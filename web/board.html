@@ -60,7 +60,7 @@ function render(v) {
   renderHost(v);
   HW.patch($('plist'), v.players.map(p => `<div class="${v.current === p.id ? 'cur' : ''}">
     <span>${HW.chip(p.id)}</span>
-    <span class="muted">☀${p.sun} 💧${p.water} 🌰${p.trustLeft} left · 🤝${p.allies.length} · 🃏${p.cards.length}${p.owls ? ' · 🦉' + p.owls : ''}</span></div>`).join(''));
+    <span class="muted">☀${p.sun} 💧${p.water} 🌰${p.trustLeft} left · 🤝${p.allies.length} · 🃏${p.cards.length}${p.squirrels ? ' · 🐿️' + p.squirrels : ''}</span></div>`).join(''));
   HW.patch($('log'), v.log.slice().reverse().map(l => `<div>${HW.esc(l)}</div>`).join(''));
 }
 
@@ -98,7 +98,7 @@ function mainHTML(v) {
     }
     if (t.step === 'share' && !t.started) h += `<p class="muted">Getting ready to share…</p>`;
     if (t.step === 'trust') h += `<p class="big">🌰 Trust given: <b>${t.trustCount}</b></p><p class="muted">Listeners: give trust on your phone if this moved you.</p>`;
-    t.followUps.forEach(f => h += `<div class="event">🦉 ${HW.esc(f)}</div>`);
+    t.followUps.forEach(f => h += `<div class="event">🐿️ ${HW.esc(f)}</div>`);
     return h;
   }
   if (v.phase === 'dusk') {
@@ -115,7 +115,7 @@ function mainHTML(v) {
   }
   if (v.phase === 'guess') {
     const waiting = v.players.filter(p => !p.guessed).map(p => HW.chip(p.id)).join(' ');
-    return `<p class="big">Who had your name as their Secret Acorn?</p><p class="muted">Guess on your phone.</p>
+    return `<p class="big">Who was your Secret Owl?</p><p class="muted">Guess on your phone.</p>
       <p>Still guessing: ${waiting || '<b>everyone has guessed</b>'}</p>`;
   }
   if (v.phase === 'chain' && v.tribute) {

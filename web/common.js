@@ -145,8 +145,8 @@ const HW = {
 
   regionColors: ['#e0a32e', '#e0703a', '#3f9e9a', '#c8463f', '#cf6f97', '#4f74b0'],
   regionIcons: ['🔍', '🎨', '🤝', '🦁', '💗', '⚓'],
-  tokenIcons: { spring: '💧', sunbeam: '☀️', cache: '🌰', owl: '🦉', campfire: '🔥', log: '🪵', path: '🍃' },
-  tierNames: ['', '🌱 Seed', '🌿 Sapling', '🌳 Oak', '🌰 Heartwood'],
+  tokenIcons: { spring: '💧', sunbeam: '☀️', mushroom: '🍄', squirrel: '🐿️', campfire: '🔥', log: '🪵', path: '🍃' },
+  tierNames: ['', '🌱 Seed', '🌿 Sapling', '🌳 Oak', '💛 Heartwood'],
   ringNames: ['Heartwood', 'Oak Circle', 'Sapling Path', 'Seedlands'],
 
   dist(a, b) {
@@ -190,7 +190,7 @@ const HW = {
       out += `<polygon points="${pts(x, y)}" fill="${base}" fill-opacity="${op}" />`;
       const tok = v.tokens[i];
       const peek = opts.peek?.[i];
-      if (h.ring === 0) out += `<text x="${x}" y="${y - 12}" class="hlabel">HEARTWOOD</text><text x="${x}" y="${y + 6}" class="ticon">🌰</text>`;
+      if (h.ring === 0) out += `<text x="${x}" y="${y - 12}" class="hlabel">HEARTWOOD</text><text x="${x}" y="${y + 6}" class="ticon">💛</text>`;
       else if (tok) out += `<text x="${x - 22}" y="${y - 18}" class="ticon small used">${HW.tokenIcons[tok]}</text>`;
       else if (peek) out += `<text x="${x}" y="${y - 14}" class="ticon">${HW.tokenIcons[peek]}</text>`;
       else out += `<text x="${x}" y="${y - 16}" class="ticon hidden">✦</text>`;
@@ -244,9 +244,9 @@ const HW = {
   },
 
   scoresTable(v) {
-    let h = `<table class="scores"><tr><th></th><th>Player</th><th>Trust</th><th>Growth</th><th>Alliances</th><th>Secret Acorn</th><th>Total</th></tr>`;
+    let h = `<table class="scores"><tr><th></th><th>Player</th><th>Trust</th><th>Growth</th><th>Alliances</th><th>Secret Owl</th><th>Total</th></tr>`;
     v.scores.forEach((s, i) => {
-      h += `<tr class="${s.winner ? 'win' : ''}"><td>${s.winner ? '🏆' : i + 1}</td><td>${HW.chip(s.id)}</td><td>${s.trust} <small>(${s.givers} people)</small></td><td>${s.growth}</td><td>${s.alliances}</td><td>${s.secret} <small>seer: ${HW.esc(s.seerName)}</small></td><td><b>${s.total}</b></td></tr>`;
+      h += `<tr class="${s.winner ? 'win' : ''}"><td>${s.winner ? '🏆' : i + 1}</td><td>${HW.chip(s.id)}</td><td>${s.trust} <small>(${s.givers} people)</small></td><td>${s.growth}</td><td>${s.alliances}</td><td>${s.secret} <small>🦉 ${HW.esc(s.owlName)}</small></td><td><b>${s.total}</b></td></tr>`;
     });
     h += '</table>';
     if (v.forestGoal) h += `<p class="${v.forestStands ? 'good' : 'bad'}">${v.forestStands ? '🌳 The forest stands: every region has an Oak story.' : '🍂 The forest did not take root: not every region has an Oak story, so there is no winner.'}</p>`;

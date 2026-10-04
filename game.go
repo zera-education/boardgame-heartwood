@@ -48,9 +48,9 @@ type Player struct {
 	Pos       int            `json:"pos"`
 	Sun       int            `json:"sun"`
 	Water     int            `json:"water"`
-	Golden    int            `json:"golden"`
+	Bonus     int            `json:"bonus"` // bonus points (✨)
 	TrustLeft int            `json:"trustLeft"`
-	Owls      int            `json:"owls"`
+	Squirrels int            `json:"squirrels"`
 	Pot       map[string]int `json:"pot"`
 	Cards     []KeptCard     `json:"cards"`
 	Allies    []string       `json:"allies"`
@@ -311,7 +311,8 @@ func (g *Game) start(forest bool) error {
 		g.Order = append(g.Order, p.ID)
 		p.Sun, p.Water, p.TrustLeft = 3, 2, 10
 	}
-	// Secret Acorn: one loop through a shuffled order.
+	// Secret Owl: one loop through a shuffled order. Each player is the Secret
+	// Owl of their Target, watching them quietly all game.
 	perm := rand.Perm(len(g.Players))
 	for i, pi := range perm {
 		g.Players[pi].Target = g.Players[perm[(i+1)%len(perm)]].ID
@@ -373,17 +374,17 @@ func (g *Game) resolveToken(p *Player, hex int) {
 	case "sunbeam":
 		p.Sun += 2
 		tu.EventText = "Sunbeam: +2 ☀"
-	case "cache":
-		p.Golden += 2
-		tu.EventText = "Acorn cache: +2 golden acorns"
-	case "owl":
-		p.Owls++
-		tu.EventText = "Owl: keep it. Right after someone else's share, play it to ask them a follow-up question."
+	case "mushroom":
+		p.Bonus += 2
+		tu.EventText = "Mushroom patch: +2 ✨ bonus points"
+	case "squirrel":
+		p.Squirrels++
+		tu.EventText = "Squirrel: store it. Right after someone else's share, play it to ask them a follow-up question."
 	case "campfire":
 		tu.EventText = "Campfire! Everyone answers in one sentence: " + CampfireCards[rand.Intn(len(CampfireCards))]
 	case "log":
 		tu.NeedsHand = true
-		tu.EventText = "Fallen log: if anyone spends 1 ☀ to help " + p.Name + ", you both take 2 golden acorns."
+		tu.EventText = "Fallen log: if anyone spends 1 ☀ to help " + p.Name + ", you both take 2 ✨ bonus points."
 	case "path":
 		tu.Teleport = true
 		tu.EventText = "Hidden path: move free to any open space in this ring, or stay."
@@ -450,7 +451,7 @@ func (g *Game) finishTurn() {
 		}
 		g.logf("%s shared (%s) and received %d trust", p.Name, tierName(tu.Tier), n)
 	}
-	p.Golden += tu.Bonus
+	p.Bonus += tu.Bonus
 	g.TurnsTaken++
 	if g.TurnsTaken >= len(g.Order) {
 		g.enterDusk()
@@ -583,7 +584,7 @@ func (g *Game) nextSeason() {
 	if g.Season >= 3 {
 		g.Phase = PhaseGuess
 		g.TimerEnd, g.TimerLabel = 0, ""
-		g.logf("The Vision of a Forest. Everyone: guess who had your name as their Secret Acorn.")
+		g.logf("The Vision of a Forest. Everyone: guess who was your Secret Owl.")
 		return
 	}
 	g.Season++
@@ -611,11 +612,11 @@ type Score struct {
 	Alliances int    `json:"alliances"`
 	Secret    int    `json:"secret"`
 	Total     int    `json:"total"`
-	SeerName  string `json:"seerName"`
+	OwlName   string `json:"owlName"`
 	Winner    bool   `json:"winner"`
 }
 
-func (g *Game) seerOf(id string) *Player {
+func (g *Game) owlOf(id string) *Player {
 	for _, p := range g.Players {
 		if p.Target == id {
 			return p
@@ -641,15 +642,15 @@ func (g *Game) Scores() ([]Score, bool) {
 				regions[c.Region] = true
 			}
 		}
-		s.Growth += len(regions) + p.Golden
+		s.Growth += len(regions) + p.Bonus
 		s.Alliances = 3 * len(p.Allies)
 		s.Secret = p.Confirmed
 		if t := g.player(p.Target); t != nil && t.Guess != p.ID {
 			s.Secret += 2
 		}
-		if seer := g.seerOf(p.ID); seer != nil {
-			s.SeerName = seer.Name
-			if p.Guess == seer.ID {
+		if owl := g.owlOf(p.ID); owl != nil {
+			s.OwlName = owl.Name
+			if p.Guess == owl.ID {
 				s.Secret += 2
 			}
 		}
@@ -785,16 +786,16 @@ func (g *Game) playerAction(me *Player, a Action) error {
 		return nil
 	case "trust":
 		return g.giveTrust(me, 1)
-	case "owl":
+	case "squirrel":
 		if g.Phase != PhaseTurn || g.Turn.Step != "trust" || g.Turn.Player == me.ID {
-			return errors.New("play an Owl right after someone else's share")
+			return errors.New("play a Squirrel right after someone else's share")
 		}
-		if me.Owls < 1 {
-			return errors.New("you have no Owl")
+		if me.Squirrels < 1 {
+			return errors.New("you have no Squirrel")
 		}
-		me.Owls--
-		me.Golden++
-		q := OwlCards[rand.Intn(len(OwlCards))]
+		me.Squirrels--
+		me.Bonus++
+		q := SquirrelCards[rand.Intn(len(SquirrelCards))]
 		g.Turn.FollowUps = append(g.Turn.FollowUps, me.Name+" asks: "+q)
 		g.setTimer(30, "Follow-up")
 		return nil
@@ -806,8 +807,8 @@ func (g *Game) playerAction(me *Player, a Action) error {
 			return errors.New("you need 1 ☀ to help")
 		}
 		me.Sun--
-		me.Golden += 2
-		g.current().Golden += 2
+		me.Bonus += 2
+		g.current().Bonus += 2
 		g.Turn.Helped = me.ID
 		g.logf("%s helped %s over the fallen log", me.Name, g.current().Name)
 		return nil
@@ -1044,8 +1045,8 @@ func (g *Game) usePower(me *Player, a Action) error {
 		} else {
 			o.Sun += 2
 		}
-		o.Golden++
-		me.Golden++
+		o.Bonus++
+		me.Bonus++
 	case 3:
 		if !moving {
 			return errors.New("use Momentum while moving")
@@ -1090,19 +1091,19 @@ func (g *Game) usePower(me *Player, a Action) error {
 			return errors.New("that ring isn't open yet")
 		}
 		me.Pos = o.Pos
-		me.Golden++
-		o.Golden++
+		me.Bonus++
+		o.Bonus++
 	case 7:
 		if !moving {
 			return errors.New("use Adventure while moving")
 		}
 		tu.FreeSteps += 3
-		me.Golden++
+		me.Bonus++
 	case 8:
 		if err := g.giveTrust(me, 2); err != nil {
 			return err
 		}
-		me.Golden++
+		me.Bonus++
 	case 9:
 		if g.Phase != PhaseDusk || g.Dusk.Resolved {
 			return errors.New("use Common Ground at Dusk, before pairs are set")

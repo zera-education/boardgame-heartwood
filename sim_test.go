@@ -165,7 +165,7 @@ func simGame(t *testing.T, o botOpts, st *simStats) {
 	for _, p := range g.Players {
 		guess := g.Players[rand.Intn(len(g.Players))]
 		if rand.Float64() < 0.3 {
-			guess = g.seerOf(p.ID)
+			guess = g.owlOf(p.ID)
 		}
 		if guess.ID != p.ID {
 			as(p, "guess", Action{Target: guess.ID})
@@ -405,8 +405,8 @@ func botTurn(g *Game, p *Player, o botOpts, buddy string, regionTaken map[int]bo
 		if rand.Float64() < rate {
 			as(x, "trust", Action{})
 		}
-		if x.Owls > 0 && rand.Float64() < 0.2 {
-			as(x, "owl", Action{})
+		if x.Squirrels > 0 && rand.Float64() < 0.2 {
+			as(x, "squirrel", Action{})
 		}
 	}
 	as(p, "endTrust", Action{})

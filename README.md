@@ -52,7 +52,7 @@ player tabs on one computer froze every other request. WebSockets don't share th
 
 ## Flow
 
-Lobby → plant seeds → 3 seasons (each a round of turns, then Dusk) → Secret Acorn guesses → tribute chain → scores.
+Lobby → plant seeds → 3 seasons (each a round of turns, then Dusk) → Secret Owl guesses → tribute chain → scores.
 On a turn: tap neighbouring spaces to step → *Stop here and discover* → read the prompt → *Start sharing* (timer) →
 *I'm done* → listeners tap *Give trust* → *Pass to the next player*. A player may draw again once, take a lighter
 question, or pass the turn (tap twice; no card, no points). At Dusk, a pair that asked for an alliance but didn't get
@@ -64,14 +64,14 @@ Balanced with the simulation: in 10-player games every power wins 8–12% of the
 
 | Type | Power | When | Effect |
 |---|---|---|---|
-| 1 Reformer | True North | your turn, before sharing | look at 3 cards, choose 1; +1 golden acorn |
-| 2 Helper | Open Hands | your turn | give anyone 2 ☀ or 2 💧; you both +1 golden acorn |
+| 1 Reformer | True North | your turn, before sharing | look at 3 cards, choose 1; +1 bonus point |
+| 2 Helper | Open Hands | your turn | give anyone 2 ☀ or 2 💧; you both +1 bonus point |
 | 3 Achiever | Momentum | while moving | +2 ☀ and +1 💧 |
 | 4 Individualist | Deep Water | before sharing | answer the question one tier deeper (up to Oak); it scores at your ring's tier |
 | 5 Investigator | Field Notes | while moving | see hidden discoveries next to you (open rings); claim one without moving |
-| 6 Loyalist | Rope Team | while moving | jump to an ally's space free; you both +1 golden acorn |
-| 7 Enthusiast | Adventure | while moving | next 3 steps cost nothing; +1 golden acorn |
-| 8 Challenger | Champion | after someone else's share | give them 2 trust acorns at once; +1 golden acorn |
+| 6 Loyalist | Rope Team | while moving | jump to an ally's space free; you both +1 bonus point |
+| 7 Enthusiast | Adventure | while moving | next 3 steps cost nothing; +1 bonus point |
+| 8 Challenger | Champion | after someone else's share | give them 2 trust acorns at once; +1 bonus point |
 | 9 Peacemaker | Common Ground | Dusk, before pairs | tonight's alliance works at any distance and costs no water |
 
 ## Files

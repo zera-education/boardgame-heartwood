@@ -431,8 +431,8 @@ func buildView(g *Game, pid, secret, host string) map[string]any {
 	for _, p := range g.Players {
 		pp := map[string]any{
 			"id": p.ID, "name": p.Name, "color": p.Color, "types": p.Types, "used": p.Used,
-			"pos": p.Pos, "sun": p.Sun, "water": p.Water, "golden": p.Golden, "trustLeft": p.TrustLeft,
-			"owls": p.Owls, "cards": p.Cards, "allies": p.Allies, "partners": p.Partners,
+			"pos": p.Pos, "sun": p.Sun, "water": p.Water, "bonus": p.Bonus, "trustLeft": p.TrustLeft,
+			"squirrels": p.Squirrels, "cards": p.Cards, "allies": p.Allies, "partners": p.Partners,
 			"guessed": p.Guess != "",
 		}
 		if g.Dusk != nil {

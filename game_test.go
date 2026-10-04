@@ -237,7 +237,7 @@ func TestPlaytestFixes(t *testing.T) {
 	// A full tie shares the win.
 	g2 := &Game{Players: ps, ForestGoal: false}
 	for _, x := range ps {
-		x.Pot, x.Cards, x.Allies, x.Golden, x.Confirmed, x.Guess = map[string]int{}, nil, nil, 0, 0, ""
+		x.Pot, x.Cards, x.Allies, x.Bonus, x.Confirmed, x.Guess = map[string]int{}, nil, nil, 0, 0, ""
 		x.Target = ""
 	}
 	scores, _ := g2.Scores()
