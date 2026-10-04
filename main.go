@@ -13,6 +13,7 @@ import (
 	"math/big"
 	"net"
 	"net/http"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -420,6 +421,36 @@ func (s *Server) live(w http.ResponseWriter, r *http.Request) {
 
 // buildView returns what one viewer may see: secrets, hidden tokens and
 // other players' pots stay on the server.
+// cards serves every deck in the game, for the wiki's card pages.
+func cards(w http.ResponseWriter, r *http.Request) {
+	type tip struct {
+		Key string `json:"key"`
+		StatementTip
+	}
+	var tips []tip
+	for k, t := range StatementTips {
+		tips = append(tips, tip{k, t})
+	}
+	order := "ZERAOS"
+	sort.Slice(tips, func(i, j int) bool {
+		a, b := tips[i].Key, tips[j].Key
+		if len(a) != len(b) {
+			return len(a) < len(b)
+		}
+		for k := range a {
+			if a[k] != b[k] {
+				return strings.IndexByte(order, a[k]) < strings.IndexByte(order, b[k])
+			}
+		}
+		return false
+	})
+	writeJSON(w, 200, map[string]any{
+		"values": Values, "regionCards": RegionCards, "threads": RegionThreads,
+		"heartwood": HeartwoodCards, "bond": BondCards, "statementCard": StatementCard,
+		"statementTips": tips, "squirrel": SquirrelCards, "campfire": CampfireCards,
+	})
+}
+
 func buildView(g *Game, pid, secret, host string) map[string]any {
 	isHost := host != "" && host == g.HostSecret
 	var me *Player
@@ -581,6 +612,7 @@ func main() {
 	mux.HandleFunc("GET /api/games/{code}/state", s.state)
 	mux.HandleFunc("GET /api/games/{code}/live", s.live)
 	mux.HandleFunc("GET /api/qr", qrCode)
+	mux.HandleFunc("GET /api/cards", cards)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) { fmt.Fprintln(w, "ok") })
 	log.Printf("Heartwood on http://localhost%s (db %s, %d saved games)", *addr, *dbPath, len(s.games))
 	for _, u := range lan {

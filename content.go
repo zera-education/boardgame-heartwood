@@ -72,6 +72,16 @@ var RegionCards = [6][][3]string{
 	},
 }
 
+// RegionThreads names each region card's theme, in RegionCards order (shown in the wiki).
+var RegionThreads = [6][]string{
+	{"What lights you up", "Cheering, not comparing", "Stepping up first", "In young people's corner", "Joining in wholeheartedly"},
+	{"Beyond what was asked", "Doing it right when no one's looking", "Heart comes first", "Raising the bar together", "Getting better, kindly"},
+	{"stronger because of it", "when plans fall through", "hard words that helped", "steady for others", "not going it alone"},
+	{"belonging, not just fitting in", "dropping the act", "not having all the answers", "where you come from", "many ways to learn and be"},
+	{"changing your mind", "failure as a teacher", "first impressions and assumptions", "disagreeing well", "learning across differences"},
+	{"habits that last", "things that run without you", "planting for others", "patience and the long game", "starting with the end in mind"},
+}
+
 var HeartwoodCards = []string{
 	"What do you want the people at this table to know about you that they might not?",
 	"Who at this table has helped you grow, and how?",

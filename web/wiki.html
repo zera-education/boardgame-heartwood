@@ -112,6 +112,7 @@ article h3 { font-size: 1.15rem; margin: 1.5rem 0 .5rem; }
 const CATS = [
   ['basics', 'The basics'],
   ['map', 'The map'],
+  ['cards', 'All the cards'],
   ['resources', 'Resources'],
   ['discoveries', 'Discoveries'],
   ['dusk', 'Dusk and alliances'],
@@ -324,7 +325,8 @@ const W = [
 <p class="muted">Z in ZERAOS · top of the board</p>
 <div class="box"><p><b>Be zealous, not jealous.</b></p><p>Passionate, driven energy channelled into learning and purpose rather than comparison: advocacy for students, initiative, and enthusiastic participation.</p></div>
 <p>One of the six [[values]]. Stand on one of its spaces and your [[prompt-card|question]] comes from its deck: a [[seedlands|Seed]], [[sapling-path|Sapling]] or [[oak-circle|Oak]] question, depending on your ring.</p>
-<p>It's [[advocacy|advocated]] when someone tells an Oak story in it, or someone who stands for it tells a [[heartwood]] story.</p>` },
+<p>It's [[advocacy|advocated]] when someone tells an Oak story in it, or someone who stands for it tells a [[heartwood]] story.</p>
+<p>See all its questions: [[cards-zealous]].</p>` },
 
 { id: 'excellence', cat: 'map', icon: '⭐', title: 'Excellence',
   short: 'E in ZERAOS. Beyond expectation.',
@@ -332,7 +334,8 @@ const W = [
 <p class="muted">E in ZERAOS · upper right of the board</p>
 <div class="box"><p><b>Beyond expectation.</b></p><p>Consistently surpassing standards, never merely meeting them: in academics, governance, and personal growth. Heart (zealous) always comes first.</p></div>
 <p>One of the six [[values]]. Stand on one of its spaces and your [[prompt-card|question]] comes from its deck: a [[seedlands|Seed]], [[sapling-path|Sapling]] or [[oak-circle|Oak]] question, depending on your ring.</p>
-<p>It's [[advocacy|advocated]] when someone tells an Oak story in it, or someone who stands for it tells a [[heartwood]] story.</p>` },
+<p>It's [[advocacy|advocated]] when someone tells an Oak story in it, or someone who stands for it tells a [[heartwood]] story.</p>
+<p>See all its questions: [[cards-excellence]].</p>` },
 
 { id: 'resilience', cat: 'map', icon: '🎋', title: 'Resilience',
   short: 'R in ZERAOS. Anti-fragile.',
@@ -340,7 +343,8 @@ const W = [
 <p class="muted">R in ZERAOS · lower right of the board</p>
 <div class="box"><p><b>Anti-fragile.</b></p><p>More than bouncing back: growing stronger through challenge. Purpose-driven leadership that persists toward long-term goals and learns from setbacks.</p></div>
 <p>One of the six [[values]]. Stand on one of its spaces and your [[prompt-card|question]] comes from its deck: a [[seedlands|Seed]], [[sapling-path|Sapling]] or [[oak-circle|Oak]] question, depending on your ring.</p>
-<p>It's [[advocacy|advocated]] when someone tells an Oak story in it, or someone who stands for it tells a [[heartwood]] story.</p>` },
+<p>It's [[advocacy|advocated]] when someone tells an Oak story in it, or someone who stands for it tells a [[heartwood]] story.</p>
+<p>See all its questions: [[cards-resilience]].</p>` },
 
 { id: 'authenticity', cat: 'map', icon: '🪞', title: 'Authenticity',
   short: 'A in ZERAOS. Inclusive education.',
@@ -348,7 +352,8 @@ const W = [
 <p class="muted">A in ZERAOS · bottom of the board</p>
 <div class="box"><p><b>Inclusive education.</b></p><p>Genuine representation and honesty. Everyone, including students in zera Plus, belongs and is valued, without pretense.</p></div>
 <p>One of the six [[values]]. Stand on one of its spaces and your [[prompt-card|question]] comes from its deck: a [[seedlands|Seed]], [[sapling-path|Sapling]] or [[oak-circle|Oak]] question, depending on your ring.</p>
-<p>It's [[advocacy|advocated]] when someone tells an Oak story in it, or someone who stands for it tells a [[heartwood]] story.</p>` },
+<p>It's [[advocacy|advocated]] when someone tells an Oak story in it, or someone who stands for it tells a [[heartwood]] story.</p>
+<p>See all its questions: [[cards-authenticity]].</p>` },
 
 { id: 'open-mindedness', cat: 'map', icon: '💡', title: 'Open-mindedness',
   short: 'O in ZERAOS. Growth mindset.',
@@ -356,7 +361,8 @@ const W = [
 <p class="muted">O in ZERAOS · lower left of the board</p>
 <div class="box"><p><b>Growth mindset.</b></p><p>Welcoming diverse perspectives and inclusive decision-making: challenging assumptions and treating failure as a place to grow, not an endpoint.</p></div>
 <p>One of the six [[values]]. Stand on one of its spaces and your [[prompt-card|question]] comes from its deck: a [[seedlands|Seed]], [[sapling-path|Sapling]] or [[oak-circle|Oak]] question, depending on your ring.</p>
-<p>It's [[advocacy|advocated]] when someone tells an Oak story in it, or someone who stands for it tells a [[heartwood]] story.</p>` },
+<p>It's [[advocacy|advocated]] when someone tells an Oak story in it, or someone who stands for it tells a [[heartwood]] story.</p>
+<p>See all its questions: [[cards-open-mindedness]].</p>` },
 
 { id: 'sustainability', cat: 'map', icon: '🌍', title: 'Sustainability',
   short: 'S in ZERAOS. Start with the end in mind.',
@@ -364,7 +370,8 @@ const W = [
 <p class="muted">S in ZERAOS · upper left of the board</p>
 <div class="box"><p><b>Start with the end in mind.</b></p><p>Long-term thinking built into everything: creating lasting impact and building systems that outlast any single leader or cohort.</p></div>
 <p>One of the six [[values]]. Stand on one of its spaces and your [[prompt-card|question]] comes from its deck: a [[seedlands|Seed]], [[sapling-path|Sapling]] or [[oak-circle|Oak]] question, depending on your ring.</p>
-<p>It's [[advocacy|advocated]] when someone tells an Oak story in it, or someone who stands for it tells a [[heartwood]] story.</p>` },
+<p>It's [[advocacy|advocated]] when someone tells an Oak story in it, or someone who stands for it tells a [[heartwood]] story.</p>
+<p>See all its questions: [[cards-sustainability]].</p>` },
 
 { id: 'seedlands', cat: 'map', icon: '🌱', title: 'Seedlands',
   short: 'The outer ring. Open from Season 1. Light, fun questions.',
@@ -861,6 +868,90 @@ const W = [
   <li><b>Scores.</b> The big screen shows everyone's points and the winner. 🏆 See [[scoring]].</li>
 </ol>` },
 
+// ───────────── All the cards (filled from /api/cards, so they always match the game)
+
+{ id: 'all-cards', cat: 'cards', icon: '🗂️', title: 'All the cards',
+  short: 'Every question, follow-up and tip in the game, deck by deck.',
+  body: `
+<p>Every card in the game, exactly as the game deals it. Search the wiki to find any question.</p>
+<h3>Value decks</h3>
+<p>Five cards per value. Each card has a 🌱 Seed, 🌿 Sapling and 🌳 Oak question on one thread; your ring picks which one you answer.</p>
+<ul>
+  <li>☀️ [[cards-zealous]]</li>
+  <li>⭐ [[cards-excellence]]</li>
+  <li>🎋 [[cards-resilience]]</li>
+  <li>🪞 [[cards-authenticity]]</li>
+  <li>💡 [[cards-open-mindedness]]</li>
+  <li>🌍 [[cards-sustainability]]</li>
+</ul>
+<h3>Other decks</h3>
+<ul>
+  <li>💛 [[cards-heartwood]]: the centre's own deck.</li>
+  <li>🌙 [[cards-bond]]: Dusk conversations, and the statement card for alliances.</li>
+  <li>🤝 [[cards-statement-pairs]] and [[cards-statement-trios]]: the Keeper's tips for alliance statements.</li>
+  <li>🐿️ [[cards-squirrel]] and 🔥 [[cards-campfire]].</li>
+</ul>` },
+
+{ id: 'cards-zealous', cat: 'cards', icon: '☀️', title: 'Zealous cards',
+  short: 'The 5 Zealous cards, each with a Seed, Sapling and Oak question.',
+  body: `<p>The [[zealous]] deck. Your ring picks the question: 🌱 [[seedlands|Seed]], 🌿 [[sapling-path|Sapling]] or 🌳 [[oak-circle|Oak]]. Asking for a [[lighter-tier]] moves you up the same card.</p>
+<div data-deck="value:0"></div>` },
+
+{ id: 'cards-excellence', cat: 'cards', icon: '⭐', title: 'Excellence cards',
+  short: 'The 5 Excellence cards, each with a Seed, Sapling and Oak question.',
+  body: `<p>The [[excellence]] deck. Your ring picks the question: 🌱 [[seedlands|Seed]], 🌿 [[sapling-path|Sapling]] or 🌳 [[oak-circle|Oak]]. Asking for a [[lighter-tier]] moves you up the same card.</p>
+<div data-deck="value:1"></div>` },
+
+{ id: 'cards-resilience', cat: 'cards', icon: '🎋', title: 'Resilience cards',
+  short: 'The 5 Resilience cards, each with a Seed, Sapling and Oak question.',
+  body: `<p>The [[resilience]] deck. Your ring picks the question: 🌱 [[seedlands|Seed]], 🌿 [[sapling-path|Sapling]] or 🌳 [[oak-circle|Oak]]. Asking for a [[lighter-tier]] moves you up the same card.</p>
+<div data-deck="value:2"></div>` },
+
+{ id: 'cards-authenticity', cat: 'cards', icon: '🪞', title: 'Authenticity cards',
+  short: 'The 5 Authenticity cards, each with a Seed, Sapling and Oak question.',
+  body: `<p>The [[authenticity]] deck. Your ring picks the question: 🌱 [[seedlands|Seed]], 🌿 [[sapling-path|Sapling]] or 🌳 [[oak-circle|Oak]]. Asking for a [[lighter-tier]] moves you up the same card.</p>
+<div data-deck="value:3"></div>` },
+
+{ id: 'cards-open-mindedness', cat: 'cards', icon: '💡', title: 'Open-mindedness cards',
+  short: 'The 5 Open-mindedness cards, each with a Seed, Sapling and Oak question.',
+  body: `<p>The [[open-mindedness]] deck. Your ring picks the question: 🌱 [[seedlands|Seed]], 🌿 [[sapling-path|Sapling]] or 🌳 [[oak-circle|Oak]]. Asking for a [[lighter-tier]] moves you up the same card.</p>
+<div data-deck="value:4"></div>` },
+
+{ id: 'cards-sustainability', cat: 'cards', icon: '🌍', title: 'Sustainability cards',
+  short: 'The 5 Sustainability cards, each with a Seed, Sapling and Oak question.',
+  body: `<p>The [[sustainability]] deck. Your ring picks the question: 🌱 [[seedlands|Seed]], 🌿 [[sapling-path|Sapling]] or 🌳 [[oak-circle|Oak]]. Asking for a [[lighter-tier]] moves you up the same card.</p>
+<div data-deck="value:5"></div>` },
+
+{ id: 'cards-heartwood', cat: 'cards', icon: '💛', title: 'Heartwood cards',
+  short: 'The deck for the centre: legacy questions, no value.',
+  body: `<p>Asked in the [[heartwood]], worth 4 points. These belong to no value.</p>
+<div data-deck="heartwood"></div>` },
+
+{ id: 'cards-bond', cat: 'cards', icon: '🌙', title: 'Bond and statement cards',
+  short: 'What pairs talk about at Dusk, season by season.',
+  body: `<p>At [[dusk]], each [[fireside-chat]] pair gets a [[bond-card]] for that season. A pair or trio forming an [[alliance]] gets the statement card instead.</p>
+<div data-deck="bond"></div>` },
+
+{ id: 'cards-statement-pairs', cat: 'cards', icon: '🤝', title: 'Statement tips: pairs',
+  short: 'For the Keeper: where two values meet, and example lines.',
+  body: `<p>When an alliance of two is stuck on its [[statement]], the [[keeper]] sees the tip for its exact values: where they meet (or pull against each other), and three example lines to spark ideas, not to copy.</p>
+<div data-deck="tips:2"></div>` },
+
+{ id: 'cards-statement-trios', cat: 'cards', icon: '🤝', title: 'Statement tips: trios',
+  short: 'For the Keeper: where three values meet, and example lines.',
+  body: `<p>When an alliance grows to three, it writes a new [[statement]] that holds all three values. These are the [[keeper]]'s tips.</p>
+<div data-deck="tips:3"></div>` },
+
+{ id: 'cards-squirrel', cat: 'cards', icon: '🐿️', title: 'Squirrel follow-ups',
+  short: 'The follow-up questions a Squirrel asks.',
+  body: `<p>When someone plays a [[squirrel]] after a share, the big screen gives them one of these to ask.</p>
+<div data-deck="squirrel"></div>` },
+
+{ id: 'cards-campfire', cat: 'cards', icon: '🔥', title: 'Campfire questions',
+  short: 'One-sentence questions everyone answers around the table.',
+  body: `<p>When a [[campfire]] is found, everyone answers one of these in a single sentence.</p>
+<div data-deck="campfire"></div>` },
+
 // ───────────── Your phone
 { id: 'your-phone', cat: 'phone', icon: '📱', title: 'Your phone',
   short: 'Mostly face down. Four private jobs; everything else, say it aloud.',
@@ -926,9 +1017,50 @@ function tile(e) {
   return `<a class="tile" href="#${e.id}"><span class="ic">${e.icon}</span><span><b>${esc(e.title)}</b><small>${esc(e.short)}</small></span></a>`;
 }
 
+// Card decks come from the game itself, so these pages always match what's dealt.
+let CARDS = null;
+const TIERS = [['🌱', 'Seed', '45 s'], ['🌿', 'Sapling', '60 s'], ['🌳', 'Oak', '90 s']];
+function deckHTML(deck) {
+  const C = CARDS, li = xs => `<ol>${xs.map(x => `<li>${esc(x)}</li>`).join('')}</ol>`;
+  const [kind, arg] = deck.split(':');
+  if (kind === 'value') {
+    const v = C.values[+arg];
+    return `<p class="muted">${v.icon} ${esc(v.name)} · <i>${esc(v.tagline)}</i></p>` + C.regionCards[+arg].map((card, k) =>
+      `<div class="box"><h3 style="margin-top:0">Card ${k + 1}${C.threads[+arg]?.[k] ? ` · ${esc(C.threads[+arg][k])}` : ''}</h3>` +
+      card.map((q, t) => `<p>${TIERS[t][0]} <b>${TIERS[t][1]}</b> <span class="muted">(${TIERS[t][2]})</span><br>${esc(q)}</p>`).join('') + `</div>`).join('');
+  }
+  if (kind === 'heartwood') return li(C.heartwood);
+  if (kind === 'squirrel') return li(C.squirrel);
+  if (kind === 'campfire') return li(C.campfire);
+  if (kind === 'bond') return C.bond.map((xs, i) => `<h3>Season ${i + 1}</h3>${li(xs)}`).join('') +
+    `<h3>Statement card (alliances)</h3><div class="box"><p>${esc(C.statementCard)}</p></div>`;
+  if (kind === 'tips') {
+    const byLetter = Object.fromEntries(C.values.map(v => [v.letter, v]));
+    return C.statementTips.filter(t => t.key.length === +arg).map(t => `<div class="box">
+      <h3 style="margin-top:0">${[...t.key].map(l => `${byLetter[l].icon} ${esc(byLetter[l].name)}`).join(' + ')}</h3>
+      <p><i>${esc(t.common)}</i></p>${li(t.examples)}</div>`).join('');
+  }
+  return '';
+}
+function fillDecks() {
+  main.querySelectorAll('[data-deck]').forEach(el => {
+    el.innerHTML = CARDS ? deckHTML(el.dataset.deck)
+      : CARDS === false ? `<p class="empty">Couldn't load the cards. Open the wiki from the game's own address.</p>`
+      : `<p class="muted">Loading the cards…</p>`;
+  });
+}
+fetch('/api/cards').then(r => r.ok ? r.json() : Promise.reject()).then(d => {
+  CARDS = d;
+  // Let the index search find any question.
+  for (const e of W) {
+    const m = e.body.match(/data-deck="([^"]+)"/);
+    if (m) e.extra = deckHTML(m[1]).replace(/<[^>]+>/g, ' ');
+  }
+}).catch(() => { CARDS = false; }).finally(route);
+
 function renderIndex(filter) {
   const f = (filter || '').trim().toLowerCase();
-  const match = e => !f || (e.title + ' ' + e.short + ' ' + e.body.replace(/<[^>]+>/g, ' ')).toLowerCase().includes(f);
+  const match = e => !f || (e.title + ' ' + e.short + ' ' + e.body.replace(/<[^>]+>/g, ' ') + ' ' + (e.extra || '')).toLowerCase().includes(f);
   let html = f ? '' : `<div class="hero"><div class="seed">📖</div><h1>Heartwood Wiki</h1>
     <p>Every term in the game, one page each. Tap a term to read it; links inside each page lead to the next.</p></div>`;
   let any = false;
@@ -965,6 +1097,7 @@ function renderEntry(e) {
         <span>${next ? `<a href="#${next.id}">${next.icon} ${esc(next.title)} →</a>` : ''}</span>
       </div>
     </article>`;
+  fillDecks();
 }
 
 function route() {
