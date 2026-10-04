@@ -146,6 +146,7 @@ const HW = {
   regionColors: ['#e0a32e', '#e0703a', '#3f9e9a', '#c8463f', '#cf6f97', '#4f74b0'],
   regionIcons: ['🔍', '🎨', '🤝', '🦁', '💗', '⚓'],
   tokenIcons: { spring: '💧', sunbeam: '☀️', mushroom: '🍄', squirrel: '🐿️', campfire: '🔥', path: '🍃' },
+  tokenNames: { spring: 'Spring', sunbeam: 'Sunbeam', mushroom: 'Mushroom patch', squirrel: 'Squirrel', campfire: 'Campfire', path: 'Hidden path' },
   tierNames: ['', '🌱 Seed', '🌿 Sapling', '🌳 Oak', '💛 Heartwood'],
   ringNames: ['Heartwood', 'Oak Circle', 'Sapling Path', 'Seedlands'],
 

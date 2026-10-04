@@ -268,3 +268,56 @@ func TestPlaytestFixes(t *testing.T) {
 		t.Fatalf("expected a three-way shared win, got %d winners", winners)
 	}
 }
+
+// The Keeper taps public moves for a player; private ones stay on the phone.
+func TestKeeperActsForPlayers(t *testing.T) {
+	g := NewGame("KPR", "host")
+	var ps []*Player
+	for i, n := range []string{"A", "B"} {
+		p, _ := g.Join(n, Colors[i])
+		g.Apply(Action{Host: "host", Type: "assignPowers", Target: p.ID, Types: []int{3}})
+		ps = append(ps, p)
+	}
+	keeper := func(as *Player, typ string, a Action) error {
+		a.Host, a.As, a.Type = "host", as.ID, typ
+		return g.Apply(a)
+	}
+	if err := g.Apply(Action{Host: "host", Type: "start"}); err != nil {
+		t.Fatal(err)
+	}
+	outer := []int{}
+	for i, h := range g.Hexes {
+		if h.Ring == 3 {
+			outer = append(outer, i)
+		}
+	}
+	if keeper(ps[1], "plant", Action{Hex: outer[0]}) == nil {
+		t.Fatal("Keeper planted for the wrong player")
+	}
+	for k, p := range ps {
+		if err := keeper(p, "plant", Action{Hex: outer[k]}); err != nil {
+			t.Fatalf("plant for %s: %v", p.Name, err)
+		}
+	}
+	a := ps[0]
+	for _, step := range []string{"power", "endMove", "startShare", "doneShare"} {
+		if err := keeper(a, step, Action{Power: 3}); err != nil {
+			t.Fatalf("%s: %v", step, err)
+		}
+	}
+	if !a.Used[3] {
+		t.Fatal("Momentum not used")
+	}
+	if keeper(ps[1], "trust", Action{}) == nil {
+		t.Fatal("Keeper gave trust for a player")
+	}
+	if err := g.Apply(Action{Pid: ps[1].ID, Secret: ps[1].Secret, Type: "trust"}); err != nil {
+		t.Fatalf("player's own trust: %v", err)
+	}
+	if err := keeper(a, "endTrust", Action{}); err != nil {
+		t.Fatal(err)
+	}
+	if g.current().ID != ps[1].ID {
+		t.Fatal("turn did not pass")
+	}
+}

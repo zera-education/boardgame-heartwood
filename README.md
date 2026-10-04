@@ -33,6 +33,11 @@ Locally, the server prints the address phones on the same Wi-Fi should use, and 
   the Keeper; the Keeper controls (Enneagram powers, start, next player, Dusk pairs, next season, tributes, timers) appear only on that
   browser. Under **Help a player rejoin · Keeper on another device** the Keeper can issue a 4-digit rejoin code
   (one use, 10 minutes) or get a link that moves the Keeper controls to another device.
+- **Players say it, the Keeper taps it.** Every public action (plant, step, discover, share timer, draw again, lighter,
+  pass, powers, Squirrel follow-ups, tribute confirm) is tapped by the Keeper on the board, acting for that player
+  (`as` on the action; the server refuses `trust`, `duskChoice` and `guess` from the Keeper). The phone keeps only the
+  private jobs: the Secret Owl name, Give trust, the Dusk choice and Bond card, the Secret Owl guess, and a reminder of
+  your powers.
 - **Players** scan the QR code or open `play.html?g=CODE`. They pick a name and a colour. In the lobby the Keeper gives
   each player **1 to 3 Enneagram types** (the game can't start until everyone has one); each type gives one power
   they can activate once per game. Their seat is kept in the URL (`&p=…`) and on the
@@ -53,9 +58,9 @@ player tabs on one computer froze every other request. WebSockets don't share th
 ## Flow
 
 Lobby → plant seeds → 3 seasons (each a round of turns, then Dusk) → Secret Owl guesses → tribute chain → scores.
-On a turn: tap neighbouring spaces to step → *Stop here and discover* → read the prompt → *Start sharing* (timer) →
-*I'm done* → listeners tap *Give trust* → *Pass to the next player*. A player may draw again once, take a lighter
-question, or pass the turn (tap twice; no card, no points). At Dusk, a pair that asked for an alliance but didn't get
+On a turn the player speaks and the Keeper taps: neighbouring spaces to step → *Stop here and discover* → the prompt
+shows on the board → *Start sharing* (timer) → *They're done sharing* → listeners tap *Give trust* on their phones →
+*Next player*. A player may draw again once, take a lighter question, or pass the turn (no card, no points). At Dusk, a pair that asked for an alliance but didn't get
 one is told why.
 
 ## Powers (one per Enneagram type, used once)

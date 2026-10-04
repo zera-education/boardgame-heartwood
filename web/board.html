@@ -49,19 +49,44 @@ const host = localStorage.getItem('hw-host-' + HW.code) || '';
 const creds = host ? { host } : {};
 $('code').textContent = HW.code;
 let forestGoal = false;
+const keep = {};      // Keeper dropdown choices not yet sent, so a redraw doesn't reset them
 
 const act = (type, extra) => HW.act(creds, type, extra);
+// Players say it aloud; the Keeper taps it here, acting for them.
+const actAs = (pid, type, extra) => act(type, { as: pid, ...extra });
 
 function render(v) {
   $('title').textContent = HW.phaseTitle(v);
-  HW.renderBoard($('svg'));
+  HW.renderBoard($('svg'), boardOpts(v));
   HW.patch($('main'), mainHTML(v));
   HW.patch($('forest'), HW.forestHTML(v));
   renderHost(v);
   HW.patch($('plist'), v.players.map(p => `<div class="${v.current === p.id ? 'cur' : ''}">
     <span>${HW.chip(p.id)}</span>
-    <span class="muted">☀${p.sun} 💧${p.water} 🌰${p.trustLeft} left · 🤝${p.allies.length} · 🃏${p.cards.length}${p.squirrels ? ' · 🐿️' + p.squirrels : ''}</span></div>`).join(''));
+    <span class="muted">☀${p.sun} 💧${p.water} 🌰${p.trustLeft} left · 🤝${p.allies.length} · 🃏${p.cards.length}${p.squirrels ? ' · 🐿️' + p.squirrels : ''}</span>
+    <span class="pw">${(p.types || []).map(t => `<span class="${p.used?.[t] ? 'used' : ''}">${HW.esc(v.powers[t - 1].title)}</span>`).join(' · ')}</span></div>`).join(''));
   HW.patch($('log'), v.log.slice().reverse().map(l => `<div>${HW.esc(l)}</div>`).join(''));
+}
+
+// On the Keeper's screen the board is tappable: plant, step, Hidden path.
+function boardOpts(v) {
+  const opts = { highlight: new Set() };
+  if (!v.isHost) return opts;
+  if (v.phase === 'plant' && v.current) {
+    v.hexes.forEach((h, i) => { if (h.ring === 3) opts.highlight.add(i); });
+    opts.onClick = i => opts.highlight.has(i) && actAs(v.current, 'plant', { hex: i });
+  }
+  const t = v.turn;
+  if (v.phase === 'turn' && t && t.step === 'move') {
+    const me = HW.player(t.player), here = v.hexes[me.pos];
+    opts.peek = t.peek || {};
+    v.hexes.forEach((h, i) => {
+      if (t.teleport) { if (h.ring === here.ring && HW.ringOpen(h.ring)) opts.highlight.add(i); }
+      else if (!t.discovered && HW.dist(h, here) === 1 && HW.ringOpen(h.ring) && (h.ring !== 0 || me.allies.length)) opts.highlight.add(i);
+    });
+    opts.onClick = i => opts.highlight.has(i) && actAs(me.id, 'step', { hex: i });
+  }
+  return opts;
 }
 
 // Phones can't reach "localhost": when the board was opened that way, show the
@@ -83,21 +108,21 @@ function mainHTML(v) {
   }
   if (v.phase === 'plant') {
     return `<p class="big">${HW.chip(v.current)} is planting their seed.</p>
-      <p class="muted">Choose an outer space in the value you identify with most, on your phone, and tell us why in one sentence.</p>`;
+      <p class="muted">Which value do you identify with most? Tell us why, in one sentence. The Keeper places your seed.</p>`;
   }
   if (v.phase === 'turn' && v.turn) {
     const t = v.turn, p = HW.player(t.player);
     const ring = p.pos >= 0 ? v.hexes[p.pos] : null;
     let h = `<p class="big">${HW.chip(t.player)}'s turn · <span class="muted">${ring ? (ring.region >= 0 ? v.regions[ring.region] + ', ' : '') + HW.ringNames[ring.ring] : ''}</span></p>`;
     if (t.eventText) h += `<div class="event">${HW.esc(t.eventText)}</div>`;
-    if (t.step === 'move') h += `<p class="muted">Moving… (☀ ${p.sun} · 💧 ${p.water}${t.freeSteps ? ` · ${t.freeSteps} free steps` : ''})</p>`;
+    if (t.step === 'move') h += `<p class="muted">Where to? Say it, and the Keeper moves you. (☀ ${p.sun} · 💧 ${p.water}${t.freeSteps ? ` · ${t.freeSteps} free steps` : ''})</p>`;
     if (t.step !== 'move') {
       h += `<span class="tier">${HW.tierNames[t.tier]}${t.region >= 0 ? ' · ' + HW.regionIcons[t.region] + ' ' + v.regions[t.region] : ''}</span>`;
-      if (t.choices?.length) h += `<p class="muted">Choosing between three cards (True North)…</p>`;
+      if (t.choices?.length) h += `<p class="muted">True North: choose one of three cards.</p>` + t.choices.map(c => `<div class="choice">${HW.esc(c)}</div>`).join('');
       else h += `<div class="prompt">${HW.esc(t.prompt)}</div>`;
     }
-    if (t.step === 'share' && !t.started) h += `<p class="muted">Getting ready to share…</p>`;
-    if (t.step === 'trust') h += `<p class="big">🌰 Trust given: <b>${t.trustCount}</b></p><p class="muted">Listeners: give trust on your phone if this moved you.</p>`;
+    if (t.step === 'share' && !t.started) h += `<p class="muted">Getting ready to share… Not this one? Ask for another card, a lighter question, or pass.</p>`;
+    if (t.step === 'trust') h += `<p class="big">🌰 Trust given: <b>${t.trustCount}</b></p><p class="muted">Listeners: give trust on your phone if this moved you. Holding a 🐿️? Raise your hand to ask a follow-up.</p>`;
     t.followUps.forEach(f => h += `<div class="event">🐿️ ${HW.esc(f)}</div>`);
     return h;
   }
@@ -123,10 +148,75 @@ function mainHTML(v) {
     return `<p class="muted">Tribute ${tr.idx + 1} of ${tr.total}</p>
       <div class="prompt">${HW.chip(tr.giver)} → ${HW.chip(tr.receiver)}</div>
       <p>"Three things I discovered about you today, and one thing I appreciate."</p>
-      <p class="muted">${HW.esc(HW.name(tr.receiver))} confirms on their phone, then gives their own tribute.</p>`;
+      <p class="muted">Then ${HW.esc(HW.name(tr.receiver))} says how many of the three were true, and gives their own tribute.</p>`;
   }
   if (v.phase === 'scores') return HW.scoresTable(v);
   return '';
+}
+
+// ---------- Keeper controls ----------
+const btn = (label, data, cls = '', dis = false) =>
+  `<button class="${cls}" ${Object.entries(data).map(([k, x]) => `data-${k}="${HW.esc(String(x))}"`).join(' ')} ${dis ? 'disabled' : ''}>${label}</button>`;
+const sel = (key, options) => `<select data-keep="${key}">${options.map(([val, label]) =>
+  `<option value="${HW.esc(val)}" ${keep[key] === val ? 'selected' : ''}>${HW.esc(label)}</option>`).join('')}</select>`;
+
+// Powers the Keeper can activate right now, for whoever holds them.
+function readyPowers(v) {
+  const t = v.turn, out = [];
+  const unused = p => (p.types || []).filter(x => !p.used?.[x]);
+  if (v.phase === 'turn' && t) {
+    const p = HW.player(t.player);
+    const moving = t.step === 'move' && !t.discovered;
+    const beforeShare = t.step === 'share' && !t.started && !t.choices?.length;
+    for (const x of unused(p)) {
+      if ((x === 1 && beforeShare && t.tier < 4) || (x === 4 && beforeShare && t.tier < 3) ||
+          (x === 2 && t.step !== 'trust') || ([3, 5, 7].includes(x) && moving) ||
+          (x === 6 && moving && p.allies.length)) out.push([p, x]);
+    }
+    if (t.step === 'trust') v.players.forEach(o => { if (o.id !== p.id && unused(o).includes(8)) out.push([o, 8]); });
+  }
+  if (v.phase === 'dusk' && !v.dusk.resolved) v.players.forEach(o => { if (unused(o).includes(9)) out.push([o, 9]); });
+  return out;
+}
+
+function powerRow(v, [p, x]) {
+  const pw = v.powers[x - 1];
+  let extra = '';
+  if (x === 2) extra = sel('p2t', v.players.filter(o => o.id !== p.id).map(o => [o.id, o.name])) + sel('p2r', [['sun', '2 ☀'], ['water', '2 💧']]);
+  if (x === 6) extra = sel('p6t', p.allies.map(a => [a, HW.name(a)]));
+  return `<div class="row">${HW.chip(p.id)} ${extra}${btn(`⚡ ${HW.esc(pw.title)}`, { k: 'power', as: p.id, power: x }, 'ghost')}
+    <span class="muted" style="font-size:.85rem">${HW.esc(pw.text)}</span></div>`;
+}
+
+function turnControls(v) {
+  const t = v.turn, p = HW.player(t.player), id = p.id;
+  let h = `<p><b>For ${HW.chip(id)}:</b></p>`;
+  if (t.step === 'move') {
+    if (t.teleport) return h + `<p class="muted">Hidden path: tap a highlighted space in this ring, or</p>` + btn('Stay here', { k: 'endMove', as: id });
+    if (t.canClaim) h += `<p class="muted">Field Notes: claim one discovery next to them.</p><div class="row">${Object.entries(t.peek || {}).map(([i, k]) =>
+      btn(`${HW.tokenIcons[k] || ''} ${HW.tokenNames[k] || k}`, { k: 'claim', as: id, hex: i }, 'ghost')).join('')}</div>`;
+    const here = v.hexes[p.pos];
+    const near = v.players.filter(o => o.id !== id && HW.dist(v.hexes[o.pos], here) <= 1);
+    h += `<p class="muted">Tap a highlighted space to step. 1 ☀ a step, +1 ☀ into the Sapling Path, 1 💧 into the Oak Circle; the Heartwood needs an ally.${t.freeSteps ? ` <b>${t.freeSteps} free steps left.</b>` : ''}
+      ${near.length ? `Here, next to ${near.map(o => HW.chip(o.id)).join(' ')}.` : ''}</p>`;
+    return h + btn(t.discovered ? 'Draw the card' : 'Stop here and discover', { k: 'endMove', as: id });
+  }
+  if (t.step === 'share') {
+    if (t.choices?.length) return h + `<p class="muted">True North: which card?</p>` + t.choices.map((c, k) =>
+      btn(HW.esc(c), { k: 'pickChoice', as: id, card: t.choiceIds[k] }, 'ghost seat')).join('');
+    if (t.started) return h + btn("They're done sharing", { k: 'doneShare', as: id });
+    return h + `<div class="row">${btn('Start sharing', { k: 'startShare', as: id })}
+      ${btn('Draw again', { k: 'redraw', as: id }, 'ghost', t.redrawn)}
+      ${btn('Lighter tier', { k: 'lighter', as: id }, 'ghost', t.tier <= 1 || t.tier >= 4)}
+      ${btn('Pass this turn', { k: 'pass', as: id }, 'ghost')}</div>`;
+  }
+  if (t.step === 'trust') {
+    const sq = v.players.filter(o => o.id !== id && o.squirrels > 0);
+    h += btn('Next player →', { k: 'endTrust', as: id });
+    if (sq.length) h += `<p class="muted" style="margin-top:.6em">A hand up for a follow-up?</p><div class="row">${sq.map(o =>
+      btn(`🐿️ ${HW.esc(o.name)} asks`, { k: 'squirrel', as: o.id }, 'ghost')).join('')}</div>`;
+  }
+  return h;
 }
 
 function renderHost(v) {
@@ -141,38 +231,26 @@ function renderHost(v) {
         `<button class="${p.types?.includes(pw.type) ? 'sel' : 'ghost'}" data-assign="${p.id}" data-type="${pw.type}" title="${pw.type} ${pw.name}: ${HW.esc(pw.title)}">${pw.type}</button>`).join('')}</span>
         <button class="ghost kick" data-kick="${p.id}" title="Remove ${HW.esc(p.name)}">✕</button></div>`).join('') || '<p class="muted">No one has joined yet.</p>'}</div>
       <p class="muted" style="font-size:.85rem">${v.powers.map(pw => `${pw.type} ${pw.title}`).join(' · ')}</p>
-      <p><button id="start" ${v.players.length < 2 || v.players.some(p => !p.types?.length) ? 'disabled' : ''}>Start the expedition</button>
+      <p>${btn('Start the expedition', { k: 'start' }, '', v.players.length < 2 || v.players.some(p => !p.types?.length))}
         ${v.players.some(p => !p.types?.length) ? '<span class="muted">Everyone needs at least one power.</span>' : ''}</p>`;
   }
-  if (v.phase === 'turn' && v.turn) {
-    if (v.turn.step === 'trust') h += `<button id="endTrust">Next player →</button>`;
-    h += `<button class="ghost" id="skip">Skip this turn</button>`;
-  }
+  if (v.phase === 'plant') h += `<p>Tap the outer space ${HW.chip(v.current)} chooses, on the board.</p>`;
+  if (v.phase === 'turn' && v.turn) h += turnControls(v);
   if (v.phase === 'dusk') {
-    if (!v.dusk.resolved) h += `<button id="resolve">Set the pairs</button>`;
-    else h += `<button id="next">${v.season >= 3 ? 'Go to the finale →' : `Start Season ${v.season + 1} →`}</button>`;
+    if (!v.dusk.resolved) h += btn('Set the pairs', { k: 'resolveDusk' });
+    else h += btn(v.season >= 3 ? 'Go to the finale →' : `Start Season ${v.season + 1} →`, { k: 'nextSeason' });
   }
-  if (v.phase === 'guess') h += `<button id="chain">Start the tributes</button>`;
-  if (v.phase === 'chain') h += `<button class="ghost" id="nextTrib">Skip to next tribute</button>`;
+  if (v.phase === 'guess') h += btn('Start the tributes', { k: 'startChain' });
+  if (v.phase === 'chain' && v.tribute) {
+    const r = v.tribute.receiver;
+    h += `<p>${HW.chip(r)}, how many of the three were true?</p><div class="row">${[0, 1, 2, 3].map(n =>
+      btn(String(n), { k: 'confirm', as: r, n })).join('')}</div>` + btn('Skip to next tribute', { k: 'nextTribute' }, 'ghost');
+  }
+  const ready = readyPowers(v);
+  if (ready.length) h += `<div class="powers-now"><p class="muted">Powers they can use now (when they say so):</p>${ready.map(r => powerRow(v, r)).join('')}</div>`;
+  if (v.phase === 'turn' && v.turn) h += `<p style="margin-top:.6em">${btn('Skip this turn', { k: 'skipTurn' }, 'ghost')}</p>`;
   if (HW.patch($('hostActions'), h)) {
-    const on = (id, fn) => { const b = $(id); if (b) b.onclick = fn; };
-    on('start', () => act('start', { forest: forestGoal }));
-    on('endTrust', () => act('endTrust'));
-    on('skip', confirmSkip);
-    on('resolve', () => act('resolveDusk'));
-    on('next', () => act('nextSeason'));
-    on('chain', () => act('startChain'));
-    on('nextTrib', () => act('nextTribute'));
     const f = $('forest'); if (f) f.onchange = () => { forestGoal = f.checked; };
-    $('hostActions').querySelectorAll('[data-kick]').forEach(b => b.onclick = () => act('kick', { target: b.dataset.kick }));
-    $('hostActions').querySelectorAll('[data-assign]').forEach(b => b.onclick = () => {
-      const p = HW.player(b.dataset.assign), t = +b.dataset.type, types = (p.types || []).slice();
-      const i = types.indexOf(t);
-      if (i >= 0) types.splice(i, 1);
-      else if (types.length >= 3) return HW.toast(`${p.name} already has 3 powers. Tap one to remove it.`);
-      else types.push(t);
-      act('assignPowers', { target: p.id, types });
-    });
   }
   const tools = `<label for="rejoinWho">Give a player a rejoin code (for a new phone or browser):</label>
     <div class="row"><select id="rejoinWho" style="flex:1">${v.players.map(p => `<option value="${p.id}">${HW.esc(p.name)}</option>`).join('')}</select>
@@ -192,12 +270,45 @@ function renderHost(v) {
   }
 }
 
-let skipArmed = 0;
-function confirmSkip() {
-  if (Date.now() - skipArmed < 3000) { act('skipTurn'); skipArmed = 0; return; }
-  skipArmed = Date.now();
-  HW.toast('Tap "Skip this turn" again to confirm');
+// Taps that need a second tap within 3 s, so a stray tap doesn't pass or skip.
+const armed = {};
+function twice(key, msg) {
+  if (Date.now() - (armed[key] || 0) < 3000) { armed[key] = 0; return true; }
+  armed[key] = Date.now();
+  HW.toast(msg);
+  return false;
 }
+
+$('hostActions').addEventListener('change', e => {
+  const s = e.target.closest('select[data-keep]');
+  if (s) keep[s.dataset.keep] = s.value;
+});
+$('hostActions').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b || b.disabled) return;
+  const d = b.dataset;
+  if (d.kick) return act('kick', { target: d.kick });
+  if (d.assign) {
+    const p = HW.player(d.assign), t = +d.type, types = (p.types || []).slice();
+    const i = types.indexOf(t);
+    if (i >= 0) types.splice(i, 1);
+    else if (types.length >= 3) return HW.toast(`${p.name} already has 3 powers. Tap one to remove it.`);
+    else types.push(t);
+    return act('assignPowers', { target: p.id, types });
+  }
+  const val = key => b.closest('.row')?.querySelector(`select[data-keep="${key}"]`)?.value || '';
+  switch (d.k) {
+    case 'start': return act('start', { forest: forestGoal });
+    case 'skipTurn': return twice('skip', 'Tap "Skip this turn" again to confirm') && act('skipTurn');
+    case 'pass': return twice('pass', 'Tap "Pass this turn" again to pass. No card, no points.') && actAs(d.as, 'pass');
+    case 'claim': return actAs(d.as, 'claim', { hex: +d.hex });
+    case 'pickChoice': return actAs(d.as, 'pickChoice', { card: +d.card });
+    case 'confirm': return actAs(d.as, 'confirm', { n: +d.n });
+    case 'power': return actAs(d.as, 'power', { power: +d.power, target: val(d.power === '2' ? 'p2t' : 'p6t'), resource: val('p2r') });
+    case 'resolveDusk': case 'nextSeason': case 'startChain': case 'nextTribute': return act(d.k);
+    default: if (d.k && d.as) return actAs(d.as, d.k); // endMove, redraw, lighter, startShare, doneShare, endTrust, squirrel
+  }
+});
 
 document.querySelectorAll('[data-t]').forEach(b => b.onclick = () => act('timer', { n: +b.dataset.t }));
 HW.connect(creds, render, msg => { $('main').innerHTML = `<p class="bad">${HW.esc(msg)}</p>`; });

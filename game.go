@@ -150,6 +150,7 @@ type Action struct {
 	Card     int    `json:"card"`
 	Forest   bool   `json:"forest"`
 	Types    []int  `json:"types"`
+	As       string `json:"as"` // the player the Keeper acts for
 }
 
 func buildHexes() []Hex {
@@ -693,6 +694,18 @@ func (g *Game) Scores() ([]Score, bool) {
 
 func (g *Game) Apply(a Action) error {
 	isHost := a.Host != "" && a.Host == g.HostSecret
+	if isHost && a.As != "" {
+		// Players say it aloud and the Keeper taps it on the big screen. Private
+		// choices (trust, Dusk partner, Secret Owl guess) stay on their phones.
+		if !keeperActs[a.Type] {
+			return errors.New("players do that on their own phone")
+		}
+		p := g.player(a.As)
+		if p == nil {
+			return errors.New("no such player")
+		}
+		return g.playerAction(p, a)
+	}
 	var me *Player
 	if !isHost {
 		me = g.player(a.Pid)
@@ -704,6 +717,13 @@ func (g *Game) Apply(a Action) error {
 		return g.hostAction(a)
 	}
 	return g.playerAction(me, a)
+}
+
+// keeperActs lists the player actions the Keeper may take for a player.
+var keeperActs = map[string]bool{
+	"plant": true, "step": true, "endMove": true, "claim": true, "redraw": true, "lighter": true,
+	"pickChoice": true, "pass": true, "startShare": true, "doneShare": true, "endTrust": true,
+	"power": true, "squirrel": true, "confirm": true,
 }
 
 func (g *Game) hostAction(a Action) error {

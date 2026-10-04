@@ -300,7 +300,7 @@ func (s *Server) action(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err.Error())
 		return
 	}
-	payload, _ := json.Marshal(map[string]any{"hex": a.Hex, "target": a.Target, "power": a.Power, "n": a.N, "types": a.Types})
+	payload, _ := json.Marshal(map[string]any{"hex": a.Hex, "target": a.Target, "power": a.Power, "n": a.N, "types": a.Types, "as": a.As})
 	actor := a.Pid
 	if a.Host != "" {
 		actor = "host"
@@ -476,6 +476,12 @@ func buildView(g *Game, pid, secret, host string) map[string]any {
 		}
 		if me != nil {
 			tv["iGave"] = t.Trusted[me.ID] > 0
+		}
+		if isHost {
+			// The Keeper runs Field Notes on the big screen, so it sees what was scouted.
+			if p := g.player(t.Player); p != nil {
+				tv["peek"] = p.Peek
+			}
 		}
 		var choices []string
 		for _, c := range t.Choices {

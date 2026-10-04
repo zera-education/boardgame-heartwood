@@ -53,6 +53,12 @@ svg.board { width: 100%; height: auto; display: block; }
 .plist { display: grid; grid-template-columns: 1fr; gap: 4px; font-size: .92rem; }
 .plist div { display: flex; justify-content: space-between; gap: 8px; padding: 4px 6px; border-radius: 6px; }
 .plist div.cur { background: var(--panel2); }
+.plist div { flex-wrap: wrap; }
+.plist .pw { flex-basis: 100%; font-size: .8rem; color: var(--muted); }
+.plist .pw .used { text-decoration: line-through; opacity: .6; }
+.choice { padding: .5em .7em; border-radius: 10px; background: var(--panel2); margin: .4em 0; font-weight: 700; }
+.powers-now { border-top: 1px solid var(--line); margin-top: .8em; padding-top: .4em; }
+.powers-now .row { margin: .3em 0; }
 .pair { padding: .6em; border-radius: 10px; background: var(--panel2); margin: .4em 0; }
 .badge { font-size: .75rem; padding: .1em .5em; border-radius: 99px; background: var(--accent); color: #1a1a1a; font-weight: 800; }
 table.scores { width: 100%; border-collapse: collapse; }

@@ -125,10 +125,10 @@ const W = [
 { id: 'expedition', cat: 'basics', icon: '🧭', title: 'The expedition',
   short: 'What Heartwood is, in one page.',
   body: `
-<p>Heartwood is a board game about getting to know each other. Up to 10 players sit in one room: the board is on the big screen, and each player has their own phone.</p>
+<p>Heartwood is a board game about getting to know each other. Up to 10 players sit in one room, looking at each other and at the big screen. Each player has a phone, but it stays mostly face down: you say what you want and the [[keeper]] taps it. See [[your-phone]].</p>
 <p>ZERA's story is a tree's story: the seed planted in 2021, the sprout in 2023, the tree in 2024, and the vision of a forest by 2035. You are an expedition into that forest. You start at its sunny edge, the [[seedlands]], and walk inward toward the [[heartwood]] at its centre. <b>Every step inward is a deeper question.</b></p>
 <div class="facts">
-  <div class="fact"><span>Players</span>Up to 10, one phone each</div>
+  <div class="fact"><span>Players</span>Up to 10, phones mostly face down</div>
   <div class="fact"><span>Time</span>About 2 hours</div>
   <div class="fact"><span>Rounds</span>3 [[season|seasons]] and a [[finale]]</div>
   <div class="fact"><span>Winner</span>Most points</div>
@@ -150,6 +150,7 @@ const W = [
 <ul>
   <li>Creates the game and shows the 4-letter join code on the big screen.</li>
   <li>Gives each player 1 to 3 [[enneagram-powers]] in the lobby, before the start.</li>
+  <li>Taps what players say on the big screen: planting, moving, the share timer, passing, powers and follow-ups. See [[your-phone]].</li>
   <li>Reads the [[forest-pact]] at the start.</li>
   <li>Starts each [[season]] and keeps an eye on the clock.</li>
   <li>Taps <b>Set the pairs</b> at [[dusk]].</li>
@@ -192,12 +193,12 @@ const W = [
 { id: 'turn', cat: 'basics', icon: '🥾', title: 'Turn',
   short: 'Move, discover, share, receive trust. About two minutes.',
   body: `
-<p>When it's your turn, your phone says <b>Your turn</b> and shows your buttons. A turn takes about two minutes.</p>
+<p>When it's your turn, look up: say what you'd like, and the [[keeper]] taps it on the big screen. A turn takes about two minutes.</p>
 <ol>
-  <li><b>🥾 Move (optional).</b> Tap a highlighted neighbouring space. See [[moving]] for what it costs. Take as many steps as you can afford, or none.</li>
-  <li><b>✦ Discover.</b> Tap <b>Stop here and discover</b>. If your space's [[discovery]] is still face down, it's yours. You can't move again this turn (unless you found a [[hidden-path]]).</li>
-  <li><b>💬 Share.</b> Your [[prompt-card|question]] appears. Tap <b>Start sharing</b>, answer within the [[answer-timer|timer]], then tap <b>I'm done sharing</b>. See [[share]].</li>
-  <li><b>🌰 Trust.</b> Others may give you a [[trust-acorn]]; someone may play a [[squirrel]]. When the room is ready, tap <b>Pass to the next player →</b>.</li>
+  <li><b>🥾 Move (optional).</b> Say where to; the Keeper moves your pawn one neighbouring space at a time. See [[moving]] for what it costs. Take as many steps as you can afford, or none.</li>
+  <li><b>✦ Discover.</b> Say "stop here"; the Keeper taps <b>Stop here and discover</b>. If your space's [[discovery]] is still face down, it's yours. You can't move again this turn (unless you found a [[hidden-path]]).</li>
+  <li><b>💬 Share.</b> Your [[prompt-card|question]] appears on the big screen. The Keeper starts the [[answer-timer|timer]] when you begin and stops it when you finish. See [[share]].</li>
+  <li><b>🌰 Trust.</b> Others may give you a [[trust-acorn]] on their phones; someone may raise a hand to play a [[squirrel]]. When the room is ready, the Keeper moves on to the next player.</li>
 </ol>
 <p>You keep the card for [[growth]] points, and a 🌳 grows on your space on the big board.</p>
 <p>Don't want to answer? [[passing|Passing]] is always free.</p>` },
@@ -242,12 +243,12 @@ const W = [
   short: 'You never have to answer. Three ways out, all free.',
   body: `
 <p><b>Passing is always free.</b> It's part of the [[forest-pact]]. Nobody asks why.</p>
-<p>Before you tap <b>Start sharing</b>, you can:</p>
+<p>Before you start sharing, just say:</p>
 <div class="tablewrap"><table>
 <tr><th>Option</th><th>What it does</th><th>Limit</th></tr>
 <tr><td><b>Draw again</b></td><td>A new card from the same deck.</td><td>Once per turn</td></tr>
 <tr><td><b>[[lighter-tier|Lighter tier]]</b></td><td>Answer the lighter question on the same card.</td><td>Not in the Heartwood</td></tr>
-<tr><td><b>Pass this turn</b></td><td>Tap it twice. You keep everything you have; you just don't keep a card this turn.</td><td>Any time</td></tr>
+<tr><td><b>Pass this turn</b></td><td>Say "pass". You keep everything you have; you just don't keep a card this turn.</td><td>Any time</td></tr>
 </table></div>
 <p>If you've already used a power this turn, you still keep its bonus when you pass.</p>` },
 
@@ -265,7 +266,7 @@ const W = [
 { id: 'answer-timer', cat: 'basics', icon: '⏱️', title: 'Answer timer',
   short: '45, 60 or 90 seconds, depending on the ring. A guide, not a buzzer.',
   body: `
-<p>When you tap <b>Start sharing</b>, a timer runs on the big screen and your phone.</p>
+<p>When you start sharing, the Keeper starts a timer on the big screen.</p>
 <div class="facts">
   <div class="fact"><span>🌱 Seed</span>45 seconds</div>
   <div class="fact"><span>🌿 Sapling</span>60 seconds</div>
@@ -279,7 +280,7 @@ const W = [
   body: `
 <p>Before [[season]] 1, everyone places their token, one at a time.</p>
 <ol>
-  <li>When it's your turn to plant, tap an outer [[seedlands]] space in the [[values|value]] you identify with most.</li>
+  <li>When it's your turn to plant, say which [[values|value]] you identify with most; the Keeper places your seed on an outer [[seedlands]] space of that value.</li>
   <li>Tell everyone why, in one sentence.</li>
 </ol>
 <p>It's the first small share of the game, and it shows who stands where.</p>
@@ -377,7 +378,7 @@ const W = [
 { id: 'moving', cat: 'map', icon: '👣', title: 'Moving',
   short: '1 ☀ per step, plus an extra cost when you step inward.',
   body: `
-<p>On your [[turn]], before you discover, tap a highlighted neighbouring space to step there.</p>
+<p>On your [[turn]], before you discover, say where you want to go. The [[keeper]] taps each neighbouring space you step to.</p>
 <div class="tablewrap"><table>
 <tr><th>Step</th><th>Cost</th></tr>
 <tr><td>Around a ring, or outward</td><td>1 ☀</td></tr>
@@ -387,7 +388,7 @@ const W = [
 </table></div>
 <ul>
   <li>You can't enter a ring that isn't open yet (see [[season]]).</li>
-  <li>Once you tap <b>Stop here and discover</b>, you can't move again this turn, unless you find a [[hidden-path]].</li>
+  <li>Once you stop and discover, you can't move again this turn, unless you find a [[hidden-path]].</li>
   <li>Powers that help you move: [[momentum]], [[adventure]], [[rope-team]].</li>
 </ul>
 <div class="tip"><h3>Tip</h3><p>Where you stop decides who you can ally with at [[dusk]]. Players who move later can see where others stopped.</p></div>` },
@@ -474,7 +475,7 @@ const W = [
 <p>A squirrel stores things to dig up later. A Squirrel is a [[discovery]] you store until you want it: a follow-up question. There are 6 on the board.</p>
 <h3>How to play it</h3>
 <ol>
-  <li>Right after someone else's [[share]], tap <b>🐿️ Ask a follow-up</b>.</li>
+  <li>Right after someone else's [[share]], raise your hand; the [[keeper]] taps it.</li>
   <li>The app gives you a question to ask them, such as <i>"What's the story behind that?"</i> or <i>"How did that change you?"</i></li>
   <li>They get 30 seconds to answer.</li>
   <li>You take 1 [[bonus-point]].</li>
@@ -485,7 +486,7 @@ const W = [
 { id: 'discovery', cat: 'discoveries', icon: '✦', title: 'Discovery',
   short: 'A face-down find on every space. First to stop there takes it.',
   body: `
-<p>36 discoveries lie face down (✦), one on every space except the [[heartwood]]. When you tap <b>Stop here and discover</b> on a space whose discovery is still hidden, it flips and it's yours. Found ones stay face up.</p>
+<p>36 discoveries lie face down (✦), one on every space except the [[heartwood]]. When you stop and discover on a space whose discovery is still hidden, it flips and it's yours. Found ones stay face up.</p>
 <div class="tablewrap"><table>
 <tr><th>Discovery</th><th>How many</th><th>What happens</th></tr>
 <tr><td>💧 [[spring]]</td><td>9</td><td>+2 💧</td></tr>
@@ -601,9 +602,9 @@ const W = [
 <p>The Enneagram describes nine personality types, each with its own gift. Before the start, the [[keeper]] gives each player <b>1 to 3 types</b>, and you get those types' powers. <b>Each one works once in the whole game</b>.</p>
 <h3>Using a power</h3>
 <ul>
-  <li>Your powers are at the bottom of your phone. Tap <b>Activate</b> at the right moment; the power then fades and says <b>Used</b>.</li>
+  <li>Your phone lists your powers as a reminder. At the right moment, say it aloud ("I use Momentum"); the [[keeper]] activates it on the big screen, and it shows as used.</li>
   <li>The trail log on the big screen shows who used what.</li>
-  <li>"While moving" means on your turn, before you tap <b>Stop here and discover</b>.</li>
+  <li>"While moving" means on your turn, before you stop and discover.</li>
 </ul>
 <div class="tablewrap"><table>
 <tr><th>Type</th><th>Power</th><th>When</th><th>What it does</th></tr>
@@ -825,7 +826,7 @@ const W = [
   body: `
 <p>At the [[finale]], one at a time around the loop, each [[secret-owl]] gives the colleague they watched one minute:</p>
 <div class="box"><p><b>"Three things I discovered about you today, and one thing I appreciate."</b></p></div>
-<p>Then hand them an acorn: your trust. 🌰 They tap how many of your three discoveries are true (0–3), then honour the colleague they watched, and so on until the loop closes.</p>
+<p>Then hand them an acorn: your trust. 🌰 They say how many of your three discoveries are true (0–3), the Keeper taps it, and they honour the colleague they watched, and so on until the loop closes.</p>
 <p>By the end, everyone in the room has heard three true things someone noticed about them, and one appreciation.</p>` },
 
 { id: 'finale', cat: 'scoring', icon: '🌲', title: 'Finale',
@@ -853,6 +854,30 @@ const W = [
 <div class="tip"><h3>Tip</h3><p>In Season 3, talk openly about who will take the hard road, and where. It turns a race into a shared goal.</p></div>` },
 
 // ───────────── Your phone
+{ id: 'your-phone', cat: 'phone', icon: '📱', title: 'Your phone',
+  short: 'Mostly face down. Four private jobs; everything else, say it aloud.',
+  body: `
+<p>Heartwood is about the people in the room, so your phone stays face down. Everything public happens on the big screen: you say what you want and the [[keeper]] taps it.</p>
+<h3>What your phone does</h3>
+<ul>
+  <li>🦉 Shows the colleague you're the [[secret-owl]] for. Tap to reveal.</li>
+  <li>🌰 After someone else shares, lets you [[trust-acorn|give trust]]. It's private: a gift, not a grade.</li>
+  <li>🌙 At [[dusk]], lets you choose your partner, and shows your [[bond-card]].</li>
+  <li>❓ At the [[finale]], takes your guess of your own Secret Owl.</li>
+</ul>
+<p>It also reminds you of your [[enneagram-powers]] and how many trust acorns and [[squirrel|Squirrels]] you have.</p>
+<h3>Say it, and the Keeper taps it</h3>
+<div class="tablewrap"><table>
+<tr><th>You say</th><th>The Keeper taps</th></tr>
+<tr><td>"Courage, because…" (planting)</td><td>An outer space of that value</td></tr>
+<tr><td>"One step into Compassion." / "Stop here."</td><td>The space, then <b>Stop here and discover</b></td></tr>
+<tr><td>(you start talking)</td><td><b>Start sharing</b>, then <b>They're done sharing</b></td></tr>
+<tr><td>"Another card." / "Lighter, please." / "Pass."</td><td>Draw again / Lighter tier / Pass this turn</td></tr>
+<tr><td>"I use Momentum."</td><td>The power</td></tr>
+<tr><td>(a hand up after a share)</td><td>🐿️ the Squirrel follow-up</td></tr>
+<tr><td>"Two of the three were true."</td><td>2, at the tribute</td></tr>
+</table></div>` },
+
 { id: 'live-badge', cat: 'phone', icon: '🟢', title: 'Live badge',
   short: 'Shows whether your phone is connected. It catches up by itself.',
   body: `
