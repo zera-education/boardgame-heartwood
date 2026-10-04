@@ -1,0 +1,985 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heartwood Wiki</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #13241b; --panel: #1c3326; --panel2: #24402f; --deep: #0f1d16; --ink: #f3efe2; --muted: #b9c4b3;
+  --accent: #e0a32e; --good: #7bc47f; --bad: #e57373; --line: #345a42;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+@media (min-width: 900px) { html { font-size: 17.5px; } }
+body {
+  margin: 0; color: var(--ink); line-height: 1.55; background: var(--bg);
+  font-family: "Nunito", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background-image: radial-gradient(ellipse 90% 40% at 50% -5%, rgba(224,163,46,.12), transparent 70%);
+  background-repeat: no-repeat;
+}
+.wrap { max-width: 60rem; margin: 0 auto; padding: 0 16px 48px; }
+a { color: var(--accent); text-underline-offset: 3px; }
+a:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+h1, h2, h3 { line-height: 1.2; font-weight: 800; }
+p { margin: 0 0 .8rem; }
+ul, ol { margin: 0 0 .8rem; padding-left: 1.3rem; }
+li { margin: .25rem 0; }
+b, strong { font-weight: 800; }
+.muted { color: var(--muted); }
+table { border-collapse: collapse; width: 100%; margin: 0 0 1rem; font-size: .95rem; }
+th, td { text-align: left; padding: .45em .6em; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; }
+.tablewrap { overflow-x: auto; }
+
+/* top bar */
+.topbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 14px 0 6px; }
+.brand { font-weight: 800; letter-spacing: .12em; text-decoration: none; color: var(--ink); font-size: 1.05rem; }
+.brand span { margin-right: .3em; }
+.toplinks { margin-left: auto; display: flex; gap: 14px; font-size: .92rem; font-weight: 700; }
+.toplinks a { color: var(--muted); text-decoration: none; }
+.toplinks a:hover { color: var(--ink); }
+.search { width: 100%; margin: 6px 0 0; }
+.search input {
+  width: 100%; font: inherit; font-size: 1rem; color: var(--ink); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 12px; padding: .65em .9em;
+}
+.search input::placeholder { color: var(--muted); }
+
+/* index */
+.hero { text-align: center; padding: 22px 0 4px; }
+.hero .seed { font-size: 2.8rem; line-height: 1; }
+.hero h1 { font-size: 2.1rem; margin: .3rem 0 .2rem; letter-spacing: .06em; }
+.hero p { color: var(--muted); max-width: 34rem; margin: 0 auto; }
+.cat { margin-top: 1.8rem; }
+.cat h2 { font-size: 1.05rem; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); margin: 0 0 .6rem; }
+.tiles { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15.5rem), 1fr)); }
+.tile {
+  display: flex; gap: .7rem; align-items: flex-start; text-decoration: none; color: var(--ink);
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px;
+}
+.tile:hover { border-color: var(--accent); }
+.tile .ic { font-size: 1.6rem; line-height: 1.1; flex: none; width: 2rem; text-align: center; }
+.tile b { display: block; }
+.tile small { display: block; color: var(--muted); font-size: .86rem; line-height: 1.35; margin-top: .1rem; }
+.empty { color: var(--muted); text-align: center; padding: 2rem 0; }
+
+/* article */
+.crumbs { font-size: .9rem; color: var(--muted); margin: 14px 0 0; }
+.crumbs a { color: var(--muted); }
+article { margin-top: 10px; }
+.head { display: flex; gap: 14px; align-items: center; padding: 6px 0 10px; border-bottom: 1px solid var(--line); }
+.head .ic { font-size: 3rem; line-height: 1; }
+.head h1 { font-size: 2rem; margin: 0; }
+.head .tag { display: inline-block; margin-top: .3rem; background: var(--panel2); border: 1px solid var(--line); border-radius: 99px; padding: .1em .7em; font-size: .8rem; font-weight: 800; color: var(--muted); }
+.summary { font-size: 1.15rem; margin: 1rem 0 1.2rem; }
+article h3 { font-size: 1.15rem; margin: 1.5rem 0 .5rem; }
+.box { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin: 1rem 0; }
+.box > :last-child { margin-bottom: 0; }
+.tip { background: #2d2a17; border-left: 4px solid var(--accent); border-radius: 10px; padding: 12px 14px; margin: 1rem 0; }
+.tip > :last-child { margin-bottom: 0; }
+.tip h3 { margin-top: 0; font-size: 1rem; }
+.facts { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); margin: 1rem 0; }
+.fact { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.fact span { display: block; font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-weight: 800; }
+.see { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+.see h3 { margin: 0 0 .6rem; font-size: .85rem; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips a { text-decoration: none; color: var(--ink); background: var(--panel2); border: 1px solid var(--line); border-radius: 99px; padding: .3em .8em; font-size: .9rem; font-weight: 700; }
+.chips a:hover { border-color: var(--accent); }
+.pager { display: flex; justify-content: space-between; gap: 10px; margin-top: 1.6rem; font-weight: 700; font-size: .95rem; }
+.pager a { text-decoration: none; }
+.foot { margin-top: 3rem; text-align: center; color: var(--muted); font-size: .85rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="brand" href="#"><span>🌰</span>HEARTWOOD WIKI</a>
+    <nav class="toplinks"><a href="howto.html">How to play</a><a href="/">Game</a></nav>
+    <div class="search"><input id="q" type="search" placeholder="Search terms: water, alliance, Owl…" aria-label="Search the wiki" autocomplete="off"></div>
+  </div>
+  <main id="main"></main>
+  <p class="foot">🌰 Heartwood · made for the ZERA International School leadership retreat.</p>
+</div>
+
+<script>
+// Each entry is one wiki page. In body text, [[id]] links to another page
+// (shown with its title) and [[id|text]] links with custom text.
+const CATS = [
+  ['basics', 'The basics'],
+  ['map', 'The map'],
+  ['resources', 'Resources'],
+  ['discoveries', 'Discoveries'],
+  ['dusk', 'Dusk and alliances'],
+  ['powers', 'Enneagram powers'],
+  ['scoring', 'Scoring and the finale'],
+  ['phone', 'Your phone'],
+];
+
+const W = [
+// ───────────── The basics
+{ id: 'expedition', cat: 'basics', icon: '🧭', title: 'The expedition',
+  short: 'What Heartwood is, in one page.',
+  body: `
+<p>Heartwood is a board game about getting to know each other. Up to 10 players sit in one room: the board is on the big screen, and each player has their own phone.</p>
+<p>ZERA's story is a tree's story: the seed planted in 2021, the sprout in 2023, the tree in 2024, and the vision of a forest by 2035. You are an expedition into that forest. You start at its sunny edge, the [[seedlands]], and walk inward toward the [[heartwood]] at its centre. <b>Every step inward is a deeper question.</b></p>
+<div class="facts">
+  <div class="fact"><span>Players</span>Up to 10, one phone each</div>
+  <div class="fact"><span>Time</span>About 2 hours</div>
+  <div class="fact"><span>Rounds</span>3 [[season|seasons]] and a [[finale]]</div>
+  <div class="fact"><span>Winner</span>Most points</div>
+</div>
+<h3>The two goals</h3>
+<p>The real goal is to know each other more deeply. The game goal is to score the most points. They are built to be the same: every point comes from sharing, listening or bonding. See [[scoring]].</p>
+<h3>The shape of the game</h3>
+<ol>
+  <li>[[plant-your-seed|Plant your seed]] on the outer ring.</li>
+  <li>Three [[season|seasons]]. In each, everyone takes one [[turn]], then everyone pairs up at [[dusk]].</li>
+  <li>The [[finale]]: [[secret-acorn]] tributes, then the scores.</li>
+</ol>` },
+
+{ id: 'keeper', cat: 'basics', icon: '🎙️', title: 'Keeper',
+  short: 'The facilitator who runs the big screen. Not a player.',
+  body: `
+<p>The Keeper is the facilitator. They stand outside the game: they don't score and don't take turns.</p>
+<h3>What the Keeper does</h3>
+<ul>
+  <li>Creates the game and shows the 4-letter join code on the big screen.</li>
+  <li>Reads the [[forest-pact]] at the start.</li>
+  <li>Starts each [[season]] and keeps an eye on the clock.</li>
+  <li>Taps <b>Set the pairs</b> at [[dusk]].</li>
+  <li>Leads the [[finale]].</li>
+  <li>May pause any share, and can skip a [[turn]] if someone is away.</li>
+  <li>Gives out [[rejoin-code|rejoin codes]] when a player changes phone.</li>
+</ul>
+<p>The Keeper can also switch on the [[forest-goal]] before the game starts.</p>` },
+
+{ id: 'forest-pact', cat: 'basics', icon: '🌲', title: 'Forest Pact',
+  short: 'The five promises everyone makes before playing.',
+  body: `
+<p>The Keeper reads the Forest Pact at the start. It holds for the whole game, and after it.</p>
+<div class="box">
+<p>🌲 <b>What's shared in the forest stays in the forest.</b></p>
+<p>🍃 <b>[[passing|Passing]] is always free.</b></p>
+<p>👂 <b>Listen to understand:</b> no advice, no fixing, no debating.</p>
+<p>🌰 <b>Trust is a gift, not a grade.</b></p>
+<p>📵 <b>Phones down while someone shares.</b> Pick yours up only to play.</p>
+</div>
+<p>The [[keeper]] may pause any share.</p>` },
+
+{ id: 'season', cat: 'basics', icon: '🍂', title: 'Season',
+  short: 'One round: everyone takes a turn, then Dusk. There are three.',
+  body: `
+<p>The game has three seasons, each named after a moment in ZERA's growth. In each season everyone takes one [[turn]], in order, and then [[dusk]] falls.</p>
+<div class="tablewrap"><table>
+<tr><th>Season</th><th>Name</th><th>What opens</th></tr>
+<tr><td>1</td><td>🌱 Planting the Seed</td><td>[[seedlands]] only: light questions</td></tr>
+<tr><td>2</td><td>🌿 The Sprout</td><td>+ [[sapling-path]]: stories</td></tr>
+<tr><td>3</td><td>🌳 Growing into a Tree</td><td>+ [[oak-circle]] and [[heartwood]]: the deep questions</td></tr>
+<tr><td>Finale</td><td>🌲 The Vision of a Forest</td><td>[[secret-acorn]] tributes and the scores</td></tr>
+</table></div>
+<h3>At the start of each new season</h3>
+<ul>
+  <li>Your [[sunlight]] tops back up to 3 (if you have more, you keep it).</li>
+  <li>The next player in order goes first, so the advantage of moving last goes around the table.</li>
+</ul>` },
+
+{ id: 'turn', cat: 'basics', icon: '🥾', title: 'Turn',
+  short: 'Move, discover, share, receive trust. About two minutes.',
+  body: `
+<p>When it's your turn, your phone says <b>Your turn</b> and shows your buttons. A turn takes about two minutes.</p>
+<ol>
+  <li><b>🥾 Move (optional).</b> Tap a highlighted neighbouring space. See [[moving]] for what it costs. Take as many steps as you can afford, or none.</li>
+  <li><b>✦ Discover.</b> Tap <b>Stop here and discover</b>. If your space's [[discovery]] is still face down, it's yours. You can't move again this turn (unless you found a [[hidden-path]]).</li>
+  <li><b>💬 Share.</b> Your [[prompt-card|question]] appears. Tap <b>Start sharing</b>, answer within the [[answer-timer|timer]], then tap <b>I'm done sharing</b>. See [[share]].</li>
+  <li><b>🌰 Trust.</b> Others may give you a [[trust-acorn]]; someone may play an [[owl]]. When the room is ready, tap <b>Pass to the next player →</b>.</li>
+</ol>
+<p>You keep the card for [[growth]] points, and a 🌳 grows on your space on the big board.</p>
+<p>Don't want to answer? [[passing|Passing]] is always free.</p>` },
+
+{ id: 'share', cat: 'basics', icon: '💬', title: 'Share',
+  short: 'Answering your question out loud while the room listens.',
+  body: `
+<p>A share is the heart of every [[turn]]: you answer your [[prompt-card|question]] out loud, and everyone else listens.</p>
+<h3>When you share</h3>
+<ul>
+  <li>Be honest rather than impressive. [[trust-points|Trust]] comes from many people being moved, not from one great speech.</li>
+  <li>The [[answer-timer]] is a guide. When it turns red, finish your thought kindly.</li>
+  <li>You can always [[passing|pass]].</li>
+</ul>
+<h3>When someone else shares</h3>
+<ul>
+  <li>Phones down. Listen to understand: no advice, no fixing, no debating.</li>
+  <li>If it moved you, tap <b>Give trust 🌰</b>. See [[trust-acorn]].</li>
+  <li>If you hold an [[owl]], you can ask a follow-up question.</li>
+  <li>If they found a [[fallen-log]], you can help them over it.</li>
+  <li>Listen for your [[secret-acorn]].</li>
+</ul>` },
+
+{ id: 'prompt-card', cat: 'basics', icon: '🃏', title: 'Question card',
+  short: 'Your question: the value picks the topic, the ring picks the depth.',
+  body: `
+<p>Where you stand decides your question. The [[values|value]] of your space picks the deck, and your ring picks how deep the question goes.</p>
+<p>Each value card holds three questions at once, one per tier:</p>
+<div class="tablewrap"><table>
+<tr><th>Tier</th><th>Ring</th><th>Kind of question</th><th>Timer</th><th>Points</th></tr>
+<tr><td>🌱 Seed</td><td>[[seedlands]]</td><td>Light and fun</td><td>45 s</td><td>1</td></tr>
+<tr><td>🌿 Sapling</td><td>[[sapling-path]]</td><td>A story from your life</td><td>60 s</td><td>2</td></tr>
+<tr><td>🌳 Oak</td><td>[[oak-circle]]</td><td>What's underneath: values, fears, hopes</td><td>90 s</td><td>3</td></tr>
+<tr><td>🌰 Heartwood</td><td>[[heartwood]]</td><td>Your legacy (its own deck, no value)</td><td>90 s</td><td>4</td></tr>
+</table></div>
+<div class="box">
+<p class="muted">One Courage card, three depths:</p>
+<p>🌱 A light question to warm up.<br>🌿 <i>Tell us about a time you were afraid and did it anyway.</i><br>🌳 A question about what lies underneath.</p>
+</div>
+<p>Before you start, you may draw again once or choose the [[lighter-tier]]. Powers that change your card: [[true-north]] and [[deep-water]].</p>` },
+
+{ id: 'passing', cat: 'basics', icon: '🍃', title: 'Passing',
+  short: 'You never have to answer. Three ways out, all free.',
+  body: `
+<p><b>Passing is always free.</b> It's part of the [[forest-pact]]. Nobody asks why.</p>
+<p>Before you tap <b>Start sharing</b>, you can:</p>
+<div class="tablewrap"><table>
+<tr><th>Option</th><th>What it does</th><th>Limit</th></tr>
+<tr><td><b>Draw again</b></td><td>A new card from the same deck.</td><td>Once per turn</td></tr>
+<tr><td><b>[[lighter-tier|Lighter tier]]</b></td><td>Answer the lighter question on the same card.</td><td>Not in the Heartwood</td></tr>
+<tr><td><b>Pass this turn</b></td><td>Tap it twice. You keep everything you have; you just don't keep a card this turn.</td><td>Any time</td></tr>
+</table></div>
+<p>If you've already used a power this turn, you still keep its bonus when you pass.</p>` },
+
+{ id: 'lighter-tier', cat: 'basics', icon: '🪶', title: 'Lighter tier',
+  short: 'Answer the gentler question on the same card.',
+  body: `
+<p>Every [[prompt-card|question card]] has three depths. <b>Lighter tier</b> swaps your question for the next gentler one on the same card: Oak → Sapling → Seed.</p>
+<ul>
+  <li>The card then scores at the lighter tier (for example, 2 instead of 3).</li>
+  <li>You can step down more than once.</li>
+  <li>Not available in the [[heartwood]], which has its own deck.</li>
+</ul>
+<p>It's one of three free ways of [[passing]].</p>` },
+
+{ id: 'answer-timer', cat: 'basics', icon: '⏱️', title: 'Answer timer',
+  short: '45, 60 or 90 seconds, depending on the ring. A guide, not a buzzer.',
+  body: `
+<p>When you tap <b>Start sharing</b>, a timer runs on the big screen and your phone.</p>
+<div class="facts">
+  <div class="fact"><span>🌱 Seed</span>45 seconds</div>
+  <div class="fact"><span>🌿 Sapling</span>60 seconds</div>
+  <div class="fact"><span>🌳 Oak / 🌰 Heartwood</span>90 seconds</div>
+  <div class="fact"><span>🦉 Owl answer</span>30 seconds</div>
+</div>
+<p>The timer is a guide. When it runs out it turns red: finish your thought kindly. Nothing is lost if you go over.</p>` },
+
+{ id: 'plant-your-seed', cat: 'basics', icon: '🌱', title: 'Plant your seed',
+  short: 'Where you start: a Seedlands space in the value you identify with most.',
+  body: `
+<p>Before [[season]] 1, everyone places their token, one at a time.</p>
+<ol>
+  <li>When it's your turn to plant, tap an outer [[seedlands]] space in the [[values|value]] you identify with most.</li>
+  <li>Tell everyone why, in one sentence.</li>
+</ol>
+<p>It's the first small share of the game, and it shows who stands where.</p>
+<div class="tip"><h3>Tip</h3><p>Your starting space affects who you can reach and ally with early on. Choose honestly first; you can always walk.</p></div>` },
+
+// ───────────── The map
+{ id: 'the-map', cat: 'map', icon: '🗺️', title: 'The map',
+  short: '37 hexagon spaces: three rings around the Heartwood, cut into six values.',
+  body: `
+<p>The forest has <b>37 spaces</b>: the [[heartwood]] at the centre and three rings around it. It's cut into six coloured wedges, one per [[values|value]].</p>
+<div class="tablewrap"><table>
+<tr><th>Ring</th><th>Spaces</th><th>Opens</th><th>Extra cost to step in</th></tr>
+<tr><td>🌱 [[seedlands]] (outer)</td><td>18</td><td>Season 1</td><td>none</td></tr>
+<tr><td>🌿 [[sapling-path]] (middle)</td><td>12</td><td>Season 2</td><td>+1 ☀</td></tr>
+<tr><td>🌳 [[oak-circle]] (inner)</td><td>6</td><td>Season 3</td><td>+1 💧</td></tr>
+<tr><td>🌰 [[heartwood]] (centre)</td><td>1</td><td>Season 3</td><td>needs an [[alliance|ally]]</td></tr>
+</table></div>
+<p>Each value wedge has 3 Seedlands spaces, 2 Sapling Path spaces and 1 Oak Circle space. Every space except the Heartwood starts with a face-down [[discovery]].</p>
+<p>Rings that aren't open yet look faded. Any number of players can share a space.</p>
+<p>See [[moving]] for what it costs to walk.</p>` },
+
+{ id: 'values', cat: 'map', icon: '🎨', title: 'The six values',
+  short: "ZERA's six Cs. Each owns a wedge of the map and a deck of questions.",
+  body: `
+<p>The board is cut into six wedges, one for each of ZERA's values. The value of the space you stand on picks the deck your [[prompt-card|question]] comes from.</p>
+<div class="tablewrap"><table>
+<tr><th>Value</th><th>Where on the board</th><th>About</th></tr>
+<tr><td>🔍 Curiosity</td><td>bottom left</td><td rowspan="3">ZERA's learning environment</td></tr>
+<tr><td>🎨 Creativity</td><td>bottom right</td></tr>
+<tr><td>🤝 Collaboration</td><td>right</td></tr>
+<tr><td>🦁 Courage</td><td>top</td><td rowspan="3">The leaders ZERA forms</td></tr>
+<tr><td>💗 Compassion</td><td>top left</td></tr>
+<tr><td>⚓ Commitment</td><td>left</td></tr>
+</table></div>
+<div class="tip"><h3>Why it matters for points</h3><p>[[growth|Growth]] gives +1 for each <b>different</b> value you share in. Moving around the ring to a new value can be worth more than staying put.</p></div>
+<p>With the [[forest-goal]] on, every value needs at least one Oak story.</p>` },
+
+{ id: 'seedlands', cat: 'map', icon: '🌱', title: 'Seedlands',
+  short: 'The outer ring. Open from Season 1. Light, fun questions.',
+  body: `
+<div class="facts">
+  <div class="fact"><span>Spaces</span>18 (outer ring)</div>
+  <div class="fact"><span>Opens</span>Season 1</div>
+  <div class="fact"><span>Question</span>🌱 Seed: light and fun</div>
+  <div class="fact"><span>Card points</span>1</div>
+</div>
+<p>The sunny edge of the forest, where everyone [[plant-your-seed|plants their seed]]. In [[season]] 1 it's the only open ring, so the first round of questions is gentle: a warm-up.</p>
+<p>Next ring in: [[sapling-path]].</p>` },
+
+{ id: 'sapling-path', cat: 'map', icon: '🌿', title: 'Sapling Path',
+  short: 'The middle ring. Opens in Season 2. Stories from your life.',
+  body: `
+<div class="facts">
+  <div class="fact"><span>Spaces</span>12 (middle ring)</div>
+  <div class="fact"><span>Opens</span>Season 2</div>
+  <div class="fact"><span>Step in</span>1 ☀ + 1 ☀ extra</div>
+  <div class="fact"><span>Question</span>🌿 Sapling: a story</div>
+  <div class="fact"><span>Card points</span>2</div>
+</div>
+<p>Stepping inward onto the Sapling Path costs 2 [[sunlight]] in total. Moving along it, or back out, costs the usual 1.</p>
+<div class="tip"><h3>Tip</h3><p>Reach the Sapling Path in Season 2. From there, the [[oak-circle]] or [[heartwood]] is one or two steps away in Season 3.</p></div>` },
+
+{ id: 'oak-circle', cat: 'map', icon: '🌳', title: 'Oak Circle',
+  short: 'The inner ring. Opens in Season 3. What lies underneath.',
+  body: `
+<div class="facts">
+  <div class="fact"><span>Spaces</span>6 (one per value)</div>
+  <div class="fact"><span>Opens</span>Season 3</div>
+  <div class="fact"><span>Step in</span>1 ☀ + 1 💧</div>
+  <div class="fact"><span>Question</span>🌳 Oak: values, fears, hopes</div>
+  <div class="fact"><span>Card points</span>3</div>
+</div>
+<p>Stepping inward into the Oak Circle costs 1 [[sunlight]] and 1 [[water]]. Keep a drop of water for it.</p>
+<p>An answer at the Oak tier on a value's space is an <b>Oak story</b>, which matters for the [[forest-goal]].</p>
+<p>Next ring in: [[heartwood]].</p>` },
+
+{ id: 'heartwood', cat: 'map', icon: '🌰', title: 'Heartwood (the centre)',
+  short: 'The single centre space. Needs an ally. Worth the most.',
+  body: `
+<div class="facts">
+  <div class="fact"><span>Spaces</span>1 (centre)</div>
+  <div class="fact"><span>Opens</span>Season 3</div>
+  <div class="fact"><span>Step in</span>1 ☀ + at least one ally</div>
+  <div class="fact"><span>Question</span>🌰 Your legacy</div>
+  <div class="fact"><span>Card points</span>4</div>
+</div>
+<p>The heartwood is the dense core of a tree, its strongest part. To step in you need at least one [[alliance|ally]]: nobody reaches the centre alone.</p>
+<ul>
+  <li>It has its own deck of legacy questions, with no [[values|value]], so it doesn't add a value to your [[growth]].</li>
+  <li>No [[lighter-tier]] here, and no [[discovery]].</li>
+  <li>Any number of players can stand in it.</li>
+</ul>
+<p>From the [[seedlands]], the whole road costs 4 ☀ and 1 💧.</p>` },
+
+{ id: 'moving', cat: 'map', icon: '👣', title: 'Moving',
+  short: '1 ☀ per step, plus an extra cost when you step inward.',
+  body: `
+<p>On your [[turn]], before you discover, tap a highlighted neighbouring space to step there.</p>
+<div class="tablewrap"><table>
+<tr><th>Step</th><th>Cost</th></tr>
+<tr><td>Around a ring, or outward</td><td>1 ☀</td></tr>
+<tr><td>Inward onto the [[sapling-path]]</td><td>2 ☀</td></tr>
+<tr><td>Inward into the [[oak-circle]]</td><td>1 ☀ + 1 💧</td></tr>
+<tr><td>Inward into the [[heartwood]]</td><td>1 ☀, and you need an [[alliance|ally]]</td></tr>
+</table></div>
+<ul>
+  <li>You can't enter a ring that isn't open yet (see [[season]]).</li>
+  <li>Once you tap <b>Stop here and discover</b>, you can't move again this turn, unless you find a [[hidden-path]].</li>
+  <li>Powers that help you move: [[momentum]], [[adventure]], [[rope-team]].</li>
+</ul>
+<div class="tip"><h3>Tip</h3><p>Where you stop decides who you can ally with at [[dusk]]. Players who move later can see where others stopped.</p></div>` },
+
+// ───────────── Resources
+{ id: 'sunlight', cat: 'resources', icon: '☀️', title: 'Sunlight',
+  short: 'For walking. 3 at the start of every season.',
+  body: `
+<div class="facts">
+  <div class="fact"><span>Start</span>3</div>
+  <div class="fact"><span>Refill</span>Back up to 3 each season</div>
+  <div class="fact"><span>Scores</span>Nothing. Use it.</div>
+</div>
+<h3>Spend it on</h3>
+<ul>
+  <li>1 per step when [[moving]], +1 extra to step inward onto the [[sapling-path]].</li>
+  <li>1 to help someone over a [[fallen-log]] (you both gain 2 ✨).</li>
+</ul>
+<h3>Get more from</h3>
+<ul>
+  <li>☀️ [[sunbeam]] discovery: +2</li>
+  <li>[[momentum]] power: +2</li>
+  <li>Someone's [[open-hands]] power: +2</li>
+</ul>
+<p>If you have more than 3 when a new season starts, you keep the extra.</p>
+<div class="tip"><h3>Tip</h3><p>Leftover sunlight is wasted at the end of the game, and the season top-up only brings you back to 3. Spend it.</p></div>` },
+
+{ id: 'water', cat: 'resources', icon: '💧', title: 'Water',
+  short: 'For going deep and for alliances. Never refills, always carries over.',
+  body: `
+<div class="facts">
+  <div class="fact"><span>Start</span>2</div>
+  <div class="fact"><span>Refill</span>None, but it carries over</div>
+  <div class="fact"><span>Scores</span>Nothing</div>
+</div>
+<h3>Spend it on</h3>
+<ul>
+  <li>1 to step inward into the [[oak-circle]].</li>
+  <li>1 each to form an [[alliance]] at [[dusk]].</li>
+</ul>
+<h3>Get more from</h3>
+<ul>
+  <li>💧 [[spring]] discovery: +2</li>
+  <li>A [[fireside-chat]] at Dusk: +1</li>
+  <li>[[momentum]] power: +1</li>
+  <li>Someone's [[open-hands]] power: +2</li>
+</ul>
+<div class="tip"><h3>Tip</h3><p>Water is the scarcest resource. Plan for at least 1 💧 for the Oak Circle in Season 3, plus 1 for each alliance you want. [[common-ground]] makes an alliance free.</p></div>` },
+
+{ id: 'trust-acorn', cat: 'resources', icon: '🌰', title: 'Trust acorn',
+  short: 'Your gift to others after they share. 10 for the whole game.',
+  body: `
+<div class="facts">
+  <div class="fact"><span>Start</span>10 to give away</div>
+  <div class="fact"><span>Give</span>1 per share, after someone else shares</div>
+  <div class="fact"><span>Scores</span>Only the ones you <b>receive</b></div>
+</div>
+<p>After someone else's [[share]], tap <b>Give trust 🌰</b> if it moved you. It's a gift, not a grade.</p>
+<ul>
+  <li>One acorn per share. The [[champion]] power gives 2 at once.</li>
+  <li>You can't give trust on your own share.</li>
+  <li>Acorns you receive score [[trust-points]]. Acorns you never give score nothing.</li>
+</ul>
+<div class="tip"><h3>Give them all away</h3><p>With 10 players you'll hear about 27 shares and hold only 10 acorns. Give where you're moved, and spread them out.</p></div>` },
+
+{ id: 'golden-acorn', cat: 'resources', icon: '✨', title: 'Golden acorn',
+  short: 'Points you pick up on the way. 1 point each.',
+  body: `
+<div class="facts">
+  <div class="fact"><span>Start</span>0</div>
+  <div class="fact"><span>Scores</span>1 point each, in [[growth]]</div>
+</div>
+<h3>Where they come from</h3>
+<div class="tablewrap"><table>
+<tr><th>Source</th><th>✨</th></tr>
+<tr><td>🌰 [[acorn-cache]] discovery</td><td>+2</td></tr>
+<tr><td>🪵 Helping over a [[fallen-log]] (both of you)</td><td>+2 each</td></tr>
+<tr><td>🦉 Playing an [[owl]]</td><td>+1</td></tr>
+<tr><td>[[true-north]], [[adventure]], [[champion]]</td><td>+1</td></tr>
+<tr><td>[[open-hands]], [[rope-team]] (both players)</td><td>+1 each</td></tr>
+</table></div>` },
+
+{ id: 'owl', cat: 'resources', icon: '🦉', title: 'Owl',
+  short: 'A follow-up question you keep and play after someone else shares.',
+  body: `
+<p>An Owl is a [[discovery]] you keep until you want it. There are 6 on the board.</p>
+<h3>How to play it</h3>
+<ol>
+  <li>Right after someone else's [[share]], tap <b>🦉 Ask a follow-up</b>.</li>
+  <li>The app gives you a question to ask them, such as <i>"What's the story behind that?"</i> or <i>"How did that change you?"</i></li>
+  <li>They get 30 seconds to answer.</li>
+  <li>You take 1 [[golden-acorn]].</li>
+</ol>
+<div class="tip"><h3>Tip</h3><p>An Owl is the best tool for your [[secret-acorn]]: it lets you ask them something deeper without looking obvious. Research says asking follow-up questions makes people like you more.</p></div>` },
+
+// ───────────── Discoveries
+{ id: 'discovery', cat: 'discoveries', icon: '✦', title: 'Discovery',
+  short: 'A face-down find on every space. First to stop there takes it.',
+  body: `
+<p>36 discoveries lie face down (✦), one on every space except the [[heartwood]]. When you tap <b>Stop here and discover</b> on a space whose discovery is still hidden, it flips and it's yours. Found ones stay face up.</p>
+<div class="tablewrap"><table>
+<tr><th>Discovery</th><th>How many</th><th>What happens</th></tr>
+<tr><td>💧 [[spring]]</td><td>9</td><td>+2 💧</td></tr>
+<tr><td>☀️ [[sunbeam]]</td><td>7</td><td>+2 ☀</td></tr>
+<tr><td>🌰 [[acorn-cache]]</td><td>5</td><td>+2 ✨</td></tr>
+<tr><td>🦉 [[owl]]</td><td>6</td><td>Keep it to ask a follow-up later</td></tr>
+<tr><td>🔥 [[campfire]]</td><td>3</td><td>Everyone answers in one sentence</td></tr>
+<tr><td>🪵 [[fallen-log]]</td><td>4</td><td>Ask for a hand; you and your helper gain 2 ✨ each</td></tr>
+<tr><td>🍃 [[hidden-path]]</td><td>2</td><td>Free move within your ring</td></tr>
+</table></div>
+<p>The [[field-notes]] power lets you see the hidden discoveries next to you and claim one.</p>
+<div class="tip"><h3>Tip</h3><p>Unexplored spaces are worth more. Stopping on a space someone already found gives you nothing extra.</p></div>` },
+
+{ id: 'spring', cat: 'discoveries', icon: '💧', title: 'Spring',
+  short: 'Discovery: +2 water.',
+  body: `<p>The most common [[discovery]] (9 on the board). You take <b>+2 [[water]]</b> straight away.</p><p>Water never refills, so a Spring can pay for your step into the [[oak-circle]] and an [[alliance]].</p>` },
+
+{ id: 'sunbeam', cat: 'discoveries', icon: '☀️', title: 'Sunbeam',
+  short: 'Discovery: +2 sunlight.',
+  body: `<p>A [[discovery]] (7 on the board). You take <b>+2 [[sunlight]]</b>.</p><p>You find it after you've stopped, so it usually helps your next turn, unless you also found a [[hidden-path]]. Sunlight above 3 carries into the next season.</p>` },
+
+{ id: 'acorn-cache', cat: 'discoveries', icon: '🌰', title: 'Acorn cache',
+  short: 'Discovery: +2 golden acorns (2 points).',
+  body: `<p>A [[discovery]] (5 on the board). You take <b>+2 [[golden-acorn|golden acorns]]</b>, which are 2 points in [[growth]].</p>` },
+
+{ id: 'campfire', cat: 'discoveries', icon: '🔥', title: 'Campfire',
+  short: 'Discovery: everyone answers one quick question, around the table.',
+  body: `
+<p>A [[discovery]] (3 on the board). The app shows a Campfire question, and everyone answers it in one sentence, around the table.</p>
+<div class="box"><p class="muted">Examples</p><p><i>One word for how you feel right now.</i><br><i>A song that always lifts you.</i><br><i>Mountain, beach or city?</i></p></div>
+<p>It's just for warmth: no points. It also gives you a quick, low-key clue for your [[secret-acorn]].</p>` },
+
+{ id: 'fallen-log', cat: 'discoveries', icon: '🪵', title: 'Fallen log',
+  short: 'Discovery: ask for a hand. You and your helper each gain 2 golden acorns.',
+  body: `
+<p>A [[discovery]] (4 on the board). A log blocks your path, so you ask the room for a hand.</p>
+<ol>
+  <li>Everyone else sees a <b>Give 1 ☀ to help</b> button.</li>
+  <li>The first player to tap it spends 1 [[sunlight]].</li>
+  <li>You and your helper each take <b>+2 [[golden-acorn|✨]]</b>.</li>
+</ol>
+<div class="tip"><h3>Tip</h3><p>If you have a spare ☀ when someone hits a log, help. It's 2 points for 1 sunlight.</p></div>` },
+
+{ id: 'hidden-path', cat: 'discoveries', icon: '🍃', title: 'Hidden path',
+  short: 'Discovery: move free to any open space in your ring.',
+  body: `
+<p>A rare [[discovery]] (2 on the board). You may move <b>free</b> to any open space in your current ring, or stay where you are.</p>
+<ul>
+  <li>It doesn't cost [[sunlight]].</li>
+  <li>You don't discover the space you land on.</li>
+  <li>Your [[prompt-card|question]] comes from wherever you end up, so you can pick a new [[values|value]].</li>
+</ul>
+<div class="tip"><h3>Tip</h3><p>Jump next to someone you want to ally with at [[dusk]], or to a value you haven't shared in yet.</p></div>` },
+
+// ───────────── Dusk
+{ id: 'dusk', cat: 'dusk', icon: '🌙', title: 'Dusk',
+  short: 'End of each season: everyone pairs up and talks for 4 minutes.',
+  body: `
+<p>At the end of every [[season]], everyone pairs up for a 4-minute conversation, all at the same time.</p>
+<ol>
+  <li>On your phone, choose a partner you haven't paired with before, or choose <b>Anyone (the Keeper pairs me)</b>.</li>
+  <li>To try for an [[alliance]], tick <b>Make it an alliance</b>.</li>
+  <li>Tap <b>Send my choice</b>.</li>
+  <li>The [[keeper]] taps <b>Set the pairs</b>. You pair only if you both chose each other; the app pairs everyone else, avoiding repeat partners where it can.</li>
+  <li>Your phone shows your partner and a [[bond-card]]. Talk for 4 minutes.</li>
+</ol>
+<p>Every pair is either an <b>[[alliance]]</b> or a <b>[[fireside-chat]]</b>. With an odd number of players, one group is a [[trio]].</p>
+<p>Before pairs are set, a Peacemaker can use [[common-ground]].</p>` },
+
+{ id: 'alliance', cat: 'dusk', icon: '🤝', title: 'Alliance',
+  short: 'A bond formed at Dusk. 3 points, and the key to the Heartwood.',
+  body: `
+<p>An alliance forms at [[dusk]] when <b>all four</b> are true:</p>
+<ol>
+  <li>You both chose each other.</li>
+  <li>You both ticked <b>Make it an alliance</b>.</li>
+  <li>You stand on the same or neighbouring spaces.</li>
+  <li>You each have at least 1 [[water]].</li>
+</ol>
+<p>You each pay 1 💧 and each gain an <b>ally</b>. If any check fails, you still talk: it becomes a [[fireside-chat]], and your phone tells you why the alliance didn't form.</p>
+<h3>What an ally gives you</h3>
+<ul>
+  <li><b>+3 points</b> each at the end.</li>
+  <li><b>The key to the [[heartwood]]:</b> you can't step in without at least one ally.</li>
+  <li>Someone to jump to with [[rope-team]].</li>
+</ul>
+<div class="facts">
+  <div class="fact"><span>Per Dusk</span>At most 1 new ally</div>
+  <div class="fact"><span>Per game</span>At most 3 allies</div>
+</div>
+<div class="tip"><h3>Tips</h3><p>Talk before the end of the season: agree where you'll both stop. Get your first ally by Season 2 so the Heartwood is open to you in Season 3. [[common-ground]] removes the distance and water checks.</p></div>` },
+
+{ id: 'fireside-chat', cat: 'dusk', icon: '🔥', title: 'Fireside chat',
+  short: "Any Dusk pair that isn't an alliance. +1 water each.",
+  body: `
+<p>Every [[dusk]] pair that doesn't form an [[alliance]] has a Fireside chat. You still talk for 4 minutes with the [[bond-card]], and each of you takes <b>+1 [[water]]</b>.</p>
+<p>That water helps you afford an alliance next time. A Fireside chat is never a loss: it's a good conversation and a resource.</p>` },
+
+{ id: 'bond-card', cat: 'dusk', icon: '💌', title: 'Bond card',
+  short: 'The conversation prompt your Dusk pair gets. Deeper each season.',
+  body: `
+<p>At [[dusk]], each pair gets a Bond card to start their 4-minute talk. Like the questions on the board, they go deeper each [[season]].</p>
+<div class="tablewrap"><table>
+<tr><th>Season</th><th>Example</th></tr>
+<tr><td>1</td><td><i>Find three things you have in common that have nothing to do with work.</i></td></tr>
+<tr><td>2</td><td><i>Each tell the story of a turning point in your life.</i></td></tr>
+<tr><td>3</td><td><i>What does each of you need from the other in the year ahead?</i></td></tr>
+</table></div>
+<p>No points: just a good conversation, and often the best clues for your [[secret-acorn]].</p>` },
+
+{ id: 'trio', cat: 'dusk', icon: '👥', title: 'Trio',
+  short: 'With an odd number of players, one Dusk group has three.',
+  body: `
+<p>With an odd number of players, one [[dusk]] group is a trio. All three talk together with the same [[bond-card]].</p>
+<ul>
+  <li>Only two of the three can form an [[alliance]]: the pair that chose each other.</li>
+  <li>The third person always has a [[fireside-chat]] and takes +1 💧.</li>
+  <li>All three count as having paired, so none of them repeats with the others later.</li>
+</ul>` },
+
+// ───────────── Powers
+{ id: 'enneagram-powers', cat: 'powers', icon: '⚡', title: 'Enneagram powers',
+  short: 'Pick your top 3 Enneagram types; you get their 3 powers, each once.',
+  body: `
+<p>The Enneagram describes nine personality types, each with its own gift. When you join, you tap your <b>top three types</b>: the ones most like you. You get those three powers, and <b>each one works once in the whole game</b>.</p>
+<h3>Using a power</h3>
+<ul>
+  <li>Your powers are at the bottom of your phone. Tap <b>Activate</b> at the right moment; the power then fades and says <b>Used</b>.</li>
+  <li>The trail log on the big screen shows who used what.</li>
+  <li>"While moving" means on your turn, before you tap <b>Stop here and discover</b>.</li>
+</ul>
+<div class="tablewrap"><table>
+<tr><th>Type</th><th>Power</th><th>When</th><th>What it does</th></tr>
+<tr><td>1 Reformer</td><td>🧭 [[true-north]]</td><td>Before sharing</td><td>Choose from 3 cards. +1 ✨</td></tr>
+<tr><td>2 Helper</td><td>🤲 [[open-hands]]</td><td>Your turn</td><td>Give a player 2 ☀ or 2 💧. You both get +1 ✨.</td></tr>
+<tr><td>3 Achiever</td><td>🚀 [[momentum]]</td><td>While moving</td><td>+2 ☀ and +1 💧</td></tr>
+<tr><td>4 Individualist</td><td>🌊 [[deep-water]]</td><td>Before sharing</td><td>Answer one tier deeper</td></tr>
+<tr><td>5 Investigator</td><td>🔎 [[field-notes]]</td><td>While moving</td><td>Peek at nearby discoveries and claim one</td></tr>
+<tr><td>6 Loyalist</td><td>🪢 [[rope-team]]</td><td>While moving</td><td>Jump to an ally. You both get +1 ✨.</td></tr>
+<tr><td>7 Enthusiast</td><td>🎒 [[adventure]]</td><td>While moving</td><td>Next 3 steps free. +1 ✨</td></tr>
+<tr><td>8 Challenger</td><td>🛡️ [[champion]]</td><td>After someone's share</td><td>Give 2 trust at once. +1 ✨</td></tr>
+<tr><td>9 Peacemaker</td><td>🕊️ [[common-ground]]</td><td>At Dusk</td><td>Alliance at any distance, no water</td></tr>
+</table></div>
+<div class="tip"><h3>Tip</h3><p>Pick the types that are really you; the game is about being known. Then plan when to spend each one: most powers are strongest in Season 3.</p></div>` },
+
+{ id: 'true-north', cat: 'powers', icon: '🧭', title: 'True North',
+  short: 'Type 1 Reformer. See 3 cards, choose the one to answer. +1 ✨.',
+  body: `
+<div class="facts">
+  <div class="fact"><span>Type</span>1 Reformer · integrity</div>
+  <div class="fact"><span>When</span>Your turn, before you start sharing</div>
+</div>
+<p>Look at 3 [[prompt-card|cards]] from your space's [[values|value]] and choose the one to answer. You also take <b>+1 [[golden-acorn]]</b>, which arrives at the end of your turn.</p>
+<ul><li>Not in the [[heartwood]].</li></ul>
+<div class="tip"><h3>Best used</h3><p>On an [[oak-circle|Oak]] turn, when you want the question that lets you say what you really mean.</p></div>
+<p class="muted">See all [[enneagram-powers]].</p>` },
+
+{ id: 'open-hands', cat: 'powers', icon: '🤲', title: 'Open Hands',
+  short: 'Type 2 Helper. Give any player 2 ☀ or 2 💧 from the bank. Both +1 ✨.',
+  body: `
+<div class="facts">
+  <div class="fact"><span>Type</span>2 Helper · care</div>
+  <div class="fact"><span>When</span>Your turn</div>
+</div>
+<p>Choose any player and either 2 [[sunlight]] or 2 [[water]]. They receive it from the bank, not from you, and <b>you both take 1 [[golden-acorn]]</b>.</p>
+<div class="tip"><h3>Best used</h3><p>On someone who is one drop short of the [[oak-circle]] or an [[alliance]], ideally your future ally, so you help both of you.</p></div>
+<p class="muted">See all [[enneagram-powers]].</p>` },
+
+{ id: 'momentum', cat: 'powers', icon: '🚀', title: 'Momentum',
+  short: 'Type 3 Achiever. Take 2 ☀ and 1 💧 while moving.',
+  body: `
+<div class="facts">
+  <div class="fact"><span>Type</span>3 Achiever · drive</div>
+  <div class="fact"><span>When</span>Your turn, while moving</div>
+</div>
+<p>Take <b>+2 [[sunlight]] and +1 [[water]]</b>. Use it before you stop, then keep walking.</p>
+<div class="tip"><h3>Best used</h3><p>In Season 3, to push from the [[sapling-path]] all the way into the [[oak-circle]] or [[heartwood]].</p></div>
+<p class="muted">See all [[enneagram-powers]].</p>` },
+
+{ id: 'deep-water', cat: 'powers', icon: '🌊', title: 'Deep Water',
+  short: 'Type 4 Individualist. Answer the question one tier deeper.',
+  body: `
+<div class="facts">
+  <div class="fact"><span>Type</span>4 Individualist · depth</div>
+  <div class="fact"><span>When</span>Your turn, before you start sharing</div>
+</div>
+<p>Answer the question one tier deeper than your ring: Seed → Sapling, or Sapling → Oak. The card still scores at your ring's tier.</p>
+<ul>
+  <li>Not on an Oak or Heartwood question.</li>
+  <li>The deeper question is the reward: it's a chance to be known sooner, and to earn more [[trust-points|trust]].</li>
+  <li>On the [[sapling-path]] it gives you an Oak story, which counts for the [[forest-goal]].</li>
+</ul>
+<p class="muted">See all [[enneagram-powers]].</p>` },
+
+{ id: 'field-notes', cat: 'powers', icon: '🔎', title: 'Field Notes',
+  short: 'Type 5 Investigator. See hidden discoveries next to you; claim one.',
+  body: `
+<div class="facts">
+  <div class="fact"><span>Type</span>5 Investigator · insight</div>
+  <div class="fact"><span>When</span>Your turn, while moving</div>
+</div>
+<p>See every face-down [[discovery]] on the spaces next to you (in open rings), then claim one without moving there.</p>
+<ul>
+  <li>Only works if there's a hidden discovery next to you.</li>
+  <li>Claim before you step away: if you move first, the chance is gone.</li>
+  <li>After claiming, you can still move and discover your own space.</li>
+</ul>
+<div class="tip"><h3>Best used</h3><p>Early, when the board is full of hidden discoveries, and you're looking for a [[spring]] or [[acorn-cache]].</p></div>
+<p class="muted">See all [[enneagram-powers]].</p>` },
+
+{ id: 'rope-team', cat: 'powers', icon: '🪢', title: 'Rope Team',
+  short: "Type 6 Loyalist. Jump free to an ally's space. Both +1 ✨.",
+  body: `
+<div class="facts">
+  <div class="fact"><span>Type</span>6 Loyalist · loyalty</div>
+  <div class="fact"><span>When</span>Your turn, while moving</div>
+</div>
+<p>Move to an [[alliance|ally's]] space for free, from anywhere on the board. <b>You both take 1 [[golden-acorn]].</b> You can keep moving afterwards.</p>
+<ul><li>You need an ally, and their ring must be open.</li></ul>
+<div class="tip"><h3>Best used</h3><p>When your ally is in the [[oak-circle]] or [[heartwood]] and you're far away, or to stand next to them for the next [[dusk]].</p></div>
+<p class="muted">See all [[enneagram-powers]].</p>` },
+
+{ id: 'adventure', cat: 'powers', icon: '🎒', title: 'Adventure',
+  short: 'Type 7 Enthusiast. Your next 3 steps are free. +1 ✨.',
+  body: `
+<div class="facts">
+  <div class="fact"><span>Type</span>7 Enthusiast · joy</div>
+  <div class="fact"><span>When</span>Your turn, while moving</div>
+</div>
+<p>Your next 3 steps cost nothing: no [[sunlight]] and no [[water]], even into the [[oak-circle]]. You also take <b>+1 [[golden-acorn]]</b>.</p>
+<ul><li>Closed rings and the [[heartwood]]'s ally rule still apply.</li></ul>
+<div class="tip"><h3>Best used</h3><p>In Season 3, to walk from the [[sapling-path]] into the Oak Circle and save your water for an alliance.</p></div>
+<p class="muted">See all [[enneagram-powers]].</p>` },
+
+{ id: 'champion', cat: 'powers', icon: '🛡️', title: 'Champion',
+  short: 'Type 8 Challenger. Give someone 2 trust acorns at once. +1 ✨.',
+  body: `
+<div class="facts">
+  <div class="fact"><span>Type</span>8 Challenger · strength</div>
+  <div class="fact"><span>When</span>After someone else's share</div>
+</div>
+<p>Give that player <b>2 [[trust-acorn|trust acorns]] at once</b>, and take 1 [[golden-acorn]]. Use it instead of <b>Give trust</b> for that share. Both acorns come from your own 10.</p>
+<div class="tip"><h3>Best used</h3><p>For a share that really took courage. Note that [[trust-points|Trust]] counts at most 2 acorns from any one giver, so Champion maxes out what you give that person.</p></div>
+<p class="muted">See all [[enneagram-powers]].</p>` },
+
+{ id: 'common-ground', cat: 'powers', icon: '🕊️', title: 'Common Ground',
+  short: 'Type 9 Peacemaker. Tonight your alliance works at any distance, free.',
+  body: `
+<div class="facts">
+  <div class="fact"><span>Type</span>9 Peacemaker · harmony</div>
+  <div class="fact"><span>When</span>At Dusk, before pairs are set</div>
+</div>
+<p>Tonight your [[alliance]] works at any distance and costs neither of you [[water]].</p>
+<ul>
+  <li>You still both need to choose each other and tick <b>Make it an alliance</b>.</li>
+  <li>If no alliance forms, the power is still spent.</li>
+</ul>
+<div class="tip"><h3>Best used</h3><p>When the person you want to ally with ended their turn far away, or one of you is out of water. Agree with them first.</p></div>
+<p class="muted">See all [[enneagram-powers]].</p>` },
+
+// ───────────── Scoring
+{ id: 'scoring', cat: 'scoring', icon: '🏆', title: 'Scoring',
+  short: 'Four kinds of points. Most points wins. Totals hidden until the end.',
+  body: `
+<p>When the forest is grown, the app adds up four kinds of points. Nobody sees the totals until the end.</p>
+<div class="tablewrap"><table>
+<tr><th>Points</th><th>How</th></tr>
+<tr><td>🌰 [[trust-points|Trust]]</td><td>Per person who gave you acorns: their acorns (up to 2) + 1</td></tr>
+<tr><td>🌳 [[growth|Growth]]</td><td>Cards kept (1–4 each) + 1 per different value + 1 per ✨</td></tr>
+<tr><td>🤝 [[alliance|Alliances]]</td><td>3 per ally, up to 3 allies</td></tr>
+<tr><td>🤫 [[secret-acorn|Secret Acorn]]</td><td>Up to 3 for discoveries, +2 if not guessed, +2 if you guess your seer</td></tr>
+</table></div>
+<h3>Ties</h3>
+<p>The player with more Trust points wins. If that's tied too, they share the win.</p>
+<h3>Example: Mei's 37</h3>
+<div class="box">
+<p>🌰 Trust <b>16</b>: 7 people gave her acorns. Five gave 1 (5 × 2 = 10), two gave 2 (2 × 3 = 6).</p>
+<p>🌳 Growth <b>11</b>: Seed 1 + Sapling 2 + Oak 3 = 6, two different values +2, three golden acorns +3.</p>
+<p>🤝 Alliances <b>6</b>: 2 allies.</p>
+<p>🤫 Secret Acorn <b>4</b>: 2 discoveries confirmed, and he didn't guess her.</p>
+</div>
+<p>With the [[forest-goal]] on, there's only a winner if the forest takes root.</p>` },
+
+{ id: 'trust-points', cat: 'scoring', icon: '💛', title: 'Trust points',
+  short: 'Points from acorns you received. Many givers beat many acorns.',
+  body: `
+<p>For each person who gave you any [[trust-acorn|trust acorns]] during the game:</p>
+<div class="box"><p><b>their acorns (counting at most 2) + 1 for that person</b></p></div>
+<div class="tablewrap"><table>
+<tr><th>Giver</th><th>Acorns</th><th>Points</th></tr>
+<tr><td>Amir</td><td>🌰</td><td>1 + 1 = 2</td></tr>
+<tr><td>Bea</td><td>🌰🌰</td><td>2 + 1 = 3</td></tr>
+<tr><td>Chen</td><td>🌰🌰🌰</td><td>2 + 1 = 3</td></tr>
+</table></div>
+<p><b>Trust from many people beats lots of trust from a few.</b> Nine people giving you one acorn each is 18 points; three people giving you three each is 9.</p>
+<p>Trust also breaks ties in [[scoring]].</p>` },
+
+{ id: 'growth', cat: 'scoring', icon: '🌳', title: 'Growth',
+  short: 'Points from cards you answered, the values you covered, and golden acorns.',
+  body: `
+<div class="tablewrap"><table>
+<tr><th>Part</th><th>Points</th></tr>
+<tr><td>Each card you kept</td><td>🌱 Seed 1 · 🌿 Sapling 2 · 🌳 Oak 3 · 🌰 Heartwood 4</td></tr>
+<tr><td>Each different [[values|value]] you shared in</td><td>+1 (Heartwood cards have no value)</td></tr>
+<tr><td>Each [[golden-acorn]]</td><td>+1</td></tr>
+</table></div>
+<p>A card scores at the tier you answered, so [[lighter-tier]] lowers it and [[deep-water]] doesn't raise it. If you [[passing|pass]] a turn, you keep no card that turn.</p>
+<div class="tip"><h3>Tip</h3><p>Three turns in three different values gives +3. Spread out as you walk inward.</p></div>` },
+
+{ id: 'secret-acorn', cat: 'scoring', icon: '🤫', title: 'Secret Acorn',
+  short: 'One colleague you secretly get to know all game, then honour at the finale.',
+  body: `
+<p>A quiet side quest that runs all game: you get to know one particular person, without them finding out it's you.</p>
+<h3>How it starts</h3>
+<p>At the start, your phone gives you one colleague's name: your <b>Secret Acorn</b>. Tap to reveal it, and keep it to yourself. Someone else has <i>your</i> name: that person is your [[seer]].</p>
+<p>All the names form <b>one loop</b> around the room: A has B, B has C, and so on until J has A. Everyone gives and receives once.</p>
+<h3>During the game: discover three things</h3>
+<p>Something they love, something that shaped them, something they hope for. Learn them from:</p>
+<ul>
+  <li>Their [[share|shares]].</li>
+  <li>An [[owl]] follow-up.</li>
+  <li>A [[dusk]] conversation with them.</li>
+  <li>[[campfire]] answers.</li>
+</ul>
+<p>Don't be too obvious, or they'll guess it was you.</p>
+<h3>At the finale</h3>
+<ol>
+  <li><b>Guess</b> who had your name. See [[seer]].</li>
+  <li><b>Give your [[tribute]]:</b> "Three things I discovered about you today, and one thing I appreciate."</li>
+  <li><b>They confirm</b> how many of your three discoveries are true: 0, 1, 2 or 3.</li>
+</ol>
+<h3>Points (up to 7)</h3>
+<div class="tablewrap"><table>
+<tr><th>What happens</th><th>Points</th></tr>
+<tr><td>Each discovery your Secret Acorn confirms as true</td><td>+1 each (max 3)</td></tr>
+<tr><td>Your Secret Acorn fails to guess you had their name</td><td>+2</td></tr>
+<tr><td>You correctly guess your own seer</td><td>+2</td></tr>
+</table></div>
+<div class="tip"><h3>Tips</h3>
+<ul>
+  <li>Be curious about everyone, so your interest in one person blends in.</li>
+  <li>Go past surface facts. "Likes coffee" is weak; "became a teacher because of their grandmother" lands.</li>
+  <li>Make the "one thing I appreciate" specific. It doesn't score, but it's what people remember.</li>
+</ul></div>` },
+
+{ id: 'seer', cat: 'scoring', icon: '👁️', title: 'Seer',
+  short: 'The person who had your name as their Secret Acorn.',
+  body: `
+<p>Your seer is the person who drew <i>your</i> name as their [[secret-acorn]]. All game, they're quietly getting to know you.</p>
+<h3>Guessing your seer</h3>
+<ul>
+  <li>After the last [[dusk]], pick who you think it was and tap <b>Lock in my guess</b>.</li>
+  <li>You can change it until the tributes start.</li>
+  <li>A correct guess is <b>+2</b> for you.</li>
+  <li>If you guess wrong, your seer gets <b>+2</b> for staying hidden.</li>
+</ul>
+<div class="tip"><h3>Clues</h3><p>Who asked you follow-ups? Who chose you at Dusk? Who listened especially closely when you shared?</p></div>` },
+
+{ id: 'tribute', cat: 'scoring', icon: '🎁', title: 'Tribute',
+  short: 'One minute to honour your Secret Acorn at the finale.',
+  body: `
+<p>At the [[finale]], one at a time around the loop, each player gives their [[secret-acorn]] one minute:</p>
+<div class="box"><p><b>"Three things I discovered about you today, and one thing I appreciate."</b></p></div>
+<p>Then hand them the acorn. They tap how many of your three discoveries are true (0–3), then honour their own Secret Acorn, and so on until the loop closes.</p>
+<p>By the end, everyone in the room has heard three true things someone noticed about them, and one appreciation.</p>` },
+
+{ id: 'finale', cat: 'scoring', icon: '🌲', title: 'Finale',
+  short: 'The Vision of a Forest: guesses, tributes, then the scores.',
+  body: `
+<p>After the third [[dusk]], the game moves to <b>The Vision of a Forest</b>.</p>
+<ol>
+  <li><b>Guess.</b> Everyone guesses their [[seer]] and taps <b>Lock in my guess</b>.</li>
+  <li><b>Tributes.</b> One at a time, around the loop, everyone gives their [[tribute]].</li>
+  <li><b>Confirm.</b> Each person taps how many of the three discoveries were true.</li>
+  <li><b>Scores.</b> The big screen shows everyone's points and the winner. 🏆 See [[scoring]].</li>
+</ol>` },
+
+{ id: 'forest-goal', cat: 'scoring', icon: '🌳', title: 'Forest Goal',
+  short: 'Optional: nobody wins unless every value has an Oak story.',
+  body: `
+<p>An optional rule the [[keeper]] can switch on before the game starts.</p>
+<p>With it on, there's only a winner if, by the end, <b>every one of the six [[values]] has at least one Oak story</b>: a card answered at the 🌳 Oak tier on one of that value's spaces.</p>
+<ul>
+  <li>If any value is missing, the forest doesn't take root and nobody wins.</li>
+  <li>[[heartwood]] stories don't count for any value.</li>
+  <li>[[deep-water]] on the [[sapling-path]] gives an Oak story.</li>
+  <li>The big screen shows the progress.</li>
+</ul>
+<div class="tip"><h3>Tip</h3><p>In Season 3, talk openly about who will take the hard road, and where. It turns a race into a shared goal.</p></div>` },
+
+// ───────────── Your phone
+{ id: 'live-badge', cat: 'phone', icon: '🟢', title: 'Live badge',
+  short: 'Shows whether your phone is connected. It catches up by itself.',
+  body: `
+<p>The small badge in the corner of your phone shows your connection:</p>
+<div class="tablewrap"><table>
+<tr><th>Badge</th><th>Meaning</th></tr>
+<tr><td>● Live</td><td>Connected. Everything updates instantly.</td></tr>
+<tr><td>● Reconnecting…</td><td>The Wi-Fi dropped. It's trying again.</td></tr>
+<tr><td>● Offline</td><td>No connection. It catches up by itself once the Wi-Fi is back.</td></tr>
+</table></div>
+<p>Nothing you did is lost. If the browser closed, see [[rejoin-code]].</p>` },
+
+{ id: 'rejoin-code', cat: 'phone', icon: '🔑', title: 'Rejoin code',
+  short: 'Getting back into your seat after closing the browser or changing phone.',
+  body: `
+<ul>
+  <li><b>Same phone and browser:</b> open the game again and tap <b>Continue as</b> your name.</li>
+  <li><b>Different phone or browser:</b> ask the [[keeper]] for a 4-digit rejoin code, and enter it under <b>Rejoin with a code</b>.</li>
+</ul>
+<p>You come back with everything: your resources, powers, cards and [[secret-acorn]].</p>` },
+];
+
+// ───────────── rendering
+const byId = Object.fromEntries(W.map(e => [e.id, e]));
+const main = document.getElementById('main');
+const q = document.getElementById('q');
+const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+function links(html) {
+  return html.replace(/\[\[([a-z0-9-]+)(?:\|([^\]]+))?\]\]/g, (m, id, text) => {
+    const e = byId[id];
+    if (!e) return text || id;
+    return `<a href="#${id}">${text || e.title}</a>`;
+  });
+}
+
+function tile(e) {
+  return `<a class="tile" href="#${e.id}"><span class="ic">${e.icon}</span><span><b>${esc(e.title)}</b><small>${esc(e.short)}</small></span></a>`;
+}
+
+function renderIndex(filter) {
+  const f = (filter || '').trim().toLowerCase();
+  const match = e => !f || (e.title + ' ' + e.short + ' ' + e.body.replace(/<[^>]+>/g, ' ')).toLowerCase().includes(f);
+  let html = f ? '' : `<div class="hero"><div class="seed">📖</div><h1>Heartwood Wiki</h1>
+    <p>Every term in the game, one page each. Tap a term to read it; links inside each page lead to the next.</p></div>`;
+  let any = false;
+  for (const [cat, name] of CATS) {
+    const items = W.filter(e => e.cat === cat && match(e));
+    if (!items.length) continue;
+    any = true;
+    html += `<section class="cat"><h2>${name}</h2><div class="tiles">${items.map(tile).join('')}</div></section>`;
+  }
+  if (!any) html += `<p class="empty">Nothing matches "${esc(filter)}".</p>`;
+  main.innerHTML = html;
+}
+
+function renderEntry(e) {
+  const cat = CATS.find(c => c[0] === e.cat)[1];
+  const same = W.filter(x => x.cat === e.cat);
+  const i = same.indexOf(e);
+  const prev = same[i - 1], next = same[i + 1];
+  // "Mentioned here" chips: every page this one links to, in order, without repeats.
+  const refs = [...new Set([...e.body.matchAll(/\[\[([a-z0-9-]+)/g)].map(m => m[1]))].filter(id => id !== e.id && byId[id]);
+  // "Linked from": pages that link to this one.
+  const back = W.filter(x => x !== e && x.body.includes('[[' + e.id)).map(x => x.id).filter(id => !refs.includes(id));
+  const chips = ids => ids.map(id => `<a href="#${id}">${byId[id].icon} ${esc(byId[id].title)}</a>`).join('');
+  main.innerHTML = `
+    <p class="crumbs"><a href="#">Wiki</a> › ${cat}</p>
+    <article>
+      <div class="head"><span class="ic">${e.icon}</span><div><h1>${esc(e.title)}</h1><span class="tag">${cat}</span></div></div>
+      <p class="summary">${esc(e.short)}</p>
+      ${links(e.body)}
+      ${refs.length ? `<div class="see"><h3>Mentioned here</h3><div class="chips">${chips(refs)}</div></div>` : ''}
+      ${back.length ? `<div class="see"><h3>Linked from</h3><div class="chips">${chips(back)}</div></div>` : ''}
+      <div class="pager">
+        <span>${prev ? `<a href="#${prev.id}">← ${prev.icon} ${esc(prev.title)}</a>` : ''}</span>
+        <span>${next ? `<a href="#${next.id}">${next.icon} ${esc(next.title)} →</a>` : ''}</span>
+      </div>
+    </article>`;
+}
+
+function route() {
+  const id = decodeURIComponent(location.hash.slice(1));
+  const e = byId[id];
+  if (e) {
+    q.value = '';
+    document.title = e.title + ' · Heartwood Wiki';
+    renderEntry(e);
+    window.scrollTo(0, 0);
+  } else {
+    document.title = 'Heartwood Wiki';
+    renderIndex(q.value);
+  }
+}
+
+q.addEventListener('input', () => {
+  if (location.hash.length > 1) history.pushState(null, '', location.pathname);
+  renderIndex(q.value);
+});
+window.addEventListener('hashchange', route);
+route();
+</script>
+</body>
+</html>

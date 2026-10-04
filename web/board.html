@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heartwood Board</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="boardscreen">
+  <div>
+    <svg class="board" id="svg"></svg>
+  </div>
+  <div class="side">
+    <div class="panel">
+      <div class="row" style="justify-content:space-between">
+        <h1 id="title">Heartwood</h1>
+        <span class="muted">Game <b id="code"></b> · <a href="howto.html" target="_blank">How to play</a> · <a href="wiki.html" target="_blank">Wiki</a></span>
+      </div>
+      <div class="timer" data-timer></div>
+      <div id="forest"></div>
+    </div>
+    <div class="panel" id="main"></div>
+    <div class="panel" id="host" hidden>
+      <h3>Keeper</h3>
+      <div id="hostActions"></div>
+      <div class="row" style="margin-top:.5em"><span class="muted">Timer:</span>
+        <button class="ghost" data-t="60">1 min</button><button class="ghost" data-t="90">90 s</button><button class="ghost" data-t="240">4 min</button></div>
+      <details style="margin-top:.6em"><summary class="muted">Help a player rejoin · Keeper on another device</summary>
+        <div id="hostTools"></div>
+        <div id="hostOut"></div>
+      </details>
+    </div>
+    <div class="panel"><h3>Expedition</h3><div class="plist" id="plist"></div></div>
+    <div class="panel"><h3>Trail log</h3><div class="log" id="log"></div></div>
+  </div>
+</div>
+<script src="common.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+// A Keeper link (?k=…) moves the Keeper controls to this device.
+const params = new URLSearchParams(location.search);
+if (params.get('k')) {
+  localStorage.setItem('hw-host-' + HW.code, params.get('k'));
+  params.delete('k');
+  history.replaceState(null, '', `${location.pathname}?${params}`);
+}
+const host = localStorage.getItem('hw-host-' + HW.code) || '';
+const creds = host ? { host } : {};
+$('code').textContent = HW.code;
+let forestGoal = false;
+
+const act = (type, extra) => HW.act(creds, type, extra);
+
+function render(v) {
+  $('title').textContent = HW.phaseTitle(v);
+  HW.renderBoard($('svg'));
+  HW.patch($('main'), mainHTML(v));
+  HW.patch($('forest'), HW.forestHTML(v));
+  renderHost(v);
+  HW.patch($('plist'), v.players.map(p => `<div class="${v.current === p.id ? 'cur' : ''}">
+    <span>${HW.chip(p.id)}</span>
+    <span class="muted">☀${p.sun} 💧${p.water} 🌰${p.trustLeft} left · 🤝${p.allies.length} · 🃏${p.cards.length}${p.owls ? ' · 🦉' + p.owls : ''}</span></div>`).join(''));
+  HW.patch($('log'), v.log.slice().reverse().map(l => `<div>${HW.esc(l)}</div>`).join(''));
+}
+
+// Phones can't reach "localhost": when the board was opened that way, show the
+// server's Wi-Fi address instead.
+function phoneOrigin(v) {
+  const local = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+  return local && v.lan?.length ? v.lan[0] : location.origin;
+}
+
+function mainHTML(v) {
+  const origin = phoneOrigin(v);
+  const joinUrl = `${origin}/play.html?g=${v.code}`;
+  if (v.phase === 'lobby') {
+    return `<div class="row" style="align-items:flex-start;gap:16px">
+      <img class="qr" src="/api/qr?u=${encodeURIComponent(joinUrl)}" alt="QR code to join">
+      <div style="flex:1;min-width:200px"><p>Scan to join, or open:</p><div class="joinurl">${HW.esc(joinUrl)}</div>
+      <p class="muted">or open ${HW.esc(origin)} and enter code <b>${v.code}</b>. Phones must be on the same Wi-Fi as this computer.</p></div></div>
+      <p>${v.players.length} of 10 joined: ${v.players.map(p => HW.chip(p.id)).join(' ')}</p>`;
+  }
+  if (v.phase === 'plant') {
+    return `<p class="big">${HW.chip(v.current)} is planting their seed.</p>
+      <p class="muted">Choose an outer space in the value you identify with most, on your phone, and tell us why in one sentence.</p>`;
+  }
+  if (v.phase === 'turn' && v.turn) {
+    const t = v.turn, p = HW.player(t.player);
+    const ring = p.pos >= 0 ? v.hexes[p.pos] : null;
+    let h = `<p class="big">${HW.chip(t.player)}'s turn · <span class="muted">${ring ? (ring.region >= 0 ? v.regions[ring.region] + ', ' : '') + HW.ringNames[ring.ring] : ''}</span></p>`;
+    if (t.eventText) h += `<div class="event">${HW.esc(t.eventText)}${t.helped ? ` <b>${HW.esc(HW.name(t.helped))} helped!</b>` : ''}</div>`;
+    if (t.step === 'move') h += `<p class="muted">Moving… (☀ ${p.sun} · 💧 ${p.water}${t.freeSteps ? ` · ${t.freeSteps} free steps` : ''})</p>`;
+    if (t.step !== 'move') {
+      h += `<span class="tier">${HW.tierNames[t.tier]}${t.region >= 0 ? ' · ' + HW.regionIcons[t.region] + ' ' + v.regions[t.region] : ''}</span>`;
+      if (t.choices?.length) h += `<p class="muted">Choosing between three cards (True North)…</p>`;
+      else h += `<div class="prompt">${HW.esc(t.prompt)}</div>`;
+    }
+    if (t.step === 'share' && !t.started) h += `<p class="muted">Getting ready to share…</p>`;
+    if (t.step === 'trust') h += `<p class="big">🌰 Trust given: <b>${t.trustCount}</b></p><p class="muted">Listeners: give trust on your phone if this moved you.</p>`;
+    t.followUps.forEach(f => h += `<div class="event">🦉 ${HW.esc(f)}</div>`);
+    return h;
+  }
+  if (v.phase === 'dusk') {
+    if (!v.dusk.resolved) {
+      const waiting = v.players.filter(p => !p.duskChosen).map(p => HW.chip(p.id)).join(' ');
+      return `<p class="big">Dusk falls. Choose a partner on your phone.</p>
+        <p class="muted">Same or neighbouring space, and 1 💧 each, to make it an Alliance. Everyone else gets a Fireside chat (+1 💧).</p>
+        <p>Still choosing: ${waiting || '<b>everyone has chosen</b>'}</p>`;
+    }
+    return `<p class="big">Talk for 4 minutes.</p>` + v.dusk.pairs.map(pr => `<div class="pair">
+      ${HW.chip(pr.a)} &amp; ${HW.chip(pr.b)}${pr.c ? ' &amp; ' + HW.chip(pr.c) : ''}
+      ${pr.ally ? '<span class="badge">ALLIANCE</span>' : '<span class="muted">fireside</span>'}
+      <div class="muted">${HW.esc(pr.bond)}</div>${pr.note ? `<div class="note">${HW.esc(pr.note)}</div>` : ''}</div>`).join('');
+  }
+  if (v.phase === 'guess') {
+    const waiting = v.players.filter(p => !p.guessed).map(p => HW.chip(p.id)).join(' ');
+    return `<p class="big">Who had your name as their Secret Acorn?</p><p class="muted">Guess on your phone.</p>
+      <p>Still guessing: ${waiting || '<b>everyone has guessed</b>'}</p>`;
+  }
+  if (v.phase === 'chain' && v.tribute) {
+    const tr = v.tribute;
+    return `<p class="muted">Tribute ${tr.idx + 1} of ${tr.total}</p>
+      <div class="prompt">${HW.chip(tr.giver)} → ${HW.chip(tr.receiver)}</div>
+      <p>"Three things I discovered about you today, and one thing I appreciate."</p>
+      <p class="muted">${HW.esc(HW.name(tr.receiver))} confirms on their phone, then gives their own tribute.</p>`;
+  }
+  if (v.phase === 'scores') return HW.scoresTable(v);
+  return '';
+}
+
+function renderHost(v) {
+  const el = $('host');
+  if (!v.isHost) { el.hidden = true; return; }
+  el.hidden = false;
+  let h = '';
+  if (v.phase === 'lobby') {
+    h += `<label><input type="checkbox" id="forest" style="width:auto" ${forestGoal ? 'checked' : ''}> Forest Goal: no winner unless every region gets an Oak story</label>
+      <p><button id="start" ${v.players.length < 2 ? 'disabled' : ''}>Start the expedition</button></p>`;
+    h += v.players.map(p => `<button class="ghost" data-kick="${p.id}">Remove ${HW.esc(p.name)}</button>`).join('');
+  }
+  if (v.phase === 'turn' && v.turn) {
+    if (v.turn.step === 'trust') h += `<button id="endTrust">Next player →</button>`;
+    h += `<button class="ghost" id="skip">Skip this turn</button>`;
+  }
+  if (v.phase === 'dusk') {
+    if (!v.dusk.resolved) h += `<button id="resolve">Set the pairs</button>`;
+    else h += `<button id="next">${v.season >= 3 ? 'Go to the finale →' : `Start Season ${v.season + 1} →`}</button>`;
+  }
+  if (v.phase === 'guess') h += `<button id="chain">Start the tributes</button>`;
+  if (v.phase === 'chain') h += `<button class="ghost" id="nextTrib">Skip to next tribute</button>`;
+  if (HW.patch($('hostActions'), h)) {
+    const on = (id, fn) => { const b = $(id); if (b) b.onclick = fn; };
+    on('start', () => act('start', { forest: forestGoal }));
+    on('endTrust', () => act('endTrust'));
+    on('skip', confirmSkip);
+    on('resolve', () => act('resolveDusk'));
+    on('next', () => act('nextSeason'));
+    on('chain', () => act('startChain'));
+    on('nextTrib', () => act('nextTribute'));
+    const f = $('forest'); if (f) f.onchange = () => { forestGoal = f.checked; };
+    $('hostActions').querySelectorAll('[data-kick]').forEach(b => b.onclick = () => act('kick', { target: b.dataset.kick }));
+  }
+  const tools = `<label for="rejoinWho">Give a player a rejoin code (for a new phone or browser):</label>
+    <div class="row"><select id="rejoinWho" style="flex:1">${v.players.map(p => `<option value="${p.id}">${HW.esc(p.name)}</option>`).join('')}</select>
+    <button class="ghost" id="rejoinGo" ${v.players.length ? '' : 'disabled'}>Get code</button></div>
+    <p><button class="ghost" id="keeperLink">Show Keeper link for another device</button></p>`;
+  if (HW.patch($('hostTools'), tools)) {
+    $('rejoinGo').onclick = async () => {
+      try {
+        const r = await HW.post(`/api/games/${HW.code}/rejoin-code`, { host, pid: $('rejoinWho').value });
+        $('hostOut').innerHTML = `<p>${HW.esc(r.name)}: open the game on the phone, choose <b>Rejoin with a code</b>, and enter</p><div class="pin">${r.pin}</div><p class="muted">Works once, for 10 minutes.</p>`;
+      } catch (e) { HW.toast(e.message); }
+    };
+    $('keeperLink').onclick = () => {
+      const url = `${phoneOrigin(HW.view)}/board.html?g=${HW.code}&k=${host}`;
+      $('hostOut').innerHTML = `<p class="muted">Open this on the device that should run the game (anyone with it can run the game):</p><p class="joinurl" style="font-size:1rem">${HW.esc(url)}</p>`;
+    };
+  }
+}
+
+let skipArmed = 0;
+function confirmSkip() {
+  if (Date.now() - skipArmed < 3000) { act('skipTurn'); skipArmed = 0; return; }
+  skipArmed = Date.now();
+  HW.toast('Tap "Skip this turn" again to confirm');
+}
+
+document.querySelectorAll('[data-t]').forEach(b => b.onclick = () => act('timer', { n: +b.dataset.t }));
+HW.connect(creds, render, msg => { $('main').innerHTML = `<p class="bad">${HW.esc(msg)}</p>`; });
+</script>
+</body>
+</html>

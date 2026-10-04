@@ -1,0 +1,7 @@
+# build output and local data
+/heartwood
+/deploy/heartwood
+*.db
+*.db-shm
+*.db-wal
+.DS_Store
