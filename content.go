@@ -1,47 +1,69 @@
 package main
 
-// Card text and powers. Regions follow ZERA's six Cs; each region card has a
-// Seed (light), Sapling (story) and Oak (deep) prompt.
+// Card text and powers. The six values on the map are ZERA's core values,
+// ZERAOS; each value's card has a Seed (light), Sapling (story) and Oak (deep)
+// prompt.
 
-var RegionNames = [6]string{"Curiosity", "Creativity", "Collaboration", "Courage", "Compassion", "Commitment"}
+// Value is one of ZERA's core values. The map's wedges follow them clockwise,
+// so the forest spells Z-E-R-A-O-S. Players stand for one, and alliances join
+// different ones.
+type Value struct {
+	Letter      string `json:"letter"`
+	Name        string `json:"name"`
+	Tagline     string `json:"tagline"`
+	Description string `json:"description"`
+	Icon        string `json:"icon"`
+	Color       string `json:"color"`
+}
+
+var Values = [6]Value{
+	{"Z", "Zealous", "Be zealous, not jealous.", "Passionate, driven energy channelled into learning and purpose rather than comparison: advocacy for students, initiative, and enthusiastic participation.", "☀️", "#e0703a"},
+	{"E", "Excellence", "Beyond expectation.", "Consistently surpassing standards, never merely meeting them: in academics, governance, and personal growth. Heart (zealous) always comes first.", "⭐", "#e0a32e"},
+	{"R", "Resilience", "Anti-fragile.", "More than bouncing back: growing stronger through challenge. Purpose-driven leadership that persists toward long-term goals and learns from setbacks.", "🎋", "#c8463f"},
+	{"A", "Authenticity", "Inclusive education.", "Genuine representation and honesty. Everyone, including students in zera Plus, belongs and is valued, without pretense.", "🪞", "#cf6f97"},
+	{"O", "Open-mindedness", "Growth mindset.", "Welcoming diverse perspectives and inclusive decision-making: challenging assumptions and treating failure as a place to grow, not an endpoint.", "💡", "#4f74b0"},
+	{"S", "Sustainability", "Start with the end in mind.", "Long-term thinking built into everything: creating lasting impact and building systems that outlast any single leader or cohort.", "🌍", "#3f9e9a"},
+}
+
+var RegionNames = [6]string{"Zealous", "Excellence", "Resilience", "Authenticity", "Open-mindedness", "Sustainability"}
 
 var RegionCards = [6][][3]string{
-	{ // Curiosity
+	{ // Zealous (placeholder: old Curiosity prompts)
 		{"What could you talk about for ten minutes with no notes?", "Tell us about a question that changed the direction of your life.", "What about yourself are you still trying to figure out?"},
 		{"If you could master one skill overnight, what would it be?", "Who first made you love learning, and how?", "What do you wish people here asked you about more?"},
 		{"What's the last thing you looked up out of pure curiosity?", "Tell us about a place that opened your eyes.", "Which belief of yours has changed the most over the years?"},
 		{"Which book, film or show do you recommend to everyone?", "Tell us about someone very different from you who taught you something.", "What question are you carrying into next year?"},
 		{"What job would you try for one week, just to see?", "Tell us about a mistake that taught you more than any success.", "What would you explore if no one depended on you?"},
 	},
-	{ // Creativity
+	{ // Excellence (placeholder: old Creativity prompts)
 		{"What did you love making as a child?", "Tell us about a time you solved a problem in a way nobody expected.", "What part of you rarely gets to show up at work?"},
 		{"What's your favourite way to spend a free Saturday?", "Tell us about something you started from nothing.", "If you knew you couldn't fail, what would you build next?"},
 		{"What creative skill do you secretly wish you had?", "Tell us about a time you turned a constraint into an advantage.", "When do you feel most fully yourself?"},
 		{"What would your perfect classroom look like?", "Tell us about an idea of yours that people doubted.", "What dream did you put down that you'd like to pick up again?"},
 		{"Describe your ideal weekend in three words.", "Tell us about a moment of play you still remember.", "What does the world lose if you play it safe?"},
 	},
-	{ // Collaboration
+	{ // Resilience (placeholder: old Collaboration prompts)
 		{"What's the best team you've ever been part of (sport, choir, class project, anything)?", "Tell us about someone who made you better just by working beside you.", "What do you need from this team that you've never asked for?"},
 		{"Planner or \"let's figure it out\"? Give an example.", "Tell us about a disagreement that ended up making a relationship stronger.", "When do you feel most alone in your role?"},
 		{"In a group, are you the starter, the finisher, the connector or the critic?", "Tell us about a time a team carried you.", "What makes it hard for you to ask for help?"},
 		{"Who's the person you call when something goes wrong?", "Tell us about a time you had to rebuild trust with someone.", "What do you want this team to understand about how you work?"},
 		{"What's a team ritual you love?", "Tell us about the best boss or mentor you ever had.", "Where do you hold back in this team, and why?"},
 	},
-	{ // Courage
+	{ // Authenticity (placeholder: old Courage prompts)
 		{"What's the most adventurous thing you've ever done, or eaten?", "Tell us about a time you were afraid and did it anyway.", "What fear still shapes the way you lead?"},
 		{"What's a small brave thing you did this year?", "Tell us about a time you spoke up when staying quiet would have been easier.", "What risk do you know you need to take in the next year?"},
 		{"What scares you that is completely harmless?", "Tell us about a time you started over.", "What would you do differently if you trusted yourself more?"},
 		{"When did you last try something for the first time?", "Tell us about a decision others thought was crazy.", "What failure have you never fully talked about?"},
 		{"What's the boldest thing on your bucket list?", "Tell us about someone whose courage inspired you.", "What do you need to let go of to lead better?"},
 	},
-	{ // Compassion
+	{ // Open-mindedness (placeholder: old Compassion prompts)
 		{"Who was your favourite teacher, and why?", "Tell us about a time someone was kind to you when you didn't expect it.", "When did you last feel truly cared for, and by whom?"},
 		{"What small thing instantly makes your day better?", "Tell us about a student, or a child, who changed you.", "What are you carrying this year that few people here know about?"},
 		{"Who in your life always makes you laugh?", "Tell us about a time you were there for someone in a hard season.", "How do you take care of yourself when no one is watching?"},
 		{"How do you most like to be appreciated?", "Tell us about a time you were wrong about someone.", "What kind of support do you find hard to receive?"},
 		{"What act of kindness from your school days do you still remember?", "Tell us about a parent's or student's story that stayed with you.", "Who do you need to thank, or forgive, and haven't yet? (No names needed.)"},
 	},
-	{ // Commitment
+	{ // Sustainability (placeholder: old Commitment prompts)
 		{"What habit or hobby have you kept for more than five years?", "Tell us about a promise you kept even though it cost you.", "Why are you still at ZERA? What keeps you here?"},
 		{"What will you never give up (a food, a team, a ritual)?", "Tell us about the hardest season of your working life, and what got you through.", "What do you want to be true of ZERA when you're no longer here?"},
 		{"What's the longest you've ever worked on one thing?", "Tell us about a time you almost quit.", "What are you committed to that few people see?"},
@@ -63,6 +85,57 @@ var BondCards = [3][]string{
 	{"Find three things you have in common that have nothing to do with work.", "Swap the stories of how you each came to ZERA.", "Share your favourite childhood food and the memory behind it."},
 	{"Each tell the story of a turning point in your life.", "What's a lesson you each learned the hard way?", "Who shaped you most before you turned 18?"},
 	{"Tell your partner one thing you've learned about them today, and what it meant to you.", "What does each of you need from the other in the year ahead?", "Complete for each other: \"Working with you, I'd love more of ___.\""},
+}
+
+// StatementCard replaces the Bond card for a pair or trio forming an alliance:
+// they find one line that holds all their values.
+var StatementCard = "Find one line that holds all your values (a statement, a slogan or a cheer, about 12 words). Try: \"We ___ so that ___.\" One of you types it on your phone."
+
+// StatementTip helps the Keeper when an alliance is stuck on its statement:
+// what the values have in common, and example lines.
+type StatementTip struct {
+	Common   string   `json:"common"`
+	Examples []string `json:"examples"`
+}
+
+// StatementTips is keyed by the alliance's value letters in ZERAOS order, e.g.
+// "ZE", "ERS": 15 pairs and 20 trios.
+var StatementTips = map[string]StatementTip{
+	"ZE":  {"ZE placeholder: what these values share.", []string{"ZE placeholder example."}},
+	"ZR":  {"ZR placeholder: what these values share.", []string{"ZR placeholder example."}},
+	"ZA":  {"ZA placeholder: what these values share.", []string{"ZA placeholder example."}},
+	"ZO":  {"ZO placeholder: what these values share.", []string{"ZO placeholder example."}},
+	"ZS":  {"ZS placeholder: what these values share.", []string{"ZS placeholder example."}},
+	"ER":  {"ER placeholder: what these values share.", []string{"ER placeholder example."}},
+	"EA":  {"EA placeholder: what these values share.", []string{"EA placeholder example."}},
+	"EO":  {"EO placeholder: what these values share.", []string{"EO placeholder example."}},
+	"ES":  {"ES placeholder: what these values share.", []string{"ES placeholder example."}},
+	"RA":  {"RA placeholder: what these values share.", []string{"RA placeholder example."}},
+	"RO":  {"RO placeholder: what these values share.", []string{"RO placeholder example."}},
+	"RS":  {"RS placeholder: what these values share.", []string{"RS placeholder example."}},
+	"AO":  {"AO placeholder: what these values share.", []string{"AO placeholder example."}},
+	"AS":  {"AS placeholder: what these values share.", []string{"AS placeholder example."}},
+	"OS":  {"OS placeholder: what these values share.", []string{"OS placeholder example."}},
+	"ZER": {"ZER placeholder: what these values share.", []string{"ZER placeholder example."}},
+	"ZEA": {"ZEA placeholder: what these values share.", []string{"ZEA placeholder example."}},
+	"ZEO": {"ZEO placeholder: what these values share.", []string{"ZEO placeholder example."}},
+	"ZES": {"ZES placeholder: what these values share.", []string{"ZES placeholder example."}},
+	"ZRA": {"ZRA placeholder: what these values share.", []string{"ZRA placeholder example."}},
+	"ZRO": {"ZRO placeholder: what these values share.", []string{"ZRO placeholder example."}},
+	"ZRS": {"ZRS placeholder: what these values share.", []string{"ZRS placeholder example."}},
+	"ZAO": {"ZAO placeholder: what these values share.", []string{"ZAO placeholder example."}},
+	"ZAS": {"ZAS placeholder: what these values share.", []string{"ZAS placeholder example."}},
+	"ZOS": {"ZOS placeholder: what these values share.", []string{"ZOS placeholder example."}},
+	"ERA": {"ERA placeholder: what these values share.", []string{"ERA placeholder example."}},
+	"ERO": {"ERO placeholder: what these values share.", []string{"ERO placeholder example."}},
+	"ERS": {"ERS placeholder: what these values share.", []string{"ERS placeholder example."}},
+	"EAO": {"EAO placeholder: what these values share.", []string{"EAO placeholder example."}},
+	"EAS": {"EAS placeholder: what these values share.", []string{"EAS placeholder example."}},
+	"EOS": {"EOS placeholder: what these values share.", []string{"EOS placeholder example."}},
+	"RAO": {"RAO placeholder: what these values share.", []string{"RAO placeholder example."}},
+	"RAS": {"RAS placeholder: what these values share.", []string{"RAS placeholder example."}},
+	"ROS": {"ROS placeholder: what these values share.", []string{"ROS placeholder example."}},
+	"AOS": {"AOS placeholder: what these values share.", []string{"AOS placeholder example."}},
 }
 
 var SquirrelCards = []string{

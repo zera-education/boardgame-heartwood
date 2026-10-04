@@ -5,17 +5,19 @@ import (
 	"fmt"
 	"math/rand"
 	"sort"
+	"strings"
 	"time"
 )
 
 const (
-	PhaseLobby  = "lobby"
-	PhasePlant  = "plant"
-	PhaseTurn   = "turn"
-	PhaseDusk   = "dusk"
-	PhaseGuess  = "guess"
-	PhaseChain  = "chain"
-	PhaseScores = "scores"
+	PhaseLobby   = "lobby"
+	PhasePlant   = "plant"
+	PhaseTurn    = "turn"
+	PhaseDusk    = "dusk"
+	PhaseStories = "stories" // finale: each alliance tells its story
+	PhaseGuess   = "guess"
+	PhaseChain   = "chain"
+	PhaseScores  = "scores"
 )
 
 var SeasonNames = [4]string{"", "Planting the Seed", "The Sprout", "Growing into a Tree"}
@@ -43,6 +45,7 @@ type Player struct {
 	Secret    string         `json:"secret"`
 	Name      string         `json:"name"`
 	Color     string         `json:"color"`
+	Value     int            `json:"value"` // the ZERAOS value they stand for; -1 until planted
 	Types     []int          `json:"types"`
 	Used      map[int]bool   `json:"used"`
 	Pos       int            `json:"pos"`
@@ -51,7 +54,7 @@ type Player struct {
 	Squirrels int            `json:"squirrels"`
 	Pot       map[string]int `json:"pot"`
 	Cards     []KeptCard     `json:"cards"`
-	Allies    []string       `json:"allies"`
+	Allies    []string       `json:"allies"` // the other members of their alliance
 	Partners  []string       `json:"partners"`
 	Target    string         `json:"target"`
 	Guess     string         `json:"guess"`
@@ -89,19 +92,30 @@ type DuskChoice struct {
 }
 
 type Pair struct {
-	A    string `json:"a"`
-	B    string `json:"b"`
-	C    string `json:"c,omitempty"`
-	Ally bool   `json:"ally"`
-	Bond string `json:"bond"`
-	Note string `json:"note,omitempty"` // why a requested alliance didn't form
+	A        string `json:"a"`
+	B        string `json:"b"`
+	C        string `json:"c,omitempty"`
+	Ally     bool   `json:"ally"`               // this pair or trio formed or grew an alliance
+	Alliance string `json:"alliance,omitempty"` // which one
+	Bond     string `json:"bond"`
+	Note     string `json:"note,omitempty"` // why a requested alliance didn't form
 }
 
 type DuskState struct {
 	Choices  map[string]DuskChoice `json:"choices"`
 	Common   map[string]bool       `json:"common"`
 	Pairs    []Pair                `json:"pairs"`
+	Notes    map[string]string     `json:"notes"` // per player: why their own choice was set aside
 	Resolved bool                  `json:"resolved"`
+}
+
+// Alliance is 2 or 3 players who stand for different values, held together by
+// one statement that holds all their values.
+type Alliance struct {
+	ID        string   `json:"id"`
+	Members   []string `json:"members"`
+	Statement string   `json:"statement"`
+	Season    int      `json:"season"` // the Dusk it formed or last grew at
 }
 
 type Game struct {
@@ -109,8 +123,9 @@ type Game struct {
 	HostSecret string               `json:"hostSecret"`
 	Phase      string               `json:"phase"`
 	Season     int                  `json:"season"`
-	ForestGoal bool                 `json:"forestGoal"`
 	Players    []*Player            `json:"players"`
+	Alliances  []*Alliance          `json:"alliances"`
+	StoryIdx   int                  `json:"storyIdx"` // finale: which alliance is telling its story
 	Order      []string             `json:"order"`
 	TurnIdx    int                  `json:"turnIdx"`
 	StartIdx   int                  `json:"startIdx"`
@@ -147,7 +162,7 @@ type Action struct {
 	Ally   bool   `json:"ally"`
 	N      int    `json:"n"`
 	Card   int    `json:"card"`
-	Forest bool   `json:"forest"`
+	Text   string `json:"text"`
 	Types  []int  `json:"types"`
 	As     string `json:"as"` // the player the Keeper acts for
 }
@@ -159,7 +174,8 @@ func buildHexes() []Hex {
 		q, r := dirs[4][0]*k, dirs[4][1]*k
 		for side := 0; side < 6; side++ {
 			for s := 0; s < k; s++ {
-				hs = append(hs, Hex{q, r, k, side})
+				// Values go clockwise from the top, so the forest reads Z-E-R-A-O-S.
+				hs = append(hs, Hex{q, r, k, (3 - side + 6) % 6})
 				q += dirs[side][0]
 				r += dirs[side][1]
 			}
@@ -287,7 +303,7 @@ func (g *Game) Join(name, color string) (*Player, error) {
 			return nil, errors.New("that name is taken")
 		}
 	}
-	p := &Player{ID: randID(6), Secret: randID(16), Name: name, Color: color,
+	p := &Player{ID: randID(6), Secret: randID(16), Name: name, Color: color, Value: -1,
 		Used: map[int]bool{}, Pos: -1, Pot: map[string]int{}, Peek: map[int]string{}}
 	g.Players = append(g.Players, p)
 	g.logf("%s joined", name)
@@ -318,7 +334,7 @@ func (g *Game) assignPowers(pid string, types []int) error {
 	return nil
 }
 
-func (g *Game) start(forest bool) error {
+func (g *Game) start() error {
 	if g.Phase != PhaseLobby {
 		return errors.New("already started")
 	}
@@ -330,7 +346,6 @@ func (g *Game) start(forest bool) error {
 			return fmt.Errorf("assign at least one Enneagram power to %s", p.Name)
 		}
 	}
-	g.ForestGoal = forest
 	for _, p := range g.Players {
 		g.Order = append(g.Order, p.ID)
 		p.TrustLeft = 10
@@ -344,7 +359,7 @@ func (g *Game) start(forest bool) error {
 	}
 	g.Phase = PhasePlant
 	g.TurnIdx, g.TurnsTaken = 0, 0
-	g.logf("The expedition begins. Plant your seed: choose a Seedlands space in the value you identify with most, and say why.")
+	g.logf("The expedition begins. Plant your seed: say which value you stand for, and why.")
 	return nil
 }
 
@@ -488,21 +503,107 @@ func (g *Game) enterDusk() {
 	g.logf("Dusk falls on season %d. Choose a partner you haven't talked with yet.", g.Season)
 }
 
-func (g *Game) adjacentOrSame(a, b *Player) bool {
-	return g.dist(a.Pos, b.Pos) <= 1
+func (g *Game) allianceOf(pid string) *Alliance {
+	for _, al := range g.Alliances {
+		if contains(al.Members, pid) {
+			return al
+		}
+	}
+	return nil
+}
+
+func (g *Game) alliance(id string) *Alliance {
+	for _, al := range g.Alliances {
+		if al.ID == id {
+			return al
+		}
+	}
+	return nil
+}
+
+// valueKey is an alliance's values as letters in ZERAOS order, e.g. "ERS":
+// the key for StatementTips.
+func (g *Game) valueKey(members []string) string {
+	has := map[int]bool{}
+	for _, m := range members {
+		if p := g.player(m); p != nil && p.Value >= 0 {
+			has[p.Value] = true
+		}
+	}
+	k := ""
+	for i, v := range Values {
+		if has[i] {
+			k += v.Letter
+		}
+	}
+	return k
+}
+
+func (g *Game) valueName(p *Player) string {
+	if p.Value < 0 {
+		return "no value yet"
+	}
+	return Values[p.Value].Name
+}
+
+// setAllies keeps each member's Allies list in step with their alliance.
+func (g *Game) setAllies(al *Alliance) {
+	for _, m := range al.Members {
+		p := g.player(m)
+		p.Allies = nil
+		for _, o := range al.Members {
+			if o != m {
+				p.Allies = append(p.Allies, o)
+			}
+		}
+	}
+}
+
+// allyCheck says why a and b can't ally tonight, or "" if they can. grown lists
+// alliances that already grew tonight (each grows by one at most per Dusk).
+func (g *Game) allyCheck(a, b *Player, grown map[string]bool) string {
+	alA, alB := g.allianceOf(a.ID), g.allianceOf(b.ID)
+	switch {
+	case a.Value >= 0 && a.Value == b.Value:
+		return fmt.Sprintf("No alliance: you both stand for %s. An alliance joins different values.", g.valueName(a))
+	case alA != nil && alB != nil:
+		return "No alliance: you're each in an alliance already, and alliances don't merge."
+	}
+	al, newcomer := alA, b
+	if al == nil {
+		al, newcomer = alB, a
+	}
+	if al == nil {
+		return ""
+	}
+	if len(al.Members) >= 3 {
+		return "No alliance: that alliance is full (3 at most)."
+	}
+	if grown[al.ID] {
+		return "No alliance: that alliance already welcomed someone tonight."
+	}
+	for _, m := range al.Members {
+		if p := g.player(m); p.Value == newcomer.Value {
+			return fmt.Sprintf("No alliance: %s already stands for %s in that alliance.", p.Name, g.valueName(p))
+		}
+	}
+	return ""
 }
 
 func (g *Game) resolveDusk() {
 	d := g.Dusk
-	paired := map[string]bool{}
-	var pairs []Pair
-	ids := append([]string(nil), g.Order...)
-	for _, id := range ids {
-		if paired[id] {
-			continue
-		}
+	d.Notes = map[string]string{}
+	// Mutual choices, in turn order.
+	type mutual struct {
+		a, b *Player
+		ask  bool // both ticked alliance
+		one  bool // only one did
+	}
+	var mutuals []mutual
+	seen := map[string]bool{}
+	for _, id := range g.Order {
 		c, ok := d.Choices[id]
-		if !ok || c.Partner == "" || paired[c.Partner] {
+		if seen[id] || !ok || c.Partner == "" || seen[c.Partner] {
 			continue
 		}
 		oc, ok := d.Choices[c.Partner]
@@ -513,32 +614,82 @@ func (g *Game) resolveDusk() {
 		if a == nil || b == nil || contains(a.Partners, b.ID) {
 			continue
 		}
-		pr := Pair{A: a.ID, B: b.ID}
-		if c.Ally || oc.Ally {
-			// Say why an alliance someone asked for didn't happen.
-			common := d.Common[a.ID] || d.Common[b.ID]
-			switch {
-			case !(c.Ally && oc.Ally):
-				pr.Note = "Only one of you asked for an alliance."
-			case hasAlly(a, b.ID):
-				pr.Note = "You're already allies."
-			case len(a.Allies) >= 3 || len(b.Allies) >= 3:
-				pr.Note = "One of you already has 3 alliances."
-			case !common && !g.adjacentOrSame(a, b):
-				pr.Note = "No alliance: you weren't on the same or neighbouring spaces."
-			default:
-				a.Allies = append(a.Allies, b.ID)
-				b.Allies = append(b.Allies, a.ID)
-				pr.Ally = true
+		seen[a.ID], seen[b.ID] = true, true
+		mutuals = append(mutuals, mutual{a, b, c.Ally && oc.Ally, c.Ally != oc.Ally})
+	}
+
+	taken := map[string]bool{}
+	grown := map[string]bool{}
+	var pairs []Pair
+	// First, alliances that grow to three: the existing member joins the
+	// conversation, so all three can find their new statement together.
+	for _, m := range mutuals {
+		alA, alB := g.allianceOf(m.a.ID), g.allianceOf(m.b.ID)
+		if !m.ask || (alA == nil) == (alB == nil) || g.allyCheck(m.a, m.b, grown) != "" {
+			continue
+		}
+		al, newcomer := alA, m.b
+		if al == nil {
+			al, newcomer = alB, m.a
+		}
+		other := ""
+		for _, x := range al.Members {
+			if x != m.a.ID && x != m.b.ID {
+				other = x
 			}
 		}
-		paired[a.ID], paired[b.ID] = true, true
+		if taken[other] {
+			continue
+		}
+		al.Members = append(al.Members, newcomer.ID)
+		al.Statement, al.Season = "", g.Season
+		g.setAllies(al)
+		grown[al.ID] = true
+		taken[m.a.ID], taken[m.b.ID], taken[other] = true, true, true
+		pairs = append(pairs, Pair{A: m.a.ID, B: m.b.ID, C: other, Ally: true, Alliance: al.ID})
+		g.logf("%s joined the alliance of %s", newcomer.Name, g.namesOf(al.Members, newcomer.ID))
+	}
+	// Then everyone else who chose each other.
+	for _, m := range mutuals {
+		if taken[m.a.ID] && taken[m.b.ID] {
+			continue
+		}
+		if taken[m.a.ID] || taken[m.b.ID] {
+			// One of them was pulled into their alliance's trio tonight.
+			pulled, left := m.a, m.b
+			if taken[m.b.ID] {
+				pulled, left = m.b, m.a
+			}
+			d.Notes[left.ID] = fmt.Sprintf("%s is with their alliance tonight, welcoming a new member, so you're paired with someone else.", pulled.Name)
+			continue
+		}
+		pr := Pair{A: m.a.ID, B: m.b.ID}
+		switch {
+		case m.one:
+			pr.Note = "Only one of you asked for an alliance."
+		case m.ask:
+			if why := g.allyCheck(m.a, m.b, grown); why != "" {
+				pr.Note = why
+				break
+			}
+			if al := g.allianceOf(m.a.ID); al == nil && g.allianceOf(m.b.ID) == nil {
+				al = &Alliance{ID: randID(6), Members: []string{m.a.ID, m.b.ID}, Season: g.Season}
+				g.Alliances = append(g.Alliances, al)
+				g.setAllies(al)
+				pr.Ally, pr.Alliance = true, al.ID
+				g.logf("Alliance: %s & %s (%s + %s)", m.a.Name, m.b.Name, g.valueName(m.a), g.valueName(m.b))
+			} else {
+				// An alliance growing to three whose third member was already taken.
+				pr.Note = "No alliance tonight: the other member of that alliance is already paired."
+			}
+		}
+		taken[m.a.ID], taken[m.b.ID] = true, true
 		pairs = append(pairs, pr)
 	}
 	// Everyone else gets a Fireside chat, avoiding repeat partners where possible.
 	var rest []string
-	for _, id := range ids {
-		if !paired[id] {
+	for _, id := range g.Order {
+		if !taken[id] {
 			rest = append(rest, id)
 		}
 	}
@@ -555,13 +706,28 @@ func (g *Game) resolveDusk() {
 		pairs = append(pairs, Pair{A: rest[0], B: rest[j]})
 		rest = append(rest[1:j], rest[j+1:]...)
 	}
-	if len(rest) == 1 && len(pairs) > 0 {
-		pairs[len(pairs)-1].C = rest[0]
+	if len(rest) == 1 {
+		// The odd one out joins the last Fireside chat, so alliance trios stay
+		// just the alliance.
+		joined := false
+		for i := len(pairs) - 1; i >= 0; i-- {
+			if !pairs[i].Ally && pairs[i].C == "" {
+				pairs[i].C, joined = rest[0], true
+				break
+			}
+		}
+		if !joined && len(pairs) > 0 {
+			pairs[len(pairs)-1].C = rest[0]
+		}
 	}
 	bonds := BondCards[g.Season-1]
 	for i := range pairs {
 		pr := &pairs[i]
-		pr.Bond = bonds[rand.Intn(len(bonds))]
+		if pr.Ally {
+			pr.Bond = StatementCard
+		} else {
+			pr.Bond = bonds[rand.Intn(len(bonds))]
+		}
 		members := []string{pr.A, pr.B}
 		if pr.C != "" {
 			members = append(members, pr.C)
@@ -574,21 +740,62 @@ func (g *Game) resolveDusk() {
 				}
 			}
 		}
-		if pr.Ally {
-			g.logf("Alliance: %s & %s", g.player(pr.A).Name, g.player(pr.B).Name)
-		}
 	}
 	d.Pairs = pairs
 	d.Resolved = true
 	g.setTimer(240, "Dusk conversations")
 }
 
+func (g *Game) namesOf(ids []string, except string) string {
+	var ns []string
+	for _, id := range ids {
+		if p := g.player(id); p != nil && id != except {
+			ns = append(ns, p.Name)
+		}
+	}
+	return strings.Join(ns, " & ")
+}
+
+// setStatement records an alliance's statement. Any member can write or edit
+// it during the Dusk the alliance formed or grew at.
+func (g *Game) setStatement(me *Player, text string) error {
+	al := g.allianceOf(me.ID)
+	if al == nil {
+		return errors.New("you're not in an alliance")
+	}
+	if g.Phase != PhaseDusk || !g.Dusk.Resolved || al.Season != g.Season {
+		return errors.New("write your statement at the Dusk your alliance formed")
+	}
+	text = strings.TrimSpace(text)
+	if text == "" {
+		return errors.New("write a line that holds all your values")
+	}
+	if len([]rune(text)) > 140 {
+		return errors.New("keep it short: about 12 words")
+	}
+	al.Statement = text
+	g.logf("%s: \"%s\"", g.namesOf(al.Members, ""), text)
+	return nil
+}
+
+func (g *Game) toGuess() {
+	g.Phase = PhaseGuess
+	g.TimerEnd, g.TimerLabel = 0, ""
+	g.logf("Everyone: guess who was your Secret Owl.")
+}
+
 func (g *Game) nextSeason() {
 	g.Dusk = nil
 	if g.Season >= 3 {
-		g.Phase = PhaseGuess
 		g.TimerEnd, g.TimerLabel = 0, ""
-		g.logf("The Vision of a Forest. Everyone: guess who was your Secret Owl.")
+		if len(g.Alliances) > 0 {
+			g.Phase = PhaseStories
+			g.StoryIdx = 0
+			g.setTimer(120, "Alliance story")
+			g.logf("The Vision of a Forest. Each alliance tells its story: its statement, and how they found it.")
+			return
+		}
+		g.toGuess()
 		return
 	}
 	g.Season++
@@ -608,7 +815,8 @@ type Score struct {
 	Trust     int    `json:"trust"`
 	Givers    int    `json:"givers"`
 	Growth    int    `json:"growth"`
-	Alliances int    `json:"alliances"`
+	Advocacy  int    `json:"advocacy"`
+	Advocated []int  `json:"advocated"` // the values that earned Advocacy points
 	Secret    int    `json:"secret"`
 	Total     int    `json:"total"`
 	OwlName   string `json:"owlName"`
@@ -624,7 +832,51 @@ func (g *Game) owlOf(id string) *Player {
 	return nil
 }
 
-func (g *Game) Scores() ([]Score, bool) {
+// advocated says whether a value was advocated by the end: someone told an Oak
+// story in it, or someone who stands for it told a Heartwood story.
+func (g *Game) advocated(v int) bool {
+	if g.Oak[v] {
+		return true
+	}
+	for _, p := range g.Players {
+		if p.Value != v {
+			continue
+		}
+		for _, c := range p.Cards {
+			if c.Tier == 4 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// alliedValues is every value p's alliance stands for (just p's own without one).
+func (g *Game) alliedValues(p *Player) []int {
+	members := []string{p.ID}
+	if al := g.allianceOf(p.ID); al != nil {
+		members = al.Members
+	}
+	var vs []int
+	for _, m := range members {
+		if o := g.player(m); o != nil && o.Value >= 0 && !containsInt(vs, o.Value) {
+			vs = append(vs, o.Value)
+		}
+	}
+	sort.Ints(vs)
+	return vs
+}
+
+func containsInt(xs []int, x int) bool {
+	for _, y := range xs {
+		if y == x {
+			return true
+		}
+	}
+	return false
+}
+
+func (g *Game) Scores() []Score {
 	var out []Score
 	for _, p := range g.Players {
 		s := Score{ID: p.ID, Name: p.Name, Color: p.Color}
@@ -642,7 +894,12 @@ func (g *Game) Scores() ([]Score, bool) {
 			}
 		}
 		s.Growth += len(regions) + p.Bonus
-		s.Alliances = 3 * len(p.Allies)
+		for _, v := range g.alliedValues(p) {
+			if g.advocated(v) {
+				s.Advocacy += 3
+				s.Advocated = append(s.Advocated, v)
+			}
+		}
 		s.Secret = p.Confirmed
 		if t := g.player(p.Target); t != nil && t.Guess != p.ID {
 			s.Secret += 2
@@ -653,7 +910,7 @@ func (g *Game) Scores() ([]Score, bool) {
 				s.Secret += 2
 			}
 		}
-		s.Total = s.Trust + s.Growth + s.Alliances + s.Secret
+		s.Total = s.Trust + s.Growth + s.Advocacy + s.Secret
 		out = append(out, s)
 	}
 	sort.Slice(out, func(i, j int) bool {
@@ -662,15 +919,12 @@ func (g *Game) Scores() ([]Score, bool) {
 		}
 		return out[i].Trust > out[j].Trust
 	})
-	forestStands := len(g.Oak) == 6
-	if len(out) > 0 && (!g.ForestGoal || forestStands) {
-		for i := range out {
-			if out[i].Total == out[0].Total && out[i].Trust == out[0].Trust {
-				out[i].Winner = true // a true tie shares the win
-			}
+	for i := range out {
+		if out[i].Total == out[0].Total && out[i].Trust == out[0].Trust {
+			out[i].Winner = true // a true tie shares the win
 		}
 	}
-	return out, forestStands
+	return out
 }
 
 // ---- actions ----
@@ -712,7 +966,7 @@ var keeperActs = map[string]bool{
 func (g *Game) hostAction(a Action) error {
 	switch a.Type {
 	case "start":
-		return g.start(a.Forest)
+		return g.start()
 	case "assignPowers":
 		return g.assignPowers(a.Target, a.Types)
 	case "kick":
@@ -751,6 +1005,16 @@ func (g *Game) hostAction(a Action) error {
 			return errors.New("set the Dusk pairs first")
 		}
 		g.nextSeason()
+	case "nextStory":
+		if g.Phase != PhaseStories {
+			return errors.New("not now")
+		}
+		g.StoryIdx++
+		if g.StoryIdx >= len(g.Alliances) {
+			g.toGuess()
+			return nil
+		}
+		g.setTimer(120, "Alliance story")
 	case "startChain":
 		if g.Phase != PhaseGuess {
 			return errors.New("not now")
@@ -792,7 +1056,8 @@ func (g *Game) playerAction(me *Player, a Action) error {
 			return errors.New("plant on an outer Seedlands space")
 		}
 		me.Pos = a.Hex
-		g.logf("%s planted their seed in %s", me.Name, RegionNames[g.Hexes[a.Hex].Region])
+		me.Value = g.Hexes[a.Hex].Region
+		g.logf("%s stands for %s", me.Name, RegionNames[me.Value])
 		g.TurnsTaken++
 		if g.TurnsTaken >= len(g.Order) {
 			g.Phase = PhaseTurn
@@ -836,6 +1101,8 @@ func (g *Game) playerAction(me *Player, a Action) error {
 		}
 		g.Dusk.Choices[me.ID] = DuskChoice{Partner: a.Target, Ally: a.Ally}
 		return nil
+	case "statement":
+		return g.setStatement(me, a.Text)
 	case "guess":
 		if g.Phase != PhaseGuess {
 			return errors.New("not now")

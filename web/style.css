@@ -101,8 +101,9 @@ table.scores tr.win { background: rgba(224,163,46,.18); }
 .pin { font-size: 2.4rem; font-weight: 800; letter-spacing: .15em; color: var(--accent); }
 .legend { display: flex; flex-wrap: wrap; gap: 4px 12px; justify-content: center; font-size: .8rem; color: var(--muted); margin-top: 6px; }
 .legend i { display: inline-block; width: .8em; height: .8em; border-radius: 3px; margin-right: .3em; vertical-align: -1px; }
-.forest { margin-top: .4em; font-size: .95rem; display: flex; flex-wrap: wrap; gap: .4em; align-items: center; }
-.forest span:not(.muted) { opacity: .45; }
-.forest span.done { opacity: 1; font-weight: 800; color: var(--good); }
 .note { color: var(--accent); font-size: .9rem; margin-top: .2em; }
 .qr { width: 168px; height: 168px; image-rendering: pixelated; background: #fff; padding: 6px; border-radius: 8px; }
+.alliance { padding: .4em 0; }
+.statement { font-weight: 800; font-size: 1.1rem; margin-top: .2em; }
+.tip { border-left: 4px solid var(--accent); padding: .3em .7em; margin: .5em 0; background: var(--panel2); border-radius: 8px; }
+.values { display: grid; gap: 4px; margin-top: .5em; }

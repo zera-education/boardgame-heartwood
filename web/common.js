@@ -20,7 +20,8 @@ const HW = {
 
   // Go sends empty lists as null.
   normalise(v) {
-    v.log ||= []; v.order ||= [];
+    v.log ||= []; v.order ||= []; v.alliances ||= [];
+    v.alliances.forEach(a => { a.members ||= []; });
     v.players = (v.players || []).map(p => ({ ...p, allies: p.allies || [], partners: p.partners || [], cards: p.cards || [], types: p.types || [], used: p.used || {} }));
     if (v.turn) v.turn.followUps ||= [];
     return v;
@@ -143,8 +144,19 @@ const HW = {
     return `<span class="chip"><i style="background:${p.color}"></i>${HW.esc(p.name)}</span>`;
   },
 
-  regionColors: ['#e0a32e', '#e0703a', '#3f9e9a', '#c8463f', '#cf6f97', '#4f74b0'],
-  regionIcons: ['🔍', '🎨', '🤝', '🦁', '💗', '⚓'],
+  // The six ZERAOS values come from the server (content.go), with icon and colour.
+  get regionColors() { return (HW.view?.values || []).map(x => x.color); },
+  get regionIcons() { return (HW.view?.values || []).map(x => x.icon); },
+  valueName(i) {
+    const x = HW.view?.values?.[i];
+    return x ? `${x.icon} ${x.name}` : '';
+  },
+  // An alliance's members and statement, for the board and the phone.
+  allianceHTML(al) {
+    if (!al) return '';
+    return `<div class="alliance">${al.members.map(m => `${HW.chip(m)} <small>${HW.valueName(HW.player(m)?.value)}</small>`).join(' · ')}
+      <div class="statement">${al.statement ? `“${HW.esc(al.statement)}”` : '<span class="muted">Writing their statement…</span>'}</div></div>`;
+  },
   tokenIcons: { mushroom: '🍄', squirrel: '🐿️', campfire: '🔥', path: '🍃' },
   tokenNames: { mushroom: 'Mushroom patch', squirrel: 'Squirrel', campfire: 'Campfire', path: 'Hidden path' },
   tierNames: ['', '🌱 Seed', '🌿 Sapling', '🌳 Oak', '💛 Heartwood'],
@@ -232,25 +244,16 @@ const HW = {
     return {
       lobby: 'Gathering the expedition', plant: 'Plant your seed',
       turn: `Season ${v.season} · ${v.seasonName}`, dusk: `Dusk · Season ${v.season}`,
-      guess: 'The Vision of a Forest', chain: 'The Vision of a Forest', scores: 'The forest is grown',
+      stories: 'The Vision of a Forest', guess: 'The Vision of a Forest', chain: 'The Vision of a Forest', scores: 'The forest is grown',
     }[v.phase] || v.phase;
   },
 
-  // Forest Goal progress: which regions already have an Oak story.
-  forestHTML(v) {
-    if (!v.forestGoal || ['lobby', 'scores'].includes(v.phase)) return '';
-    const done = Object.keys(v.oak || {}).length;
-    return `<div class="forest"><span class="muted">Forest Goal ${done}/6:</span> ${v.regions.map((r, i) =>
-      `<span class="${v.oak?.[i] ? 'done' : ''}" title="${r}">${HW.regionIcons[i]}${v.oak?.[i] ? '✓' : ''}</span>`).join(' ')}</div>`;
-  },
-
   scoresTable(v) {
-    let h = `<table class="scores"><tr><th></th><th>Player</th><th>Trust</th><th>Growth</th><th>Alliances</th><th>Secret Owl</th><th>Total</th></tr>`;
+    let h = `<table class="scores"><tr><th></th><th>Player</th><th>Trust</th><th>Growth</th><th>Advocacy</th><th>Secret Owl</th><th>Total</th></tr>`;
     v.scores.forEach((s, i) => {
-      h += `<tr class="${s.winner ? 'win' : ''}"><td>${s.winner ? '🏆' : i + 1}</td><td>${HW.chip(s.id)}</td><td>${s.trust} <small>(${s.givers} people)</small></td><td>${s.growth}</td><td>${s.alliances}</td><td>${s.secret} <small>🦉 ${HW.esc(s.owlName)}</small></td><td><b>${s.total}</b></td></tr>`;
+      h += `<tr class="${s.winner ? 'win' : ''}"><td>${s.winner ? '🏆' : i + 1}</td><td>${HW.chip(s.id)}</td><td>${s.trust} <small>(${s.givers} people)</small></td><td>${s.growth}</td><td>${s.advocacy} <small>${(s.advocated || []).map(x => v.values[x].icon).join('')}</small></td><td>${s.secret} <small>🦉 ${HW.esc(s.owlName)}</small></td><td><b>${s.total}</b></td></tr>`;
     });
     h += '</table>';
-    if (v.forestGoal) h += `<p class="${v.forestStands ? 'good' : 'bad'}">${v.forestStands ? '🌳 The forest stands: every region has an Oak story.' : '🍂 The forest did not take root: not every region has an Oak story, so there is no winner.'}</p>`;
     return h;
   },
 };

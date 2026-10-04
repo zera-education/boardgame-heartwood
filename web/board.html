@@ -18,7 +18,6 @@
         <span class="muted">Game <b id="code"></b> · <a href="howto.html" target="_blank">How to play</a> · <a href="wiki.html" target="_blank">Wiki</a></span>
       </div>
       <div class="timer" data-timer></div>
-      <div id="forest"></div>
     </div>
     <div class="panel" id="main"></div>
     <div class="panel" id="host" hidden>
@@ -32,6 +31,7 @@
       </details>
     </div>
     <div class="panel"><h3>Expedition</h3><div class="plist" id="plist"></div></div>
+    <div class="panel" id="alliancesp" hidden><h3>Alliances</h3><div id="alliances"></div></div>
     <div class="panel"><h3>Trail log</h3><div class="log" id="log"></div></div>
   </div>
 </div>
@@ -48,7 +48,6 @@ if (params.get('k')) {
 const host = localStorage.getItem('hw-host-' + HW.code) || '';
 const creds = host ? { host } : {};
 $('code').textContent = HW.code;
-let forestGoal = false;
 const keep = {};      // Keeper dropdown choices not yet sent, so a redraw doesn't reset them
 
 const act = (type, extra) => HW.act(creds, type, extra);
@@ -59,12 +58,13 @@ function render(v) {
   $('title').textContent = HW.phaseTitle(v);
   HW.renderBoard($('svg'), boardOpts(v));
   HW.patch($('main'), mainHTML(v));
-  HW.patch($('forest'), HW.forestHTML(v));
   renderHost(v);
   HW.patch($('plist'), v.players.map(p => `<div class="${v.current === p.id ? 'cur' : ''}">
-    <span>${HW.chip(p.id)}</span>
+    <span>${HW.chip(p.id)} <small>${p.value >= 0 ? HW.valueName(p.value) : ''}</small></span>
     <span class="muted">🌰${p.trustLeft} left · 🤝${p.allies.length} · 🃏${p.cards.length}${p.squirrels ? ' · 🐿️' + p.squirrels : ''}</span>
     <span class="pw">${(p.types || []).map(t => `<span class="${p.used?.[t] ? 'used' : ''}">${HW.esc(v.powers[t - 1].title)}</span>`).join(' · ')}</span></div>`).join(''));
+  $('alliancesp').hidden = !v.alliances.length;
+  HW.patch($('alliances'), v.alliances.map(HW.allianceHTML).join(''));
   HW.patch($('log'), v.log.slice().reverse().map(l => `<div>${HW.esc(l)}</div>`).join(''));
 }
 
@@ -108,18 +108,22 @@ function mainHTML(v) {
   }
   if (v.phase === 'plant') {
     return `<p class="big">${HW.chip(v.current)} is planting their seed.</p>
-      <p class="muted">Which value do you identify with most? Tell us why, in one sentence. The Keeper places your seed.</p>`;
+      <p class="muted">Which ZERAOS value do you stand for? Tell us why, in one sentence. The Keeper places your seed in it.</p>
+      <div class="values">${v.values.map(x => `<div><b style="color:${x.color}">${x.icon} ${HW.esc(x.name)}</b> <span class="muted">${HW.esc(x.tagline)}</span></div>`).join('')}</div>`;
   }
   if (v.phase === 'turn' && v.turn) {
     const t = v.turn, p = HW.player(t.player);
     const ring = p.pos >= 0 ? v.hexes[p.pos] : null;
-    let h = `<p class="big">${HW.chip(t.player)}'s turn · <span class="muted">${ring ? (ring.region >= 0 ? v.regions[ring.region] + ', ' : '') + HW.ringNames[ring.ring] : ''}</span></p>`;
+    let h = '';
+    const fresh = v.alliances.filter(al => al.season === v.season - 1 && al.statement);
+    if (v.turnsTaken === 0 && fresh.length) h += `<div class="event"><b>New alliances: say your statement aloud.</b>${fresh.map(HW.allianceHTML).join('')}</div>`;
+    h += `<p class="big">${HW.chip(t.player)}'s turn · <span class="muted">${ring ? (ring.region >= 0 ? HW.valueName(ring.region) + ', ' : '') + HW.ringNames[ring.ring] : ''}</span></p>`;
     if (t.eventText) h += `<div class="event">${HW.esc(t.eventText)}</div>`;
     if (t.campfire) h += `<div class="event">🔥 Campfire! Everyone answers in one sentence: ${HW.esc(t.campfire)}</div>`;
     if (t.invited) h += `<div class="event">🤲 ${HW.chip(t.invited)} answers this question too, after ${HW.chip(t.player)}.</div>`;
     if (t.step === 'move') h += `<p class="muted">Where to? Say it, and the Keeper moves you. (${t.stepsLeft} step${t.stepsLeft === 1 ? '' : 's'} left)</p>`;
     if (t.step !== 'move') {
-      h += `<span class="tier">${HW.tierNames[t.tier]}${t.region >= 0 ? ' · ' + HW.regionIcons[t.region] + ' ' + v.regions[t.region] : ''}</span>`;
+      h += `<span class="tier">${HW.tierNames[t.tier]}${t.region >= 0 ? ' · ' + HW.valueName(t.region) : ''}</span>`;
       if (t.choices?.length) h += `<p class="muted">True North: choose one of three cards.</p>` + t.choices.map(c => `<div class="choice">${HW.esc(c)}</div>`).join('');
       else h += `<div class="prompt">${HW.esc(t.prompt)}</div>`;
     }
@@ -132,13 +136,22 @@ function mainHTML(v) {
     if (!v.dusk.resolved) {
       const waiting = v.players.filter(p => !p.duskChosen).map(p => HW.chip(p.id)).join(' ');
       return `<p class="big">Dusk falls. Choose a partner on your phone.</p>
-        <p class="muted">Choose each other, tick alliance, and stand on the same or neighbouring spaces to make it an Alliance. Everyone else has a Fireside chat.</p>
+        <p class="muted">To ally, choose each other and both tick alliance. An alliance joins different values (up to 3 people), and finds one statement that holds them all. Everyone else has a Fireside chat.</p>
         <p>Still choosing: ${waiting || '<b>everyone has chosen</b>'}</p>`;
     }
-    return `<p class="big">Talk for 4 minutes.</p>` + v.dusk.pairs.map(pr => `<div class="pair">
+    return `<p class="big">Talk for 4 minutes.</p>` + v.dusk.pairs.map(pr => {
+      const al = pr.ally && v.alliances.find(a => a.id === pr.alliance);
+      return `<div class="pair">
       ${HW.chip(pr.a)} &amp; ${HW.chip(pr.b)}${pr.c ? ' &amp; ' + HW.chip(pr.c) : ''}
       ${pr.ally ? '<span class="badge">ALLIANCE</span>' : '<span class="muted">fireside</span>'}
-      <div class="muted">${HW.esc(pr.bond)}</div>${pr.note ? `<div class="note">${HW.esc(pr.note)}</div>` : ''}</div>`).join('');
+      ${al ? `<div class="statement">${al.statement ? `“${HW.esc(al.statement)}”` : '<span class="muted">Writing their statement…</span>'}</div>` : `<div class="muted">${HW.esc(pr.bond)}</div>`}
+      ${pr.note ? `<div class="note">${HW.esc(pr.note)}</div>` : ''}</div>`;
+    }).join('');
+  }
+  if (v.phase === 'stories' && v.story) {
+    const al = v.alliances.find(a => a.id === v.story.alliance);
+    return `<p class="muted">Alliance ${v.story.idx + 1} of ${v.story.total}</p>
+      <p class="big">Tell your alliance's story: your statement, and how you found it.</p>${HW.allianceHTML(al)}`;
   }
   if (v.phase === 'guess') {
     const waiting = v.players.filter(p => !p.guessed).map(p => HW.chip(p.id)).join(' ');
@@ -227,8 +240,7 @@ function renderHost(v) {
   el.hidden = false;
   let h = '';
   if (v.phase === 'lobby') {
-    h += `<label><input type="checkbox" id="forest" style="width:auto" ${forestGoal ? 'checked' : ''}> Forest Goal: no winner unless every region gets an Oak story</label>
-      <p class="muted">Give each player 1 to 3 Enneagram powers (tap a type to add or remove it). Each power works once.</p>
+    h += `<p class="muted">Give each player 1 to 3 Enneagram powers (tap a type to add or remove it). Each power works once.</p>
       <div class="assign">${v.players.map(p => `<div class="arow"><span>${HW.chip(p.id)}</span><span class="atypes">${v.powers.map(pw =>
         `<button class="${p.types?.includes(pw.type) ? 'sel' : 'ghost'}" data-assign="${p.id}" data-type="${pw.type}" title="${pw.type} ${pw.name}: ${HW.esc(pw.title)}">${pw.type}</button>`).join('')}</span>
         <button class="ghost kick" data-kick="${p.id}" title="Remove ${HW.esc(p.name)}">✕</button></div>`).join('') || '<p class="muted">No one has joined yet.</p>'}</div>
@@ -236,12 +248,24 @@ function renderHost(v) {
       <p>${btn('Start the expedition', { k: 'start' }, '', v.players.length < 2 || v.players.some(p => !p.types?.length))}
         ${v.players.some(p => !p.types?.length) ? '<span class="muted">Everyone needs at least one power.</span>' : ''}</p>`;
   }
-  if (v.phase === 'plant') h += `<p>Tap the outer space ${HW.chip(v.current)} chooses, on the board.</p>`;
+  if (v.phase === 'plant') h += `<p>Tap an outer space of the value ${HW.chip(v.current)} stands for, on the board.</p>`;
   if (v.phase === 'turn' && v.turn) h += turnControls(v);
   if (v.phase === 'dusk') {
     if (!v.dusk.resolved) h += btn('Set the pairs', { k: 'resolveDusk' });
-    else h += btn(v.season >= 3 ? 'Go to the finale →' : `Start Season ${v.season + 1} →`, { k: 'nextSeason' });
+    else {
+      // Help for each alliance writing its statement tonight.
+      const writing = v.alliances.filter(al => al.season === v.season);
+      writing.forEach(al => {
+        const tip = v.tips?.[v.allianceKeys?.[al.id]];
+        h += `<div class="tip">${HW.allianceHTML(al)}${tip ? `<p class="muted" style="margin:.3em 0">Common ground: ${HW.esc(tip.common)}</p>
+          <details><summary class="muted">Example lines to offer if they're stuck</summary><ul>${tip.examples.map(x => `<li>${HW.esc(x)}</li>`).join('')}</ul></details>` : ''}</div>`;
+      });
+      const missing = writing.filter(al => !al.statement).length;
+      if (missing) h += `<p class="muted">Waiting for ${missing} statement${missing > 1 ? 's' : ''}. You can still go on; they can say it aloud.</p>`;
+      h += btn(v.season >= 3 ? 'Go to the finale →' : `Start Season ${v.season + 1} →`, { k: 'nextSeason' });
+    }
   }
+  if (v.phase === 'stories') h += btn('Next alliance →', { k: 'nextStory' });
   if (v.phase === 'guess') h += btn('Start the tributes', { k: 'startChain' });
   if (v.phase === 'chain' && v.tribute) {
     const r = v.tribute.receiver;
@@ -251,9 +275,7 @@ function renderHost(v) {
   const ready = readyPowers(v);
   if (ready.length) h += `<div class="powers-now"><p class="muted">Powers they can use now (when they say so):</p>${ready.map(r => powerRow(v, r)).join('')}</div>`;
   if (v.phase === 'turn' && v.turn) h += `<p style="margin-top:.6em">${btn('Skip this turn', { k: 'skipTurn' }, 'ghost')}</p>`;
-  if (HW.patch($('hostActions'), h)) {
-    const f = $('forest'); if (f) f.onchange = () => { forestGoal = f.checked; };
-  }
+  HW.patch($('hostActions'), h);
   const tools = `<label for="rejoinWho">Give a player a rejoin code (for a new phone or browser):</label>
     <div class="row"><select id="rejoinWho" style="flex:1">${v.players.map(p => `<option value="${p.id}">${HW.esc(p.name)}</option>`).join('')}</select>
     <button class="ghost" id="rejoinGo" ${v.players.length ? '' : 'disabled'}>Get code</button></div>
@@ -300,14 +322,14 @@ $('hostActions').addEventListener('click', e => {
   }
   const val = key => b.closest('.row')?.querySelector(`select[data-keep="${key}"]`)?.value || '';
   switch (d.k) {
-    case 'start': return act('start', { forest: forestGoal });
+    case 'start': return act('start');
     case 'skipTurn': return twice('skip', 'Tap "Skip this turn" again to confirm') && act('skipTurn');
     case 'pass': return twice('pass', 'Tap "Pass this turn" again to pass. No card, no points.') && actAs(d.as, 'pass');
     case 'claim': return actAs(d.as, 'claim', { hex: +d.hex });
     case 'pickChoice': return actAs(d.as, 'pickChoice', { card: +d.card });
     case 'confirm': return actAs(d.as, 'confirm', { n: +d.n });
     case 'power': return actAs(d.as, 'power', { power: +d.power, target: val(d.power === '2' ? 'p2t' : 'p6t') });
-    case 'resolveDusk': case 'nextSeason': case 'startChain': case 'nextTribute': return act(d.k);
+    case 'resolveDusk': case 'nextSeason': case 'nextStory': case 'startChain': case 'nextTribute': return act(d.k);
     default: if (d.k && d.as) return actAs(d.as, d.k); // endMove, redraw, lighter, startShare, doneShare, endTrust, squirrel
   }
 });

@@ -6,8 +6,8 @@ package main
 //	HW_SIM=1 go test -run TestBalanceSim -v
 //
 // Bots plan like reasonable players: each season they pick a Dusk partner they
-// haven't talked to, then end their move as deep as the season allows and next
-// to that partner if they can. They use their powers when useful and give
+// haven't talked to (one who stands for a different value, when they plan an
+// alliance), then end their move as deep as the season allows. They use their powers when useful and give
 // trust more often to deeper shares.
 
 import (
@@ -20,23 +20,22 @@ import (
 )
 
 type simStats struct {
-	games                                          int
-	alliances, heartwood, forestOK, noWinner       float64
-	trustUnused                                    float64
-	oakShares, tierSum, shares                     float64
-	winsByPower                                    [10]float64
-	holdsPower                                     [10]float64
-	scoreSum, trustSum, growthSum, allySum, secSum float64
-	margin, spread                                 float64
-	zeroAlliance                                   float64
-	stuckTurns                                     float64
+	games                                         int
+	alliances, heartwood, advocated, noWinner     float64
+	trustUnused                                   float64
+	oakShares, tierSum, shares                    float64
+	winsByPower                                   [10]float64
+	holdsPower                                    [10]float64
+	scoreSum, trustSum, growthSum, advSum, secSum float64
+	margin, spread                                float64
+	zeroAlliance                                  float64
+	stuckTurns                                    float64
 }
 
 type botOpts struct {
 	players     int
-	coordinate  bool // Season 3: bots spread across regions for the Forest Goal
-	forest      bool
-	partnerPlan bool // bots move to end next to their chosen Dusk partner
+	coordinate  bool // Season 3: bots spread across values that have no Oak story yet
+	partnerPlan bool // bots pick Dusk partners they can ally with (different values, room left)
 }
 
 func TestBalanceSim(t *testing.T) {
@@ -47,10 +46,10 @@ func TestBalanceSim(t *testing.T) {
 		name string
 		o    botOpts
 	}{
-		{"10 players, planning partners", botOpts{players: 10, partnerPlan: true, coordinate: true, forest: true}},
-		{"10 players, no partner planning", botOpts{players: 10, partnerPlan: false, coordinate: true, forest: true}},
-		{"10 players, no region coordination", botOpts{players: 10, partnerPlan: true, coordinate: false, forest: true}},
-		{"6 players, planning partners", botOpts{players: 6, partnerPlan: true, coordinate: true, forest: true}},
+		{"10 players, planning partners", botOpts{players: 10, partnerPlan: true, coordinate: true}},
+		{"10 players, no partner planning", botOpts{players: 10, partnerPlan: false, coordinate: true}},
+		{"10 players, no region coordination", botOpts{players: 10, partnerPlan: true, coordinate: false}},
+		{"6 players, planning partners", botOpts{players: 6, partnerPlan: true, coordinate: true}},
 	}
 	for _, run := range runs {
 		var st simStats
@@ -66,11 +65,11 @@ func report(t *testing.T, name string, s *simStats, o botOpts) {
 	pp := n * float64(o.players)
 	var b strings.Builder
 	fmt.Fprintf(&b, "\n=== %s (%d games)\n", name, s.games)
-	fmt.Fprintf(&b, "alliances per player: %.2f   players with no alliance: %.0f%%\n", s.alliances/pp, 100*s.zeroAlliance/pp)
+	fmt.Fprintf(&b, "allies per player: %.2f   players with no alliance: %.0f%%\n", s.alliances/pp, 100*s.zeroAlliance/pp)
 	fmt.Fprintf(&b, "Heartwood shares per game: %.2f   Oak shares per game: %.2f   avg tier: %.2f\n", s.heartwood/n, s.oakShares/n, s.tierSum/s.shares)
-	fmt.Fprintf(&b, "Forest Goal met: %.0f%% of games\n", 100*s.forestOK/n)
+	fmt.Fprintf(&b, "values advocated per game: %.1f of 6\n", s.advocated/n)
 	fmt.Fprintf(&b, "end of game per player: trust acorns unused %.1f\n", s.trustUnused/pp)
-	fmt.Fprintf(&b, "avg score %.1f = trust %.1f + growth %.1f + alliances %.1f + secret %.1f\n", s.scoreSum/pp, s.trustSum/pp, s.growthSum/pp, s.allySum/pp, s.secSum/pp)
+	fmt.Fprintf(&b, "avg score %.1f = trust %.1f + growth %.1f + advocacy %.1f + secret %.1f\n", s.scoreSum/pp, s.trustSum/pp, s.growthSum/pp, s.advSum/pp, s.secSum/pp)
 	fmt.Fprintf(&b, "winner margin %.1f points, top-to-bottom spread %.1f\n", s.margin/n, s.spread/n)
 	fmt.Fprintf(&b, "turns where the bot could not move at all: %.1f%%\n", 100*s.stuckTurns/(pp*3))
 	fmt.Fprintf(&b, "win rate when holding each power (fair = %.1f%%):\n", 100/float64(o.players))
@@ -103,7 +102,7 @@ func simGame(t *testing.T, o botOpts, st *simStats) {
 		must(host("assignPowers", Action{Target: p.ID, Types: types}), "assign powers")
 		openness[p.ID] = 0.7 + 0.6*rand.Float64() // some people's stories land harder than others'
 	}
-	must(host("start", Action{Forest: o.forest}), "start")
+	must(host("start", Action{}), "start")
 
 	// Plant: anywhere on the outer ring.
 	for g.Phase == PhasePlant {
@@ -118,7 +117,7 @@ func simGame(t *testing.T, o botOpts, st *simStats) {
 
 	for season := 1; season <= 3; season++ {
 		// Each bot picks a Dusk partner for this season.
-		buddy := pickBuddies(g)
+		buddy := pickBuddies(g, o.partnerPlan)
 		regionTaken := map[int]bool{}
 		for g.Phase == PhaseTurn {
 			p := g.current()
@@ -135,19 +134,25 @@ func simGame(t *testing.T, o botOpts, st *simStats) {
 			if b == nil {
 				continue
 			}
-			ally := len(p.Allies) < 3 && !hasAlly(p, b.ID)
-			if ally && g.dist(p.Pos, b.Pos) > 1 {
-				if hasPower(p, 9) && !p.Used[9] {
-					as(p, "power", Action{Power: 9})
-				}
+			ally := g.allyCheck(p, b, map[string]bool{}) == ""
+			if hasPower(p, 9) && !p.Used[9] && season == 3 {
+				as(p, "power", Action{Power: 9})
 			}
 			as(p, "duskChoice", Action{Target: b.ID, Ally: ally})
 		}
 		must(host("resolveDusk", Action{}), "resolve")
+		for _, al := range g.Alliances {
+			if al.Season == g.Season && al.Statement == "" {
+				must(as(g.player(al.Members[0]), "statement", Action{Text: "We hold " + g.valueKey(al.Members) + " together."}), "statement")
+			}
+		}
 		must(host("nextSeason", Action{}), "next season")
 	}
 
-	// Finale.
+	// Finale: alliance stories, then guesses.
+	for g.Phase == PhaseStories {
+		must(host("nextStory", Action{}), "story")
+	}
 	for _, p := range g.Players {
 		guess := g.Players[rand.Intn(len(g.Players))]
 		if rand.Float64() < 0.3 {
@@ -163,10 +168,12 @@ func simGame(t *testing.T, o botOpts, st *simStats) {
 		must(as(g.player(giver.Target), "confirm", Action{N: 2 + rand.Intn(2)}), "confirm")
 	}
 
-	scores, stands := g.Scores()
+	scores := g.Scores()
 	st.games++
-	if stands {
-		st.forestOK++
+	for v := range Values {
+		if g.advocated(v) {
+			st.advocated++
+		}
 	}
 	if !scores[0].Winner {
 		st.noWinner++
@@ -178,7 +185,7 @@ func simGame(t *testing.T, o botOpts, st *simStats) {
 		st.scoreSum += float64(s.Total)
 		st.trustSum += float64(s.Trust)
 		st.growthSum += float64(s.Growth)
-		st.allySum += float64(s.Alliances)
+		st.advSum += float64(s.Advocacy)
 		st.secSum += float64(s.Secret)
 		st.alliances += float64(len(p.Allies))
 		if len(p.Allies) == 0 {
@@ -213,8 +220,9 @@ func hasPower(p *Player, ty int) bool {
 	return false
 }
 
-// pickBuddies pairs players who haven't talked yet, preferring people close by.
-func pickBuddies(g *Game) map[string]string {
+// pickBuddies pairs players who haven't talked yet, preferring people close by,
+// and (when planning) people they could ally with.
+func pickBuddies(g *Game, plan bool) map[string]string {
 	ids := append([]string(nil), g.Order...)
 	rand.Shuffle(len(ids), func(i, j int) { ids[i], ids[j] = ids[j], ids[i] })
 	out := map[string]string{}
@@ -228,7 +236,11 @@ func pickBuddies(g *Game) map[string]string {
 			if o == id || out[o] != "" || contains(p.Partners, o) {
 				continue
 			}
-			if d := g.dist(p.Pos, g.player(o).Pos) + rand.Intn(3); d < bestD {
+			d := g.dist(p.Pos, g.player(o).Pos) + rand.Intn(3)
+			if plan && g.allyCheck(p, g.player(o), map[string]bool{}) == "" {
+				d -= 10
+			}
+			if d < bestD {
 				best, bestD = o, d
 			}
 		}

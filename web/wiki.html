@@ -158,7 +158,7 @@ const W = [
   <li>May pause any share, and can skip a [[turn]] if someone is away.</li>
   <li>Gives out [[rejoin-code|rejoin codes]] when a player changes phone.</li>
 </ul>
-<p>The Keeper can also switch on the [[forest-goal]] before the game starts.</p>` },
+` },
 
 { id: 'forest-pact', cat: 'basics', icon: '🌲', title: 'Forest Pact',
   short: 'The five promises everyone makes before playing.',
@@ -233,7 +233,7 @@ const W = [
 <tr><td>💛 Heartwood</td><td>[[heartwood]]</td><td>Your legacy (its own deck, no value)</td><td>90 s</td><td>4</td></tr>
 </table></div>
 <div class="box">
-<p class="muted">One Courage card, three depths:</p>
+<p class="muted">One Resilience card, three depths:</p>
 <p>🌱 A light question to warm up.<br>🌿 <i>Tell us about a time you were afraid and did it anyway.</i><br>🌳 A question about what lies underneath.</p>
 </div>
 <p>Before you start, you may draw again once or choose the [[lighter-tier]]. Powers that change your card: [[true-north]] and [[deep-water]].</p>` },
@@ -275,15 +275,15 @@ const W = [
 <p>The timer is a guide. When it runs out it turns red: finish your thought kindly. Nothing is lost if you go over.</p>` },
 
 { id: 'plant-your-seed', cat: 'basics', icon: '🌱', title: 'Plant your seed',
-  short: 'Where you start: a Seedlands space in the value you identify with most.',
+  short: 'Where you start: choose the ZERAOS value you stand for.',
   body: `
-<p>Before [[season]] 1, everyone places their token, one at a time.</p>
+<p>Before [[season]] 1, everyone plants their seed, one at a time.</p>
 <ol>
-  <li>When it's your turn to plant, say which [[values|value]] you identify with most; the Keeper places your seed on an outer [[seedlands]] space of that value.</li>
-  <li>Tell everyone why, in one sentence.</li>
+  <li>When it's your turn, say which of the [[values|six ZERAOS values]] you <b>stand for</b>, and why, in one sentence.</li>
+  <li>The [[keeper]] places your seed on an outer [[seedlands]] space of that value.</li>
 </ol>
-<p>It's the first small share of the game, and it shows who stands where.</p>
-<div class="tip"><h3>Tip</h3><p>Your starting space affects who you can reach and ally with early on. Choose honestly first; you can always walk.</p></div>` },
+<p>That value is yours for the whole game: you [[advocacy|advocate]] it, and you can only form an [[alliance]] with people who stand for a <b>different</b> one.</p>
+<div class="tip"><h3>Tip</h3><p>Choose the value you'd speak up for, not the one you think is rarest. Uneven choices are fine, and worth talking about.</p></div>` },
 
 // ───────────── The map
 { id: 'the-map', cat: 'map', icon: '🗺️', title: 'The map',
@@ -295,27 +295,76 @@ const W = [
 <tr><td>🌱 [[seedlands]] (outer)</td><td>18</td><td>Season 1</td><td>open from the start</td></tr>
 <tr><td>🌿 [[sapling-path]] (middle)</td><td>12</td><td>Season 2</td><td>open from Season 2</td></tr>
 <tr><td>🌳 [[oak-circle]] (inner)</td><td>6</td><td>Season 3</td><td>open from Season 3</td></tr>
-<tr><td>💛 [[heartwood]] (centre)</td><td>1</td><td>Season 3</td><td>needs an [[alliance|ally]]</td></tr>
+<tr><td>💛 [[heartwood]] (centre)</td><td>1</td><td>Season 3</td><td>needs an [[alliance]]</td></tr>
 </table></div>
 <p>Each value wedge has 3 Seedlands spaces, 2 Sapling Path spaces and 1 Oak Circle space. Every space except the Heartwood starts with a face-down [[discovery]].</p>
 <p>Rings that aren't open yet look faded. Any number of players can share a space.</p>
 <p>See [[moving]] for how you walk: up to 3 spaces a turn.</p>` },
 
-{ id: 'values', cat: 'map', icon: '🎨', title: 'The six values',
-  short: "ZERA's six Cs. Each owns a wedge of the map and a deck of questions.",
+{ id: 'values', cat: 'map', icon: '🌳', title: 'The six values (ZERAOS)',
+  short: "ZERA's core values. Each owns a wedge of the map and a deck of questions.",
   body: `
-<p>The board is cut into six wedges, one for each of ZERA's values. The value of the space you stand on picks the deck your [[prompt-card|question]] comes from.</p>
+<p>The board is cut into six wedges, one for each of ZERA's core values, <b>ZERAOS</b>. Reading clockwise from the top, they spell the word. The value of the space you stand on picks the deck your [[prompt-card|question]] comes from.</p>
 <div class="tablewrap"><table>
-<tr><th>Value</th><th>Where on the board</th><th>About</th></tr>
-<tr><td>🔍 Curiosity</td><td>bottom left</td><td rowspan="3">ZERA's learning environment</td></tr>
-<tr><td>🎨 Creativity</td><td>bottom right</td></tr>
-<tr><td>🤝 Collaboration</td><td>right</td></tr>
-<tr><td>🦁 Courage</td><td>top</td><td rowspan="3">The leaders ZERA forms</td></tr>
-<tr><td>💗 Compassion</td><td>top left</td></tr>
-<tr><td>⚓ Commitment</td><td>left</td></tr>
+<tr><th>Value</th><th>ZERA's line</th><th>Where</th></tr>
+<tr><td>☀️ [[zealous]]</td><td><i>Be zealous, not jealous.</i></td><td>top</td></tr>
+<tr><td>⭐ [[excellence]]</td><td><i>Beyond expectation.</i></td><td>upper right</td></tr>
+<tr><td>🎋 [[resilience]]</td><td><i>Anti-fragile.</i></td><td>lower right</td></tr>
+<tr><td>🪞 [[authenticity]]</td><td><i>Inclusive education.</i></td><td>bottom</td></tr>
+<tr><td>💡 [[open-mindedness]]</td><td><i>Growth mindset.</i></td><td>lower left</td></tr>
+<tr><td>🌍 [[sustainability]]</td><td><i>Start with the end in mind.</i></td><td>upper left</td></tr>
 </table></div>
-<div class="tip"><h3>Why it matters for points</h3><p>[[growth|Growth]] gives +1 for each <b>different</b> value you share in. Moving around the ring to a new value can be worth more than staying put.</p></div>
-<p>With the [[forest-goal]] on, every value needs at least one Oak story.</p>` },
+<h3>Stand for one, advocate it, tell its story</h3>
+<p>At the start you [[plant-your-seed|choose the value you stand for]]. All game you [[advocacy|advocate]] it. At [[dusk]] you join colleagues who stand for <b>different</b> values in an [[alliance]], with one [[statement]] that holds them all. At the [[finale]], each alliance tells its story.</p>
+<div class="tip"><h3>Why it matters for points</h3><p>[[growth|Growth]] gives +1 for each <b>different</b> value you share in, and [[advocacy|Advocacy]] scores every value your alliance stands for that got a deep story.</p></div>` },
+
+{ id: 'zealous', cat: 'map', icon: '☀️', title: 'Zealous',
+  short: 'Z in ZERAOS. Be zealous, not jealous.',
+  body: `
+<p class="muted">Z in ZERAOS · top of the board</p>
+<div class="box"><p><b>Be zealous, not jealous.</b></p><p>Passionate, driven energy channelled into learning and purpose rather than comparison: advocacy for students, initiative, and enthusiastic participation.</p></div>
+<p>One of the six [[values]]. Stand on one of its spaces and your [[prompt-card|question]] comes from its deck: a [[seedlands|Seed]], [[sapling-path|Sapling]] or [[oak-circle|Oak]] question, depending on your ring.</p>
+<p>It's [[advocacy|advocated]] when someone tells an Oak story in it, or someone who stands for it tells a [[heartwood]] story.</p>` },
+
+{ id: 'excellence', cat: 'map', icon: '⭐', title: 'Excellence',
+  short: 'E in ZERAOS. Beyond expectation.',
+  body: `
+<p class="muted">E in ZERAOS · upper right of the board</p>
+<div class="box"><p><b>Beyond expectation.</b></p><p>Consistently surpassing standards, never merely meeting them: in academics, governance, and personal growth. Heart (zealous) always comes first.</p></div>
+<p>One of the six [[values]]. Stand on one of its spaces and your [[prompt-card|question]] comes from its deck: a [[seedlands|Seed]], [[sapling-path|Sapling]] or [[oak-circle|Oak]] question, depending on your ring.</p>
+<p>It's [[advocacy|advocated]] when someone tells an Oak story in it, or someone who stands for it tells a [[heartwood]] story.</p>` },
+
+{ id: 'resilience', cat: 'map', icon: '🎋', title: 'Resilience',
+  short: 'R in ZERAOS. Anti-fragile.',
+  body: `
+<p class="muted">R in ZERAOS · lower right of the board</p>
+<div class="box"><p><b>Anti-fragile.</b></p><p>More than bouncing back: growing stronger through challenge. Purpose-driven leadership that persists toward long-term goals and learns from setbacks.</p></div>
+<p>One of the six [[values]]. Stand on one of its spaces and your [[prompt-card|question]] comes from its deck: a [[seedlands|Seed]], [[sapling-path|Sapling]] or [[oak-circle|Oak]] question, depending on your ring.</p>
+<p>It's [[advocacy|advocated]] when someone tells an Oak story in it, or someone who stands for it tells a [[heartwood]] story.</p>` },
+
+{ id: 'authenticity', cat: 'map', icon: '🪞', title: 'Authenticity',
+  short: 'A in ZERAOS. Inclusive education.',
+  body: `
+<p class="muted">A in ZERAOS · bottom of the board</p>
+<div class="box"><p><b>Inclusive education.</b></p><p>Genuine representation and honesty. Everyone, including students in zera Plus, belongs and is valued, without pretense.</p></div>
+<p>One of the six [[values]]. Stand on one of its spaces and your [[prompt-card|question]] comes from its deck: a [[seedlands|Seed]], [[sapling-path|Sapling]] or [[oak-circle|Oak]] question, depending on your ring.</p>
+<p>It's [[advocacy|advocated]] when someone tells an Oak story in it, or someone who stands for it tells a [[heartwood]] story.</p>` },
+
+{ id: 'open-mindedness', cat: 'map', icon: '💡', title: 'Open-mindedness',
+  short: 'O in ZERAOS. Growth mindset.',
+  body: `
+<p class="muted">O in ZERAOS · lower left of the board</p>
+<div class="box"><p><b>Growth mindset.</b></p><p>Welcoming diverse perspectives and inclusive decision-making: challenging assumptions and treating failure as a place to grow, not an endpoint.</p></div>
+<p>One of the six [[values]]. Stand on one of its spaces and your [[prompt-card|question]] comes from its deck: a [[seedlands|Seed]], [[sapling-path|Sapling]] or [[oak-circle|Oak]] question, depending on your ring.</p>
+<p>It's [[advocacy|advocated]] when someone tells an Oak story in it, or someone who stands for it tells a [[heartwood]] story.</p>` },
+
+{ id: 'sustainability', cat: 'map', icon: '🌍', title: 'Sustainability',
+  short: 'S in ZERAOS. Start with the end in mind.',
+  body: `
+<p class="muted">S in ZERAOS · upper left of the board</p>
+<div class="box"><p><b>Start with the end in mind.</b></p><p>Long-term thinking built into everything: creating lasting impact and building systems that outlast any single leader or cohort.</p></div>
+<p>One of the six [[values]]. Stand on one of its spaces and your [[prompt-card|question]] comes from its deck: a [[seedlands|Seed]], [[sapling-path|Sapling]] or [[oak-circle|Oak]] question, depending on your ring.</p>
+<p>It's [[advocacy|advocated]] when someone tells an Oak story in it, or someone who stands for it tells a [[heartwood]] story.</p>` },
 
 { id: 'seedlands', cat: 'map', icon: '🌱', title: 'Seedlands',
   short: 'The outer ring. Open from Season 1. Light, fun questions.',
@@ -349,26 +398,26 @@ const W = [
   <div class="fact"><span>Question</span>🌳 Oak: values, fears, hopes</div>
   <div class="fact"><span>Card points</span>3</div>
 </div>
-<p>An answer at the Oak tier on a value's space is an <b>Oak story</b>, which matters for the [[forest-goal]].</p>
+<p>An answer at the Oak tier on a value's space is an <b>Oak story</b>: it [[advocacy|advocates]] that value.</p>
 <p>Next ring in: [[heartwood]].</p>` },
 
 { id: 'heartwood', cat: 'map', icon: '💛', title: 'Heartwood (the centre)',
-  short: 'The single centre space. Needs an ally. Worth the most.',
+  short: 'The single centre space. Needs an alliance. Worth the most.',
   body: `
 <div class="facts">
   <div class="fact"><span>Spaces</span>1 (centre)</div>
   <div class="fact"><span>Opens</span>Season 3</div>
-  <div class="fact"><span>Step in</span>Needs at least one ally</div>
+  <div class="fact"><span>Step in</span>Needs an alliance</div>
   <div class="fact"><span>Question</span>💛 Your legacy</div>
   <div class="fact"><span>Card points</span>4</div>
 </div>
-<p>The heartwood is the dense core of a tree, its strongest part. To step in you need at least one [[alliance|ally]]: nobody reaches the centre alone.</p>
+<p>The heartwood is the dense core of a tree, its strongest part. To step in you need to be in an [[alliance]]: nobody reaches the centre alone. A Heartwood story [[advocacy|advocates]] the value of whoever tells it.</p>
 <ul>
   <li>It has its own deck of legacy questions, with no [[values|value]], so it doesn't add a value to your [[growth]].</li>
   <li>No [[lighter-tier]] here, and no [[discovery]].</li>
   <li>Any number of players can stand in it.</li>
 </ul>
-<p>From the [[seedlands]] it's 3 steps: in Season 3, with an ally, you can walk all the way in on one turn.</p>` },
+<p>From the [[seedlands]] it's 3 steps: in Season 3, in an alliance, you can walk all the way in on one turn.</p>` },
 
 { id: 'moving', cat: 'map', icon: '👣', title: 'Moving',
   short: 'Up to 3 spaces a turn, free, through open rings.',
@@ -376,12 +425,12 @@ const W = [
 <p>On your [[turn]], before you discover, say where you want to go. The [[keeper]] taps each neighbouring space you step to: <b>up to 3 spaces a turn</b>, and moving costs nothing.</p>
 <ul>
   <li>You can't enter a ring that isn't open yet (see [[season]]).</li>
-  <li>You can't step into the [[heartwood]] without at least one [[alliance|ally]].</li>
+  <li>You can't step into the [[heartwood]] without an [[alliance]].</li>
   <li>Take fewer steps, or none at all, if you like where you are.</li>
   <li>Once you stop and discover, you can't move again this turn, unless you find a [[hidden-path]].</li>
   <li>Powers that help you move: [[momentum]] (3 more steps) and [[rope-team]] (jump to an ally).</li>
 </ul>
-<div class="tip"><h3>Tip</h3><p>Where you stop decides who you can ally with at [[dusk]]. Players who move later can see where others stopped.</p></div>` },
+<div class="tip"><h3>Tip</h3><p>Where you stop decides your question: its value, and how deep. Head for a value your alliance wants advocated.</p></div>` },
 
 // ───────────── Resources
 { id: 'trust-acorn', cat: 'resources', icon: '🌰', title: 'Trust acorn',
@@ -464,7 +513,7 @@ const W = [
   <li>You don't discover the space you land on.</li>
   <li>Your [[prompt-card|question]] comes from wherever you end up, so you can pick a new [[values|value]].</li>
 </ul>
-<div class="tip"><h3>Tip</h3><p>Jump next to someone you want to ally with at [[dusk]], or to a value you haven't shared in yet.</p></div>` },
+<div class="tip"><h3>Tip</h3><p>Jump to a value you haven't shared in yet, or one your alliance wants advocated.</p></div>` },
 
 // ───────────── Dusk
 { id: 'dusk', cat: 'dusk', icon: '🌙', title: 'Dusk',
@@ -476,43 +525,60 @@ const W = [
   <li>To try for an [[alliance]], tick <b>Make it an alliance</b>.</li>
   <li>Tap <b>Send my choice</b>.</li>
   <li>The [[keeper]] taps <b>Set the pairs</b>. You pair only if you both chose each other; the app pairs everyone else, avoiding repeat partners where it can.</li>
-  <li>Your phone shows your partner and a [[bond-card]]. Talk for 4 minutes.</li>
+  <li>Your phone shows your partner and a card: the [[bond-card]] for a [[fireside-chat]], or the [[statement]] card for an alliance. Talk for 4 minutes.</li>
 </ol>
-<p>Every pair is either an <b>[[alliance]]</b> or a <b>[[fireside-chat]]</b>. With an odd number of players, one group is a [[trio]].</p>
-<p>Before pairs are set, a Peacemaker can use [[common-ground]].</p>` },
+<p>When an alliance of two welcomes a third, the existing member joins that conversation, so it becomes a [[trio]]. With an odd number of players, one Fireside group is a trio too.</p>` },
 
 { id: 'alliance', cat: 'dusk', icon: '🤝', title: 'Alliance',
-  short: 'A bond formed at Dusk. 3 points, and the key to the Heartwood.',
+  short: '2 or 3 people who stand for different values, held by one statement.',
   body: `
-<p>An alliance forms at [[dusk]] when <b>all three</b> are true:</p>
+<p>An alliance is 2 or 3 people who stand for <b>different</b> [[values]], held together by one [[statement]] that holds all their values. Real alliances don't form because of points: they form around something shared. This one asks you to find it.</p>
+<h3>Forming one at Dusk</h3>
 <ol>
-  <li>You both chose each other.</li>
-  <li>You both ticked <b>Make it an alliance</b>.</li>
-  <li>You stand on the same or neighbouring spaces (or one of you used [[common-ground]]).</li>
+  <li>You both chose each other at [[dusk]], and both ticked <b>Make it an alliance</b>.</li>
+  <li>You stand for different values.</li>
+  <li>Neither of you is in an alliance yet.</li>
 </ol>
-<p>It costs nothing: you each gain an <b>ally</b>. You can't ally twice with the same person, and each of you can have at most 3 allies. If any check fails, you still talk: it becomes a [[fireside-chat]], and your phone tells you why the alliance didn't form.</p>
-<h3>What an ally gives you</h3>
-<ul>
-  <li><b>+3 points</b> each at the end.</li>
-  <li><b>The key to the [[heartwood]]:</b> you can't step in without at least one ally.</li>
-  <li>Someone to jump to with [[rope-team]].</li>
-</ul>
+<p>If a check fails you still talk: it becomes a [[fireside-chat]], and your phone tells you why.</p>
+<h3>Growing to three</h3>
+<p>An alliance of two can welcome one more at a later Dusk: one member and a newcomer who stands for a <b>third</b> value choose each other and tick alliance. That night all three talk together (the other member joins in, setting aside their own choice), and write a <b>new</b> statement for all three values.</p>
 <div class="facts">
-  <div class="fact"><span>Per Dusk</span>At most 1 new ally</div>
-  <div class="fact"><span>Per game</span>At most 3 allies</div>
+  <div class="fact"><span>Size</span>2 or 3 people</div>
+  <div class="fact"><span>Values</span>All different</div>
+  <div class="fact"><span>Merging</span>Never: one alliance each</div>
 </div>
-<div class="tip"><h3>Tips</h3><p>Talk before the end of the season: agree where you'll both stop. Get your first ally by Season 2 so the Heartwood is open to you in Season 3. [[common-ground]] removes the distance check.</p></div>` },
+<h3>What it gives you</h3>
+<ul>
+  <li><b>More to [[advocacy|advocate]]:</b> every value your alliance stands for can score 3 if it gets a deep story.</li>
+  <li><b>The key to the [[heartwood]]:</b> you can't step in without an alliance.</li>
+  <li>Someone to jump to with [[rope-team]].</li>
+  <li>A story to tell at the [[finale]].</li>
+</ul>
+<div class="tip"><h3>Tip</h3><p>Plan together: "I'll take a deep question in your value if you take one in mine."</p></div>` },
+
+{ id: 'statement', cat: 'dusk', icon: '✍️', title: 'Statement',
+  short: 'One line that holds all your alliance values. About 12 words.',
+  body: `
+<p>Every new or grown [[alliance]] finds <b>one line that holds all its values</b>: a statement, a slogan or a cheer, your choice. About 12 words.</p>
+<div class="box"><p class="muted">Try</p><p><i>"We ___ so that ___."</i></p></div>
+<ol>
+  <li>Talk it through in your [[dusk]] conversation.</li>
+  <li>One of you types it on your phone. It appears on the big screen, and you can change it until the next [[season]] starts.</li>
+  <li>At the start of the next season, say it aloud to the room. At the [[finale]], tell the story of how you found it.</li>
+</ol>
+<p>Stuck? The [[keeper]] has a hint for every combination of values: what they share, and a few example lines.</p>
+<div class="tip"><h3>Tip</h3><p>Don't just list the values. Look for the place where they need each other, or where they pull against each other and you still choose both.</p></div>` },
 
 { id: 'fireside-chat', cat: 'dusk', icon: '🔥', title: 'Fireside chat',
   short: "Any Dusk pair that isn't an alliance. Same talk, no alliance.",
   body: `
-<p>Every [[dusk]] pair that doesn't form an [[alliance]] has a Fireside chat. You still talk for 4 minutes with the [[bond-card]]: the same conversation, without the alliance.</p>
+<p>Every [[dusk]] pair that doesn't form or grow an [[alliance]] has a Fireside chat. You talk for 4 minutes with the [[bond-card]].</p>
 <p>A Fireside chat is never a loss. It's a good conversation, and often the best clue when you're someone's [[secret-owl]].</p>` },
 
 { id: 'bond-card', cat: 'dusk', icon: '💌', title: 'Bond card',
   short: 'The conversation prompt your Dusk pair gets. Deeper each season.',
   body: `
-<p>At [[dusk]], each pair gets a Bond card to start their 4-minute talk. Like the questions on the board, they go deeper each [[season]].</p>
+<p>At [[dusk]], each [[fireside-chat]] gets a Bond card to start the 4-minute talk (an alliance gets the [[statement]] card instead). Like the questions on the board, they go deeper each [[season]].</p>
 <div class="tablewrap"><table>
 <tr><th>Season</th><th>Example</th></tr>
 <tr><td>1</td><td><i>Find three things you have in common that have nothing to do with work.</i></td></tr>
@@ -522,14 +588,14 @@ const W = [
 <p>No points: just a good conversation, and often the best clues when you're someone's [[secret-owl]].</p>` },
 
 { id: 'trio', cat: 'dusk', icon: '👥', title: 'Trio',
-  short: 'With an odd number of players, one Dusk group has three.',
+  short: 'A Dusk group of three: an alliance growing, or the odd one out.',
   body: `
-<p>With an odd number of players, one [[dusk]] group is a trio. All three talk together with the same [[bond-card]].</p>
+<p>A [[dusk]] group can be a trio in two ways:</p>
 <ul>
-  <li>Only two of the three can form an [[alliance]]: the pair that chose each other.</li>
-  <li>The third person always has a [[fireside-chat]].</li>
-  <li>All three count as having paired, so none of them repeats with the others later.</li>
-</ul>` },
+  <li><b>An alliance growing to three.</b> When one member and a newcomer choose each other, the alliance's other member joins them, so all three can write their new [[statement]].</li>
+  <li><b>An odd number of players.</b> The odd one out joins a [[fireside-chat]].</li>
+</ul>
+<p>All three count as having paired, so none of them repeats with the others later.</p>` },
 
 // ───────────── Powers
 { id: 'enneagram-powers', cat: 'powers', icon: '⚡', title: 'Enneagram powers',
@@ -588,8 +654,8 @@ const W = [
   <div class="fact"><span>When</span>Your turn, while moving</div>
 </div>
 <p>Move <b>up to 3 more spaces</b> this turn: up to 6 in all. Use it before you stop and discover.</p>
-<ul><li>Closed rings and the [[heartwood]]'s ally rule still apply.</li></ul>
-<div class="tip"><h3>Best used</h3><p>To cross the board to an ally before [[dusk]], or to reach a [[values|value]] you haven't shared in yet.</p></div>
+<ul><li>Closed rings and the [[heartwood]]'s alliance rule still apply.</li></ul>
+<div class="tip"><h3>Best used</h3><p>To reach a [[values|value]] you haven't shared in yet, or one your alliance wants advocated.</p></div>
 <p class="muted">See all [[enneagram-powers]].</p>` },
 
 { id: 'deep-water', cat: 'powers', icon: '🌊', title: 'Deep Water',
@@ -603,7 +669,7 @@ const W = [
 <ul>
   <li>Not on an Oak or Heartwood question.</li>
   <li>The deeper question is the reward: it's a chance to be known sooner, and to earn more [[trust-points|trust]].</li>
-  <li>On the [[sapling-path]] it gives you an Oak story, which counts for the [[forest-goal]].</li>
+  <li>On the [[sapling-path]] it gives you an Oak story, which [[advocacy|advocates]] that value.</li>
 </ul>
 <p class="muted">See all [[enneagram-powers]].</p>` },
 
@@ -631,8 +697,8 @@ const W = [
   <div class="fact"><span>When</span>Your turn, while moving</div>
 </div>
 <p>Jump to an [[alliance|ally's]] space from anywhere on the board, without using your steps. <b>You both take 1 [[bonus-point]].</b> You can keep moving afterwards with the steps you have left.</p>
-<ul><li>You need an ally, and their ring must be open.</li></ul>
-<div class="tip"><h3>Best used</h3><p>When your ally is in the [[oak-circle]] or [[heartwood]] and you're far away, or to stand next to them for the next [[dusk]].</p></div>
+<ul><li>You need an alliance, and your ally's ring must be open.</li></ul>
+<div class="tip"><h3>Best used</h3><p>When your ally is in the [[oak-circle]] or [[heartwood]] and you're far away, or to stand in a value you both want advocated.</p></div>
 <p class="muted">See all [[enneagram-powers]].</p>` },
 
 { id: 'adventure', cat: 'powers', icon: '🎒', title: 'Adventure',
@@ -681,7 +747,7 @@ const W = [
 <tr><th>Points</th><th>How</th></tr>
 <tr><td>🌰 [[trust-points|Trust]]</td><td>Per person who gave you acorns: their acorns (up to 2) + 1</td></tr>
 <tr><td>🌳 [[growth|Growth]]</td><td>Cards kept (1–4 each) + 1 per different value + 1 per ✨</td></tr>
-<tr><td>🤝 [[alliance|Alliances]]</td><td>3 per ally, up to 3 allies</td></tr>
+<tr><td>📣 [[advocacy|Advocacy]]</td><td>3 per value your alliance stands for that was advocated</td></tr>
 <tr><td>🦉 [[secret-owl|Secret Owl]]</td><td>Up to 3 for discoveries, +2 if not guessed, +2 if you guess your own Owl</td></tr>
 </table></div>
 <h3>Ties</h3>
@@ -690,10 +756,27 @@ const W = [
 <div class="box">
 <p>🌰 Trust <b>16</b>: 7 people gave her acorns. Five gave 1 (5 × 2 = 10), two gave 2 (2 × 3 = 6).</p>
 <p>🌳 Growth <b>11</b>: Seed 1 + Sapling 2 + Oak 3 = 6, two different values +2, three bonus points +3.</p>
-<p>🤝 Alliances <b>6</b>: 2 allies.</p>
+<p>📣 Advocacy <b>6</b>: her alliance stands for Resilience, Excellence and Open-mindedness; the first two got an Oak story.</p>
 <p>🦉 Secret Owl <b>4</b>: 2 discoveries confirmed, and he didn't guess she was his Owl.</p>
 </div>
-<p>With the [[forest-goal]] on, there's only a winner if the forest takes root.</p>` },
+` },
+
+{ id: 'advocacy', cat: 'scoring', icon: '📣', title: 'Advocacy',
+  short: '3 points for each value your alliance stands for that got a voice.',
+  body: `
+<p>You [[plant-your-seed|stand for]] one of the [[values]]. A value is <b>advocated</b> by the end of the game if:</p>
+<ul>
+  <li>anyone told an 🌳 Oak story in it (a card answered at the Oak tier on one of its spaces), or</li>
+  <li>someone who stands for it told a 💛 [[heartwood]] story.</li>
+</ul>
+<p>You score <b>3 points for each value your [[alliance]] stands for</b> that was advocated. Without an alliance, it's just your own value.</p>
+<div class="facts">
+  <div class="fact"><span>Alone</span>Up to 3</div>
+  <div class="fact"><span>Alliance of 2</span>Up to 6</div>
+  <div class="fact"><span>Alliance of 3</span>Up to 9</div>
+</div>
+<p>[[deep-water]] on the [[sapling-path]] gives an Oak story too.</p>
+<div class="tip"><h3>Tip</h3><p>You score for a value getting a voice, not for joining. Plan with your allies who will take the deep question where.</p></div>` },
 
 { id: 'trust-points', cat: 'scoring', icon: '🌰', title: 'Trust points',
   short: 'Points from acorns you received. Many givers beat many acorns.',
@@ -767,28 +850,16 @@ const W = [
 <p>By the end, everyone in the room has heard three true things someone noticed about them, and one appreciation.</p>` },
 
 { id: 'finale', cat: 'scoring', icon: '🌲', title: 'Finale',
-  short: 'The Vision of a Forest: guesses, tributes, then the scores.',
+  short: 'The Vision of a Forest: alliance stories, guesses, tributes, scores.',
   body: `
 <p>After the third [[dusk]], the game moves to <b>The Vision of a Forest</b>.</p>
 <ol>
+  <li><b>Alliance stories.</b> The [[keeper]] calls each [[alliance]] in turn. In about 2 minutes, tell your story: your [[statement]], and how you found it.</li>
   <li><b>Guess.</b> Everyone guesses who their own [[secret-owl]] was and taps <b>Lock in my guess</b>.</li>
   <li><b>Tributes.</b> One at a time, around the loop, everyone gives their [[tribute]].</li>
-  <li><b>Confirm.</b> Each person taps how many of the three discoveries were true.</li>
+  <li><b>Confirm.</b> Each person says how many of the three discoveries were true.</li>
   <li><b>Scores.</b> The big screen shows everyone's points and the winner. 🏆 See [[scoring]].</li>
 </ol>` },
-
-{ id: 'forest-goal', cat: 'scoring', icon: '🌳', title: 'Forest Goal',
-  short: 'Optional: nobody wins unless every value has an Oak story.',
-  body: `
-<p>An optional rule the [[keeper]] can switch on before the game starts.</p>
-<p>With it on, there's only a winner if, by the end, <b>every one of the six [[values]] has at least one Oak story</b>: a card answered at the 🌳 Oak tier on one of that value's spaces.</p>
-<ul>
-  <li>If any value is missing, the forest doesn't take root and nobody wins.</li>
-  <li>[[heartwood]] stories don't count for any value.</li>
-  <li>[[deep-water]] on the [[sapling-path]] gives an Oak story.</li>
-  <li>The big screen shows the progress.</li>
-</ul>
-<div class="tip"><h3>Tip</h3><p>In Season 3, talk openly about who will take the hard road, and where. It turns a race into a shared goal.</p></div>` },
 
 // ───────────── Your phone
 { id: 'your-phone', cat: 'phone', icon: '📱', title: 'Your phone',
@@ -806,8 +877,8 @@ const W = [
 <h3>Say it, and the Keeper taps it</h3>
 <div class="tablewrap"><table>
 <tr><th>You say</th><th>The Keeper taps</th></tr>
-<tr><td>"Courage, because…" (planting)</td><td>An outer space of that value</td></tr>
-<tr><td>"One step into Compassion." / "Stop here."</td><td>The space, then <b>Stop here and discover</b></td></tr>
+<tr><td>"I stand for Resilience, because…" (planting)</td><td>An outer space of that value</td></tr>
+<tr><td>"One step into Authenticity." / "Stop here."</td><td>The space, then <b>Stop here and discover</b></td></tr>
 <tr><td>(you start talking)</td><td><b>Start sharing</b>, then <b>They're done sharing</b></td></tr>
 <tr><td>"Another card." / "Lighter, please." / "Pass."</td><td>Draw again / Lighter tier / Pass this turn</td></tr>
 <tr><td>"I use Momentum."</td><td>The power</td></tr>

@@ -10,7 +10,7 @@
 :root {
   --bg: #13241b; --panel: #1c3326; --panel2: #24402f; --deep: #0f1d16; --ink: #f3efe2; --muted: #b9c4b3;
   --accent: #e0a32e; --good: #7bc47f; --bad: #e57373; --line: #345a42; --hw: #7a4b2a;
-  --curiosity: #e0a32e; --creativity: #e0703a; --collaboration: #3f9e9a; --courage: #c8463f; --compassion: #cf6f97; --commitment: #4f74b0;
+  --zealous: #e0703a; --excellence: #e0a32e; --resilience: #c8463f; --authenticity: #cf6f97; --openness: #4f74b0; --sustainability: #3f9e9a;
   --trust: #c98500; --growth: #199e70; --ally: #3987e5; --secret: #d55181;
   color-scheme: dark;
 }
@@ -297,8 +297,8 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
   <p class="lead">Heartwood is a board game about getting to know each other. You play together in one room, looking at each other and at the big screen. Your phone stays mostly face down.</p>
   <div class="callout green">
     <h3>🗣️ Say it, and the Keeper taps it</h3>
-    <p>Everything public happens on the big screen. You say what you want ("I'll step into Courage", "a lighter question, please", "I use Momentum") and the Keeper taps it.</p>
-    <p>Your phone has only four jobs: it shows <b>your Secret Owl</b>, it lets you <b>give trust</b> after someone shares, you <b>choose your Dusk partner</b> on it, and you <b>guess your own Secret Owl</b> at the end. It also reminds you of your powers.</p>
+    <p>Everything public happens on the big screen. You say what you want ("I'll step into Resilience", "a lighter question, please", "I use Momentum") and the Keeper taps it.</p>
+    <p>Your phone has only four jobs: it shows <b>your Secret Owl</b>, it lets you <b>give trust</b> after someone shares, you <b>choose your Dusk partner</b> on it (and type your alliance's statement), and you <b>guess your own Secret Owl</b> at the end. It also reminds you of your powers.</p>
   </div>
   <p>ZERA's story is a tree's story. The seed was planted in 2021. It sprouted in 2023 and grew into a tree in 2024. The vision is a forest by 2035. (<i>Zera</i> is Hebrew for seed, and our mascot is an acorn. In this game an acorn 🌰 always means one thing: <b>trust</b> you give each other.)</p>
   <ol class="story" aria-label="ZERA's story, and the part of the game that matches it">
@@ -309,7 +309,11 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
   </ol>
   <p>You are an expedition into that forest of 2035. You start at its sunny edges and walk inward, toward the Heartwood at its centre: the dense core of a tree, its strongest part. <b>Every step inward is a deeper story.</b></p>
   <div class="callout">
-    <p><b>Two goals that are really one.</b> The real goal is to know each other more deeply. The game goal is to score the most points. The game is built so they are the same: every point comes from sharing, listening or bonding.</p>
+    <h3>Your value: stand for it, advocate it, tell its story</h3>
+    <p>The forest is cut into ZERA's six core values, <b>ZERAOS</b>. At the start you choose the one you <b>stand for</b>. All game you <b>advocate</b> it: a deep story told in your value gives it a voice. At Dusk you join colleagues who stand for <b>different</b> values, and find one statement that holds all of them. At the end, each alliance <b>tells its story</b>.</p>
+  </div>
+  <div class="callout">
+    <p><b>Two goals that are really one.</b> The real goal is to know each other more deeply. The game goal is to score the most points. The game is built so they are the same: every point comes from sharing, listening, advocating or noticing.</p>
   </div>
   <div class="grid two">
     <div class="card">
@@ -353,8 +357,9 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
       </ul>
     </div>
     <div class="card cat" style="--c:var(--ally)">
-      <h3><span aria-hidden="true">🤝</span> Alliances</h3>
-      <p class="small" style="margin:0"><b>3 points</b> for each ally you made at Dusk. You can make up to 3.</p>
+      <h3><span aria-hidden="true">📣</span> Advocacy</h3>
+      <p class="small"><b>3 points</b> for each value your alliance stands for (just your own, without an alliance) that was <b>advocated</b> by the end.</p>
+      <p class="small" style="margin:0">A value is advocated when someone told an 🌳 Oak story in it, or someone who stands for it told a 💛 Heartwood story. So an alliance of three values can earn up to 9, if all three get a voice.</p>
     </div>
     <div class="card cat" style="--c:var(--secret)">
       <h3><span aria-hidden="true">🦉</span> Secret Owl</h3>
@@ -369,10 +374,10 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
 
   <h3>A worked example: Mei's score</h3>
   <figure class="scorebar" style="margin-left:0;margin-right:0">
-    <div class="bar" role="img" aria-label="Mei's 37 points: Trust 16, Growth 11, Alliances 6, Secret Owl 4.">
+    <div class="bar" role="img" aria-label="Mei's 37 points: Trust 16, Growth 11, Advocacy 6, Secret Owl 4.">
       <span style="flex:16;background:var(--trust)" title="Trust: 16 points">16</span>
       <span style="flex:11;background:var(--growth)" title="Growth: 11 points">11</span>
-      <span style="flex:6;background:var(--ally)" title="Alliances: 6 points">6</span>
+      <span style="flex:6;background:var(--ally)" title="Advocacy: 6 points">6</span>
       <span style="flex:4;background:var(--secret)" title="Secret Owl: 4 points">4</span>
     </div>
     <div class="axis" aria-hidden="true"><span>0</span><span>37 points</span></div>
@@ -380,7 +385,7 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
       <ul class="legend">
         <li><i style="background:var(--trust)"></i>Trust <b>16</b></li>
         <li><i style="background:var(--growth)"></i>Growth <b>11</b></li>
-        <li><i style="background:var(--ally)"></i>Alliances <b>6</b></li>
+        <li><i style="background:var(--ally)"></i>Advocacy <b>6</b></li>
         <li><i style="background:var(--secret)"></i>Secret Owl <b>4</b></li>
       </ul>
     </figcaption>
@@ -391,40 +396,35 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
       <thead><tr><th scope="col">Category</th><th scope="col">How she earned it</th><th scope="col" class="n">Points</th></tr></thead>
       <tbody>
         <tr><th scope="row">🌰 Trust</th><td class="d">7 people gave her acorns. Five gave 1 each (5 × 2 = 10). Two gave 2 each (2 × 3 = 6).</td><td class="n">16</td></tr>
-        <tr><th scope="row">🌳 Growth</th><td class="d">Cards: 🌱 Seed in Compassion (1) + 🌿 Sapling in Courage (2) + 🌳 Oak in Courage (3) = 6. Two different values: +2. Bonus points from a Mushroom patch (2) and one Squirrel she played (1): +3.</td><td class="n">11</td></tr>
-        <tr><th scope="row">🤝 Alliances</th><td class="d">2 allies × 3.</td><td class="n">6</td></tr>
+        <tr><th scope="row">🌳 Growth</th><td class="d">Cards: 🌱 Seed in Authenticity (1) + 🌿 Sapling in Resilience (2) + 🌳 Oak in Resilience (3) = 6. Two different values: +2. Bonus points from a Mushroom patch (2) and one Squirrel she played (1): +3.</td><td class="n">11</td></tr>
+        <tr><th scope="row">📣 Advocacy</th><td class="d">Mei stands for Resilience, in an alliance with Dan (Excellence) and Jo (Open-mindedness). Her own Oak story advocated Resilience: +3. Someone told an Oak story in Excellence: +3. Nobody did in Open-mindedness: +0.</td><td class="n">6</td></tr>
         <tr><th scope="row">🦉 Secret Owl</th><td class="d">The colleague she watched confirmed 2 of her 3 discoveries: +2. He did not guess she was his Owl: +2. She guessed wrong about her own Owl: +0.</td><td class="n">4</td></tr>
       </tbody>
       <tfoot><tr><th scope="row">Total</th><td></td><td class="n">37</td></tr></tfoot>
     </table>
   </div>
-  <p class="small muted" style="margin-top:.6rem">Mei never reached the Heartwood. A Heartwood story would have scored 4 instead of the Oak's 3, but she would have needed an ally to step in.</p>
+  <p class="small muted" style="margin-top:.6rem">Mei never reached the Heartwood. A Heartwood story would have scored 4 instead of the Oak's 3, and she could have stepped in, since she was in an alliance.</p>
 
-  <div class="callout green">
-    <h3>🌳 Optional: the Forest Goal</h3>
-    <p>The Keeper can switch this on before the game starts. Then there is only a winner if, by the end, <b>every one of the six values has at least one Oak story</b>: a card answered at the 🌳 Oak tier on one of that value's spaces.</p>
-    <p>If any value is missing, the forest does not take root and nobody wins. Heartwood stories don't count for any value. So in Season 3, talk openly about who will take the hard road, and where.</p>
-  </div>
 </section>
 
 <!-- ============ 3 ============ -->
 <section id="map" aria-labelledby="map-h">
   <h2 id="map-h"><span class="num" aria-hidden="true">3</span>The map</h2>
-  <p class="lead">The forest has 37 spaces: the Heartwood in the centre and three rings around it. It is cut into six wedges, one for each of ZERA's values.</p>
+  <p class="lead">The forest has 37 spaces: the Heartwood in the centre and three rings around it. It is cut into six wedges, one for each of ZERA's core values, <b>ZERAOS</b>, reading clockwise from the top.</p>
   <div class="mapfig">
     <figure style="margin:0">
-      <svg class="board" viewBox="-330 -330 660 660" role="img" aria-labelledby="board-t board-d"><title id="board-t">The Heartwood board</title><desc id="board-d">37 hexagon spaces. The Heartwood is in the centre. Around it are three rings: the Oak Circle (6 spaces), the Sapling Path (12) and the Seedlands (18). The board is cut into six coloured value wedges: Curiosity at the bottom left, Creativity at the bottom right, Collaboration on the right, Courage at the top, Compassion at the top left and Commitment on the left. Each wedge has 3 Seedlands spaces, 2 Sapling Path spaces and 1 Oak Circle space.</desc><style>.hw-ti{font-size:28px;text-anchor:middle;dominant-baseline:central}.hw-hl{font-size:13px;font-weight:800;letter-spacing:.12em;fill:#f3efe2;text-anchor:middle;dominant-baseline:central}.hw-pill{font-size:20px;font-weight:800;letter-spacing:.06em;fill:#f3efe2;text-anchor:middle;dominant-baseline:central}.hw-ri{font-size:30px;text-anchor:middle;dominant-baseline:central}.hw-rn{font-size:23px;font-weight:800;fill:#f3efe2;dominant-baseline:central}</style><polygon points="41.6,-24.0 41.6,24.0 0.0,48.0 -41.6,24.0 -41.6,-24.0 -0.0,-48.0" fill="#7a4b2a" fill-opacity="1" stroke="#0c1711" stroke-width="3"/><polygon points="-1.7,51.0 -1.7,99.0 -43.3,123.0 -84.9,99.0 -84.9,51.0 -43.3,27.0" fill="#e0a32e" fill-opacity="1" stroke="#0c1711" stroke-width="3"/><polygon points="84.9,51.0 84.9,99.0 43.3,123.0 1.7,99.0 1.7,51.0 43.3,27.0" fill="#e0703a" fill-opacity="1" stroke="#0c1711" stroke-width="3"/><polygon points="128.2,-24.0 128.2,24.0 86.6,48.0 45.0,24.0 45.0,-24.0 86.6,-48.0" fill="#3f9e9a" fill-opacity="1" stroke="#0c1711" stroke-width="3"/><polygon points="84.9,-99.0 84.9,-51.0 43.3,-27.0 1.7,-51.0 1.7,-99.0 43.3,-123.0" fill="#c8463f" fill-opacity="1" stroke="#0c1711" stroke-width="3"/><polygon points="-1.7,-99.0 -1.7,-51.0 -43.3,-27.0 -84.9,-51.0 -84.9,-99.0 -43.3,-123.0" fill="#cf6f97" fill-opacity="1" stroke="#0c1711" stroke-width="3"/><polygon points="-45.0,-24.0 -45.0,24.0 -86.6,48.0 -128.2,24.0 -128.2,-24.0 -86.6,-48.0" fill="#4f74b0" fill-opacity="1" stroke="#0c1711" stroke-width="3"/><polygon points="-45.0,126.0 -45.0,174.0 -86.6,198.0 -128.2,174.0 -128.2,126.0 -86.6,102.0" fill="#e0a32e" fill-opacity="0.78" stroke="#0c1711" stroke-width="3"/><polygon points="41.6,126.0 41.6,174.0 0.0,198.0 -41.6,174.0 -41.6,126.0 -0.0,102.0" fill="#e0a32e" fill-opacity="0.78" stroke="#0c1711" stroke-width="3"/><polygon points="128.2,126.0 128.2,174.0 86.6,198.0 45.0,174.0 45.0,126.0 86.6,102.0" fill="#e0703a" fill-opacity="0.78" stroke="#0c1711" stroke-width="3"/><polygon points="171.5,51.0 171.5,99.0 129.9,123.0 88.3,99.0 88.3,51.0 129.9,27.0" fill="#e0703a" fill-opacity="0.78" stroke="#0c1711" stroke-width="3"/><polygon points="214.8,-24.0 214.8,24.0 173.2,48.0 131.6,24.0 131.6,-24.0 173.2,-48.0" fill="#3f9e9a" fill-opacity="0.78" stroke="#0c1711" stroke-width="3"/><polygon points="171.5,-99.0 171.5,-51.0 129.9,-27.0 88.3,-51.0 88.3,-99.0 129.9,-123.0" fill="#3f9e9a" fill-opacity="0.78" stroke="#0c1711" stroke-width="3"/><polygon points="128.2,-174.0 128.2,-126.0 86.6,-102.0 45.0,-126.0 45.0,-174.0 86.6,-198.0" fill="#c8463f" fill-opacity="0.78" stroke="#0c1711" stroke-width="3"/><polygon points="41.6,-174.0 41.6,-126.0 0.0,-102.0 -41.6,-126.0 -41.6,-174.0 -0.0,-198.0" fill="#c8463f" fill-opacity="0.78" stroke="#0c1711" stroke-width="3"/><polygon points="-45.0,-174.0 -45.0,-126.0 -86.6,-102.0 -128.2,-126.0 -128.2,-174.0 -86.6,-198.0" fill="#cf6f97" fill-opacity="0.78" stroke="#0c1711" stroke-width="3"/><polygon points="-88.3,-99.0 -88.3,-51.0 -129.9,-27.0 -171.5,-51.0 -171.5,-99.0 -129.9,-123.0" fill="#cf6f97" fill-opacity="0.78" stroke="#0c1711" stroke-width="3"/><polygon points="-131.6,-24.0 -131.6,24.0 -173.2,48.0 -214.8,24.0 -214.8,-24.0 -173.2,-48.0" fill="#4f74b0" fill-opacity="0.78" stroke="#0c1711" stroke-width="3"/><polygon points="-88.3,51.0 -88.3,99.0 -129.9,123.0 -171.5,99.0 -171.5,51.0 -129.9,27.0" fill="#4f74b0" fill-opacity="0.78" stroke="#0c1711" stroke-width="3"/><polygon points="-88.3,201.0 -88.3,249.0 -129.9,273.0 -171.5,249.0 -171.5,201.0 -129.9,177.0" fill="#e0a32e" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="-1.7,201.0 -1.7,249.0 -43.3,273.0 -84.9,249.0 -84.9,201.0 -43.3,177.0" fill="#e0a32e" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="84.9,201.0 84.9,249.0 43.3,273.0 1.7,249.0 1.7,201.0 43.3,177.0" fill="#e0a32e" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="171.5,201.0 171.5,249.0 129.9,273.0 88.3,249.0 88.3,201.0 129.9,177.0" fill="#e0703a" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="214.8,126.0 214.8,174.0 173.2,198.0 131.6,174.0 131.6,126.0 173.2,102.0" fill="#e0703a" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="258.1,51.0 258.1,99.0 216.5,123.0 174.9,99.0 174.9,51.0 216.5,27.0" fill="#e0703a" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="301.4,-24.0 301.4,24.0 259.8,48.0 218.2,24.0 218.2,-24.0 259.8,-48.0" fill="#3f9e9a" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="258.1,-99.0 258.1,-51.0 216.5,-27.0 174.9,-51.0 174.9,-99.0 216.5,-123.0" fill="#3f9e9a" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="214.8,-174.0 214.8,-126.0 173.2,-102.0 131.6,-126.0 131.6,-174.0 173.2,-198.0" fill="#3f9e9a" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="171.5,-249.0 171.5,-201.0 129.9,-177.0 88.3,-201.0 88.3,-249.0 129.9,-273.0" fill="#c8463f" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="84.9,-249.0 84.9,-201.0 43.3,-177.0 1.7,-201.0 1.7,-249.0 43.3,-273.0" fill="#c8463f" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="-1.7,-249.0 -1.7,-201.0 -43.3,-177.0 -84.9,-201.0 -84.9,-249.0 -43.3,-273.0" fill="#c8463f" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="-88.3,-249.0 -88.3,-201.0 -129.9,-177.0 -171.5,-201.0 -171.5,-249.0 -129.9,-273.0" fill="#cf6f97" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="-131.6,-174.0 -131.6,-126.0 -173.2,-102.0 -214.8,-126.0 -214.8,-174.0 -173.2,-198.0" fill="#cf6f97" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="-174.9,-99.0 -174.9,-51.0 -216.5,-27.0 -258.1,-51.0 -258.1,-99.0 -216.5,-123.0" fill="#cf6f97" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="-218.2,-24.0 -218.2,24.0 -259.8,48.0 -301.4,24.0 -301.4,-24.0 -259.8,-48.0" fill="#4f74b0" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="-174.9,51.0 -174.9,99.0 -216.5,123.0 -258.1,99.0 -258.1,51.0 -216.5,27.0" fill="#4f74b0" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="-131.6,126.0 -131.6,174.0 -173.2,198.0 -214.8,174.0 -214.8,126.0 -173.2,102.0" fill="#4f74b0" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><path d="M43.3 -25.0L43.3 25.0M43.3 25.0L0.0 50.0M0.0 50.0L-43.3 25.0M-43.3 25.0L-43.3 -25.0M-43.3 -25.0L-0.0 -50.0M-0.0 -50.0L43.3 -25.0M0.0 100.0L-43.3 125.0M-43.3 125.0L-86.6 100.0M-86.6 100.0L-86.6 50.0M86.6 50.0L86.6 100.0M86.6 100.0L43.3 125.0M43.3 125.0L-0.0 100.0M129.9 -25.0L129.9 25.0M129.9 25.0L86.6 50.0M86.6 -50.0L129.9 -25.0M86.6 -100.0L86.6 -50.0M0.0 -100.0L43.3 -125.0M43.3 -125.0L86.6 -100.0M-86.6 -50.0L-86.6 -100.0M-86.6 -100.0L-43.3 -125.0M-43.3 -125.0L0.0 -100.0M-86.6 50.0L-129.9 25.0M-129.9 25.0L-129.9 -25.0M-129.9 -25.0L-86.6 -50.0M-43.3 175.0L-86.6 200.0M-86.6 200.0L-129.9 175.0M-129.9 175.0L-129.9 125.0M43.3 175.0L0.0 200.0M0.0 200.0L-43.3 175.0M129.9 125.0L129.9 175.0M129.9 175.0L86.6 200.0M86.6 200.0L43.3 175.0M173.2 50.0L173.2 100.0M173.2 100.0L129.9 125.0M216.5 -25.0L216.5 25.0M216.5 25.0L173.2 50.0M173.2 -50.0L216.5 -25.0M173.2 -100.0L173.2 -50.0M129.9 -125.0L173.2 -100.0M129.9 -175.0L129.9 -125.0M43.3 -175.0L86.6 -200.0M86.6 -200.0L129.9 -175.0M-43.3 -175.0L-0.0 -200.0M-0.0 -200.0L43.3 -175.0M-129.9 -125.0L-129.9 -175.0M-129.9 -175.0L-86.6 -200.0M-86.6 -200.0L-43.3 -175.0M-173.2 -50.0L-173.2 -100.0M-173.2 -100.0L-129.9 -125.0M-173.2 50.0L-216.5 25.0M-216.5 25.0L-216.5 -25.0M-216.5 -25.0L-173.2 -50.0M-129.9 125.0L-173.2 100.0M-173.2 100.0L-173.2 50.0M-86.6 250.0L-129.9 275.0M-129.9 275.0L-173.2 250.0M-173.2 250.0L-173.2 200.0M0.0 250.0L-43.3 275.0M-43.3 275.0L-86.6 250.0M86.6 250.0L43.3 275.0M43.3 275.0L-0.0 250.0M173.2 200.0L173.2 250.0M173.2 250.0L129.9 275.0M129.9 275.0L86.6 250.0M216.5 125.0L216.5 175.0M216.5 175.0L173.2 200.0M259.8 50.0L259.8 100.0M259.8 100.0L216.5 125.0M303.1 -25.0L303.1 25.0M303.1 25.0L259.8 50.0M259.8 -50.0L303.1 -25.0M259.8 -100.0L259.8 -50.0M216.5 -125.0L259.8 -100.0M216.5 -175.0L216.5 -125.0M173.2 -200.0L216.5 -175.0M173.2 -250.0L173.2 -200.0M86.6 -250.0L129.9 -275.0M129.9 -275.0L173.2 -250.0M0.0 -250.0L43.3 -275.0M43.3 -275.0L86.6 -250.0M-86.6 -250.0L-43.3 -275.0M-43.3 -275.0L0.0 -250.0M-173.2 -200.0L-173.2 -250.0M-173.2 -250.0L-129.9 -275.0M-129.9 -275.0L-86.6 -250.0M-216.5 -125.0L-216.5 -175.0M-216.5 -175.0L-173.2 -200.0M-259.8 -50.0L-259.8 -100.0M-259.8 -100.0L-216.5 -125.0M-259.8 50.0L-303.1 25.0M-303.1 25.0L-303.1 -25.0M-303.1 -25.0L-259.8 -50.0M-216.5 125.0L-259.8 100.0M-259.8 100.0L-259.8 50.0M-173.2 200.0L-216.5 175.0M-216.5 175.0L-216.5 125.0" fill="none" stroke="#f3efe2" stroke-opacity=".45" stroke-width="2.5" stroke-linecap="round"/><text x="0.0" y="24.0" class="hw-ti" style="font-size:26px">💛</text><text x="-43.3" y="77.0" class="hw-ti">🌳</text><text x="43.3" y="77.0" class="hw-ti">🌳</text><text x="86.6" y="2.0" class="hw-ti">🌳</text><text x="-86.6" y="2.0" class="hw-ti">🌳</text><text x="-86.6" y="152.0" class="hw-ti">🌿</text><text x="0.0" y="152.0" class="hw-ti">🌿</text><text x="86.6" y="152.0" class="hw-ti">🌿</text><text x="129.9" y="77.0" class="hw-ti">🌿</text><text x="173.2" y="2.0" class="hw-ti">🌿</text><text x="129.9" y="-73.0" class="hw-ti">🌿</text><text x="-129.9" y="-73.0" class="hw-ti">🌿</text><text x="-173.2" y="2.0" class="hw-ti">🌿</text><text x="-129.9" y="77.0" class="hw-ti">🌿</text><text x="-129.9" y="227.0" class="hw-ti">🌱</text><text x="-43.3" y="227.0" class="hw-ti">🌱</text><text x="43.3" y="227.0" class="hw-ti">🌱</text><text x="129.9" y="227.0" class="hw-ti">🌱</text><text x="173.2" y="152.0" class="hw-ti">🌱</text><text x="216.5" y="77.0" class="hw-ti">🌱</text><text x="259.8" y="2.0" class="hw-ti">🌱</text><text x="216.5" y="-73.0" class="hw-ti">🌱</text><text x="173.2" y="-148.0" class="hw-ti">🌱</text><text x="129.9" y="-223.0" class="hw-ti">🌱</text><text x="-129.9" y="-223.0" class="hw-ti">🌱</text><text x="-173.2" y="-148.0" class="hw-ti">🌱</text><text x="-216.5" y="-73.0" class="hw-ti">🌱</text><text x="-259.8" y="2.0" class="hw-ti">🌱</text><text x="-216.5" y="77.0" class="hw-ti">🌱</text><text x="-173.2" y="152.0" class="hw-ti">🌱</text><rect x="-102.3" y="-242.0" width="204.5" height="34" rx="17.0" fill="#0c1711" fill-opacity=".9" stroke="#f3efe2" stroke-opacity=".7" stroke-width="1.5"/><text x="0" y="-224.0" class="hw-pill" style="font-size:22px">🌱 SEEDLANDS</text><rect x="-126.7" y="-167.0" width="253.4" height="34" rx="17.0" fill="#0c1711" fill-opacity=".9" stroke="#f3efe2" stroke-opacity=".7" stroke-width="1.5"/><text x="0" y="-149.0" class="hw-pill" style="font-size:22px">🌿 SAPLING PATH</text><rect x="-110.4" y="-92.0" width="220.8" height="34" rx="17.0" fill="#0c1711" fill-opacity=".9" stroke="#f3efe2" stroke-opacity=".7" stroke-width="1.5"/><text x="0" y="-74.0" class="hw-pill" style="font-size:22px">🌳 OAK CIRCLE</text><rect x="-64.0" y="-24.0" width="128.0" height="28" rx="14.0" fill="#0c1711" fill-opacity=".9" stroke="#f3efe2" stroke-opacity=".7" stroke-width="1.5"/><text x="0" y="-9.0" class="hw-pill" style="font-size:16px">HEARTWOOD</text><circle cx="-55.4" cy="287.8" r="27" fill="#0c1711" stroke="#e0a32e" stroke-width="4"/><text x="-55.4" y="288.8" class="hw-ri"><title>Curiosity</title>🔍</text><circle cx="221.6" cy="191.9" r="27" fill="#0c1711" stroke="#e0703a" stroke-width="4"/><text x="221.6" y="192.9" class="hw-ri"><title>Creativity</title>🎨</text><circle cx="277.0" cy="-95.9" r="27" fill="#0c1711" stroke="#3f9e9a" stroke-width="4"/><text x="277.0" y="-94.9" class="hw-ri"><title>Collaboration</title>🤝</text><circle cx="55.4" cy="-287.8" r="27" fill="#0c1711" stroke="#c8463f" stroke-width="4"/><text x="55.4" y="-286.8" class="hw-ri"><title>Courage</title>🦁</text><circle cx="-221.6" cy="-191.9" r="27" fill="#0c1711" stroke="#cf6f97" stroke-width="4"/><text x="-221.6" y="-190.9" class="hw-ri"><title>Compassion</title>💗</text><circle cx="-277.0" cy="95.9" r="27" fill="#0c1711" stroke="#4f74b0" stroke-width="4"/><text x="-277.0" y="96.9" class="hw-ri"><title>Commitment</title>⚓</text></svg>
+      <svg class="board" viewBox="-330 -330 660 660" role="img" aria-labelledby="board-t board-d"><title id="board-t">The Heartwood board</title><desc id="board-d">37 hexagon spaces. The Heartwood is in the centre. Around it are three rings: the Oak Circle (6 spaces), the Sapling Path (12) and the Seedlands (18). The board is cut into six coloured wedges, one for each of ZERA's core values, ZERAOS, reading clockwise from the top: Zealous, Excellence, Resilience, Authenticity, Open-mindedness and Sustainability. Each wedge has 3 Seedlands spaces, 2 Sapling Path spaces and 1 Oak Circle space.</desc><style>.hw-ti{font-size:28px;text-anchor:middle;dominant-baseline:central}.hw-hl{font-size:13px;font-weight:800;letter-spacing:.12em;fill:#f3efe2;text-anchor:middle;dominant-baseline:central}.hw-pill{font-size:20px;font-weight:800;letter-spacing:.06em;fill:#f3efe2;text-anchor:middle;dominant-baseline:central}.hw-ri{font-size:30px;text-anchor:middle;dominant-baseline:central}.hw-rn{font-size:23px;font-weight:800;fill:#f3efe2;dominant-baseline:central}</style><polygon points="41.6,-24.0 41.6,24.0 0.0,48.0 -41.6,24.0 -41.6,-24.0 -0.0,-48.0" fill="#7a4b2a" fill-opacity="1" stroke="#0c1711" stroke-width="3"/><polygon points="-1.7,51.0 -1.7,99.0 -43.3,123.0 -84.9,99.0 -84.9,51.0 -43.3,27.0" fill="#cf6f97" fill-opacity="1" stroke="#0c1711" stroke-width="3"/><polygon points="84.9,51.0 84.9,99.0 43.3,123.0 1.7,99.0 1.7,51.0 43.3,27.0" fill="#c8463f" fill-opacity="1" stroke="#0c1711" stroke-width="3"/><polygon points="128.2,-24.0 128.2,24.0 86.6,48.0 45.0,24.0 45.0,-24.0 86.6,-48.0" fill="#e0a32e" fill-opacity="1" stroke="#0c1711" stroke-width="3"/><polygon points="84.9,-99.0 84.9,-51.0 43.3,-27.0 1.7,-51.0 1.7,-99.0 43.3,-123.0" fill="#e0703a" fill-opacity="1" stroke="#0c1711" stroke-width="3"/><polygon points="-1.7,-99.0 -1.7,-51.0 -43.3,-27.0 -84.9,-51.0 -84.9,-99.0 -43.3,-123.0" fill="#3f9e9a" fill-opacity="1" stroke="#0c1711" stroke-width="3"/><polygon points="-45.0,-24.0 -45.0,24.0 -86.6,48.0 -128.2,24.0 -128.2,-24.0 -86.6,-48.0" fill="#4f74b0" fill-opacity="1" stroke="#0c1711" stroke-width="3"/><polygon points="-45.0,126.0 -45.0,174.0 -86.6,198.0 -128.2,174.0 -128.2,126.0 -86.6,102.0" fill="#cf6f97" fill-opacity="0.78" stroke="#0c1711" stroke-width="3"/><polygon points="41.6,126.0 41.6,174.0 0.0,198.0 -41.6,174.0 -41.6,126.0 -0.0,102.0" fill="#cf6f97" fill-opacity="0.78" stroke="#0c1711" stroke-width="3"/><polygon points="128.2,126.0 128.2,174.0 86.6,198.0 45.0,174.0 45.0,126.0 86.6,102.0" fill="#c8463f" fill-opacity="0.78" stroke="#0c1711" stroke-width="3"/><polygon points="171.5,51.0 171.5,99.0 129.9,123.0 88.3,99.0 88.3,51.0 129.9,27.0" fill="#c8463f" fill-opacity="0.78" stroke="#0c1711" stroke-width="3"/><polygon points="214.8,-24.0 214.8,24.0 173.2,48.0 131.6,24.0 131.6,-24.0 173.2,-48.0" fill="#e0a32e" fill-opacity="0.78" stroke="#0c1711" stroke-width="3"/><polygon points="171.5,-99.0 171.5,-51.0 129.9,-27.0 88.3,-51.0 88.3,-99.0 129.9,-123.0" fill="#e0a32e" fill-opacity="0.78" stroke="#0c1711" stroke-width="3"/><polygon points="128.2,-174.0 128.2,-126.0 86.6,-102.0 45.0,-126.0 45.0,-174.0 86.6,-198.0" fill="#e0703a" fill-opacity="0.78" stroke="#0c1711" stroke-width="3"/><polygon points="41.6,-174.0 41.6,-126.0 0.0,-102.0 -41.6,-126.0 -41.6,-174.0 -0.0,-198.0" fill="#e0703a" fill-opacity="0.78" stroke="#0c1711" stroke-width="3"/><polygon points="-45.0,-174.0 -45.0,-126.0 -86.6,-102.0 -128.2,-126.0 -128.2,-174.0 -86.6,-198.0" fill="#3f9e9a" fill-opacity="0.78" stroke="#0c1711" stroke-width="3"/><polygon points="-88.3,-99.0 -88.3,-51.0 -129.9,-27.0 -171.5,-51.0 -171.5,-99.0 -129.9,-123.0" fill="#3f9e9a" fill-opacity="0.78" stroke="#0c1711" stroke-width="3"/><polygon points="-131.6,-24.0 -131.6,24.0 -173.2,48.0 -214.8,24.0 -214.8,-24.0 -173.2,-48.0" fill="#4f74b0" fill-opacity="0.78" stroke="#0c1711" stroke-width="3"/><polygon points="-88.3,51.0 -88.3,99.0 -129.9,123.0 -171.5,99.0 -171.5,51.0 -129.9,27.0" fill="#4f74b0" fill-opacity="0.78" stroke="#0c1711" stroke-width="3"/><polygon points="-88.3,201.0 -88.3,249.0 -129.9,273.0 -171.5,249.0 -171.5,201.0 -129.9,177.0" fill="#cf6f97" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="-1.7,201.0 -1.7,249.0 -43.3,273.0 -84.9,249.0 -84.9,201.0 -43.3,177.0" fill="#cf6f97" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="84.9,201.0 84.9,249.0 43.3,273.0 1.7,249.0 1.7,201.0 43.3,177.0" fill="#cf6f97" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="171.5,201.0 171.5,249.0 129.9,273.0 88.3,249.0 88.3,201.0 129.9,177.0" fill="#c8463f" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="214.8,126.0 214.8,174.0 173.2,198.0 131.6,174.0 131.6,126.0 173.2,102.0" fill="#c8463f" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="258.1,51.0 258.1,99.0 216.5,123.0 174.9,99.0 174.9,51.0 216.5,27.0" fill="#c8463f" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="301.4,-24.0 301.4,24.0 259.8,48.0 218.2,24.0 218.2,-24.0 259.8,-48.0" fill="#e0a32e" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="258.1,-99.0 258.1,-51.0 216.5,-27.0 174.9,-51.0 174.9,-99.0 216.5,-123.0" fill="#e0a32e" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="214.8,-174.0 214.8,-126.0 173.2,-102.0 131.6,-126.0 131.6,-174.0 173.2,-198.0" fill="#e0a32e" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="171.5,-249.0 171.5,-201.0 129.9,-177.0 88.3,-201.0 88.3,-249.0 129.9,-273.0" fill="#e0703a" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="84.9,-249.0 84.9,-201.0 43.3,-177.0 1.7,-201.0 1.7,-249.0 43.3,-273.0" fill="#e0703a" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="-1.7,-249.0 -1.7,-201.0 -43.3,-177.0 -84.9,-201.0 -84.9,-249.0 -43.3,-273.0" fill="#e0703a" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="-88.3,-249.0 -88.3,-201.0 -129.9,-177.0 -171.5,-201.0 -171.5,-249.0 -129.9,-273.0" fill="#3f9e9a" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="-131.6,-174.0 -131.6,-126.0 -173.2,-102.0 -214.8,-126.0 -214.8,-174.0 -173.2,-198.0" fill="#3f9e9a" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="-174.9,-99.0 -174.9,-51.0 -216.5,-27.0 -258.1,-51.0 -258.1,-99.0 -216.5,-123.0" fill="#3f9e9a" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="-218.2,-24.0 -218.2,24.0 -259.8,48.0 -301.4,24.0 -301.4,-24.0 -259.8,-48.0" fill="#4f74b0" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="-174.9,51.0 -174.9,99.0 -216.5,123.0 -258.1,99.0 -258.1,51.0 -216.5,27.0" fill="#4f74b0" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="-131.6,126.0 -131.6,174.0 -173.2,198.0 -214.8,174.0 -214.8,126.0 -173.2,102.0" fill="#4f74b0" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><path d="M43.3 -25.0L43.3 25.0M43.3 25.0L0.0 50.0M0.0 50.0L-43.3 25.0M-43.3 25.0L-43.3 -25.0M-43.3 -25.0L-0.0 -50.0M-0.0 -50.0L43.3 -25.0M0.0 100.0L-43.3 125.0M-43.3 125.0L-86.6 100.0M-86.6 100.0L-86.6 50.0M86.6 50.0L86.6 100.0M86.6 100.0L43.3 125.0M43.3 125.0L-0.0 100.0M129.9 -25.0L129.9 25.0M129.9 25.0L86.6 50.0M86.6 -50.0L129.9 -25.0M86.6 -100.0L86.6 -50.0M0.0 -100.0L43.3 -125.0M43.3 -125.0L86.6 -100.0M-86.6 -50.0L-86.6 -100.0M-86.6 -100.0L-43.3 -125.0M-43.3 -125.0L0.0 -100.0M-86.6 50.0L-129.9 25.0M-129.9 25.0L-129.9 -25.0M-129.9 -25.0L-86.6 -50.0M-43.3 175.0L-86.6 200.0M-86.6 200.0L-129.9 175.0M-129.9 175.0L-129.9 125.0M43.3 175.0L0.0 200.0M0.0 200.0L-43.3 175.0M129.9 125.0L129.9 175.0M129.9 175.0L86.6 200.0M86.6 200.0L43.3 175.0M173.2 50.0L173.2 100.0M173.2 100.0L129.9 125.0M216.5 -25.0L216.5 25.0M216.5 25.0L173.2 50.0M173.2 -50.0L216.5 -25.0M173.2 -100.0L173.2 -50.0M129.9 -125.0L173.2 -100.0M129.9 -175.0L129.9 -125.0M43.3 -175.0L86.6 -200.0M86.6 -200.0L129.9 -175.0M-43.3 -175.0L-0.0 -200.0M-0.0 -200.0L43.3 -175.0M-129.9 -125.0L-129.9 -175.0M-129.9 -175.0L-86.6 -200.0M-86.6 -200.0L-43.3 -175.0M-173.2 -50.0L-173.2 -100.0M-173.2 -100.0L-129.9 -125.0M-173.2 50.0L-216.5 25.0M-216.5 25.0L-216.5 -25.0M-216.5 -25.0L-173.2 -50.0M-129.9 125.0L-173.2 100.0M-173.2 100.0L-173.2 50.0M-86.6 250.0L-129.9 275.0M-129.9 275.0L-173.2 250.0M-173.2 250.0L-173.2 200.0M0.0 250.0L-43.3 275.0M-43.3 275.0L-86.6 250.0M86.6 250.0L43.3 275.0M43.3 275.0L-0.0 250.0M173.2 200.0L173.2 250.0M173.2 250.0L129.9 275.0M129.9 275.0L86.6 250.0M216.5 125.0L216.5 175.0M216.5 175.0L173.2 200.0M259.8 50.0L259.8 100.0M259.8 100.0L216.5 125.0M303.1 -25.0L303.1 25.0M303.1 25.0L259.8 50.0M259.8 -50.0L303.1 -25.0M259.8 -100.0L259.8 -50.0M216.5 -125.0L259.8 -100.0M216.5 -175.0L216.5 -125.0M173.2 -200.0L216.5 -175.0M173.2 -250.0L173.2 -200.0M86.6 -250.0L129.9 -275.0M129.9 -275.0L173.2 -250.0M0.0 -250.0L43.3 -275.0M43.3 -275.0L86.6 -250.0M-86.6 -250.0L-43.3 -275.0M-43.3 -275.0L0.0 -250.0M-173.2 -200.0L-173.2 -250.0M-173.2 -250.0L-129.9 -275.0M-129.9 -275.0L-86.6 -250.0M-216.5 -125.0L-216.5 -175.0M-216.5 -175.0L-173.2 -200.0M-259.8 -50.0L-259.8 -100.0M-259.8 -100.0L-216.5 -125.0M-259.8 50.0L-303.1 25.0M-303.1 25.0L-303.1 -25.0M-303.1 -25.0L-259.8 -50.0M-216.5 125.0L-259.8 100.0M-259.8 100.0L-259.8 50.0M-173.2 200.0L-216.5 175.0M-216.5 175.0L-216.5 125.0" fill="none" stroke="#f3efe2" stroke-opacity=".45" stroke-width="2.5" stroke-linecap="round"/><text x="0.0" y="24.0" class="hw-ti" style="font-size:26px">💛</text><text x="-43.3" y="77.0" class="hw-ti">🌳</text><text x="43.3" y="77.0" class="hw-ti">🌳</text><text x="86.6" y="2.0" class="hw-ti">🌳</text><text x="-86.6" y="2.0" class="hw-ti">🌳</text><text x="-86.6" y="152.0" class="hw-ti">🌿</text><text x="0.0" y="152.0" class="hw-ti">🌿</text><text x="86.6" y="152.0" class="hw-ti">🌿</text><text x="129.9" y="77.0" class="hw-ti">🌿</text><text x="173.2" y="2.0" class="hw-ti">🌿</text><text x="129.9" y="-73.0" class="hw-ti">🌿</text><text x="-129.9" y="-73.0" class="hw-ti">🌿</text><text x="-173.2" y="2.0" class="hw-ti">🌿</text><text x="-129.9" y="77.0" class="hw-ti">🌿</text><text x="-129.9" y="227.0" class="hw-ti">🌱</text><text x="-43.3" y="227.0" class="hw-ti">🌱</text><text x="43.3" y="227.0" class="hw-ti">🌱</text><text x="129.9" y="227.0" class="hw-ti">🌱</text><text x="173.2" y="152.0" class="hw-ti">🌱</text><text x="216.5" y="77.0" class="hw-ti">🌱</text><text x="259.8" y="2.0" class="hw-ti">🌱</text><text x="216.5" y="-73.0" class="hw-ti">🌱</text><text x="173.2" y="-148.0" class="hw-ti">🌱</text><text x="129.9" y="-223.0" class="hw-ti">🌱</text><text x="-129.9" y="-223.0" class="hw-ti">🌱</text><text x="-173.2" y="-148.0" class="hw-ti">🌱</text><text x="-216.5" y="-73.0" class="hw-ti">🌱</text><text x="-259.8" y="2.0" class="hw-ti">🌱</text><text x="-216.5" y="77.0" class="hw-ti">🌱</text><text x="-173.2" y="152.0" class="hw-ti">🌱</text><rect x="-102.3" y="-242.0" width="204.5" height="34" rx="17.0" fill="#0c1711" fill-opacity=".9" stroke="#f3efe2" stroke-opacity=".7" stroke-width="1.5"/><text x="0" y="-224.0" class="hw-pill" style="font-size:22px">🌱 SEEDLANDS</text><rect x="-126.7" y="-167.0" width="253.4" height="34" rx="17.0" fill="#0c1711" fill-opacity=".9" stroke="#f3efe2" stroke-opacity=".7" stroke-width="1.5"/><text x="0" y="-149.0" class="hw-pill" style="font-size:22px">🌿 SAPLING PATH</text><rect x="-110.4" y="-92.0" width="220.8" height="34" rx="17.0" fill="#0c1711" fill-opacity=".9" stroke="#f3efe2" stroke-opacity=".7" stroke-width="1.5"/><text x="0" y="-74.0" class="hw-pill" style="font-size:22px">🌳 OAK CIRCLE</text><rect x="-64.0" y="-24.0" width="128.0" height="28" rx="14.0" fill="#0c1711" fill-opacity=".9" stroke="#f3efe2" stroke-opacity=".7" stroke-width="1.5"/><text x="0" y="-9.0" class="hw-pill" style="font-size:16px">HEARTWOOD</text><circle cx="-55.4" cy="287.8" r="27" fill="#0c1711" stroke="#cf6f97" stroke-width="4"/><text x="-55.4" y="288.8" class="hw-ri"><title>Authenticity</title>🪞</text><circle cx="221.6" cy="191.9" r="27" fill="#0c1711" stroke="#c8463f" stroke-width="4"/><text x="221.6" y="192.9" class="hw-ri"><title>Resilience</title>🎋</text><circle cx="277.0" cy="-95.9" r="27" fill="#0c1711" stroke="#e0a32e" stroke-width="4"/><text x="277.0" y="-94.9" class="hw-ri"><title>Excellence</title>⭐</text><circle cx="55.4" cy="-287.8" r="27" fill="#0c1711" stroke="#e0703a" stroke-width="4"/><text x="55.4" y="-286.8" class="hw-ri"><title>Zealous</title>☀️</text><circle cx="-221.6" cy="-191.9" r="27" fill="#0c1711" stroke="#3f9e9a" stroke-width="4"/><text x="-221.6" y="-190.9" class="hw-ri"><title>Sustainability</title>🌍</text><circle cx="-277.0" cy="95.9" r="27" fill="#0c1711" stroke="#4f74b0" stroke-width="4"/><text x="-277.0" y="96.9" class="hw-ri"><title>Open-mindedness</title>💡</text></svg>
     </figure>
     <div>
       <ul class="values" aria-label="The six values">
-        <li><i class="hx" style="--c:var(--curiosity)"></i><span class="em" aria-hidden="true">🔍</span><span><b>Curiosity</b><small>bottom left</small></span></li>
-        <li><i class="hx" style="--c:var(--creativity)"></i><span class="em" aria-hidden="true">🎨</span><span><b>Creativity</b><small>bottom right</small></span></li>
-        <li><i class="hx" style="--c:var(--collaboration)"></i><span class="em" aria-hidden="true">🤝</span><span><b>Collaboration</b><small>right</small></span></li>
-        <li><i class="hx" style="--c:var(--courage)"></i><span class="em" aria-hidden="true">🦁</span><span><b>Courage</b><small>top</small></span></li>
-        <li><i class="hx" style="--c:var(--compassion)"></i><span class="em" aria-hidden="true">💗</span><span><b>Compassion</b><small>top left</small></span></li>
-        <li><i class="hx" style="--c:var(--commitment)"></i><span class="em" aria-hidden="true">⚓</span><span><b>Commitment</b><small>left</small></span></li>
+        <li><i class="hx" style="--c:var(--zealous)"></i><span class="em" aria-hidden="true">☀️</span><span><b>Zealous</b><small>Be zealous, not jealous. · top</small></span></li>
+        <li><i class="hx" style="--c:var(--excellence)"></i><span class="em" aria-hidden="true">⭐</span><span><b>Excellence</b><small>Beyond expectation. · upper right</small></span></li>
+        <li><i class="hx" style="--c:var(--resilience)"></i><span class="em" aria-hidden="true">🎋</span><span><b>Resilience</b><small>Anti-fragile. · lower right</small></span></li>
+        <li><i class="hx" style="--c:var(--authenticity)"></i><span class="em" aria-hidden="true">🪞</span><span><b>Authenticity</b><small>Inclusive education. · bottom</small></span></li>
+        <li><i class="hx" style="--c:var(--openness)"></i><span class="em" aria-hidden="true">💡</span><span><b>Open-mindedness</b><small>Growth mindset. · lower left</small></span></li>
+        <li><i class="hx" style="--c:var(--sustainability)"></i><span class="em" aria-hidden="true">🌍</span><span><b>Sustainability</b><small>Start with the end in mind. · upper left</small></span></li>
       </ul>
-      <p class="small muted" style="margin-top:.7rem">The first three describe ZERA's learning environment; the last three, the leaders ZERA forms. Each wedge has 3 Seedlands spaces, 2 on the Sapling Path and 1 in the Oak Circle.</p>
+      <p class="small muted" style="margin-top:.7rem">ZERA's core values spell <b>Z-E-R-A-O-S</b> around the forest. Each wedge has 3 Seedlands spaces, 2 on the Sapling Path and 1 in the Oak Circle.</p>
     </div>
   </div>
   <div class="callout">
@@ -438,8 +438,8 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
     <div class="node" role="listitem"><span class="em" aria-hidden="true">🌿</span><b>Sapling Path</b><span>Sapling · Season 2</span></div>
     <div class="hop" aria-hidden="true"><span class="v">↓</span><span class="h">→</span>Season 3</div>
     <div class="node" role="listitem"><span class="em" aria-hidden="true">🌳</span><b>Oak Circle</b><span>Oak · Season 3</span></div>
-    <div class="hop" aria-hidden="true"><span class="v">↓</span><span class="h">→</span>🤝 ally</div>
-    <div class="node heart" role="listitem"><span class="em" aria-hidden="true">💛</span><b>Heartwood</b><span>Heartwood · Season 3 · <span class="nowrap">needs an ally</span></span></div>
+    <div class="hop" aria-hidden="true"><span class="v">↓</span><span class="h">→</span>🤝 alliance</div>
+    <div class="node heart" role="listitem"><span class="em" aria-hidden="true">💛</span><b>Heartwood</b><span>Heartwood · Season 3 · <span class="nowrap">needs an alliance</span></span></div>
   </div>
 
   <div class="tablecard">
@@ -450,13 +450,13 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
         <tr><th scope="row">🌱 Seedlands <span class="muted small">(outer)</span></th><td class="nw" data-label="Spaces">18</td><td data-label="Your question">Seed: light and fun</td><td class="nw" data-label="Opens">Season 1</td><td data-label="To step in">open from the start</td><td class="nw" data-label="Answer time">45 s</td><td class="nw" data-label="Card points">1</td></tr>
         <tr><th scope="row">🌿 Sapling Path <span class="muted small">(middle)</span></th><td class="nw" data-label="Spaces">12</td><td data-label="Your question">Sapling: a story from your life</td><td class="nw" data-label="Opens">Season 2</td><td data-label="To step in">open from Season 2</td><td class="nw" data-label="Answer time">60 s</td><td class="nw" data-label="Card points">2</td></tr>
         <tr><th scope="row">🌳 Oak Circle <span class="muted small">(inner)</span></th><td class="nw" data-label="Spaces">6</td><td data-label="Your question">Oak: what's underneath (values, fears, hopes)</td><td class="nw" data-label="Opens">Season 3</td><td data-label="To step in">open from Season 3</td><td class="nw" data-label="Answer time">90 s</td><td class="nw" data-label="Card points">3</td></tr>
-        <tr><th scope="row">💛 Heartwood <span class="muted small">(centre)</span></th><td class="nw" data-label="Spaces">1</td><td data-label="Your question">Heartwood: your legacy (its own deck)</td><td class="nw" data-label="Opens">Season 3</td><td data-label="To step in">Season 3, and you need at least one ally</td><td class="nw" data-label="Answer time">90 s</td><td class="nw" data-label="Card points">4</td></tr>
+        <tr><th scope="row">💛 Heartwood <span class="muted small">(centre)</span></th><td class="nw" data-label="Spaces">1</td><td data-label="Your question">Heartwood: your legacy (its own deck)</td><td class="nw" data-label="Opens">Season 3</td><td data-label="To step in">Season 3, and you need an alliance</td><td class="nw" data-label="Answer time">90 s</td><td class="nw" data-label="Card points">4</td></tr>
       </tbody>
     </table>
   </div>
   <ul style="margin-top:1rem">
     <li><b>Move up to 3 spaces a turn</b>, one neighbouring space at a time, through any ring that's open. Moving costs nothing.</li>
-    <li>From the Seedlands to the Heartwood is 3 steps: in Season 3, with an ally, you can walk all the way in on one turn.</li>
+    <li>From the Seedlands to the Heartwood is 3 steps: in Season 3, in an alliance, you can walk all the way in on one turn.</li>
     <li>Rings that aren't open yet look faded on the board. Any number of players can share a space.</li>
     <li>The answer timer is a guide. When it runs out it turns red: finish your thought kindly.</li>
   </ul>
@@ -525,7 +525,7 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
           <polygon points="120,14 120,38 101,49 82,38 82,14 101,3" fill="#cf6f97" fill-opacity=".55" stroke="#0c1711" stroke-width="2"/>
           <circle cx="25" cy="26" r="9" fill="#1e88e5" stroke="#fff" stroke-width="2"/>
         </svg>
-        <p class="small" style="margin:.3em 0 0">"One more, into Compassion." The Keeper taps the highlighted space.</p>
+        <p class="small" style="margin:.3em 0 0">"One more, into Authenticity." The Keeper taps the highlighted space.</p>
       </div>
     </li>
     <li>
@@ -542,7 +542,7 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
       <p>Your question appears on the big screen, from your space's value at your ring's tier. When you start talking, the Keeper starts the timer: 45 s, 60 s or 90 s. When you finish, the Keeper stops it.</p>
       <div class="mock">
         <div class="lbl">On the big screen</div>
-        <span class="tier">🌿 Sapling · Courage</span>
+        <span class="tier">🌿 Sapling · Resilience</span>
         <div class="q">Tell us about a time you were afraid and did it anyway.</div>
         <p class="small muted" style="margin:.3em 0 0">Passing is always free: just say so.</p>
       </div>
@@ -608,14 +608,14 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
   <h2 id="seasons-h"><span class="num" aria-hidden="true">7</span>Seasons and Dusk</h2>
   <p class="lead">The game runs in three seasons, then the finale. In each season everyone takes one turn, then Dusk falls.</p>
   <ol class="timeline">
-    <li><span class="ic" aria-hidden="true">📍</span><div class="box"><b>Plant your seed</b><span class="tag">before Season 1</span><br>In turn, say which value you identify with most, and why, in one sentence. The Keeper places your seed on an outer Seedlands space of that value.</div></li>
+    <li><span class="ic" aria-hidden="true">📍</span><div class="box"><b>Plant your seed: choose the value you stand for</b><span class="tag">before Season 1</span><br>In turn, say which ZERAOS value you stand for, and why, in one sentence. The Keeper places your seed on an outer Seedlands space of that value. It's yours for the whole game.</div></li>
     <li><span class="ic" aria-hidden="true">🌱</span><div class="box"><b>Season 1 · Planting the Seed</b><span class="tag">Seedlands open</span><br>Only the outer ring is open, so the questions are light and fun.</div></li>
-    <li class="dusk"><span class="ic" aria-hidden="true">🌙</span><div class="box"><b>Dusk</b>Pair up and talk for 4 minutes.</div></li>
-    <li><span class="ic" aria-hidden="true">🌿</span><div class="box"><b>Season 2 · The Sprout</b><span class="tag">+ Sapling Path</span><br>The next player in order starts.</div></li>
-    <li class="dusk"><span class="ic" aria-hidden="true">🌙</span><div class="box"><b>Dusk</b>Pair up with someone new.</div></li>
+    <li class="dusk"><span class="ic" aria-hidden="true">🌙</span><div class="box"><b>Dusk</b>Pair up and talk for 4 minutes. New alliances write their statement.</div></li>
+    <li><span class="ic" aria-hidden="true">🌿</span><div class="box"><b>Season 2 · The Sprout</b><span class="tag">+ Sapling Path</span><br>New alliances say their statement aloud, then the next player in order starts.</div></li>
+    <li class="dusk"><span class="ic" aria-hidden="true">🌙</span><div class="box"><b>Dusk</b>Pair up with someone new. An alliance of two may welcome a third.</div></li>
     <li><span class="ic" aria-hidden="true">🌳</span><div class="box"><b>Season 3 · Growing into a Tree</b><span class="tag">+ Oak Circle</span><span class="tag">+ Heartwood</span><br>The next player in order starts.</div></li>
     <li class="dusk"><span class="ic" aria-hidden="true">🌙</span><div class="box"><b>Dusk</b>The last pairs, then the finale.</div></li>
-    <li><span class="ic" aria-hidden="true">🌲</span><div class="box"><b>The Vision of a Forest</b><span class="tag">finale</span><br>Secret Owl guesses, the tribute chain, then the scores.</div></li>
+    <li><span class="ic" aria-hidden="true">🌲</span><div class="box"><b>The Vision of a Forest</b><span class="tag">finale</span><br>Each alliance tells its story, then Secret Owl guesses, the tribute chain, and the scores.</div></li>
   </ol>
 
   <h3>🌙 Dusk</h3>
@@ -624,43 +624,54 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
     <li>On your phone, choose a partner you haven't paired with before, or choose <b>Anyone (the Keeper pairs me)</b>.</li>
     <li>To make it an alliance, tick <b>Make it an alliance</b>. Then tap <span class="btn">Send my choice</span>.</li>
     <li>The Keeper taps <b>Set the pairs</b>. You pair only if you both chose each other. The app pairs everyone else, avoiding repeat partners where it can.</li>
-    <li>Your phone shows your partner and a Bond card for this season. Talk for 4 minutes.</li>
+    <li>Your phone shows your partner and a card: a Bond card for a Fireside chat, or the statement card for an alliance. Talk for 4 minutes.</li>
   </ol>
 
-  <h3>Alliance or Fireside chat?</h3>
+  <h3>🤝 Alliances join different values</h3>
+  <p>An alliance is 2 or 3 people who stand for <b>different</b> values, held together by <b>one statement that holds all their values</b>.</p>
   <div class="flow" role="group" aria-label="How the app decides between an alliance and a fireside chat">
     <div class="row"><div class="qbox">Did you both choose each other?</div><div class="no"><b>No:</b> the app pairs you with someone. Fireside chat.</div></div>
     <div class="yes">↓ yes</div>
     <div class="row"><div class="qbox">Did you both tick "Make it an alliance"?</div><div class="no"><b>No:</b> you still talk together. Fireside chat.</div></div>
     <div class="yes">↓ yes</div>
-    <div class="row"><div class="qbox">Are you on the same or a neighbouring space? <span class="muted small">(Common Ground skips this check.)</span></div><div class="no"><b>No:</b> you still talk together. Fireside chat.</div></div>
+    <div class="row"><div class="qbox">Do you stand for different values? <span class="muted small">(and in an alliance of two, different from your ally's too)</span></div><div class="no"><b>No:</b> you still talk together. Fireside chat.</div></div>
     <div class="yes">↓ yes</div>
-    <div class="win">🤝 Alliance! You each gain an ally. It costs nothing.</div>
+    <div class="row"><div class="qbox">Is there room? At most 3 per alliance, and two alliances never merge.</div><div class="no"><b>No:</b> you still talk together. Fireside chat.</div></div>
+    <div class="yes">↓ yes</div>
+    <div class="win">🤝 Alliance! Now find your statement.</div>
   </div>
   <p class="small muted">If you asked for an alliance and it didn't form, your phone tells you why.</p>
-  <figure style="margin:0">
-    <svg class="dusk-fig" viewBox="-130 -130 498 270" role="img" aria-labelledby="dusk-t"><title id="dusk-t">A and B stand on neighbouring spaces, so they can form an alliance. C is three spaces from A, too far for an alliance (unless one of them uses Common Ground).</title><style>.dk-p{font-size:18px;font-weight:800;fill:#10180f;text-anchor:middle;dominant-baseline:central}.dk-ok{font-size:19px;font-weight:800;fill:#9fdca2;text-anchor:middle;dominant-baseline:central}.dk-no{font-size:19px;font-weight:800;fill:#f2a0a0;text-anchor:middle;dominant-baseline:central}</style><polygon points="-41.6,-22.0 -41.6,22.0 -79.7,44.0 -117.8,22.0 -117.8,-22.0 -79.7,-44.0" fill="#3f9e9a" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="38.1,-22.0 38.1,22.0 0.0,44.0 -38.1,22.0 -38.1,-22.0 -0.0,-44.0" fill="#3f9e9a" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="117.8,-22.0 117.8,22.0 79.7,44.0 41.6,22.0 41.6,-22.0 79.7,-44.0" fill="#3f9e9a" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="197.5,-22.0 197.5,22.0 159.3,44.0 121.2,22.0 121.2,-22.0 159.3,-44.0" fill="#3f9e9a" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="277.1,-22.0 277.1,22.0 239.0,44.0 200.9,22.0 200.9,-22.0 239.0,-44.0" fill="#3f9e9a" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><polygon points="356.8,-22.0 356.8,22.0 318.7,44.0 280.6,22.0 280.6,-22.0 318.7,-44.0" fill="#3f9e9a" fill-opacity="0.55" stroke="#0c1711" stroke-width="3"/><circle cx="0.0" cy="0.0" r="17" fill="#e53935" stroke="#fff" stroke-width="3"/><text x="0.0" y="0.0" class="dk-p">A</text><circle cx="79.7" cy="0.0" r="17" fill="#1e88e5" stroke="#fff" stroke-width="3"/><text x="79.7" y="0.0" class="dk-p">B</text><circle cx="239.0" cy="0.0" r="17" fill="#fdd835" stroke="#fff" stroke-width="3"/><text x="239.0" y="0.0" class="dk-p">C</text><path d="M0.0 -58 Q39.8 -92 79.7 -58" fill="none" stroke="#7bc47f" stroke-width="3"/><text x="39.8" y="-100" class="dk-ok">✓ can ally</text><path d="M0.0 58 Q119.5 104 239.0 58" fill="none" stroke="#e57373" stroke-width="3" stroke-dasharray="7 6"/><text x="119.5" y="116" class="dk-no">✗ too far (3 spaces apart)</text></svg>
-    <figcaption class="small muted" style="text-align:center">Same or neighbouring space: A and B can ally. C is too far.</figcaption>
-  </figure>
 
   <div class="grid two" style="margin-top:14px">
     <div class="card" style="border-top:6px solid var(--ally)">
-      <h3 style="margin-top:0">🤝 What an alliance gives you</h3>
+      <h3 style="margin-top:0">✍️ Your statement</h3>
+      <p>In your Dusk talk, find <b>one line that holds all your values</b>: a statement, a slogan or a cheer, about 12 words. Try <i>"We ___ so that ___."</i></p>
+      <p class="small" style="margin:0">One of you types it on your phone, and it appears on the big screen. You can change it until the next season starts, when you say it aloud to the room. Stuck? The Keeper has hints for every combination of values.</p>
+    </div>
+    <div class="card" style="border-top:6px solid var(--ally)">
+      <h3 style="margin-top:0">👥 Growing to three</h3>
+      <p>An alliance of two can welcome one more, at a later Dusk. One member and the newcomer choose each other and tick alliance; the newcomer must stand for a third value.</p>
+      <p class="small" style="margin:0">That night all three talk together (the other member joins in, setting aside their own choice), and write a <b>new</b> statement that holds all three values.</p>
+    </div>
+  </div>
+  <div class="grid two" style="margin-top:12px">
+    <div class="card" style="border-top:6px solid var(--ally)">
+      <h3 style="margin-top:0">What an alliance gives you</h3>
       <ul style="margin:0">
-        <li><b>+3 points</b> each at the end.</li>
-        <li><b>The key to the Heartwood</b>: you can't step in without at least one ally.</li>
+        <li><b>More values to advocate</b>: Advocacy scores every value your alliance stands for that got a voice.</li>
+        <li><b>The key to the Heartwood</b>: you can't step in without an alliance.</li>
         <li>An ally to jump to with Rope Team (type 6).</li>
-        <li>One partner per Dusk means at most one new ally per Dusk, so 3 at most.</li>
+        <li>Your story to tell at the finale.</li>
       </ul>
     </div>
     <div class="card" style="border-top:6px solid var(--good)">
       <h3 style="margin-top:0">🔥 Fireside chat</h3>
-      <p>Every pair that isn't an alliance has a Fireside chat: the same 4-minute conversation and Bond card, without the alliance.</p>
-      <p style="margin:0" class="small muted">With an odd number of players, one group is a trio.</p>
+      <p>Every pair that isn't an alliance has a Fireside chat: the same 4-minute conversation, with a Bond card.</p>
+      <p style="margin:0" class="small muted">With an odd number of players, one Fireside group is a trio.</p>
     </div>
   </div>
   <div class="callout">
-    <p><b>Tip.</b> Where you end your turn decides who you can ally with at Dusk. Players who move later can see where others stopped. The start player moves on each season, so that advantage goes around.</p>
+    <p><b>Tip.</b> Plan together. "I'll take a deep question in Resilience if you take one in Excellence" is how an alliance gets every value a voice.</p>
   </div>
 </section>
 
@@ -689,14 +700,14 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
       <h3><span class="em" aria-hidden="true">🚀</span>Momentum</h3>
       <span class="when">When: your turn, while moving</span>
       <p class="fx">Move up to 3 more spaces this turn.</p>
-      <p class="note">Use it before you stop: up to 6 steps in all. Closed rings and the Heartwood's ally rule still apply.</p>
+      <p class="note">Use it before you stop: up to 6 steps in all. Closed rings and the Heartwood's alliance rule still apply.</p>
     </li>
     <li class="power" data-n="4">
       <div class="top"><span class="t">4</span><span class="who"><b>Individualist</b><br>gift: depth</span></div>
       <h3><span class="em" aria-hidden="true">🌊</span>Deep Water</h3>
       <span class="when">When: your turn, before you start sharing</span>
       <p class="fx">Answer the question one tier deeper than your ring (up to Oak). It still scores at your ring's tier.</p>
-      <p class="note">The deeper question is the reward. Not on an Oak or Heartwood question. On the Sapling Path it gives an Oak story: that counts for the Forest Goal, though the card scores 2.</p>
+      <p class="note">The deeper question is the reward. Not on an Oak or Heartwood question. On the Sapling Path it gives an Oak story: that advocates the value, though the card scores 2.</p>
     </li>
     <li class="power" data-n="5">
       <div class="top"><span class="t">5</span><span class="who"><b>Investigator</b><br>gift: insight</span></div>
@@ -710,7 +721,7 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
       <h3><span class="em" aria-hidden="true">🪢</span>Rope Team</h3>
       <span class="when">When: your turn, while moving</span>
       <p class="fx">Jump to an ally's space from anywhere, without using your steps. You both take 1 bonus point.</p>
-      <p class="note">You need an ally, and their ring must be open. You can keep moving afterwards with the steps you have left.</p>
+      <p class="note">You need an alliance, and your ally's ring must be open. You can keep moving afterwards with the steps you have left.</p>
     </li>
     <li class="power" data-n="7">
       <div class="top"><span class="t">7</span><span class="who"><b>Enthusiast</b><br>gift: joy</span></div>
@@ -747,7 +758,8 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
     </figure>
     <ol class="chain">
       <li><b>All game: observe them.</b> Something they love, something that shaped them, something they hope for. Listen to their shares; Dusk, Squirrels and alliances all help. Watch without being obvious, or they'll guess you're their Owl.</li>
-      <li><b>Guess.</b> After the last Dusk, everyone picks who they think was <i>their</i> Secret Owl and taps <b>Lock in my guess</b>. You can change it until the tributes start.</li>
+      <li><b>Alliance stories.</b> After the last Dusk, the Keeper calls each alliance in turn. Tell your story in about 2 minutes: your statement, and how you found it.</li>
+      <li><b>Guess.</b> After the stories, everyone picks who they think was <i>their</i> Secret Owl and taps <b>Lock in my guess</b>. You can change it until the tributes start.</li>
       <li><b>Give your tribute.</b> One at a time, around the loop, give the colleague you watched one minute:
         <div class="tribute">"Three things I discovered about you today, and one thing I appreciate."</div>
         Then hand them an acorn: your trust. 🌰</li>
@@ -808,7 +820,7 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
             <tr><th scope="row">🌱 Seed</th><td>S1</td><td>open</td><td>45 s</td><td class="n">1</td></tr>
             <tr><th scope="row">🌿 Sapling</th><td>S2</td><td>open</td><td>60 s</td><td class="n">2</td></tr>
             <tr><th scope="row">🌳 Oak</th><td>S3</td><td>open</td><td>90 s</td><td class="n">3</td></tr>
-            <tr><th scope="row">💛 Heart&shy;wood</th><td>S3</td><td>needs an ally</td><td>90 s</td><td class="n">4</td></tr>
+            <tr><th scope="row">💛 Heart&shy;wood</th><td>S3</td><td>needs an alliance</td><td>90 s</td><td class="n">4</td></tr>
           </tbody>
         </table>
         <p class="muted" style="margin-top:.3rem">Move up to 3 spaces a turn, free. "Card" is the points a kept card scores.</p>
@@ -830,14 +842,14 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
       </div>
       <div class="blk">
         <h3>Dusk</h3>
-        <p>Choose each other + tick alliance + same or neighbouring space = 🤝 alliance. Anything else: Fireside chat. Talk 4 minutes.</p>
+        <p>Choose each other + tick alliance + different values + room (3 at most, no merging) = 🤝 alliance, then write one statement that holds all your values. Anything else: Fireside chat. Talk 4 minutes.</p>
       </div>
       <div class="blk">
         <h3>Scoring</h3>
         <ul>
           <li>🌰 Trust: per giver, 1 acorn = 2, two or more = 3</li>
           <li>🌳 Growth: 🌱1 🌿2 🌳3 💛4 per card, +1 per value, +✨</li>
-          <li>🤝 Alliances: 3 each (max 3)</li>
+          <li>📣 Advocacy: 3 per value your alliance stands for that got an Oak story (or a Heartwood story from someone who stands for it)</li>
           <li>🦉 Secret Owl: +1 per confirmed (max 3), +2 if not guessed, +2 if you guess your own Owl</li>
           <li>Tie: most Trust wins</li>
         </ul>

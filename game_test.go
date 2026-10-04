@@ -44,7 +44,7 @@ func TestFullGame(t *testing.T) {
 		t.Fatal("powers changed after the start")
 	}
 
-	// Plant everyone on the outer ring, in two neighbouring pairs.
+	// Plant everyone on the outer ring, each in a different value.
 	outer := []int{}
 	for i, h := range g.Hexes {
 		if h.Ring == 3 {
@@ -52,7 +52,7 @@ func TestFullGame(t *testing.T) {
 		}
 	}
 	for k := range ps {
-		must(as(g.current(), "plant", Action{Hex: outer[k]}))
+		must(as(g.current(), "plant", Action{Hex: outer[k*3]}))
 	}
 	if g.Phase != PhaseTurn || g.Season != 1 {
 		t.Fatalf("phase %s season %d", g.Phase, g.Season)
@@ -117,10 +117,17 @@ func TestFullGame(t *testing.T) {
 	}
 	playSeason()
 	if len(ps[0].Allies) != 1 {
-		t.Fatalf("expected Ann and Ben allied (adjacent), allies=%v", ps[0].Allies)
+		t.Fatalf("expected Ann and Ben allied (different values), allies=%v", ps[0].Allies)
 	}
 	playSeason()
 	playSeason()
+	// The finale opens with each alliance's story.
+	if g.Phase != PhaseStories {
+		t.Fatalf("expected stories, got %s", g.Phase)
+	}
+	for g.Phase == PhaseStories {
+		must(host("nextStory", Action{}))
+	}
 	if g.Phase != PhaseGuess {
 		t.Fatalf("expected guess, got %s", g.Phase)
 	}
@@ -137,9 +144,9 @@ func TestFullGame(t *testing.T) {
 		giver := g.player(g.Chain[g.ChainIdx])
 		must(as(g.player(giver.Target), "confirm", Action{N: 3}))
 	}
-	scores, _ := g.Scores()
+	scores := g.Scores()
 	for _, s := range scores {
-		t.Logf("%-4s trust %2d growth %2d alliances %2d secret %d total %2d winner=%v", s.Name, s.Trust, s.Growth, s.Alliances, s.Secret, s.Total, s.Winner)
+		t.Logf("%-4s trust %2d growth %2d advocacy %2d secret %d total %2d winner=%v", s.Name, s.Trust, s.Growth, s.Advocacy, s.Secret, s.Total, s.Winner)
 	}
 	if !scores[0].Winner || scores[0].Total == 0 {
 		t.Fatal("no winner")
@@ -257,12 +264,12 @@ func TestPlaytestFixes(t *testing.T) {
 		}
 	}
 	// A full tie shares the win.
-	g2 := &Game{Players: ps, ForestGoal: false}
+	g2 := &Game{Players: ps}
 	for _, x := range ps {
 		x.Pot, x.Cards, x.Allies, x.Bonus, x.Confirmed, x.Guess = map[string]int{}, nil, nil, 0, 0, ""
 		x.Target = ""
 	}
-	scores, _ := g2.Scores()
+	scores := g2.Scores()
 	winners := 0
 	for _, s := range scores {
 		if s.Winner {
@@ -357,9 +364,9 @@ func TestStepsOpenHandsAndFreeAlliance(t *testing.T) {
 			outer = append(outer, i)
 		}
 	}
-	// Plant both on the same space, so they're neighbours for the alliance.
+	// Plant in two different values, so they can ally.
 	must(as(g.current(), "plant", Action{Hex: outer[0]}))
-	must(as(g.current(), "plant", Action{Hex: outer[0]}))
+	must(as(g.current(), "plant", Action{Hex: outer[3]}))
 	a, b := g.current(), ps[0]
 	if a == ps[0] {
 		b = ps[1]
@@ -404,11 +411,271 @@ func TestStepsOpenHandsAndFreeAlliance(t *testing.T) {
 	must(as(b, "startShare", Action{}))
 	must(as(b, "doneShare", Action{}))
 	must(as(b, "endTrust", Action{}))
-	a.Pos = b.Pos
 	must(as(a, "duskChoice", Action{Target: b.ID, Ally: true}))
 	must(as(b, "duskChoice", Action{Target: a.ID, Ally: true}))
 	must(g.Apply(Action{Host: "host", Type: "resolveDusk"}))
 	if !hasAlly(a, b.ID) {
 		t.Fatalf("no alliance: %+v", g.Dusk.Pairs)
 	}
+}
+
+// Alliances join different values, grow to three at most (the existing member
+// joins the trio), and hold one statement. Advocacy scores the values an
+// alliance stands for that got an Oak story (or a Heartwood story from someone
+// who stands for that value).
+func TestAlliances(t *testing.T) {
+	g := NewGame("ALY", "host")
+	must := func(err error) {
+		t.Helper()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	var ps []*Player
+	for i, n := range []string{"Zed", "Eve", "Ria", "Ash", "Zoe", "Sam"} {
+		p, _ := g.Join(n, Colors[i])
+		must(g.Apply(Action{Host: "host", Type: "assignPowers", Target: p.ID, Types: []int{1}}))
+		ps = append(ps, p)
+	}
+	as := func(p *Player, typ string, a Action) error {
+		a.Pid, a.Secret, a.Type = p.ID, p.Secret, typ
+		return g.Apply(a)
+	}
+	host := func(typ string) { t.Helper(); must(g.Apply(Action{Host: "host", Type: typ})) }
+	host("start")
+	outerOf := func(v int) int {
+		for i, h := range g.Hexes {
+			if h.Ring == 3 && h.Region == v {
+				return i
+			}
+		}
+		return -1
+	}
+	// Zed Z, Eve E, Ria R, Ash A, Zoe Z, Sam S.
+	value := map[string]int{"Zed": 0, "Eve": 1, "Ria": 2, "Ash": 3, "Zoe": 0, "Sam": 5}
+	for range ps {
+		p := g.current()
+		must(as(p, "plant", Action{Hex: outerOf(value[p.Name])}))
+	}
+	byName := func(n string) *Player {
+		for _, p := range ps {
+			if p.Name == n {
+				return p
+			}
+		}
+		return nil
+	}
+	zed, eve, ria, ash, zoe, sam := byName("Zed"), byName("Eve"), byName("Ria"), byName("Ash"), byName("Zoe"), byName("Sam")
+	if zed.Value != 0 || sam.Value != 5 {
+		t.Fatalf("values not recorded: %d %d", zed.Value, sam.Value)
+	}
+	passAll := func() {
+		for g.Phase == PhaseTurn {
+			must(as(g.current(), "pass", Action{}))
+		}
+	}
+	choose := func(a, b *Player) {
+		t.Helper()
+		must(as(a, "duskChoice", Action{Target: b.ID, Ally: true}))
+		must(as(b, "duskChoice", Action{Target: a.ID, Ally: true}))
+	}
+
+	// Dusk 1: three alliances, each joining two different values.
+	passAll()
+	choose(zed, eve)
+	choose(zoe, ria)
+	choose(ash, sam)
+	host("resolveDusk")
+	if !hasAlly(zed, eve.ID) || !hasAlly(zoe, ria.ID) || !hasAlly(ash, sam.ID) {
+		t.Fatalf("expected three alliances: %+v", g.Dusk.Pairs)
+	}
+	if as(zed, "statement", Action{Text: "  "}) == nil {
+		t.Fatal("empty statement accepted")
+	}
+	must(as(eve, "statement", Action{Text: "Fire for the work, and the bar set high."}))
+	must(as(zed, "statement", Action{Text: "We bring the fire so the bar keeps rising."}))
+	al := g.allianceOf(zed.ID)
+	if al.Statement != "We bring the fire so the bar keeps rising." || g.valueKey(al.Members) != "ZE" {
+		t.Fatalf("statement %q key %q", al.Statement, g.valueKey(al.Members))
+	}
+	host("nextSeason")
+	if as(zed, "statement", Action{Text: "Too late."}) == nil {
+		t.Fatal("statement edited after the Dusk")
+	}
+
+	// Dusk 2: alliances don't merge (Zed with Ria, Eve with Sam), and each pair
+	// is told why.
+	passAll()
+	choose(zed, ria)
+	choose(eve, sam)
+	host("resolveDusk")
+	for _, pr := range g.Dusk.Pairs {
+		if pr.Ally {
+			t.Fatalf("an alliance formed that shouldn't have: %+v", pr)
+		}
+	}
+	notes := 0
+	for _, pr := range g.Dusk.Pairs {
+		if pr.Note != "" {
+			notes++
+		}
+	}
+	if notes != 2 {
+		t.Fatalf("expected 2 refusals with a reason: %+v", g.Dusk.Pairs)
+	}
+	host("nextSeason")
+
+	// Dusk 3: the Keeper pairs everyone. (Growing to three is tested below.)
+	passAll()
+	host("resolveDusk")
+	host("nextSeason")
+	if g.Phase != PhaseStories || len(g.Alliances) != 3 {
+		t.Fatalf("phase %s, %d alliances", g.Phase, len(g.Alliances))
+	}
+
+	// Advocacy: Z+E alliance; an Oak story in Excellence counts for both.
+	g.Oak = map[int]bool{1: true}
+	scores := map[string]Score{}
+	for _, s := range g.Scores() {
+		scores[s.Name] = s
+	}
+	if scores["Zed"].Advocacy != 3 || scores["Eve"].Advocacy != 3 || scores["Ria"].Advocacy != 0 {
+		t.Fatalf("advocacy Zed %d Eve %d Ria %d", scores["Zed"].Advocacy, scores["Eve"].Advocacy, scores["Ria"].Advocacy)
+	}
+	// A Heartwood story from Sam (Sustainability) advocates S for Ash and Sam.
+	sam.Cards = append(sam.Cards, KeptCard{Region: -1, Tier: 4})
+	for _, s := range g.Scores() {
+		scores[s.Name] = s
+	}
+	if scores["Ash"].Advocacy != 3 || scores["Sam"].Advocacy != 3 {
+		t.Fatalf("Heartwood advocacy: Ash %d Sam %d", scores["Ash"].Advocacy, scores["Sam"].Advocacy)
+	}
+}
+
+// An alliance of two grows to three at Dusk: the newcomer and a member choose
+// each other, and the other member is pulled into their conversation (any
+// other pairing they'd chosen is set aside). Four is never allowed.
+func TestAllianceGrowsToThree(t *testing.T) {
+	g := NewGame("TRI", "host")
+	must := func(err error) {
+		t.Helper()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	var ps []*Player
+	for i, n := range []string{"Zed", "Eve", "Ria", "Ash", "Oli"} {
+		p, _ := g.Join(n, Colors[i])
+		must(g.Apply(Action{Host: "host", Type: "assignPowers", Target: p.ID, Types: []int{1}}))
+		ps = append(ps, p)
+	}
+	as := func(p *Player, typ string, a Action) error {
+		a.Pid, a.Secret, a.Type = p.ID, p.Secret, typ
+		return g.Apply(a)
+	}
+	host := func(typ string) { t.Helper(); must(g.Apply(Action{Host: "host", Type: typ})) }
+	host("start")
+	for range ps {
+		p := g.current()
+		v := map[string]int{"Zed": 0, "Eve": 1, "Ria": 2, "Ash": 3, "Oli": 4}[p.Name]
+		for i, h := range g.Hexes {
+			if h.Ring == 3 && h.Region == v {
+				must(as(p, "plant", Action{Hex: i}))
+				break
+			}
+		}
+	}
+	zed, eve, ria, ash, oli := ps[0], ps[1], ps[2], ps[3], ps[4]
+	passAll := func() {
+		for g.Phase == PhaseTurn {
+			must(as(g.current(), "pass", Action{}))
+		}
+	}
+	choose := func(a, b *Player, ally bool) {
+		t.Helper()
+		must(as(a, "duskChoice", Action{Target: b.ID, Ally: ally}))
+		must(as(b, "duskChoice", Action{Target: a.ID, Ally: ally}))
+	}
+	passAll()
+	choose(zed, eve, true)
+	host("resolveDusk")
+	host("nextSeason")
+
+	// Dusk 2: Ria joins via Zed; Eve had chosen Ash, and is pulled into the trio.
+	passAll()
+	choose(zed, ria, true)
+	choose(eve, ash, false)
+	host("resolveDusk")
+	al := g.allianceOf(zed.ID)
+	if len(al.Members) != 3 || !contains(al.Members, ria.ID) || g.valueKey(al.Members) != "ZER" {
+		t.Fatalf("alliance did not grow: %+v", al)
+	}
+	if len(ria.Allies) != 2 || len(eve.Allies) != 2 {
+		t.Fatalf("allies not updated: ria %v eve %v", ria.Allies, eve.Allies)
+	}
+	trio := false
+	for _, pr := range g.Dusk.Pairs {
+		if pr.Ally && pr.C != "" && contains([]string{pr.A, pr.B, pr.C}, eve.ID) {
+			trio = true
+			if pr.Bond != StatementCard {
+				t.Fatal("the trio didn't get the statement card")
+			}
+		}
+	}
+	if !trio || g.Dusk.Notes[ash.ID] == "" {
+		t.Fatalf("expected the trio and a note for Ash: %+v notes %v", g.Dusk.Pairs, g.Dusk.Notes)
+	}
+	if al.Statement != "" {
+		t.Fatal("a grown alliance should write a new statement")
+	}
+	must(as(ria, "statement", Action{Text: "Fire, high bars, and the grit to keep both."}))
+	host("nextSeason")
+
+	// Dusk 3: a fourth member is refused.
+	passAll()
+	choose(eve, oli, true)
+	host("resolveDusk")
+	if len(al.Members) != 3 || hasAlly(oli, eve.ID) {
+		t.Fatalf("alliance grew past 3: %+v", al)
+	}
+	refused := false
+	for _, pr := range g.Dusk.Pairs {
+		if pr.Note != "" && contains([]string{pr.A, pr.B}, oli.ID) {
+			refused = true
+		}
+	}
+	if !refused {
+		t.Fatalf("expected a refusal note: %+v", g.Dusk.Pairs)
+	}
+}
+
+// Two players who stand for the same value can't ally, and are told why.
+func TestSameValueCantAlly(t *testing.T) {
+	g := NewGame("SAM", "host")
+	var ps []*Player
+	for i, n := range []string{"A", "B"} {
+		p, _ := g.Join(n, Colors[i])
+		g.Apply(Action{Host: "host", Type: "assignPowers", Target: p.ID, Types: []int{1}})
+		ps = append(ps, p)
+	}
+	as := func(p *Player, typ string, a Action) error {
+		a.Pid, a.Secret, a.Type = p.ID, p.Secret, typ
+		return g.Apply(a)
+	}
+	g.Apply(Action{Host: "host", Type: "start"})
+	as(g.current(), "plant", Action{Hex: 19}) // two spaces of the same value
+	as(g.current(), "plant", Action{Hex: 20})
+	if ps[0].Value != ps[1].Value {
+		t.Skip("board layout changed")
+	}
+	for g.Phase == PhaseTurn {
+		as(g.current(), "pass", Action{})
+	}
+	as(ps[0], "duskChoice", Action{Target: ps[1].ID, Ally: true})
+	as(ps[1], "duskChoice", Action{Target: ps[0].ID, Ally: true})
+	g.Apply(Action{Host: "host", Type: "resolveDusk"})
+	if len(g.Alliances) != 0 || g.Dusk.Pairs[0].Note == "" {
+		t.Fatalf("same-value alliance: %+v", g.Dusk.Pairs)
+	}
+	t.Log(g.Dusk.Pairs[0].Note)
 }

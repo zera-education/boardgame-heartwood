@@ -125,6 +125,7 @@ function renderGame(v) {
   if (scope !== keepScope) { keepScope = scope; for (const k in keep) delete keep[k]; }
 
   HW.patch($('top'), `<div class="row" style="justify-content:space-between"><h2 style="margin:0">${HW.chip(me.id)}</h2><span class="muted">${HW.esc(HW.phaseTitle(v))}</span></div>
+    ${me.value >= 0 ? `<p style="margin:.5em 0 0">You stand for <b>${HW.valueName(me.value)}</b>${me.allies.length ? ` · allied with ${me.allies.map(a => HW.chip(a)).join(' ')}` : ''}</p>` : ''}
     ${v.phase === 'lobby' ? '' : `<p class="muted" style="margin:.5em 0 0">🌰 ${me.trustLeft} trust acorns to give${me.squirrels ? ` · 🐿️ ${me.squirrels} follow-up${me.squirrels > 1 ? 's' : ''}: raise your hand after a share` : ''}</p>`}`);
   patchKeep($('action'), actionPanel(v, me, mv));
 
@@ -144,6 +145,9 @@ function patchKeep(el, html) {
     if (k in keep && [...s.options].some(o => o.value === keep[k])) s.value = keep[k];
   });
 }
+document.addEventListener('input', e => {
+  if (e.target.id === 'statement') keep.statement = e.target.value;
+});
 document.addEventListener('change', e => {
   const s = e.target.closest('select[data-keep]');
   if (s) keep[s.dataset.keep] = s.value;
@@ -157,7 +161,7 @@ function actionPanel(v, me, mv) {
     case 'lobby': return `<p class="big">You're in. Waiting for the Keeper to start…</p><p class="muted">The Keeper gives each player 1 to 3 Enneagram powers. While you wait, read <a href="howto.html" target="_blank">how to play</a>.</p>`;
     case 'plant':
       return v.current === me.id
-        ? lookUp('Your turn to plant: say which value you identify with most, and why, in one sentence. The Keeper places your seed.')
+        ? lookUp('Your turn to plant: say which ZERAOS value you stand for, and why, in one sentence. The Keeper places your seed in it.')
         : lookUp(`Listen to ${HW.chip(v.current)}.`);
     case 'turn':
       if (t.player === me.id) return lookUp(t.step === 'move' ? 'Your turn. Say where you want to go; the Keeper moves you.' : 'Your turn. Your question is on the big screen.');
@@ -167,6 +171,11 @@ function actionPanel(v, me, mv) {
       if (t.invited === me.id) return lookUp(`Open Hands: you answer this question too, right after ${HW.chip(t.player)}.`);
       return lookUp(`Listen to ${HW.chip(t.player)}.`);
     case 'dusk': return duskPanel(v, me, mv);
+    case 'stories': {
+      const al = v.alliances.find(a => a.id === v.story?.alliance);
+      if (al?.members.includes(me.id)) return lookUp('Your alliance tells its story now: your statement, and how you found it.');
+      return lookUp('Listen to this alliance\'s story.');
+    }
     case 'guess': {
       const opts = v.players.filter(p => p.id !== me.id).map(p => `<option value="${p.id}" ${mv.guess === p.id ? 'selected' : ''}>${HW.esc(p.name)}</option>`).join('');
       return `<p class="big">Who was <b>your</b> Secret Owl?</p>
@@ -191,23 +200,35 @@ function duskPanel(v, me, mv) {
     const pr = v.dusk.pairs.find(p => [p.a, p.b, p.c].includes(me.id));
     if (!pr) return '<p>Rest by the fire.</p>';
     const others = [pr.a, pr.b, pr.c].filter(x => x && x !== me.id).map(x => HW.chip(x)).join(' & ');
-    return `<p class="big">You're with ${others} ${pr.ally ? '<span class="badge">ALLIANCE</span>' : '<span class="muted">(fireside chat)</span>'}</p>
-      ${pr.note ? `<p class="note">${HW.esc(pr.note)}</p>` : ''}
+    let h = `<p class="big">You're with ${others} ${pr.ally ? '<span class="badge">ALLIANCE</span>' : '<span class="muted">(fireside chat)</span>'}</p>
+      ${mv.note ? `<p class="note">${HW.esc(mv.note)}</p>` : ''}${pr.note ? `<p class="note">${HW.esc(pr.note)}</p>` : ''}
       <div class="prompt" style="font-size:1.3rem">${HW.esc(pr.bond)}</div><p class="muted">Talk for 4 minutes.</p>`;
+    const al = pr.ally && v.alliances.find(a => a.id === pr.alliance);
+    if (al) {
+      const draft = 'statement' in keep ? keep.statement : al.statement;
+      h += `<p style="margin-bottom:.2em"><b>Your values:</b> ${al.members.map(m => HW.valueName(HW.player(m)?.value)).join(' + ')}</p>
+        <input id="statement" maxlength="140" placeholder="We ___ so that ___." value="${HW.esc(draft || '')}">
+        <p><button data-act="statement">${al.statement ? 'Update our statement' : 'Save our statement'}</button></p>
+        ${al.statement ? `<p class="good">Saved: “${HW.esc(al.statement)}”</p>` : ''}`;
+    }
+    return h;
   }
   const choice = mv.duskChoice || {};
-  const here = v.hexes[me.pos];
+  const myAl = v.alliances.find(a => a.members.includes(me.id));
   const opts = v.players.filter(p => p.id !== me.id).map(p => {
-    const near = HW.dist(v.hexes[p.pos], here) <= 1;
     const done = me.partners.includes(p.id);
-    return `<option value="${p.id}" ${choice.partner === p.id ? 'selected' : ''} ${done ? 'disabled' : ''}>${HW.esc(p.name)}${near ? ' · nearby' : ''}${done ? ' · already talked' : ''}${me.allies.includes(p.id) ? ' · ally' : ''}</option>`;
+    const same = p.value === me.value;
+    const theirs = v.alliances.find(a => a.members.includes(p.id));
+    const tags = [HW.valueName(p.value), same ? 'same value as you' : '', done ? 'already talked' : '',
+      me.allies.includes(p.id) ? 'your ally' : theirs ? `in an alliance of ${theirs.members.length}` : ''].filter(Boolean).join(' · ');
+    return `<option value="${p.id}" ${choice.partner === p.id ? 'selected' : ''} ${done ? 'disabled' : ''}>${HW.esc(p.name)} · ${HW.esc(tags)}</option>`;
   }).join('');
   return `<p class="big">Dusk: who do you want to talk with?</p>
     <select id="partner" data-keep="partner"><option value="">Anyone (the Keeper pairs me)</option>${opts}</select>
-    <label><input type="checkbox" id="ally" style="width:auto" ${choice.ally ? 'checked' : ''}> Make it an alliance (you must be on the same or a neighbouring space${mv.common ? ', or not, thanks to Common Ground' : ''})</label>
+    <label><input type="checkbox" id="ally" style="width:auto" ${choice.ally ? 'checked' : ''}> Make it an alliance</label>
     <p><button data-act="dusk">${mv.duskChoice ? 'Update my choice' : 'Send my choice'}</button></p>
     ${mv.duskChoice ? `<p class="good">Sent: ${mv.duskChoice.partner ? HW.esc(HW.name(mv.duskChoice.partner)) : 'anyone'}${mv.duskChoice.ally ? ', as an alliance' : ''}.</p>` : ''}
-    <p class="muted">You pair only if you both choose each other. +3 points each for an alliance.</p>`;
+    <p class="muted">You pair only if you both choose each other. An alliance joins <b>different values</b>: 2 or 3 people, never two who stand for the same one, and two alliances don't merge.${myAl ? ` Yours has ${myAl.members.length}${myAl.members.length < 3 ? ', so it can welcome one more' : ' (full)'}.` : ''} Together you find one statement that holds all your values.</p>`;
 }
 
 function powerCard(v, me, type) {
@@ -241,6 +262,7 @@ document.addEventListener('click', async e => {
     case 'seat': { const seat = loadSeats()[d.pid]; if (seat) takeSeat({ pid: d.pid, ...seat }); return; }
     case 'guess': return send('guess', { target: $('guess').value });
     case 'dusk': return send('duskChoice', { target: $('partner').value, ally: $('ally').checked });
+    case 'statement': await send('statement', { text: $('statement').value }); delete keep.statement; return;
     default: return send(d.act); // trust
   }
 });

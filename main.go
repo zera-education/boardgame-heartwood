@@ -300,7 +300,7 @@ func (s *Server) action(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err.Error())
 		return
 	}
-	payload, _ := json.Marshal(map[string]any{"hex": a.Hex, "target": a.Target, "power": a.Power, "n": a.N, "types": a.Types, "as": a.As})
+	payload, _ := json.Marshal(map[string]any{"hex": a.Hex, "target": a.Target, "power": a.Power, "n": a.N, "types": a.Types, "as": a.As, "text": a.Text})
 	actor := a.Pid
 	if a.Host != "" {
 		actor = "host"
@@ -429,7 +429,7 @@ func buildView(g *Game, pid, secret, host string) map[string]any {
 	players := []map[string]any{}
 	for _, p := range g.Players {
 		pp := map[string]any{
-			"id": p.ID, "name": p.Name, "color": p.Color, "types": p.Types, "used": p.Used,
+			"id": p.ID, "name": p.Name, "color": p.Color, "value": p.Value, "types": p.Types, "used": p.Used,
 			"pos": p.Pos, "bonus": p.Bonus, "trustLeft": p.TrustLeft,
 			"squirrels": p.Squirrels, "cards": p.Cards, "allies": p.Allies, "partners": p.Partners,
 			"guessed": p.Guess != "",
@@ -449,10 +449,10 @@ func buildView(g *Game, pid, secret, host string) map[string]any {
 	}
 	v := map[string]any{
 		"code": g.Code, "phase": g.Phase, "season": g.Season, "seasonName": SeasonNames[min(g.Season, 3)],
-		"forestGoal": g.ForestGoal, "players": players, "order": g.Order, "hexes": g.Hexes,
+		"players": players, "alliances": g.Alliances, "order": g.Order, "hexes": g.Hexes,
 		"tokens": tokens, "trees": g.Trees, "oak": g.Oak, "timerEnd": g.TimerEnd, "timerLabel": g.TimerLabel,
-		"now": time.Now().UnixMilli(), "version": g.Version, "isHost": isHost,
-		"powers": Powers, "regions": RegionNames, "colors": Colors, "lan": lan,
+		"now": time.Now().UnixMilli(), "version": g.Version, "isHost": isHost, "turnsTaken": g.TurnsTaken,
+		"powers": Powers, "regions": RegionNames, "values": Values, "colors": Colors, "lan": lan,
 	}
 	if n := len(g.Log); n > 40 {
 		v["log"] = g.Log[n-40:]
@@ -494,15 +494,34 @@ func buildView(g *Game, pid, secret, host string) map[string]any {
 	}
 	if d := g.Dusk; d != nil {
 		v["dusk"] = map[string]any{"pairs": d.Pairs, "resolved": d.Resolved}
+		if isHost && d.Resolved {
+			// Tips for the Keeper, for each alliance writing its statement tonight.
+			tips := map[string]StatementTip{}
+			for _, al := range g.Alliances {
+				if al.Season == g.Season {
+					k := g.valueKey(al.Members)
+					if t, ok := StatementTips[k]; ok {
+						tips[k] = t
+					}
+				}
+			}
+			v["tips"] = tips
+		}
+	}
+	keys := map[string]string{}
+	for _, al := range g.Alliances {
+		keys[al.ID] = g.valueKey(al.Members)
+	}
+	v["allianceKeys"] = keys
+	if g.Phase == PhaseStories && g.StoryIdx < len(g.Alliances) {
+		v["story"] = map[string]any{"alliance": g.Alliances[g.StoryIdx].ID, "idx": g.StoryIdx, "total": len(g.Alliances)}
 	}
 	if g.Phase == PhaseChain && g.ChainIdx < len(g.Chain) {
 		giver := g.player(g.Chain[g.ChainIdx])
 		v["tribute"] = map[string]any{"giver": giver.ID, "receiver": giver.Target, "idx": g.ChainIdx, "total": len(g.Chain)}
 	}
 	if g.Phase == PhaseScores {
-		scores, stands := g.Scores()
-		v["scores"] = scores
-		v["forestStands"] = stands
+		v["scores"] = g.Scores()
 	}
 	if me != nil {
 		pot, givers := 0, 0
@@ -524,6 +543,10 @@ func buildView(g *Game, pid, secret, host string) map[string]any {
 				mv["duskChoice"] = c
 			}
 			mv["common"] = g.Dusk.Common[me.ID]
+			mv["note"] = g.Dusk.Notes[me.ID]
+		}
+		if al := g.allianceOf(me.ID); al != nil {
+			mv["alliance"] = al.ID
 		}
 		v["me"] = mv
 	}

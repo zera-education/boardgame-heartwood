@@ -36,8 +36,8 @@ Locally, the server prints the address phones on the same Wi-Fi should use, and 
 - **Players say it, the Keeper taps it.** Every public action (plant, step, discover, share timer, draw again, lighter,
   pass, powers, Squirrel follow-ups, tribute confirm) is tapped by the Keeper on the board, acting for that player
   (`as` on the action; the server refuses `trust`, `duskChoice` and `guess` from the Keeper). The phone keeps only the
-  private jobs: the Secret Owl name, Give trust, the Dusk choice and Bond card, the Secret Owl guess, and a reminder of
-  your powers.
+  private jobs: the Secret Owl name, Give trust, the Dusk choice and Bond card (or typing the alliance statement), the
+  Secret Owl guess, and a reminder of your powers.
 - **Players** scan the QR code or open `play.html?g=CODE`. They pick a name and a colour. In the lobby the Keeper gives
   each player **1 to 3 Enneagram types** (the game can't start until everyone has one); each type gives one power
   they can activate once per game. Their seat is kept in the URL (`&p=…`) and on the
@@ -57,9 +57,20 @@ player tabs on one computer froze every other request. WebSockets don't share th
 
 ## Flow
 
-Lobby → plant seeds → 3 seasons (each a round of turns, then Dusk) → Secret Owl guesses → tribute chain → scores.
+Lobby → plant seeds (each player says which ZERAOS value they stand for) → 3 seasons (each a round of turns, then
+Dusk) → alliance stories → Secret Owl guesses → tribute chain → scores.
+
+The six map values are ZERA's core values, ZERAOS (Zealous, Excellence, Resilience, Authenticity, Open-mindedness,
+Sustainability), clockwise from the top; `Values` in `content.go` holds each one's tagline, description, icon and colour.
+An **alliance** is 2 or 3 players who stand for different values. It forms at Dusk when two players choose each other
+and both tick alliance; an alliance of two grows to three when a member and a newcomer (a third value) choose each
+other, and the other member joins that Dusk conversation. Alliances never merge. Each new or grown alliance types one
+**statement** that holds all its values (any member, on the phone, until the next season starts); the Keeper sees a
+hint and example lines for that value combination (`StatementTips`, keyed by value letters, e.g. `"ERS"`). Scoring:
+Trust + Growth + **Advocacy** (3 per value the player's alliance stands for that got an Oak story, or a Heartwood
+story from someone who stands for it) + Secret Owl.
 There are no resources to manage: a player moves up to 3 spaces a turn, free, through the rings open that season, and
-an alliance costs nothing. 26 discoveries sit on the 36 spaces around the Heartwood; the other 10 are empty clearings.
+alliances cost nothing. 26 discoveries sit on the 36 spaces around the Heartwood; the other 10 are empty clearings.
 On a turn the player speaks and the Keeper taps: neighbouring spaces to step → *Stop here and discover* → the prompt
 shows on the board → *Start sharing* (timer) → *They're done sharing* → listeners tap *Give trust* on their phones →
 *Next player*. A player may draw again once, take a lighter question, or pass the turn (no card, no points). At Dusk, a pair that asked for an alliance but didn't get
@@ -67,7 +78,8 @@ one is told why.
 
 ## Powers (one per Enneagram type, used once)
 
-Balanced with the simulation: in 10-player games every power wins 8.6–12.7% of the time (fair share 10%).
+Balanced with the simulation: in 10-player games every power wins 8.4–12.5% of the time (fair share 10%).
+Common Ground (9) has no effect since alliances stopped depending on distance; it's due for a redesign with the other powers.
 
 | Type | Power | When | Effect |
 |---|---|---|---|
