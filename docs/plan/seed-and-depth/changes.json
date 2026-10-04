@@ -1,0 +1,63 @@
+{
+"seeds": {
+ "Zealous": [
+  ["What topic makes your friends say, “Here we go again…”?", "A gentle tease that reveals a passion. Sets up “what makes you care so much”."],
+  ["What's the loudest you've ever cheered, and for what?", "A loud, happy memory. Sets up cheering for others, not comparing."],
+  ["When someone asks for volunteers, are you the first hand up, or suddenly very busy looking at your shoes?", "Everyone recognises the shoe-staring. Sets up stepping up first."],
+  ["What's the funniest thing a child has ever said to you?", "Kids' quotes always get a laugh. Sets up being in young people's corner."],
+  ["Karaoke, the dance floor or quiz night: where are you the first to join in?", "A quick pick with a picture in it. Sets up joining in with your whole heart."]
+ ],
+ "Excellence": [
+  ["Which café or shop is so good you'd give it six stars out of five?", "A playful rating. Sets up going beyond what was asked."],
+  ["What's your most perfectionist habit at home? (Towels folded a certain way?)", "A small confession people relate to. Sets up keeping standards nobody asked for."],
+  ["Which teacher from your school days could still make you sit up straight today?", "Everyone has one. Sets up strict but kind."],
+  ["What's the most useless thing you learned at school that you still remember?", "Instant laughter. Opens the new learning card."],
+  ["What couldn't you do at 15 that you're surprisingly good at now?", "A fun before-and-after. Sets up getting better at something."]
+ ],
+ "Resilience": [
+  null,
+  ["What's the best wrong turn you've ever taken?", "Literal or not: a story with a happy twist. Sets up when plans go wrong."],
+  ["What did the adults around you nag you about as a child, that you now say yourself?", "Everyone hears their parents in their own voice. Sets up advice that turned out right."],
+  ["What's your secret trick for staying calm when everything happens at once? (Snacks count.)", "Same question, permission to be light. Sets up staying steady for others."],
+  ["What's your instant cheer-up on a bad day: a song, a snack or a person?", "A quick pick. Sets up not going it alone."]
+ ],
+ "Authenticity": [
+  ["Where do you feel so at home you could happily take a nap?", "A cosy picture. Sets up truly belonging."],
+  null,
+  ["What do people expect you to be good at, but you're secretly terrible at?", "A funny confession. Sets up not having all the answers."],
+  null,
+  null
+ ],
+ "Open-mindedness": [
+  null,
+  ["What are you so bad at that it makes people laugh?", "Laughing at yourself first. Sets up learning from mistakes."],
+  null,
+  null,
+  null
+ ],
+ "Sustainability": [
+  ["What tiny habit have you kept for years that might surprise us?", "A small reveal. Sets up habits that last."],
+  ["What's the best life hack you'd teach everyone in this room?", "Useful and fun. Sets up things that run without you."],
+  null,
+  null,
+  null
+ ]
+},
+"deeper": [
+ ["Zealous", 4, "In young people's corner", "oak", "Which students do you think are easiest to miss? (No names needed.)", "Which young person do you still think about, and wish you'd done more for? (No names needed.)", "Was an opinion about other people; an Oak should be about you."],
+ ["Excellence", 1, "Beyond what was asked", "sapling", "Tell us about someone who did far more than you expected of them.", "Tell us about a time you did far more than anyone expected of you.", "You weren't in the story; a Sapling is your own experience."],
+ ["Excellence", 1, "Beyond what was asked", "oak", "What would you like to do much better this year?", "Where are you settling for “good enough” right now?", "A goal with no risk is Sapling level; this one is honest about now."],
+ ["Sustainability", 1, "Habits that last", "oak", "What habit are you trying to build right now?", "Which old habit of yours do you know you should let go of?", "The card didn't climb: this Oak was as light as its Sapling."],
+ ["Sustainability", 3, "Planting for others", "sapling", "Tell us about something someone started long ago that you're grateful for today.", "Tell us about something you started that others still use today.", "You weren't in the story; now it's yours."]
+],
+"newcards": [
+ ["Excellence", 4, "Raising the bar together", "Learning that goes beyond", "ZERA's Excellence names academics, and no card was about learning. Teamwork came from the old Collaboration value.",
+  [["What's the best team you've ever been part of?", "What's the most useless thing you learned at school that you still remember?"],
+   ["Tell us about a time your team did better than anyone expected.", "Tell us about the best lesson you've ever been in, as a student or an adult. What made it great?"],
+   ["What do you wish your team could do really well together?", "What part of your job do you secretly wish you were better at?"]]],
+ ["Authenticity", 5, "Many ways to learn", "Room for every learner", "Overlapped Open-mindedness 5 (learning from someone very different). Refocused on belonging, the zera Plus side of Authenticity.",
+  [["How do you learn a new gadget: read the manual, watch a video, or just try?", "How do you learn a new gadget: read the manual, watch a video, or just try?"],
+   ["Tell us about someone who explained something hard in a way you finally understood.", "Tell us about a time someone made room for the way you learn or work."],
+   ["What have you learned from someone who sees or learns things very differently from you?", "When have you made someone feel they didn't belong, without meaning to? (No names needed.)"]]]
+]
+}
