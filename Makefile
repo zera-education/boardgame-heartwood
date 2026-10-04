@@ -1,6 +1,7 @@
 # Heartwood: build, test, and deploy to the Axon EC2 (heartwood.zera.edu.my).
+# Source: git@github.com:zera-education/boardgame-heartwood.git, cloned on the EC2 at ~/boardgame-heartwood.
 SERVER ?= axon
-TMP    := /tmp/heartwood-deploy
+SRC    := ~/boardgame-heartwood
 
 .PHONY: build test sim run deploy logs
 
@@ -16,13 +17,11 @@ sim:
 run: build
 	./heartwood
 
-# Cross-compile here (the server's Go is too old), ship the binary and deploy/, install.
+# Push to GitHub, then on the EC2: pull, build (Go fetches the toolchain go.mod asks for), install.
 deploy: test
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o deploy/heartwood .
-	ssh $(SERVER) 'rm -rf $(TMP) && mkdir -p $(TMP)'
-	scp -q deploy/heartwood deploy/install.sh deploy/heartwood.service deploy/nginx.conf $(SERVER):$(TMP)/
-	ssh $(SERVER) 'sudo sh $(TMP)/install.sh && rm -rf $(TMP)'
-	rm -f deploy/heartwood
+	git diff --quiet HEAD || { echo "commit your changes first"; exit 1; }
+	git push origin main
+	ssh $(SERVER) 'set -e; cd $(SRC); git pull --ff-only; GOTOOLCHAIN=auto CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o deploy/heartwood .; sudo sh deploy/install.sh; rm -f deploy/heartwood'
 
 logs:
 	ssh $(SERVER) 'journalctl -u heartwood -n 100 --no-pager'

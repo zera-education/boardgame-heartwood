@@ -17,14 +17,13 @@ cd ~/lab/heartwood
 make run        # build and serve on http://localhost:8490 (data in heartwood.db)
 make test       # full 4-player game + playtest rule fixes
 make sim        # balance playtest: 4 × 2,000 bot games (~2 min)
-make deploy     # test, cross-compile linux/amd64, ship deploy/ to the EC2, run install.sh there
+make deploy     # test, push to GitHub, then on the EC2: git pull, build, run deploy/install.sh
 make logs       # the service log on the EC2
 ```
 
-`make deploy` needs an `axon` SSH host (`SERVER=…` to override). The mini has none yet, so the first deploy
-(2026-10-04) was built here and relayed through the Air:
-`scp -3 mini:lab/heartwood/deploy/{heartwood,install.sh,heartwood.service,nginx.conf} axon:/tmp/heartwood-deploy/`, then
-`ssh axon sudo sh /tmp/heartwood-deploy/install.sh`.
+Code: **git@github.com:zera-education/boardgame-heartwood.git** (`main`). `make deploy` needs a clean working tree and
+an `axon` SSH host (`SERVER=…` to override). The EC2 keeps a clone at `~ubuntu/boardgame-heartwood`, pulls, builds there
+(its Go 1.22 downloads the toolchain `go.mod` asks for) and runs `deploy/install.sh`, which snapshots the database first.
 
 Locally, the server prints the address phones on the same Wi-Fi should use, and the board shows it with a QR code.
 

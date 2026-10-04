@@ -1,6 +1,6 @@
 #!/bin/sh
-# Install or update Heartwood on the Axon EC2 (Ubuntu). `make deploy` copies the linux binary and
-# this folder to the server and runs: sudo sh install.sh
+# Install or update Heartwood on the Axon EC2 (Ubuntu). `make deploy` pulls the repo on the server,
+# builds deploy/heartwood there and runs: sudo sh deploy/install.sh
 # Re-running it snapshots the database, replaces the binary, the unit and the nginx site, and
 # restarts the service. Settings below are the single source of truth for the unit and the site.
 set -e
