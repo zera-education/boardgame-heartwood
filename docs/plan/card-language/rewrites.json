@@ -1,0 +1,134 @@
+{
+"Zealous": [
+ ["What lights you up", [
+  ["seed", "What could you do for hours without noticing the time?", "idiom"],
+  ["sapling", "Tell us about a time you got other people excited about something you love.", "idiom"],
+  ["oak", "What makes you care so much about your work?", "two"]]],
+ ["Cheering, not comparing", [
+  ["seed", "Whose good news made you really happy this year?", "odd"],
+  ["sapling", "Tell us about a time someone else's success made you want to try harder.", "idiom"],
+  ["oak", "If you stopped comparing yourself with others, what would you do differently?", "abstract"]]],
+ ["Stepping up first", [
+  ["seed", "When someone asks for a volunteer, are you the first to raise your hand, or the last?", "odd"],
+  ["sapling", "Tell us about a time you helped before anyone asked you to.", "idiom"],
+  ["oak", "What have you been wanting to start, but haven't yet?", "two"]]],
+ ["In young people's corner", [
+  ["seed", null, null],
+  ["sapling", "Tell us about a time you did something extra for a young person who needed it.", "idiom"],
+  ["oak", "Which students do you think are easiest to miss? (No names needed.)", "idiom"]]],
+ ["Joining in wholeheartedly", [
+  ["seed", "What will you always say yes to, even when you're tired?", "odd"],
+  ["sapling", "Tell us about the last time you tried something new. How did it go?", "idiom"],
+  ["oak", "What makes you hesitate to join in?", "two"]]]
+],
+"Excellence": [
+ ["Beyond what was asked", [
+  ["seed", null, null],
+  ["sapling", null, null],
+  ["oak", "What would you like to do much better this year?", "two"]]],
+ ["Doing it right when no one's looking", [
+  ["seed", "What do you do that nobody notices when it's done well?", "odd"],
+  ["sapling", "Tell us about a time you did something properly even though no one would check. Why did you?", "idiom"],
+  ["oak", "What rule do you keep for yourself that nobody asked you to keep?", "two"]]],
+ ["Heart comes first", [
+  ["seed", "Who was the strictest but kindest teacher or boss you've had?", "abstract"],
+  ["sapling", "Tell us about a time you chose to be kind instead of getting it perfect.", "abstract"],
+  ["oak", "How do you push for high standards and still stay kind?", "abstract"]]],
+ ["Raising the bar together", [
+  ["seed", "What's the best team you've ever been part of?", "long"],
+  ["sapling", "Tell us about a time your team did better than anyone expected.", "long"],
+  ["oak", "What do you wish your team could do really well together?", "two"]]],
+ ["Getting better, kindly", [
+  ["seed", null, null],
+  ["sapling", "Tell us how you got good at something that once felt impossible.", "odd"],
+  ["oak", "How do you know when something is good enough?", "abstract"]]]
+],
+"Resilience": [
+ ["Stronger because of it", [
+  ["seed", "What's the funniest story behind a scar, or something of yours that's broken?", "odd"],
+  ["sapling", "Tell us about a hard time, big or small, that made you stronger.", "idiom"],
+  ["oak", "What did a hard time teach you that you're now glad to know?", "abstract"]]],
+ ["When plans go wrong", [
+  ["seed", "What's the best thing that happened to you because a plan went wrong?", "idiom"],
+  ["sapling", "Tell us about a time something went wrong and you found a better way.", "idiom"],
+  ["oak", "When your plans go wrong, how do you usually react?", "two"]]],
+ ["Hard words that helped", [
+  ["seed", "What advice did you ignore at first, but later realised was right?", "odd"],
+  ["sapling", "Tell us about some hard feedback that ended up helping you.", "abstract"],
+  ["oak", "What kind of feedback is still hard for you to hear?", "two"]]],
+ ["Steady for others", [
+  ["seed", null, null],
+  ["sapling", "Tell us about a time you stayed calm because others needed you to.", "idiom"],
+  ["oak", "What helps you stay strong for others when you're struggling inside?", "abstract"]]],
+ ["Not going it alone", [
+  ["seed", "What always cheers you up on a bad day?", "odd"],
+  ["sapling", "Tell us about someone who helped you keep going when you wanted to give up.", "odd"],
+  ["oak", "Is it easy or hard for you to ask for help? Why?", "odd"]]]
+],
+"Authenticity": [
+ ["Belonging, not just fitting in", [
+  ["seed", "Where do you feel most relaxed?", "odd"],
+  ["sapling", "Tell us about a time you felt left out, and what helped you feel welcome.", "idiom"],
+  ["oak", "What makes you feel you truly belong somewhere?", "odd"]]],
+ ["Dropping the act", [
+  ["seed", "What did you once pretend to like, just to fit in?", "odd"],
+  ["sapling", "Tell us about a time you were honest about who you are, and it went better than you expected.", "abstract"],
+  ["oak", "When do you feel most like yourself?", "two"]]],
+ ["Not having all the answers", [
+  ["seed", null, null],
+  ["sapling", "Tell us about a time saying “I don't know” helped.", "idiom"],
+  ["oak", "When do you feel you have to pretend you know all the answers?", "two"]]],
+ ["Where you come from", [
+  ["seed", "What's a word or food from home that you always have to explain?", "odd"],
+  ["sapling", "Tell us about a time sharing where you come from brought you closer to someone.", "abstract"],
+  ["oak", null, null]]],
+ ["Many ways to learn", [
+  ["seed", "How do you learn a new gadget: read the manual, watch a video, or just try?", "odd"],
+  ["sapling", "Tell us about someone who explained something hard in a way you finally understood.", "idiom"],
+  ["oak", "What have you learned from someone who sees or learns things very differently from you?", "abstract"]]]
+],
+"Open-mindedness": [
+ ["Changing your mind", [
+  ["seed", "What did you believe as a child that turned out to be completely untrue?", "odd"],
+  ["sapling", null, null],
+  ["oak", "What's something you find very hard to change your mind about?", "two"]]],
+ ["Learning from mistakes", [
+  ["seed", "What's something you're bad at, and don't mind?", "odd"],
+  ["sapling", "Tell us about a mistake that taught you a lot.", "abstract"],
+  ["oak", null, null]]],
+ ["First impressions", [
+  ["seed", null, null],
+  ["sapling", "Tell us about a time your first impression of someone was completely wrong. (No names needed.)", "odd"],
+  ["oak", "When are you most likely to judge too quickly?", "idiom"]]],
+ ["Disagreeing well", [
+  ["seed", "What silly debate could you argue about forever? (Pineapple on pizza?)", "odd"],
+  ["sapling", "Tell us about a time a disagreement led to a better decision.", "long"],
+  ["oak", "How do you react when someone disagrees with you?", "two"]]],
+ ["Learning across differences", [
+  ["seed", null, null],
+  ["sapling", null, null],
+  ["oak", "How do you feel when someone sees life very differently from you?", "abstract"]]]
+],
+"Sustainability": [
+ ["Habits that last", [
+  ["seed", "What small habit have you kept for years?", "odd"],
+  ["sapling", "Tell us about a habit that changed your life.", "idiom"],
+  ["oak", "What habit are you trying to build right now?", "two"]]],
+ ["Things that run without you", [
+  ["seed", "What simple trick makes your daily life easier?", "abstract"],
+  ["sapling", "Tell us about something you set up that still worked well when you weren't there.", "long"],
+  ["oak", "What part of your work would be hardest to hand over to someone else?", "two"]]],
+ ["Planting for others", [
+  ["seed", null, null],
+  ["sapling", null, null],
+  ["oak", null, null]]],
+ ["The long game", [
+  ["seed", null, null],
+  ["sapling", "Tell us about something you worked on for years before you saw the results.", "idiom"],
+  ["oak", "When are you tempted to take a shortcut?", "abstract"]]],
+ ["Starting with the end in mind", [
+  ["seed", null, null],
+  ["sapling", "Tell us about a big goal you planned step by step. How did it go?", "abstract"],
+  ["oak", "Ten years from now, what do you hope you'll thank yourself for doing this year?", "long"]]]
+]
+}
