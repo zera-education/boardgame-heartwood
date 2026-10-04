@@ -28,47 +28,47 @@ var Values = [6]Value{
 var RegionNames = [6]string{"Zealous", "Excellence", "Resilience", "Authenticity", "Open-mindedness", "Sustainability"}
 
 var RegionCards = [6][][3]string{
-	{ // Zealous (placeholder: old Curiosity prompts)
-		{"What could you talk about for ten minutes with no notes?", "Tell us about a question that changed the direction of your life.", "What about yourself are you still trying to figure out?"},
-		{"If you could master one skill overnight, what would it be?", "Who first made you love learning, and how?", "What do you wish people here asked you about more?"},
-		{"What's the last thing you looked up out of pure curiosity?", "Tell us about a place that opened your eyes.", "Which belief of yours has changed the most over the years?"},
-		{"Which book, film or show do you recommend to everyone?", "Tell us about someone very different from you who taught you something.", "What question are you carrying into next year?"},
-		{"What job would you try for one week, just to see?", "Tell us about a mistake that taught you more than any success.", "What would you explore if no one depended on you?"},
+	{ // Zealous
+		{"What makes you lose all track of time?", "Tell us about a time your excitement for something rubbed off on other people.", "Where does your drive really come from, and what keeps it going on the hard days?"},                                           // What lights you up
+		{"Whose good news this year did you cheer for the loudest?", "Think of a time someone else's success spurred you on instead of getting you down. What happened?", "If you stopped measuring yourself against other people, what would you do differently?"}, // Cheering, not comparing
+		{"When a group needs a volunteer, are you first hand up or last?", "Tell us about a time you stepped in before anyone asked you to.", "Is there an idea you've been holding back on? What would help you start?"},                                           // Stepping up first
+		{"What's the best thing a child or student has ever said to you?", "Describe a time you went out on a limb for a young person.", "Which young people are easiest to overlook, and what would it take to be firmly in their corner? (No names needed.)"},     // In young people's corner
+		{"What will you always say yes to, however tired you are?", "Tell us about the last time you threw yourself into something new. How did it go?", "What makes it hard for you to join in with your whole heart, and what helps you let go?"},                 // Joining in wholeheartedly
 	},
-	{ // Excellence (placeholder: old Creativity prompts)
-		{"What did you love making as a child?", "Tell us about a time you solved a problem in a way nobody expected.", "What part of you rarely gets to show up at work?"},
-		{"What's your favourite way to spend a free Saturday?", "Tell us about something you started from nothing.", "If you knew you couldn't fail, what would you build next?"},
-		{"What creative skill do you secretly wish you had?", "Tell us about a time you turned a constraint into an advantage.", "When do you feel most fully yourself?"},
-		{"What would your perfect classroom look like?", "Tell us about an idea of yours that people doubted.", "What dream did you put down that you'd like to pick up again?"},
-		{"Describe your ideal weekend in three words.", "Tell us about a moment of play you still remember.", "What does the world lose if you play it safe?"},
+	{ // Excellence
+		{"What's the best service you've ever had in a shop, café or restaurant?", "Tell us about someone who did far more than you expected of them.", "Where would you love to go beyond 'good enough' this year, and what's holding you back?"},                         // Beyond what was asked
+		{"Which job of yours goes unnoticed when it's done well?", "Think of a time you did something properly even though nobody would ever check. What made you bother?", "What standard do you hold yourself to that nobody asked for, and why does it matter to you?"}, // Doing it right when no one's looking
+		{"Who was the toughest but kindest person you ever learned from?", "Tell us about a time you chose kindness over a perfect result.", "How do you keep your standards high without letting your warmth slip?"},                                                      // Heart comes first
+		{"What's the best team you've ever been part of, at work or at play?", "Tell us about a time a group you were in did better together than anyone expected.", "What could a team you're in do brilliantly together, and what part would you love to play in it?"},   // Raising the bar together
+		{"Name something you're much better at now than five years ago.", "How did you get good at something that once felt impossible? Tell us the story.", "Where is the line for you between doing your best and never feeling satisfied?"},                             // Getting better, kindly
 	},
-	{ // Resilience (placeholder: old Collaboration prompts)
-		{"What's the best team you've ever been part of (sport, choir, class project, anything)?", "Tell us about someone who made you better just by working beside you.", "What do you need from this team that you've never asked for?"},
-		{"Planner or \"let's figure it out\"? Give an example.", "Tell us about a disagreement that ended up making a relationship stronger.", "When do you feel most alone in your role?"},
-		{"In a group, are you the starter, the finisher, the connector or the critic?", "Tell us about a time a team carried you.", "What makes it hard for you to ask for help?"},
-		{"Who's the person you call when something goes wrong?", "Tell us about a time you had to rebuild trust with someone.", "What do you want this team to understand about how you work?"},
-		{"What's a team ritual you love?", "Tell us about the best boss or mentor you ever had.", "Where do you hold back in this team, and why?"},
+	{ // Resilience
+		{"Which scratch, dent or scar (on you or your things) has the best story behind it?", "Tell us about a tough stretch, any size you like, that left you stronger than before.", "What has a hard season grown in you that you wouldn't want to give back?"}, // stronger because of it
+		{"What's the best thing that ever happened because a plan fell through?", "Think of a time something went wrong and you found a better way through. What happened?", "When plans fall apart, how do you usually react, and how would you like to?"},        // when plans fall through
+		{"Name a piece of advice you ignored at first and later realised was right.", "Tell us about some tough feedback that turned out to be a gift.", "What kind of feedback is still hardest for you to hear, and why do you think that is?"},                  // hard words that helped
+		{"What's your secret trick for keeping calm when everything happens at once?", "Tell us about a time you kept steady because others were counting on you.", "What helps you stay steady for others on days when you feel shaky inside?"},                   // steady for others
+		{"Song, snack or person: what's your instant mood-lifter on a bad day?", "Tell us about someone who helped you keep going when you felt like stopping.", "What makes asking for help hard or easy for you?"},                                               // not going it alone
 	},
-	{ // Authenticity (placeholder: old Courage prompts)
-		{"What's the most adventurous thing you've ever done, or eaten?", "Tell us about a time you were afraid and did it anyway.", "What fear still shapes the way you lead?"},
-		{"What's a small brave thing you did this year?", "Tell us about a time you spoke up when staying quiet would have been easier.", "What risk do you know you need to take in the next year?"},
-		{"What scares you that is completely harmless?", "Tell us about a time you started over.", "What would you do differently if you trusted yourself more?"},
-		{"When did you last try something for the first time?", "Tell us about a decision others thought was crazy.", "What failure have you never fully talked about?"},
-		{"What's the boldest thing on your bucket list?", "Tell us about someone whose courage inspired you.", "What do you need to let go of to lead better?"},
+	{ // Authenticity
+		{"Name a place where you instantly feel at ease.", "Tell us about a time you felt like the odd one out, and what helped you belong.", "Fitting in or truly belonging: what's the difference, for you?"},                                                                                 // belonging, not just fitting in
+		{"Which food, film or trend did you once pretend to like?", "Tell us about a time you stopped pretending, and it went better than you feared.", "When do you feel most free to be completely yourself, and how could you give that feeling to others?"},                                 // dropping the act
+		{"What does everyone assume you can do, but you can't?", "Tell us about a time saying \"I don't know\" turned out well.", "Where do you feel the pull to look as if you have all the answers, and what would happen if you let it go?"},                                                 // not having all the answers
+		{"What's a word, dish or habit from home that always needs explaining?", "Tell us about a time sharing a piece of your background brought people closer.", "Which part of where you come from do you most want to bring into your work here?"},                                          // where you come from
+		{"Manual, video, or press buttons till it works: how do you learn a new gadget?", "Think of someone who explained something in a way that finally made it click. What did they do?", "What has someone who thinks, learns or moves through the world differently from you taught you?"}, // many ways to learn and be
 	},
-	{ // Open-mindedness (placeholder: old Compassion prompts)
-		{"Who was your favourite teacher, and why?", "Tell us about a time someone was kind to you when you didn't expect it.", "When did you last feel truly cared for, and by whom?"},
-		{"What small thing instantly makes your day better?", "Tell us about a student, or a child, who changed you.", "What are you carrying this year that few people here know about?"},
-		{"Who in your life always makes you laugh?", "Tell us about a time you were there for someone in a hard season.", "How do you take care of yourself when no one is watching?"},
-		{"How do you most like to be appreciated?", "Tell us about a time you were wrong about someone.", "What kind of support do you find hard to receive?"},
-		{"What act of kindness from your school days do you still remember?", "Tell us about a parent's or student's story that stayed with you.", "Who do you need to thank, or forgive, and haven't yet? (No names needed.)"},
+	{ // Open-mindedness
+		{"Which childhood belief turned out to be completely untrue?", "Tell us about a time someone changed your mind about something that mattered.", "What do you find hardest to change your mind about, and why do you think that is?"},                                    // changing your mind
+		{"What are you happily bad at?", "Think of a mistake that became one of your best teachers. What happened?", "What has failure taught you that success never could?"},                                                                                                   // failure as a teacher
+		{"Name a food you were sure you'd hate, until you tried it.", "Tell us about a first impression that turned out to be completely wrong (no names needed).", "Where are you most likely to jump to conclusions, and what helps you slow down?"},                          // first impressions and assumptions
+		{"Which harmless debate will you happily argue about forever?", "Tell us about a disagreement that ended up making a decision better.", "When someone disagrees with you, how do you hope they feel afterwards, and do they?"},                                          // disagreeing well
+		{"What's one thing from another culture that's now part of your everyday life?", "Tell us about someone very different from you who taught you something you still use.", "When someone sees life very differently from you, what do you notice happening inside you?"}, // learning across differences
 	},
-	{ // Sustainability (placeholder: old Commitment prompts)
-		{"What habit or hobby have you kept for more than five years?", "Tell us about a promise you kept even though it cost you.", "Why are you still at ZERA? What keeps you here?"},
-		{"What will you never give up (a food, a team, a ritual)?", "Tell us about the hardest season of your working life, and what got you through.", "What do you want to be true of ZERA when you're no longer here?"},
-		{"What's the longest you've ever worked on one thing?", "Tell us about a time you almost quit.", "What are you committed to that few people see?"},
-		{"What morning routine do you swear by?", "Tell us about the moment you knew education was your calling (or wasn't).", "What would make the next five years at ZERA worth it for you?"},
-		{"Which family tradition do you keep?", "Tell us about someone who never gave up on you.", "What does faithfulness look like in your life right now?"},
+	{ // Sustainability
+		{"Name a small habit you've kept going for years.", "Tell us about a habit that changed your life once it finally stuck.", "What habit are you trying to build right now, and what keeps getting in the way?"},                                                            // habits that last
+		{"Which simple trick or system keeps your everyday life running?", "Tell us about a time something kept running well while you were away, and what made it work.", "Which part of your work would you find hardest to hand over, and why?"},                               // things that run without you
+		{"If you could plant one tree anywhere in the world, where would it go?", "Tell us about something someone started long ago that you're grateful for today.", "What would you gladly start, even if someone else got the credit for finishing it?"},                       // planting for others
+		{"What's the longest you've ever waited for something, and was it worth it?", "Tell us about something that took years to pay off.", "Where are you most tempted to choose the quick fix over the lasting one?"},                                                          // patience and the long game
+		{"What would you put in a time capsule to open in 2050?", "Tell us about a time you knew exactly where you wanted to end up, and worked back from there.", "Picture yourself ten years from now, looking back on this year. What do you hope you'll thank yourself for?"}, // starting with the end in mind
 	},
 }
 
@@ -101,41 +101,41 @@ type StatementTip struct {
 // StatementTips is keyed by the alliance's value letters in ZERAOS order, e.g.
 // "ZE", "ERS": 15 pairs and 20 trios.
 var StatementTips = map[string]StatementTip{
-	"ZE":  {"ZE placeholder: what these values share.", []string{"ZE placeholder example."}},
-	"ZR":  {"ZR placeholder: what these values share.", []string{"ZR placeholder example."}},
-	"ZA":  {"ZA placeholder: what these values share.", []string{"ZA placeholder example."}},
-	"ZO":  {"ZO placeholder: what these values share.", []string{"ZO placeholder example."}},
-	"ZS":  {"ZS placeholder: what these values share.", []string{"ZS placeholder example."}},
-	"ER":  {"ER placeholder: what these values share.", []string{"ER placeholder example."}},
-	"EA":  {"EA placeholder: what these values share.", []string{"EA placeholder example."}},
-	"EO":  {"EO placeholder: what these values share.", []string{"EO placeholder example."}},
-	"ES":  {"ES placeholder: what these values share.", []string{"ES placeholder example."}},
-	"RA":  {"RA placeholder: what these values share.", []string{"RA placeholder example."}},
-	"RO":  {"RO placeholder: what these values share.", []string{"RO placeholder example."}},
-	"RS":  {"RS placeholder: what these values share.", []string{"RS placeholder example."}},
-	"AO":  {"AO placeholder: what these values share.", []string{"AO placeholder example."}},
-	"AS":  {"AS placeholder: what these values share.", []string{"AS placeholder example."}},
-	"OS":  {"OS placeholder: what these values share.", []string{"OS placeholder example."}},
-	"ZER": {"ZER placeholder: what these values share.", []string{"ZER placeholder example."}},
-	"ZEA": {"ZEA placeholder: what these values share.", []string{"ZEA placeholder example."}},
-	"ZEO": {"ZEO placeholder: what these values share.", []string{"ZEO placeholder example."}},
-	"ZES": {"ZES placeholder: what these values share.", []string{"ZES placeholder example."}},
-	"ZRA": {"ZRA placeholder: what these values share.", []string{"ZRA placeholder example."}},
-	"ZRO": {"ZRO placeholder: what these values share.", []string{"ZRO placeholder example."}},
-	"ZRS": {"ZRS placeholder: what these values share.", []string{"ZRS placeholder example."}},
-	"ZAO": {"ZAO placeholder: what these values share.", []string{"ZAO placeholder example."}},
-	"ZAS": {"ZAS placeholder: what these values share.", []string{"ZAS placeholder example."}},
-	"ZOS": {"ZOS placeholder: what these values share.", []string{"ZOS placeholder example."}},
-	"ERA": {"ERA placeholder: what these values share.", []string{"ERA placeholder example."}},
-	"ERO": {"ERO placeholder: what these values share.", []string{"ERO placeholder example."}},
-	"ERS": {"ERS placeholder: what these values share.", []string{"ERS placeholder example."}},
-	"EAO": {"EAO placeholder: what these values share.", []string{"EAO placeholder example."}},
-	"EAS": {"EAS placeholder: what these values share.", []string{"EAS placeholder example."}},
-	"EOS": {"EOS placeholder: what these values share.", []string{"EOS placeholder example."}},
-	"RAO": {"RAO placeholder: what these values share.", []string{"RAO placeholder example."}},
-	"RAS": {"RAS placeholder: what these values share.", []string{"RAS placeholder example."}},
-	"ROS": {"ROS placeholder: what these values share.", []string{"ROS placeholder example."}},
-	"AOS": {"AOS placeholder: what these values share.", []string{"AOS placeholder example."}},
+	"ZE":  {"Heart first, then the high bar: passion is what lifts good work further.", []string{"We pour our hearts in so that good becomes extraordinary.", "Love the work first, then do it better than anyone asked.", "Heart first, bar high, every child, every day!"}},
+	"ZR":  {"Passion that survives setbacks, and comes back stronger because of them.", []string{"We keep our spark through setbacks so that students learn how.", "A bad day is fuel, not a full stop.", "Knocked down? Fired up! Back again, stronger!"}},
+	"ZA":  {"Speaking up for every child, with energy that is real, not for show.", []string{"We champion every child loudly so that no one feels left out.", "Cheer for every child, especially the one nobody else noticed.", "Loud and proud for every child!"}},
+	"ZO":  {"Passion that still listens: strong convictions, held with an open hand.", []string{"We speak with fire and listen hard so that better ideas win.", "Care deeply, listen widely, change your mind gladly.", "Bring the passion, bring the questions!"}},
+	"ZS":  {"A quick blaze or a steady fire? Passion paced to last for years.", []string{"We pace our passion so that it still burns in ten years.", "Light a fire that still glows long after we have gone.", "Steady flame, long game, keep it burning!"}},
+	"ER":  {"Excellence isn't never falling; it's rising higher after every fall.", []string{"We learn hard from every miss so that next time is better.", "The bar rises every time we get back up.", "Miss it, learn it, raise it, nail it!"}},
+	"EA":  {"High bars for everyone, without pretending everyone starts at the same line.", []string{"We set high hopes for every child so that all can shine.", "Every child's best, honestly measured, is our standard.", "All of us belong! All of us rise!"}},
+	"EO":  {"Aim beyond expectation, yet treat each failure as a lesson, not a verdict.", []string{"We try bold ideas so that our best keeps getting better.", "Ask the question that makes good work great.", "Try it! Test it! Make it better!"}},
+	"ES":  {"Brilliant today versus lasting for years: quality that still holds up later.", []string{"We build things properly so that they still work in ten years.", "Good enough for now is not good enough for later.", "Do it right, make it last!"}},
+	"RA":  {"Strength that comes from honesty: owning the struggle is how we grow together.", []string{"We share our struggles honestly so that nobody struggles alone.", "Real people, real struggles, real growth. Everyone belongs here.", "Fall down, get up, together, as we are!"}},
+	"RO":  {"Both see setbacks as teachers: not just bouncing back, but learning and changing.", []string{"We treat setbacks as lessons so that every failure leaves us wiser.", "Failure is feedback. Read it, then go again.", "Stumble, learn, grow, go!"}},
+	"RS":  {"Built for the long haul: systems that get stronger each time they're tested.", []string{"We build systems that bend, not break, so that they outlast us.", "Plant deep roots; hard seasons only make them stronger.", "Bend, don't break! Grow back stronger!"}},
+	"AO":  {"Every voice is real and welcome, and we're honestly changed by hearing it.", []string{"We listen to every voice so that every child sees themselves here.", "Come as you are; leave with a bigger view.", "Every voice in! Every mind open!"}},
+	"AS":  {"Inclusion that outlasts any one leader: belonging built into how the school runs.", []string{"We build belonging into how we work so that it outlives us.", "Belonging should not depend on who is in charge this year.", "Everyone in, for good!"}},
+	"OS":  {"Hold the end in mind firmly and the route loosely: plans that keep learning.", []string{"We keep asking new questions so that our plans age well.", "A good plan is one that can still learn.", "Eyes on the horizon, minds wide open!"}},
+	"ZER": {"Heart, a high bar and staying power: aim high, fall, rise higher.", []string{"We aim high and get back up so that children learn how.", "The best work comes from people who care enough to try again.", "Heart in! Bar up! Never done!"}},
+	"ZEA": {"Passion and high hopes for every child, not only the easy ones to celebrate.", []string{"We believe big for every child so that each one does too.", "Every child deserves someone who thinks they're extraordinary.", "Big hearts, high hopes, no one left out!"}},
+	"ZEO": {"Ambitious and fired up, yet humble enough to learn from anyone in the room.", []string{"We chase better ideas from anywhere so that students get our best.", "Hungry to improve, happy to be wrong on the way.", "Dream big, ask questions, do better!"}},
+	"ZES": {"Excellence today, passion for tomorrow: brilliant work done at a pace that lasts.", []string{"We do great work at a steady pace so that it lasts.", "Aim for excellence your successors will thank you for.", "Go hard, go well, go the distance!"}},
+	"ZRA": {"Never giving up on any child, and being honest when it's hard.", []string{"We keep showing up for every child so that none feels forgotten.", "Some children take longer. We stay longer.", "No child too hard, no day too long!"}},
+	"ZRO": {"Keen enough to try, tough enough to fail, open enough to change course.", []string{"We try bold things, then learn from flops, so that students dare.", "Try it with heart, learn from the wobble, then try again.", "Dream it! Try it! Flop it! Fix it!"}},
+	"ZRS": {"Passion with stamina: energy that survives hard years with the long goal in sight.", []string{"We rest, recover and return with heart so that the mission lasts.", "Keep the fire lit through hard terms; the finish is years away.", "Still burning! Still standing! Still going!"}},
+	"ZAO": {"Excited by everyone's ideas, so the quiet voices are heard, not just the loudest.", []string{"We get excited about every voice so that quiet ones speak up.", "The best idea in the room might come from the quietest person.", "All voices! All ideas! All in!"}},
+	"ZAS": {"Passion for inclusion that's built to last, not a campaign that fades.", []string{"We build our care into habits so that every child belongs, always.", "Real inclusion isn't an event. It's how we do things here.", "All our heart, all the children, all the years!"}},
+	"ZOS": {"Fired up for a long future, and willing to rethink how we get there.", []string{"We stay curious and keen so that the school keeps growing.", "Love the mission enough to keep rethinking how we get there.", "Fresh ideas! Big heart! Long view!"}},
+	"ERA": {"High standards for every child, honest about the struggle, patient through it.", []string{"We admit what isn't working so that we can make it excellent.", "Honest about the struggle, ambitious about the outcome, for every child.", "Real effort! Real growth! Real results!"}},
+	"ERO": {"Ambition that welcomes failure: the bar goes up because we're willing to be wrong.", []string{"We pilot, review and improve so that each year beats the last.", "Draft, critique, redraft: that's how great work is made.", "First try, try again, best try yet!"}},
+	"ERS": {"Excellence that lasts: quality built to weather hard years, not just shine once.", []string{"We build strong foundations so that tough years make us better.", "Build it well, test it hard, leave it stronger.", "Stronger, better, year after year!"}},
+	"EAO": {"Excellence looks different for each child; it takes an open mind to see it.", []string{"We redefine success child by child so that every gift is seen.", "There's more than one way to be brilliant.", "Many minds! Many gifts! All of them count!"}},
+	"EAS": {"Quality and inclusion built into the bones of the school, not bolted on later.", []string{"We plan for every learner from day one so that all belong.", "Judge a school by how it serves every child, year after year.", "Built for all, built to last!"}},
+	"EOS": {"Keep improving the system without tearing it up: steady progress, open to better.", []string{"We keep reviewing what works so that good systems keep getting better.", "Small improvements every term add up to a great school.", "Better each term! Wiser each year!"}},
+	"RAO": {"A safe place to fail honestly: everyone belongs, mistakes included.", []string{"We own our mistakes openly so that children feel safe making theirs.", "Here, it's safe to be wrong, be yourself and try again.", "Messy, honest, learning, together!"}},
+	"RAS": {"Belonging that holds through hard times: a community strong enough to last.", []string{"We hold together through hard seasons so that every child stays held.", "When it gets hard, nobody gets left behind, this year or next.", "Hard days? All of us, all the way!"}},
+	"ROS": {"Adaptable for the long run: plans that learn and grow stronger from each setback.", []string{"We let every setback teach the system so that it gets wiser.", "Rethink, rebuild, and leave it sturdier for the next team.", "Learn it! Change it! Keep it going!"}},
+	"AOS": {"Listening to every voice now, so tomorrow's school is shaped by all of us.", []string{"We let every voice shape decisions so that the future fits everyone.", "Plan with people, not for them, and it will last.", "Every voice today, a better school tomorrow!"}},
 }
 
 var SquirrelCards = []string{
