@@ -430,7 +430,7 @@ func buildView(g *Game, pid, secret, host string) map[string]any {
 	for _, p := range g.Players {
 		pp := map[string]any{
 			"id": p.ID, "name": p.Name, "color": p.Color, "types": p.Types, "used": p.Used,
-			"pos": p.Pos, "sun": p.Sun, "water": p.Water, "bonus": p.Bonus, "trustLeft": p.TrustLeft,
+			"pos": p.Pos, "bonus": p.Bonus, "trustLeft": p.TrustLeft,
 			"squirrels": p.Squirrels, "cards": p.Cards, "allies": p.Allies, "partners": p.Partners,
 			"guessed": p.Guess != "",
 		}
@@ -468,11 +468,12 @@ func buildView(g *Game, pid, secret, host string) map[string]any {
 			n += c
 		}
 		tv := map[string]any{
-			"player": t.Player, "step": t.Step, "discovered": t.Discovered, "freeSteps": t.FreeSteps,
+			"player": t.Player, "step": t.Step, "discovered": t.Discovered, "stepsLeft": t.StepsLeft,
 			"teleport": t.Teleport, "canClaim": t.CanClaim, "region": t.Region, "tier": t.Tier,
 			"prompt": t.Prompt, "redrawn": t.Redrawn, "started": t.Started, "event": t.Event,
 			"eventText":  t.EventText,
 			"trustCount": n, "followUps": t.FollowUps,
+			"invited": t.Invited, "campfire": t.Campfire,
 		}
 		if me != nil {
 			tv["iGave"] = t.Trusted[me.ID] > 0

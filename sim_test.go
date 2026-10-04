@@ -22,7 +22,7 @@ import (
 type simStats struct {
 	games                                          int
 	alliances, heartwood, forestOK, noWinner       float64
-	waterEnd, waterSpent, sunEnd, trustUnused      float64
+	trustUnused                                    float64
 	oakShares, tierSum, shares                     float64
 	winsByPower                                    [10]float64
 	holdsPower                                     [10]float64
@@ -69,7 +69,7 @@ func report(t *testing.T, name string, s *simStats, o botOpts) {
 	fmt.Fprintf(&b, "alliances per player: %.2f   players with no alliance: %.0f%%\n", s.alliances/pp, 100*s.zeroAlliance/pp)
 	fmt.Fprintf(&b, "Heartwood shares per game: %.2f   Oak shares per game: %.2f   avg tier: %.2f\n", s.heartwood/n, s.oakShares/n, s.tierSum/s.shares)
 	fmt.Fprintf(&b, "Forest Goal met: %.0f%% of games\n", 100*s.forestOK/n)
-	fmt.Fprintf(&b, "end of game per player: water left %.1f (spent %.1f), sun left %.1f, trust acorns unused %.1f\n", s.waterEnd/pp, s.waterSpent/pp, s.sunEnd/pp, s.trustUnused/pp)
+	fmt.Fprintf(&b, "end of game per player: trust acorns unused %.1f\n", s.trustUnused/pp)
 	fmt.Fprintf(&b, "avg score %.1f = trust %.1f + growth %.1f + alliances %.1f + secret %.1f\n", s.scoreSum/pp, s.trustSum/pp, s.growthSum/pp, s.allySum/pp, s.secSum/pp)
 	fmt.Fprintf(&b, "winner margin %.1f points, top-to-bottom spread %.1f\n", s.margin/n, s.spread/n)
 	fmt.Fprintf(&b, "turns where the bot could not move at all: %.1f%%\n", 100*s.stuckTurns/(pp*3))
@@ -116,23 +116,15 @@ func simGame(t *testing.T, o botOpts, st *simStats) {
 		must(as(g.current(), "plant", Action{Hex: outer[rand.Intn(len(outer))]}), "plant")
 	}
 
-	waterStart := map[string]int{}
-	for _, p := range g.Players {
-		waterStart[p.ID] = p.Water
-	}
-	gained := map[string]int{}
-
 	for season := 1; season <= 3; season++ {
 		// Each bot picks a Dusk partner for this season.
 		buddy := pickBuddies(g)
 		regionTaken := map[int]bool{}
 		for g.Phase == PhaseTurn {
 			p := g.current()
-			before := p.Water
 			if !botTurn(g, p, o, buddy[p.ID], regionTaken, openness, as) {
 				st.stuckTurns++
 			}
-			gained[p.ID] += max(0, p.Water-before)
 		}
 		if g.Phase != PhaseDusk {
 			t.Fatalf("expected dusk, got %s", g.Phase)
@@ -144,21 +136,14 @@ func simGame(t *testing.T, o botOpts, st *simStats) {
 				continue
 			}
 			ally := len(p.Allies) < 3 && !hasAlly(p, b.ID)
-			if ally && !(g.dist(p.Pos, b.Pos) <= 1 && p.Water >= 1 && b.Water >= 1) {
+			if ally && g.dist(p.Pos, b.Pos) > 1 {
 				if hasPower(p, 9) && !p.Used[9] {
 					as(p, "power", Action{Power: 9})
 				}
 			}
 			as(p, "duskChoice", Action{Target: b.ID, Ally: ally})
 		}
-		pre := map[string]int{}
-		for _, p := range g.Players {
-			pre[p.ID] = p.Water
-		}
 		must(host("resolveDusk", Action{}), "resolve")
-		for _, p := range g.Players {
-			gained[p.ID] += max(0, p.Water-pre[p.ID])
-		}
 		must(host("nextSeason", Action{}), "next season")
 	}
 
@@ -199,9 +184,6 @@ func simGame(t *testing.T, o botOpts, st *simStats) {
 		if len(p.Allies) == 0 {
 			st.zeroAlliance++
 		}
-		st.waterEnd += float64(p.Water)
-		st.waterSpent += float64(waterStart[p.ID] + gained[p.ID] - p.Water)
-		st.sunEnd += float64(p.Sun)
 		st.trustUnused += float64(p.TrustLeft)
 		for _, c := range p.Cards {
 			st.shares++
@@ -258,43 +240,29 @@ func pickBuddies(g *Game) map[string]string {
 }
 
 type reach struct {
-	hex, sun, water, free int
-	path                  []int
+	hex  int
+	path []int
 }
 
-// reachable lists every space the player can end on this turn, with the path.
-func reachable(g *Game, p *Player, free int) []reach {
-	start := reach{hex: p.Pos, sun: p.Sun, water: p.Water, free: free}
-	seen := map[[4]int]bool{}
+// reachable lists every space the player can end on this turn within the steps
+// left, with the shortest path to it.
+func reachable(g *Game, p *Player, steps int) []reach {
+	start := reach{hex: p.Pos}
+	seen := map[int]bool{p.Pos: true}
 	out := []reach{start}
 	queue := []reach{start}
-	orig := p.Pos
-	defer func() { p.Pos = orig }()
 	for len(queue) > 0 {
 		cur := queue[0]
 		queue = queue[1:]
+		if len(cur.path) >= steps {
+			continue
+		}
 		for to := range g.Hexes {
-			if g.dist(cur.hex, to) != 1 {
+			if seen[to] || g.dist(cur.hex, to) != 1 || g.canEnter(p, to) != nil {
 				continue
 			}
-			p.Pos = cur.hex
-			sun, water, err := g.stepCost(p, to)
-			if err != nil {
-				continue
-			}
-			nf := cur.free
-			if nf > 0 {
-				sun, water, nf = 0, 0, nf-1
-			}
-			if cur.sun < sun || cur.water < water {
-				continue
-			}
-			nx := reach{to, cur.sun - sun, cur.water - water, nf, append(append([]int(nil), cur.path...), to)}
-			k := [4]int{nx.hex, nx.sun, nx.water, nx.free}
-			if seen[k] {
-				continue
-			}
-			seen[k] = true
+			seen[to] = true
+			nx := reach{to, append(append([]int(nil), cur.path...), to)}
 			out = append(out, nx)
 			queue = append(queue, nx)
 		}
@@ -309,8 +277,8 @@ func botTurn(g *Game, p *Player, o botOpts, buddy string, regionTaken map[int]bo
 	if hasPower(p, 3) && !p.Used[3] && g.Season >= 2 {
 		as(p, "power", Action{Power: 3})
 	}
-	if hasPower(p, 7) && !p.Used[7] && g.Season == 3 {
-		as(p, "power", Action{Power: 7})
+	if hasPower(p, 7) && !p.Used[7] {
+		as(p, "power", Action{Power: 7}) // a Campfire round, any time
 	}
 	if hasPower(p, 5) && !p.Used[5] && g.Season == 1 && as(p, "power", Action{Power: 5}) == nil {
 		for hex := range p.Peek {
@@ -326,19 +294,10 @@ func botTurn(g *Game, p *Player, o botOpts, buddy string, regionTaken map[int]bo
 			}
 		}
 	}
-	if hasPower(p, 2) && !p.Used[2] && g.Season == 2 {
-		var poorest *Player
-		for _, x := range g.Players {
-			if x.ID != p.ID && (poorest == nil || x.Water < poorest.Water) {
-				poorest = x
-			}
-		}
-		as(p, "power", Action{Power: 2, Target: poorest.ID, Resource: "water"})
-	}
 
 	// Choose where to end: deep as the season allows, near the buddy, a hidden discovery, and
 	// in Season 3 a region without an Oak story yet (if bots coordinate).
-	options := reachable(g, p, tu.FreeSteps)
+	options := reachable(g, p, tu.StepsLeft)
 	b := g.player(buddy)
 	bestScore, best := -1e9, options[0]
 	for _, r := range options {
@@ -356,7 +315,6 @@ func botTurn(g *Game, p *Player, o botOpts, buddy string, regionTaken map[int]bo
 		if g.Season == 3 && o.coordinate && h.Ring == 1 && !g.Oak[h.Region] && !regionTaken[h.Region] {
 			s += 5
 		}
-		s += float64(r.water) * 0.5 // keep water for an alliance
 		s += rand.Float64()
 		if s > bestScore {
 			bestScore, best = s, r
@@ -374,6 +332,14 @@ func botTurn(g *Game, p *Player, o botOpts, buddy string, regionTaken map[int]bo
 	}
 	if hasPower(p, 1) && !p.Used[1] && g.Turn.Tier < 4 && as(p, "power", Action{Power: 1}) == nil {
 		as(p, "pickChoice", Action{Card: g.Turn.Choices[0]})
+	}
+	if hasPower(p, 2) && !p.Used[2] && g.Season >= 2 {
+		// Open Hands: invite someone to answer the question too.
+		for _, x := range g.Players {
+			if x.ID != p.ID && rand.Float64() < 0.3 && as(p, "power", Action{Power: 2, Target: x.ID}) == nil {
+				break
+			}
+		}
 	}
 	if hasPower(p, 4) && !p.Used[4] && g.Turn.Tier < 3 && g.Season >= 2 {
 		as(p, "power", Action{Power: 4})

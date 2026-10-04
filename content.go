@@ -98,19 +98,20 @@ type Power struct {
 
 var Powers = []Power{
 	{1, "Reformer", "integrity", "True North", "your turn, before you start sharing", "Look at 3 cards from your region and choose the one to answer. +1 bonus point."},
-	{2, "Helper", "care", "Open Hands", "your turn", "Give any player 2 ☀ or 2 💧 from the bank. You both take 1 bonus point."},
-	{3, "Achiever", "drive", "Momentum", "your turn, while moving", "Take 2 ☀ and 1 💧."},
+	{2, "Helper", "care", "Open Hands", "your turn, before you start sharing", "Invite another player to answer your question too, after you. You both keep the card, and you both take 1 bonus point."},
+	{3, "Achiever", "drive", "Momentum", "your turn, while moving", "Move up to 3 more spaces this turn."},
 	{4, "Individualist", "depth", "Deep Water", "your turn, before you start sharing", "Answer the question one tier deeper than your ring (up to Oak). It still scores at your ring's tier."},
 	{5, "Investigator", "insight", "Field Notes", "your turn, while moving", "See every hidden discovery next to you, then claim one without moving there."},
-	{6, "Loyalist", "loyalty", "Rope Team", "your turn, while moving", "Move to an ally's space for free, from anywhere. You both take 1 bonus point."},
-	{7, "Enthusiast", "joy", "Adventure", "your turn, while moving", "Your next 3 steps cost nothing (ring rules still apply). +1 bonus point."},
+	{6, "Loyalist", "loyalty", "Rope Team", "your turn, while moving", "Jump to an ally's space from anywhere, without using your steps. You both take 1 bonus point."},
+	{7, "Enthusiast", "joy", "Adventure", "your turn", "Call a Campfire: everyone answers a one-sentence question. +1 bonus point."},
 	{8, "Challenger", "strength", "Champion", "after someone else's share", "Give that player 2 trust acorns at once, and take 1 bonus point."},
-	{9, "Peacemaker", "harmony", "Common Ground", "at Dusk, before pairs are set", "Your alliance tonight works at any distance and costs neither of you water."},
+	{9, "Peacemaker", "harmony", "Common Ground", "at Dusk, before pairs are set", "Your alliance tonight works at any distance."},
 }
 
-// 36 discovery tokens, one per space except the Heartwood.
+// Discovery tokens: 26 for the 36 spaces around the Heartwood; the other 10
+// spaces are quiet clearings with nothing to find.
 var TokenMix = map[string]int{
-	"spring": 9, "sunbeam": 7, "mushroom": 7, "squirrel": 6, "campfire": 5, "path": 2,
+	"mushroom": 9, "squirrel": 10, "campfire": 5, "path": 2,
 }
 
 var Colors = []string{"#e53935", "#fb8c00", "#fdd835", "#43a047", "#00897b", "#1e88e5", "#5e35b1", "#d81b60", "#6d4c41", "#546e7a"}

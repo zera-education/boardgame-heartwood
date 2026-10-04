@@ -46,8 +46,6 @@ type Player struct {
 	Types     []int          `json:"types"`
 	Used      map[int]bool   `json:"used"`
 	Pos       int            `json:"pos"`
-	Sun       int            `json:"sun"`
-	Water     int            `json:"water"`
 	Bonus     int            `json:"bonus"` // bonus points (✨)
 	TrustLeft int            `json:"trustLeft"`
 	Squirrels int            `json:"squirrels"`
@@ -65,7 +63,7 @@ type TurnState struct {
 	Player     string         `json:"player"`
 	Step       string         `json:"step"` // move, share, trust
 	Discovered bool           `json:"discovered"`
-	FreeSteps  int            `json:"freeSteps"`
+	StepsLeft  int            `json:"stepsLeft"` // up to 3 a turn, more with Momentum
 	Teleport   bool           `json:"teleport"`
 	CanClaim   bool           `json:"canClaim"`
 	Region     int            `json:"region"`
@@ -77,6 +75,8 @@ type TurnState struct {
 	Started    bool           `json:"started"`
 	Bonus      int            `json:"bonus"`
 	ScoreTier  int            `json:"scoreTier"` // set by Deep Water: the tier the share scores at
+	Invited    string         `json:"invited"`   // Open Hands: answers the same question too
+	Campfire   string         `json:"campfire"`  // Adventure: the Campfire question called this turn
 	Event      string         `json:"event"`
 	EventText  string         `json:"eventText"`
 	Trusted    map[string]int `json:"trusted"`
@@ -137,20 +137,19 @@ type RejoinPin struct {
 }
 
 type Action struct {
-	Pid      string `json:"pid"`
-	Secret   string `json:"secret"`
-	Host     string `json:"host"`
-	Type     string `json:"type"`
-	Hex      int    `json:"hex"`
-	Target   string `json:"target"`
-	Resource string `json:"resource"`
-	Power    int    `json:"power"`
-	Ally     bool   `json:"ally"`
-	N        int    `json:"n"`
-	Card     int    `json:"card"`
-	Forest   bool   `json:"forest"`
-	Types    []int  `json:"types"`
-	As       string `json:"as"` // the player the Keeper acts for
+	Pid    string `json:"pid"`
+	Secret string `json:"secret"`
+	Host   string `json:"host"`
+	Type   string `json:"type"`
+	Hex    int    `json:"hex"`
+	Target string `json:"target"`
+	Power  int    `json:"power"`
+	Ally   bool   `json:"ally"`
+	N      int    `json:"n"`
+	Card   int    `json:"card"`
+	Forest bool   `json:"forest"`
+	Types  []int  `json:"types"`
+	As     string `json:"as"` // the player the Keeper acts for
 }
 
 func buildHexes() []Hex {
@@ -192,9 +191,15 @@ func NewGame(code, hostSecret string) *Game {
 		}
 	}
 	sort.Strings(kinds)
+	// Spaces beyond the mix are quiet clearings with nothing to find.
+	for len(kinds) < len(g.Hexes)-1 {
+		kinds = append(kinds, "")
+	}
 	rand.Shuffle(len(kinds), func(i, j int) { kinds[i], kinds[j] = kinds[j], kinds[i] })
 	for i := 1; i < len(g.Hexes); i++ {
-		g.Tokens[i] = &Token{Kind: kinds[i-1]}
+		if kinds[i-1] != "" {
+			g.Tokens[i] = &Token{Kind: kinds[i-1]}
+		}
 	}
 	return g
 }
@@ -328,7 +333,7 @@ func (g *Game) start(forest bool) error {
 	g.ForestGoal = forest
 	for _, p := range g.Players {
 		g.Order = append(g.Order, p.ID)
-		p.Sun, p.Water, p.TrustLeft = 3, 2, 10
+		p.TrustLeft = 10
 	}
 	// Secret Owl: one loop through a shuffled order. Each player is the Secret
 	// Owl of their Target, watching them quietly all game.
@@ -350,32 +355,25 @@ func (g *Game) current() *Player {
 }
 
 func (g *Game) newTurn() {
-	g.Turn = &TurnState{Player: g.Order[g.TurnIdx], Step: "move", Trusted: map[string]int{}, Region: -1}
+	g.Turn = &TurnState{Player: g.Order[g.TurnIdx], Step: "move", Trusted: map[string]int{}, Region: -1, StepsLeft: 3}
 	g.TimerEnd, g.TimerLabel = 0, ""
 	g.current().Peek = map[int]string{}
 }
 
-func (g *Game) stepCost(p *Player, to int) (int, int, error) {
+// canEnter says whether p may stand on space to: its ring must be open, and
+// no one reaches the Heartwood without an ally.
+func (g *Game) canEnter(p *Player, to int) error {
 	if to < 0 || to >= len(g.Hexes) {
-		return 0, 0, errors.New("no such space")
+		return errors.New("no such space")
 	}
-	h, from := g.Hexes[to], g.Hexes[p.Pos]
+	h := g.Hexes[to]
 	if !g.ringOpen(h.Ring) {
-		return 0, 0, errors.New("that ring opens in a later season")
+		return errors.New("that ring opens in a later season")
 	}
 	if h.Ring == 0 && len(p.Allies) == 0 {
-		return 0, 0, errors.New("no one reaches the Heartwood alone: you need an alliance")
+		return errors.New("no one reaches the Heartwood alone: you need an alliance")
 	}
-	sun, water := 1, 0
-	if h.Ring < from.Ring {
-		if h.Ring == 2 {
-			sun++
-		}
-		if h.Ring == 1 {
-			water = 1
-		}
-	}
-	return sun, water, nil
+	return nil
 }
 
 func (g *Game) resolveToken(p *Player, hex int) {
@@ -387,12 +385,6 @@ func (g *Game) resolveToken(p *Player, hex int) {
 	tu := g.Turn
 	tu.Event = t.Kind
 	switch t.Kind {
-	case "spring":
-		p.Water += 2
-		tu.EventText = "Spring: +2 💧"
-	case "sunbeam":
-		p.Sun += 2
-		tu.EventText = "Sunbeam: +2 ☀"
 	case "mushroom":
 		p.Bonus += 2
 		tu.EventText = "Mushroom patch: +2 ✨ bonus points"
@@ -458,6 +450,11 @@ func (g *Game) finishTurn() {
 		}
 		p.Cards = append(p.Cards, KeptCard{tu.Region, scored, tu.Prompt})
 		g.Trees[p.Pos]++
+		if o := g.player(tu.Invited); o != nil {
+			// Open Hands: the invited player answered the same question and keeps it too.
+			o.Cards = append(o.Cards, KeptCard{tu.Region, scored, tu.Prompt})
+			g.Trees[p.Pos]++
+		}
 		if tu.Tier == 3 {
 			g.Oak[tu.Region] = true
 		}
@@ -529,13 +526,7 @@ func (g *Game) resolveDusk() {
 				pr.Note = "One of you already has 3 alliances."
 			case !common && !g.adjacentOrSame(a, b):
 				pr.Note = "No alliance: you weren't on the same or neighbouring spaces."
-			case !common && (a.Water < 1 || b.Water < 1):
-				pr.Note = "No alliance: each of you needs 1 💧."
 			default:
-				if !common {
-					a.Water--
-					b.Water--
-				}
 				a.Allies = append(a.Allies, b.ID)
 				b.Allies = append(b.Allies, a.ID)
 				pr.Ally = true
@@ -582,9 +573,6 @@ func (g *Game) resolveDusk() {
 					p.Partners = append(p.Partners, o)
 				}
 			}
-			if !pr.Ally || m == pr.C {
-				p.Water++
-			}
 		}
 		if pr.Ally {
 			g.logf("Alliance: %s & %s", g.player(pr.A).Name, g.player(pr.B).Name)
@@ -605,11 +593,6 @@ func (g *Game) nextSeason() {
 	}
 	g.Season++
 	g.Phase = PhaseTurn
-	for _, p := range g.Players {
-		if p.Sun < 3 {
-			p.Sun = 3
-		}
-	}
 	g.StartIdx = (g.StartIdx + 1) % len(g.Order)
 	g.TurnIdx, g.TurnsTaken = g.StartIdx, 0
 	g.newTurn()
@@ -910,24 +893,13 @@ func (g *Game) playerAction(me *Player, a Action) error {
 		if g.dist(me.Pos, a.Hex) != 1 {
 			return errors.New("step to a neighbouring space")
 		}
-		sun, water, err := g.stepCost(me, a.Hex)
-		if err != nil {
+		if tu.StepsLeft < 1 {
+			return errors.New("no steps left this turn")
+		}
+		if err := g.canEnter(me, a.Hex); err != nil {
 			return err
 		}
-		if tu.FreeSteps > 0 {
-			sun, water = 0, 0
-		}
-		if me.Sun < sun {
-			return errors.New("not enough ☀")
-		}
-		if me.Water < water {
-			return errors.New("you need 1 💧 to enter the Oak Circle")
-		}
-		me.Sun -= sun
-		me.Water -= water
-		if tu.FreeSteps > 0 {
-			tu.FreeSteps--
-		}
+		tu.StepsLeft--
 		me.Pos = a.Hex
 		tu.CanClaim = false // scouting is about the spaces next to where you used it
 		me.Peek = map[int]string{}
@@ -1057,26 +1029,22 @@ func (g *Game) usePower(me *Player, a Action) error {
 		tu.Choices = []int{tu.Card, g.draw(tu.Region), g.draw(tu.Region)}
 		tu.Bonus++
 	case 2:
-		if !myTurn {
-			return errors.New("use Open Hands on your turn")
+		if !beforeShare || len(tu.Choices) > 0 {
+			return errors.New("use Open Hands on your turn, before you start sharing")
 		}
 		o := g.player(a.Target)
 		if o == nil || o.ID == me.ID {
 			return errors.New("choose another player")
 		}
-		if a.Resource == "water" {
-			o.Water += 2
-		} else {
-			o.Sun += 2
-		}
+		tu.Invited = o.ID
 		o.Bonus++
 		me.Bonus++
+		g.logf("%s invited %s to answer the question too", me.Name, o.Name)
 	case 3:
 		if !moving {
 			return errors.New("use Momentum while moving")
 		}
-		me.Sun += 2
-		me.Water++
+		tu.StepsLeft += 3
 	case 4:
 		if !beforeShare || tu.Tier >= 3 {
 			return errors.New("use Deep Water before sharing, below the Oak tier")
@@ -1118,11 +1086,12 @@ func (g *Game) usePower(me *Player, a Action) error {
 		me.Bonus++
 		o.Bonus++
 	case 7:
-		if !moving {
-			return errors.New("use Adventure while moving")
+		if !myTurn || tu.Step == "trust" {
+			return errors.New("use Adventure on your turn, before your share is done")
 		}
-		tu.FreeSteps += 3
+		tu.Campfire = CampfireCards[rand.Intn(len(CampfireCards))]
 		me.Bonus++
+		g.logf("%s called a Campfire: %s", me.Name, tu.Campfire)
 	case 8:
 		if err := g.giveTrust(me, 2); err != nil {
 			return err

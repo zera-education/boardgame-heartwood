@@ -164,6 +164,7 @@ function actionPanel(v, me, mv) {
       if (t.step === 'trust') return t.iGave ? `<p class="good big">You gave trust to ${HW.chip(t.player)}. 🌰</p>`
         : `<button data-act="trust" class="big" ${me.trustLeft < 1 ? 'disabled' : ''}>Give trust to ${HW.esc(HW.name(t.player))} 🌰</button>
            <p class="muted">Trust is a gift, not a grade. Give it if this share moved you. ${me.trustLeft} left.</p>`;
+      if (t.invited === me.id) return lookUp(`Open Hands: you answer this question too, right after ${HW.chip(t.player)}.`);
       return lookUp(`Listen to ${HW.chip(t.player)}.`);
     case 'dusk': return duskPanel(v, me, mv);
     case 'guess': {
@@ -190,7 +191,7 @@ function duskPanel(v, me, mv) {
     const pr = v.dusk.pairs.find(p => [p.a, p.b, p.c].includes(me.id));
     if (!pr) return '<p>Rest by the fire.</p>';
     const others = [pr.a, pr.b, pr.c].filter(x => x && x !== me.id).map(x => HW.chip(x)).join(' & ');
-    return `<p class="big">You're with ${others} ${pr.ally ? '<span class="badge">ALLIANCE</span>' : '<span class="muted">(fireside: +1 💧)</span>'}</p>
+    return `<p class="big">You're with ${others} ${pr.ally ? '<span class="badge">ALLIANCE</span>' : '<span class="muted">(fireside chat)</span>'}</p>
       ${pr.note ? `<p class="note">${HW.esc(pr.note)}</p>` : ''}
       <div class="prompt" style="font-size:1.3rem">${HW.esc(pr.bond)}</div><p class="muted">Talk for 4 minutes.</p>`;
   }
@@ -203,10 +204,10 @@ function duskPanel(v, me, mv) {
   }).join('');
   return `<p class="big">Dusk: who do you want to talk with?</p>
     <select id="partner" data-keep="partner"><option value="">Anyone (the Keeper pairs me)</option>${opts}</select>
-    <label><input type="checkbox" id="ally" style="width:auto" ${choice.ally ? 'checked' : ''}> Make it an alliance (1 💧 each; you must be on the same or a neighbouring space${mv.common ? ', or not, thanks to Common Ground' : ''})</label>
+    <label><input type="checkbox" id="ally" style="width:auto" ${choice.ally ? 'checked' : ''}> Make it an alliance (you must be on the same or a neighbouring space${mv.common ? ', or not, thanks to Common Ground' : ''})</label>
     <p><button data-act="dusk">${mv.duskChoice ? 'Update my choice' : 'Send my choice'}</button></p>
     ${mv.duskChoice ? `<p class="good">Sent: ${mv.duskChoice.partner ? HW.esc(HW.name(mv.duskChoice.partner)) : 'anyone'}${mv.duskChoice.ally ? ', as an alliance' : ''}.</p>` : ''}
-    <p class="muted">You pair only if you both choose each other. You have 💧 ${me.water}. +3 points each for an alliance.</p>`;
+    <p class="muted">You pair only if you both choose each other. +3 points each for an alliance.</p>`;
 }
 
 function powerCard(v, me, type) {

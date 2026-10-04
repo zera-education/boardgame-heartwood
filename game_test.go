@@ -71,7 +71,6 @@ func TestFullGame(t *testing.T) {
 			p := g.current()
 			if g.Season > 1 && g.Hexes[p.Pos].Ring > 1 {
 				if to := inward(p); to >= 0 {
-					p.Water += 2 // make sure the test can always afford the Oak
 					if err := as(p, "step", Action{Hex: to}); err != nil {
 						t.Logf("%s could not step in: %v", p.Name, err)
 					}
@@ -209,6 +208,12 @@ func TestPlaytestFixes(t *testing.T) {
 		as(g.current(), "plant", Action{Hex: outer[k*6]})
 	}
 	p := g.current()
+	// Some spaces are empty clearings; make sure there's something next door to scout.
+	for i := range g.Hexes {
+		if i > 0 && g.dist(p.Pos, i) == 1 && g.Tokens[i] == nil {
+			g.Tokens[i] = &Token{Kind: "mushroom"}
+		}
+	}
 	// Field Notes scouts only open rings: in Season 1, only Seedlands spaces.
 	if err := as(p, "power", Action{Power: 5}); err != nil {
 		t.Fatal(err)
@@ -237,18 +242,18 @@ func TestPlaytestFixes(t *testing.T) {
 	if g.current() == p || len(p.Cards) != 0 {
 		t.Fatal("pass did not end the turn cleanly")
 	}
-	// Odd players: the third member of a pair still gets fireside water.
+	// Odd players: everyone still gets a Dusk partner (one group is a trio).
 	for g.Phase == PhaseTurn {
 		as(g.current(), "pass", Action{})
 	}
-	before := map[string]int{}
-	for _, x := range ps {
-		before[x.ID] = x.Water
-	}
 	g.Apply(Action{Host: "host", Type: "resolveDusk"})
+	inPair := map[string]bool{}
 	for _, pr := range g.Dusk.Pairs {
-		if pr.C != "" && g.player(pr.C).Water != before[pr.C]+1 {
-			t.Fatal("third member got no fireside water")
+		inPair[pr.A], inPair[pr.B], inPair[pr.C] = true, true, true
+	}
+	for _, x := range ps {
+		if !inPair[x.ID] {
+			t.Fatalf("%s has no Dusk partner", x.Name)
 		}
 	}
 	// A full tie shares the win.
@@ -301,6 +306,9 @@ func TestKeeperActsForPlayers(t *testing.T) {
 	}
 	a := ps[0]
 	for _, step := range []string{"power", "endMove", "startShare", "doneShare"} {
+		if step == "startShare" && g.Turn.Teleport {
+			keeper(a, "endMove", Action{}) // a Hidden path: stay here
+		}
 		if err := keeper(a, step, Action{Power: 3}); err != nil {
 			t.Fatalf("%s: %v", step, err)
 		}
@@ -319,5 +327,88 @@ func TestKeeperActsForPlayers(t *testing.T) {
 	}
 	if g.current().ID != ps[1].ID {
 		t.Fatal("turn did not pass")
+	}
+}
+
+// Moving is up to 3 steps a turn (Momentum adds 3), Open Hands shares the card,
+// and an alliance costs nothing.
+func TestStepsOpenHandsAndFreeAlliance(t *testing.T) {
+	g := NewGame("STP", "host")
+	var ps []*Player
+	for i, n := range []string{"A", "B"} {
+		p, _ := g.Join(n, Colors[i])
+		g.Apply(Action{Host: "host", Type: "assignPowers", Target: p.ID, Types: []int{2, 3}})
+		ps = append(ps, p)
+	}
+	as := func(p *Player, typ string, a Action) error {
+		a.Pid, a.Secret, a.Type = p.ID, p.Secret, typ
+		return g.Apply(a)
+	}
+	must := func(err error) {
+		t.Helper()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	must(g.Apply(Action{Host: "host", Type: "start"}))
+	outer := []int{}
+	for i, h := range g.Hexes {
+		if h.Ring == 3 {
+			outer = append(outer, i)
+		}
+	}
+	// Plant both on the same space, so they're neighbours for the alliance.
+	must(as(g.current(), "plant", Action{Hex: outer[0]}))
+	must(as(g.current(), "plant", Action{Hex: outer[0]}))
+	a, b := g.current(), ps[0]
+	if a == ps[0] {
+		b = ps[1]
+	}
+	walk := func(n int) error {
+		for k := 0; k < n; k++ {
+			next := -1
+			for i, h := range g.Hexes {
+				if h.Ring == 3 && g.dist(a.Pos, i) == 1 {
+					next = i
+					break
+				}
+			}
+			if err := as(a, "step", Action{Hex: next}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	must(walk(3))
+	if walk(1) == nil {
+		t.Fatal("a fourth step was allowed")
+	}
+	must(as(a, "power", Action{Power: 3}))
+	must(walk(3))
+	must(as(a, "endMove", Action{}))
+	if g.Turn.Teleport {
+		must(as(a, "endMove", Action{}))
+	}
+	must(as(a, "power", Action{Power: 2, Target: b.ID}))
+	must(as(a, "startShare", Action{}))
+	must(as(a, "doneShare", Action{}))
+	must(as(a, "endTrust", Action{}))
+	if len(a.Cards) != 1 || len(b.Cards) != 1 || a.Bonus < 1 || b.Bonus < 1 {
+		t.Fatalf("Open Hands: cards %d/%d, bonus %d/%d", len(a.Cards), len(b.Cards), a.Bonus, b.Bonus)
+	}
+	// b stays put; then both ask for an alliance and get it, with no cost.
+	must(as(b, "endMove", Action{}))
+	if g.Turn != nil && g.Turn.Teleport {
+		must(as(b, "endMove", Action{}))
+	}
+	must(as(b, "startShare", Action{}))
+	must(as(b, "doneShare", Action{}))
+	must(as(b, "endTrust", Action{}))
+	a.Pos = b.Pos
+	must(as(a, "duskChoice", Action{Target: b.ID, Ally: true}))
+	must(as(b, "duskChoice", Action{Target: a.ID, Ally: true}))
+	must(g.Apply(Action{Host: "host", Type: "resolveDusk"}))
+	if !hasAlly(a, b.ID) {
+		t.Fatalf("no alliance: %+v", g.Dusk.Pairs)
 	}
 }

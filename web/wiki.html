@@ -100,7 +100,7 @@ article h3 { font-size: 1.15rem; margin: 1.5rem 0 .5rem; }
   <div class="topbar">
     <a class="brand" href="#"><span>🌰</span>HEARTWOOD WIKI</a>
     <nav class="toplinks"><a href="howto.html">How to play</a><a href="/">Game</a></nav>
-    <div class="search"><input id="q" type="search" placeholder="Search terms: water, alliance, Squirrel…" aria-label="Search the wiki" autocomplete="off"></div>
+    <div class="search"><input id="q" type="search" placeholder="Search terms: alliance, Squirrel, Dusk…" aria-label="Search the wiki" autocomplete="off"></div>
   </div>
   <main id="main"></main>
   <p class="foot">🌰 Heartwood · made for the ZERA International School leadership retreat.</p>
@@ -186,7 +186,6 @@ const W = [
 </table></div>
 <h3>At the start of each new season</h3>
 <ul>
-  <li>Your [[sunlight]] tops back up to 3 (if you have more, you keep it).</li>
   <li>The next player in order goes first, so the advantage of moving last goes around the table.</li>
 </ul>` },
 
@@ -195,7 +194,7 @@ const W = [
   body: `
 <p>When it's your turn, look up: say what you'd like, and the [[keeper]] taps it on the big screen. A turn takes about two minutes.</p>
 <ol>
-  <li><b>🥾 Move (optional).</b> Say where to; the Keeper moves your pawn one neighbouring space at a time. See [[moving]] for what it costs. Take as many steps as you can afford, or none.</li>
+  <li><b>🥾 Move (optional).</b> Say where to; the Keeper moves your pawn one neighbouring space at a time. Up to 3 spaces, free; see [[moving]]. Take fewer, or none.</li>
   <li><b>✦ Discover.</b> Say "stop here"; the Keeper taps <b>Stop here and discover</b>. If your space's [[discovery]] is still face down, it's yours. You can't move again this turn (unless you found a [[hidden-path]]).</li>
   <li><b>💬 Share.</b> Your [[prompt-card|question]] appears on the big screen. The Keeper starts the [[answer-timer|timer]] when you begin and stops it when you finish. See [[share]].</li>
   <li><b>🌰 Trust.</b> Others may give you a [[trust-acorn]] on their phones; someone may raise a hand to play a [[squirrel]]. When the room is ready, the Keeper moves on to the next player.</li>
@@ -292,15 +291,15 @@ const W = [
   body: `
 <p>The forest has <b>37 spaces</b>: the [[heartwood]] at the centre and three rings around it. It's cut into six coloured wedges, one per [[values|value]].</p>
 <div class="tablewrap"><table>
-<tr><th>Ring</th><th>Spaces</th><th>Opens</th><th>Extra cost to step in</th></tr>
-<tr><td>🌱 [[seedlands]] (outer)</td><td>18</td><td>Season 1</td><td>none</td></tr>
-<tr><td>🌿 [[sapling-path]] (middle)</td><td>12</td><td>Season 2</td><td>+1 ☀</td></tr>
-<tr><td>🌳 [[oak-circle]] (inner)</td><td>6</td><td>Season 3</td><td>+1 💧</td></tr>
+<tr><th>Ring</th><th>Spaces</th><th>Opens</th><th>To step in</th></tr>
+<tr><td>🌱 [[seedlands]] (outer)</td><td>18</td><td>Season 1</td><td>open from the start</td></tr>
+<tr><td>🌿 [[sapling-path]] (middle)</td><td>12</td><td>Season 2</td><td>open from Season 2</td></tr>
+<tr><td>🌳 [[oak-circle]] (inner)</td><td>6</td><td>Season 3</td><td>open from Season 3</td></tr>
 <tr><td>💛 [[heartwood]] (centre)</td><td>1</td><td>Season 3</td><td>needs an [[alliance|ally]]</td></tr>
 </table></div>
 <p>Each value wedge has 3 Seedlands spaces, 2 Sapling Path spaces and 1 Oak Circle space. Every space except the Heartwood starts with a face-down [[discovery]].</p>
 <p>Rings that aren't open yet look faded. Any number of players can share a space.</p>
-<p>See [[moving]] for what it costs to walk.</p>` },
+<p>See [[moving]] for how you walk: up to 3 spaces a turn.</p>` },
 
 { id: 'values', cat: 'map', icon: '🎨', title: 'The six values',
   short: "ZERA's six Cs. Each owns a wedge of the map and a deck of questions.",
@@ -336,11 +335,9 @@ const W = [
 <div class="facts">
   <div class="fact"><span>Spaces</span>12 (middle ring)</div>
   <div class="fact"><span>Opens</span>Season 2</div>
-  <div class="fact"><span>Step in</span>1 ☀ + 1 ☀ extra</div>
   <div class="fact"><span>Question</span>🌿 Sapling: a story</div>
   <div class="fact"><span>Card points</span>2</div>
 </div>
-<p>Stepping inward onto the Sapling Path costs 2 [[sunlight]] in total. Moving along it, or back out, costs the usual 1.</p>
 <div class="tip"><h3>Tip</h3><p>Reach the Sapling Path in Season 2. From there, the [[oak-circle]] or [[heartwood]] is one or two steps away in Season 3.</p></div>` },
 
 { id: 'oak-circle', cat: 'map', icon: '🌳', title: 'Oak Circle',
@@ -349,11 +346,9 @@ const W = [
 <div class="facts">
   <div class="fact"><span>Spaces</span>6 (one per value)</div>
   <div class="fact"><span>Opens</span>Season 3</div>
-  <div class="fact"><span>Step in</span>1 ☀ + 1 💧</div>
   <div class="fact"><span>Question</span>🌳 Oak: values, fears, hopes</div>
   <div class="fact"><span>Card points</span>3</div>
 </div>
-<p>Stepping inward into the Oak Circle costs 1 [[sunlight]] and 1 [[water]]. Keep a drop of water for it.</p>
 <p>An answer at the Oak tier on a value's space is an <b>Oak story</b>, which matters for the [[forest-goal]].</p>
 <p>Next ring in: [[heartwood]].</p>` },
 
@@ -363,7 +358,7 @@ const W = [
 <div class="facts">
   <div class="fact"><span>Spaces</span>1 (centre)</div>
   <div class="fact"><span>Opens</span>Season 3</div>
-  <div class="fact"><span>Step in</span>1 ☀ + at least one ally</div>
+  <div class="fact"><span>Step in</span>Needs at least one ally</div>
   <div class="fact"><span>Question</span>💛 Your legacy</div>
   <div class="fact"><span>Card points</span>4</div>
 </div>
@@ -373,70 +368,22 @@ const W = [
   <li>No [[lighter-tier]] here, and no [[discovery]].</li>
   <li>Any number of players can stand in it.</li>
 </ul>
-<p>From the [[seedlands]], the whole road costs 4 ☀ and 1 💧.</p>` },
+<p>From the [[seedlands]] it's 3 steps: in Season 3, with an ally, you can walk all the way in on one turn.</p>` },
 
 { id: 'moving', cat: 'map', icon: '👣', title: 'Moving',
-  short: '1 ☀ per step, plus an extra cost when you step inward.',
+  short: 'Up to 3 spaces a turn, free, through open rings.',
   body: `
-<p>On your [[turn]], before you discover, say where you want to go. The [[keeper]] taps each neighbouring space you step to.</p>
-<div class="tablewrap"><table>
-<tr><th>Step</th><th>Cost</th></tr>
-<tr><td>Around a ring, or outward</td><td>1 ☀</td></tr>
-<tr><td>Inward onto the [[sapling-path]]</td><td>2 ☀</td></tr>
-<tr><td>Inward into the [[oak-circle]]</td><td>1 ☀ + 1 💧</td></tr>
-<tr><td>Inward into the [[heartwood]]</td><td>1 ☀, and you need an [[alliance|ally]]</td></tr>
-</table></div>
+<p>On your [[turn]], before you discover, say where you want to go. The [[keeper]] taps each neighbouring space you step to: <b>up to 3 spaces a turn</b>, and moving costs nothing.</p>
 <ul>
   <li>You can't enter a ring that isn't open yet (see [[season]]).</li>
+  <li>You can't step into the [[heartwood]] without at least one [[alliance|ally]].</li>
+  <li>Take fewer steps, or none at all, if you like where you are.</li>
   <li>Once you stop and discover, you can't move again this turn, unless you find a [[hidden-path]].</li>
-  <li>Powers that help you move: [[momentum]], [[adventure]], [[rope-team]].</li>
+  <li>Powers that help you move: [[momentum]] (3 more steps) and [[rope-team]] (jump to an ally).</li>
 </ul>
 <div class="tip"><h3>Tip</h3><p>Where you stop decides who you can ally with at [[dusk]]. Players who move later can see where others stopped.</p></div>` },
 
 // ───────────── Resources
-{ id: 'sunlight', cat: 'resources', icon: '☀️', title: 'Sunlight',
-  short: 'For walking. 3 at the start of every season.',
-  body: `
-<div class="facts">
-  <div class="fact"><span>Start</span>3</div>
-  <div class="fact"><span>Refill</span>Back up to 3 each season</div>
-  <div class="fact"><span>Scores</span>Nothing. Use it.</div>
-</div>
-<h3>Spend it on</h3>
-<ul>
-  <li>1 per step when [[moving]], +1 extra to step inward onto the [[sapling-path]].</li>
-</ul>
-<h3>Get more from</h3>
-<ul>
-  <li>☀️ [[sunbeam]] discovery: +2</li>
-  <li>[[momentum]] power: +2</li>
-  <li>Someone's [[open-hands]] power: +2</li>
-</ul>
-<p>If you have more than 3 when a new season starts, you keep the extra.</p>
-<div class="tip"><h3>Tip</h3><p>Leftover sunlight is wasted at the end of the game, and the season top-up only brings you back to 3. Spend it.</p></div>` },
-
-{ id: 'water', cat: 'resources', icon: '💧', title: 'Water',
-  short: 'For going deep and for alliances. Never refills, always carries over.',
-  body: `
-<div class="facts">
-  <div class="fact"><span>Start</span>2</div>
-  <div class="fact"><span>Refill</span>None, but it carries over</div>
-  <div class="fact"><span>Scores</span>Nothing</div>
-</div>
-<h3>Spend it on</h3>
-<ul>
-  <li>1 to step inward into the [[oak-circle]].</li>
-  <li>1 each to form an [[alliance]] at [[dusk]].</li>
-</ul>
-<h3>Get more from</h3>
-<ul>
-  <li>💧 [[spring]] discovery: +2</li>
-  <li>A [[fireside-chat]] at Dusk: +1</li>
-  <li>[[momentum]] power: +1</li>
-  <li>Someone's [[open-hands]] power: +2</li>
-</ul>
-<div class="tip"><h3>Tip</h3><p>Water is the scarcest resource. Plan for at least 1 💧 for the Oak Circle in Season 3, plus 1 for each alliance you want. [[common-ground]] makes an alliance free.</p></div>` },
-
 { id: 'trust-acorn', cat: 'resources', icon: '🌰', title: 'Trust acorn',
   short: 'Your gift to others after they share. 10 for the whole game.',
   body: `
@@ -472,7 +419,7 @@ const W = [
 { id: 'squirrel', cat: 'resources', icon: '🐿️', title: 'Squirrel',
   short: 'A follow-up question you store and play after someone else shares.',
   body: `
-<p>A squirrel stores things to dig up later. A Squirrel is a [[discovery]] you store until you want it: a follow-up question. There are 6 on the board.</p>
+<p>A squirrel stores things to dig up later. A Squirrel is a [[discovery]] you store until you want it: a follow-up question. There are 10 on the board.</p>
 <h3>How to play it</h3>
 <ol>
   <li>Right after someone else's [[share]], raise your hand; the [[keeper]] taps it.</li>
@@ -484,32 +431,22 @@ const W = [
 
 // ───────────── Discoveries
 { id: 'discovery', cat: 'discoveries', icon: '✦', title: 'Discovery',
-  short: 'A face-down find on every space. First to stop there takes it.',
+  short: 'A face-down find (✦) on 26 of the spaces. First to stop there takes it.',
   body: `
-<p>36 discoveries lie face down (✦), one on every space except the [[heartwood]]. When you stop and discover on a space whose discovery is still hidden, it flips and it's yours. Found ones stay face up.</p>
+<p>26 discoveries lie face down (✦) on the spaces around the [[heartwood]]. The other 10 spaces are quiet clearings with nothing to find: they show no ✦. When you stop and discover on a space whose discovery is still hidden, it flips and it's yours. Found ones stay face up.</p>
 <div class="tablewrap"><table>
 <tr><th>Discovery</th><th>How many</th><th>What happens</th></tr>
-<tr><td>💧 [[spring]]</td><td>9</td><td>+2 💧</td></tr>
-<tr><td>☀️ [[sunbeam]]</td><td>7</td><td>+2 ☀</td></tr>
-<tr><td>🍄 [[mushroom-patch]]</td><td>7</td><td>+2 ✨</td></tr>
-<tr><td>🐿️ [[squirrel]]</td><td>6</td><td>Store it to ask a follow-up later</td></tr>
+<tr><td>🍄 [[mushroom-patch]]</td><td>9</td><td>+2 ✨</td></tr>
+<tr><td>🐿️ [[squirrel]]</td><td>10</td><td>Store it to ask a follow-up later</td></tr>
 <tr><td>🔥 [[campfire]]</td><td>5</td><td>Everyone answers in one sentence</td></tr>
 <tr><td>🍃 [[hidden-path]]</td><td>2</td><td>Free move within your ring</td></tr>
 </table></div>
 <p>The [[field-notes]] power lets you see the hidden discoveries next to you and claim one.</p>
 <div class="tip"><h3>Tip</h3><p>Unexplored spaces are worth more. Stopping on a space someone already found gives you nothing extra.</p></div>` },
 
-{ id: 'spring', cat: 'discoveries', icon: '💧', title: 'Spring',
-  short: 'Discovery: +2 water.',
-  body: `<p>The most common [[discovery]] (9 on the board). You take <b>+2 [[water]]</b> straight away.</p><p>Water never refills, so a Spring can pay for your step into the [[oak-circle]] and an [[alliance]].</p>` },
-
-{ id: 'sunbeam', cat: 'discoveries', icon: '☀️', title: 'Sunbeam',
-  short: 'Discovery: +2 sunlight.',
-  body: `<p>A [[discovery]] (7 on the board). You take <b>+2 [[sunlight]]</b>.</p><p>You find it after you've stopped, so it usually helps your next turn, unless you also found a [[hidden-path]]. Sunlight above 3 carries into the next season.</p>` },
-
 { id: 'mushroom-patch', cat: 'discoveries', icon: '🍄', title: 'Mushroom patch',
   short: 'Discovery: +2 bonus points.',
-  body: `<p>A [[discovery]] (7 on the board). You take <b>+2 [[bonus-point|bonus points]]</b>, which are 2 points in [[growth]].</p>` },
+  body: `<p>A [[discovery]] (9 on the board). You take <b>+2 [[bonus-point|bonus points]]</b>, which are 2 points in [[growth]].</p>` },
 
 { id: 'campfire', cat: 'discoveries', icon: '🔥', title: 'Campfire',
   short: 'Discovery: everyone answers one quick question, around the table.',
@@ -523,7 +460,7 @@ const W = [
   body: `
 <p>A rare [[discovery]] (2 on the board). You may move <b>free</b> to any open space in your current ring, or stay where you are.</p>
 <ul>
-  <li>It doesn't cost [[sunlight]].</li>
+  <li>It doesn't use your steps.</li>
   <li>You don't discover the space you land on.</li>
   <li>Your [[prompt-card|question]] comes from wherever you end up, so you can pick a new [[values|value]].</li>
 </ul>
@@ -547,14 +484,13 @@ const W = [
 { id: 'alliance', cat: 'dusk', icon: '🤝', title: 'Alliance',
   short: 'A bond formed at Dusk. 3 points, and the key to the Heartwood.',
   body: `
-<p>An alliance forms at [[dusk]] when <b>all four</b> are true:</p>
+<p>An alliance forms at [[dusk]] when <b>all three</b> are true:</p>
 <ol>
   <li>You both chose each other.</li>
   <li>You both ticked <b>Make it an alliance</b>.</li>
-  <li>You stand on the same or neighbouring spaces.</li>
-  <li>You each have at least 1 [[water]].</li>
+  <li>You stand on the same or neighbouring spaces (or one of you used [[common-ground]]).</li>
 </ol>
-<p>You each pay 1 💧 and each gain an <b>ally</b>. If any check fails, you still talk: it becomes a [[fireside-chat]], and your phone tells you why the alliance didn't form.</p>
+<p>It costs nothing: you each gain an <b>ally</b>. You can't ally twice with the same person, and each of you can have at most 3 allies. If any check fails, you still talk: it becomes a [[fireside-chat]], and your phone tells you why the alliance didn't form.</p>
 <h3>What an ally gives you</h3>
 <ul>
   <li><b>+3 points</b> each at the end.</li>
@@ -565,13 +501,13 @@ const W = [
   <div class="fact"><span>Per Dusk</span>At most 1 new ally</div>
   <div class="fact"><span>Per game</span>At most 3 allies</div>
 </div>
-<div class="tip"><h3>Tips</h3><p>Talk before the end of the season: agree where you'll both stop. Get your first ally by Season 2 so the Heartwood is open to you in Season 3. [[common-ground]] removes the distance and water checks.</p></div>` },
+<div class="tip"><h3>Tips</h3><p>Talk before the end of the season: agree where you'll both stop. Get your first ally by Season 2 so the Heartwood is open to you in Season 3. [[common-ground]] removes the distance check.</p></div>` },
 
 { id: 'fireside-chat', cat: 'dusk', icon: '🔥', title: 'Fireside chat',
-  short: "Any Dusk pair that isn't an alliance. +1 water each.",
+  short: "Any Dusk pair that isn't an alliance. Same talk, no alliance.",
   body: `
-<p>Every [[dusk]] pair that doesn't form an [[alliance]] has a Fireside chat. You still talk for 4 minutes with the [[bond-card]], and each of you takes <b>+1 [[water]]</b>.</p>
-<p>That water helps you afford an alliance next time. A Fireside chat is never a loss: it's a good conversation and a resource.</p>` },
+<p>Every [[dusk]] pair that doesn't form an [[alliance]] has a Fireside chat. You still talk for 4 minutes with the [[bond-card]]: the same conversation, without the alliance.</p>
+<p>A Fireside chat is never a loss. It's a good conversation, and often the best clue when you're someone's [[secret-owl]].</p>` },
 
 { id: 'bond-card', cat: 'dusk', icon: '💌', title: 'Bond card',
   short: 'The conversation prompt your Dusk pair gets. Deeper each season.',
@@ -591,7 +527,7 @@ const W = [
 <p>With an odd number of players, one [[dusk]] group is a trio. All three talk together with the same [[bond-card]].</p>
 <ul>
   <li>Only two of the three can form an [[alliance]]: the pair that chose each other.</li>
-  <li>The third person always has a [[fireside-chat]] and takes +1 💧.</li>
+  <li>The third person always has a [[fireside-chat]].</li>
   <li>All three count as having paired, so none of them repeats with the others later.</li>
 </ul>` },
 
@@ -609,14 +545,14 @@ const W = [
 <div class="tablewrap"><table>
 <tr><th>Type</th><th>Power</th><th>When</th><th>What it does</th></tr>
 <tr><td>1 Reformer</td><td>🧭 [[true-north]]</td><td>Before sharing</td><td>Choose from 3 cards. +1 ✨</td></tr>
-<tr><td>2 Helper</td><td>🤲 [[open-hands]]</td><td>Your turn</td><td>Give a player 2 ☀ or 2 💧. You both get +1 ✨.</td></tr>
-<tr><td>3 Achiever</td><td>🚀 [[momentum]]</td><td>While moving</td><td>+2 ☀ and +1 💧</td></tr>
+<tr><td>2 Helper</td><td>🤲 [[open-hands]]</td><td>Before sharing</td><td>Invite someone to answer your question too. You both keep the card, +1 ✨ each.</td></tr>
+<tr><td>3 Achiever</td><td>🚀 [[momentum]]</td><td>While moving</td><td>Move up to 3 more spaces</td></tr>
 <tr><td>4 Individualist</td><td>🌊 [[deep-water]]</td><td>Before sharing</td><td>Answer one tier deeper</td></tr>
 <tr><td>5 Investigator</td><td>🔎 [[field-notes]]</td><td>While moving</td><td>Peek at nearby discoveries and claim one</td></tr>
 <tr><td>6 Loyalist</td><td>🪢 [[rope-team]]</td><td>While moving</td><td>Jump to an ally. You both get +1 ✨.</td></tr>
-<tr><td>7 Enthusiast</td><td>🎒 [[adventure]]</td><td>While moving</td><td>Next 3 steps free. +1 ✨</td></tr>
+<tr><td>7 Enthusiast</td><td>🎒 [[adventure]]</td><td>Your turn</td><td>Call a Campfire round. +1 ✨</td></tr>
 <tr><td>8 Challenger</td><td>🛡️ [[champion]]</td><td>After someone's share</td><td>Give 2 trust at once. +1 ✨</td></tr>
-<tr><td>9 Peacemaker</td><td>🕊️ [[common-ground]]</td><td>At Dusk</td><td>Alliance at any distance, no water</td></tr>
+<tr><td>9 Peacemaker</td><td>🕊️ [[common-ground]]</td><td>At Dusk</td><td>Alliance at any distance</td></tr>
 </table></div>
 <div class="tip"><h3>Tip</h3><p>Pick the types that are really you; the game is about being known. Then plan when to spend each one: most powers are strongest in Season 3.</p></div>` },
 
@@ -633,25 +569,27 @@ const W = [
 <p class="muted">See all [[enneagram-powers]].</p>` },
 
 { id: 'open-hands', cat: 'powers', icon: '🤲', title: 'Open Hands',
-  short: 'Type 2 Helper. Give any player 2 ☀ or 2 💧 from the bank. Both +1 ✨.',
+  short: 'Type 2 Helper. Invite someone to answer your question too. Both keep the card, both +1 ✨.',
   body: `
 <div class="facts">
   <div class="fact"><span>Type</span>2 Helper · care</div>
-  <div class="fact"><span>When</span>Your turn</div>
+  <div class="fact"><span>When</span>Your turn, before you start sharing</div>
 </div>
-<p>Choose any player and either 2 [[sunlight]] or 2 [[water]]. They receive it from the bank, not from you, and <b>you both take 1 [[bonus-point]]</b>.</p>
-<div class="tip"><h3>Best used</h3><p>On someone who is one drop short of the [[oak-circle]] or an [[alliance]], ideally your future ally, so you help both of you.</p></div>
+<p>Invite another player to answer your [[prompt-card|question]] too, right after you. <b>You both keep the card</b> (it scores in [[growth]] for both of you, and grows a tree on your space), and <b>you both take 1 [[bonus-point]]</b>.</p>
+<ul><li>Say who you invite; the [[keeper]] taps it. If you then [[passing|pass]], neither of you keeps the card, but the bonus points stay.</li></ul>
+<div class="tip"><h3>Best used</h3><p>On a deep question, with someone who has been quiet, or someone you'd like to hear more from.</p></div>
 <p class="muted">See all [[enneagram-powers]].</p>` },
 
 { id: 'momentum', cat: 'powers', icon: '🚀', title: 'Momentum',
-  short: 'Type 3 Achiever. Take 2 ☀ and 1 💧 while moving.',
+  short: 'Type 3 Achiever. Move up to 3 more spaces this turn.',
   body: `
 <div class="facts">
   <div class="fact"><span>Type</span>3 Achiever · drive</div>
   <div class="fact"><span>When</span>Your turn, while moving</div>
 </div>
-<p>Take <b>+2 [[sunlight]] and +1 [[water]]</b>. Use it before you stop, then keep walking.</p>
-<div class="tip"><h3>Best used</h3><p>In Season 3, to push from the [[sapling-path]] all the way into the [[oak-circle]] or [[heartwood]].</p></div>
+<p>Move <b>up to 3 more spaces</b> this turn: up to 6 in all. Use it before you stop and discover.</p>
+<ul><li>Closed rings and the [[heartwood]]'s ally rule still apply.</li></ul>
+<div class="tip"><h3>Best used</h3><p>To cross the board to an ally before [[dusk]], or to reach a [[values|value]] you haven't shared in yet.</p></div>
 <p class="muted">See all [[enneagram-powers]].</p>` },
 
 { id: 'deep-water', cat: 'powers', icon: '🌊', title: 'Deep Water',
@@ -682,31 +620,30 @@ const W = [
   <li>Claim before you step away: if you move first, the chance is gone.</li>
   <li>After claiming, you can still move and discover your own space.</li>
 </ul>
-<div class="tip"><h3>Best used</h3><p>Early, when the board is full of hidden discoveries, and you're looking for a [[spring]] or [[mushroom-patch]].</p></div>
+<div class="tip"><h3>Best used</h3><p>Early, when the board is full of hidden discoveries, and you're looking for a [[squirrel]] or [[mushroom-patch]].</p></div>
 <p class="muted">See all [[enneagram-powers]].</p>` },
 
 { id: 'rope-team', cat: 'powers', icon: '🪢', title: 'Rope Team',
-  short: "Type 6 Loyalist. Jump free to an ally's space. Both +1 ✨.",
+  short: "Type 6 Loyalist. Jump to an ally's space, without using your steps. Both +1 ✨.",
   body: `
 <div class="facts">
   <div class="fact"><span>Type</span>6 Loyalist · loyalty</div>
   <div class="fact"><span>When</span>Your turn, while moving</div>
 </div>
-<p>Move to an [[alliance|ally's]] space for free, from anywhere on the board. <b>You both take 1 [[bonus-point]].</b> You can keep moving afterwards.</p>
+<p>Jump to an [[alliance|ally's]] space from anywhere on the board, without using your steps. <b>You both take 1 [[bonus-point]].</b> You can keep moving afterwards with the steps you have left.</p>
 <ul><li>You need an ally, and their ring must be open.</li></ul>
 <div class="tip"><h3>Best used</h3><p>When your ally is in the [[oak-circle]] or [[heartwood]] and you're far away, or to stand next to them for the next [[dusk]].</p></div>
 <p class="muted">See all [[enneagram-powers]].</p>` },
 
 { id: 'adventure', cat: 'powers', icon: '🎒', title: 'Adventure',
-  short: 'Type 7 Enthusiast. Your next 3 steps are free. +1 ✨.',
+  short: 'Type 7 Enthusiast. Call a Campfire: everyone answers in one sentence. +1 ✨.',
   body: `
 <div class="facts">
   <div class="fact"><span>Type</span>7 Enthusiast · joy</div>
-  <div class="fact"><span>When</span>Your turn, while moving</div>
+  <div class="fact"><span>When</span>Your turn</div>
 </div>
-<p>Your next 3 steps cost nothing: no [[sunlight]] and no [[water]], even into the [[oak-circle]]. You also take <b>+1 [[bonus-point]]</b>.</p>
-<ul><li>Closed rings and the [[heartwood]]'s ally rule still apply.</li></ul>
-<div class="tip"><h3>Best used</h3><p>In Season 3, to walk from the [[sapling-path]] into the Oak Circle and save your water for an alliance.</p></div>
+<p>Call a [[campfire]]: a question shows on the big screen, and everyone answers it in one sentence, around the table. You also take <b>+1 [[bonus-point]]</b>.</p>
+<div class="tip"><h3>Best used</h3><p>When the room needs a lift, or early on, to hear a little from everyone.</p></div>
 <p class="muted">See all [[enneagram-powers]].</p>` },
 
 { id: 'champion', cat: 'powers', icon: '🛡️', title: 'Champion',
@@ -721,18 +658,18 @@ const W = [
 <p class="muted">See all [[enneagram-powers]].</p>` },
 
 { id: 'common-ground', cat: 'powers', icon: '🕊️', title: 'Common Ground',
-  short: 'Type 9 Peacemaker. Tonight your alliance works at any distance, free.',
+  short: 'Type 9 Peacemaker. Tonight your alliance works at any distance.',
   body: `
 <div class="facts">
   <div class="fact"><span>Type</span>9 Peacemaker · harmony</div>
   <div class="fact"><span>When</span>At Dusk, before pairs are set</div>
 </div>
-<p>Tonight your [[alliance]] works at any distance and costs neither of you [[water]].</p>
+<p>Tonight your [[alliance]] works at any distance.</p>
 <ul>
   <li>You still both need to choose each other and tick <b>Make it an alliance</b>.</li>
   <li>If no alliance forms, the power is still spent.</li>
 </ul>
-<div class="tip"><h3>Best used</h3><p>When the person you want to ally with ended their turn far away, or one of you is out of water. Agree with them first.</p></div>
+<div class="tip"><h3>Best used</h3><p>When the person you want to ally with ended their turn far away. Agree with them first.</p></div>
 <p class="muted">See all [[enneagram-powers]].</p>` },
 
 // ───────────── Scoring

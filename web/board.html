@@ -63,7 +63,7 @@ function render(v) {
   renderHost(v);
   HW.patch($('plist'), v.players.map(p => `<div class="${v.current === p.id ? 'cur' : ''}">
     <span>${HW.chip(p.id)}</span>
-    <span class="muted">☀${p.sun} 💧${p.water} 🌰${p.trustLeft} left · 🤝${p.allies.length} · 🃏${p.cards.length}${p.squirrels ? ' · 🐿️' + p.squirrels : ''}</span>
+    <span class="muted">🌰${p.trustLeft} left · 🤝${p.allies.length} · 🃏${p.cards.length}${p.squirrels ? ' · 🐿️' + p.squirrels : ''}</span>
     <span class="pw">${(p.types || []).map(t => `<span class="${p.used?.[t] ? 'used' : ''}">${HW.esc(v.powers[t - 1].title)}</span>`).join(' · ')}</span></div>`).join(''));
   HW.patch($('log'), v.log.slice().reverse().map(l => `<div>${HW.esc(l)}</div>`).join(''));
 }
@@ -82,7 +82,7 @@ function boardOpts(v) {
     opts.peek = t.peek || {};
     v.hexes.forEach((h, i) => {
       if (t.teleport) { if (h.ring === here.ring && HW.ringOpen(h.ring)) opts.highlight.add(i); }
-      else if (!t.discovered && HW.dist(h, here) === 1 && HW.ringOpen(h.ring) && (h.ring !== 0 || me.allies.length)) opts.highlight.add(i);
+      else if (!t.discovered && t.stepsLeft > 0 && HW.dist(h, here) === 1 && HW.ringOpen(h.ring) && (h.ring !== 0 || me.allies.length)) opts.highlight.add(i);
     });
     opts.onClick = i => opts.highlight.has(i) && actAs(me.id, 'step', { hex: i });
   }
@@ -115,7 +115,9 @@ function mainHTML(v) {
     const ring = p.pos >= 0 ? v.hexes[p.pos] : null;
     let h = `<p class="big">${HW.chip(t.player)}'s turn · <span class="muted">${ring ? (ring.region >= 0 ? v.regions[ring.region] + ', ' : '') + HW.ringNames[ring.ring] : ''}</span></p>`;
     if (t.eventText) h += `<div class="event">${HW.esc(t.eventText)}</div>`;
-    if (t.step === 'move') h += `<p class="muted">Where to? Say it, and the Keeper moves you. (☀ ${p.sun} · 💧 ${p.water}${t.freeSteps ? ` · ${t.freeSteps} free steps` : ''})</p>`;
+    if (t.campfire) h += `<div class="event">🔥 Campfire! Everyone answers in one sentence: ${HW.esc(t.campfire)}</div>`;
+    if (t.invited) h += `<div class="event">🤲 ${HW.chip(t.invited)} answers this question too, after ${HW.chip(t.player)}.</div>`;
+    if (t.step === 'move') h += `<p class="muted">Where to? Say it, and the Keeper moves you. (${t.stepsLeft} step${t.stepsLeft === 1 ? '' : 's'} left)</p>`;
     if (t.step !== 'move') {
       h += `<span class="tier">${HW.tierNames[t.tier]}${t.region >= 0 ? ' · ' + HW.regionIcons[t.region] + ' ' + v.regions[t.region] : ''}</span>`;
       if (t.choices?.length) h += `<p class="muted">True North: choose one of three cards.</p>` + t.choices.map(c => `<div class="choice">${HW.esc(c)}</div>`).join('');
@@ -130,7 +132,7 @@ function mainHTML(v) {
     if (!v.dusk.resolved) {
       const waiting = v.players.filter(p => !p.duskChosen).map(p => HW.chip(p.id)).join(' ');
       return `<p class="big">Dusk falls. Choose a partner on your phone.</p>
-        <p class="muted">Same or neighbouring space, and 1 💧 each, to make it an Alliance. Everyone else gets a Fireside chat (+1 💧).</p>
+        <p class="muted">Choose each other, tick alliance, and stand on the same or neighbouring spaces to make it an Alliance. Everyone else has a Fireside chat.</p>
         <p>Still choosing: ${waiting || '<b>everyone has chosen</b>'}</p>`;
     }
     return `<p class="big">Talk for 4 minutes.</p>` + v.dusk.pairs.map(pr => `<div class="pair">
@@ -170,7 +172,7 @@ function readyPowers(v) {
     const beforeShare = t.step === 'share' && !t.started && !t.choices?.length;
     for (const x of unused(p)) {
       if ((x === 1 && beforeShare && t.tier < 4) || (x === 4 && beforeShare && t.tier < 3) ||
-          (x === 2 && t.step !== 'trust') || ([3, 5, 7].includes(x) && moving) ||
+          (x === 2 && beforeShare) || ([3, 5].includes(x) && moving) || (x === 7 && t.step !== 'trust' && !t.campfire) ||
           (x === 6 && moving && p.allies.length)) out.push([p, x]);
     }
     if (t.step === 'trust') v.players.forEach(o => { if (o.id !== p.id && unused(o).includes(8)) out.push([o, 8]); });
@@ -182,7 +184,7 @@ function readyPowers(v) {
 function powerRow(v, [p, x]) {
   const pw = v.powers[x - 1];
   let extra = '';
-  if (x === 2) extra = sel('p2t', v.players.filter(o => o.id !== p.id).map(o => [o.id, o.name])) + sel('p2r', [['sun', '2 ☀'], ['water', '2 💧']]);
+  if (x === 2) extra = sel('p2t', v.players.filter(o => o.id !== p.id).map(o => [o.id, o.name]));
   if (x === 6) extra = sel('p6t', p.allies.map(a => [a, HW.name(a)]));
   return `<div class="row">${HW.chip(p.id)} ${extra}${btn(`⚡ ${HW.esc(pw.title)}`, { k: 'power', as: p.id, power: x }, 'ghost')}
     <span class="muted" style="font-size:.85rem">${HW.esc(pw.text)}</span></div>`;
@@ -197,7 +199,7 @@ function turnControls(v) {
       btn(`${HW.tokenIcons[k] || ''} ${HW.tokenNames[k] || k}`, { k: 'claim', as: id, hex: i }, 'ghost')).join('')}</div>`;
     const here = v.hexes[p.pos];
     const near = v.players.filter(o => o.id !== id && HW.dist(v.hexes[o.pos], here) <= 1);
-    h += `<p class="muted">Tap a highlighted space to step. 1 ☀ a step, +1 ☀ into the Sapling Path, 1 💧 into the Oak Circle; the Heartwood needs an ally.${t.freeSteps ? ` <b>${t.freeSteps} free steps left.</b>` : ''}
+    h += `<p class="muted">Tap a highlighted space to step: up to 3 a turn through open rings; the Heartwood needs an ally. <b>${t.stepsLeft} step${t.stepsLeft === 1 ? '' : 's'} left.</b>
       ${near.length ? `Here, next to ${near.map(o => HW.chip(o.id)).join(' ')}.` : ''}</p>`;
     return h + btn(t.discovered ? 'Draw the card' : 'Stop here and discover', { k: 'endMove', as: id });
   }
@@ -304,7 +306,7 @@ $('hostActions').addEventListener('click', e => {
     case 'claim': return actAs(d.as, 'claim', { hex: +d.hex });
     case 'pickChoice': return actAs(d.as, 'pickChoice', { card: +d.card });
     case 'confirm': return actAs(d.as, 'confirm', { n: +d.n });
-    case 'power': return actAs(d.as, 'power', { power: +d.power, target: val(d.power === '2' ? 'p2t' : 'p6t'), resource: val('p2r') });
+    case 'power': return actAs(d.as, 'power', { power: +d.power, target: val(d.power === '2' ? 'p2t' : 'p6t') });
     case 'resolveDusk': case 'nextSeason': case 'startChain': case 'nextTribute': return act(d.k);
     default: if (d.k && d.as) return actAs(d.as, d.k); // endMove, redraw, lighter, startShare, doneShare, endTrust, squirrel
   }

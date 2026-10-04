@@ -145,8 +145,8 @@ const HW = {
 
   regionColors: ['#e0a32e', '#e0703a', '#3f9e9a', '#c8463f', '#cf6f97', '#4f74b0'],
   regionIcons: ['🔍', '🎨', '🤝', '🦁', '💗', '⚓'],
-  tokenIcons: { spring: '💧', sunbeam: '☀️', mushroom: '🍄', squirrel: '🐿️', campfire: '🔥', path: '🍃' },
-  tokenNames: { spring: 'Spring', sunbeam: 'Sunbeam', mushroom: 'Mushroom patch', squirrel: 'Squirrel', campfire: 'Campfire', path: 'Hidden path' },
+  tokenIcons: { mushroom: '🍄', squirrel: '🐿️', campfire: '🔥', path: '🍃' },
+  tokenNames: { mushroom: 'Mushroom patch', squirrel: 'Squirrel', campfire: 'Campfire', path: 'Hidden path' },
   tierNames: ['', '🌱 Seed', '🌿 Sapling', '🌳 Oak', '💛 Heartwood'],
   ringNames: ['Heartwood', 'Oak Circle', 'Sapling Path', 'Seedlands'],
 
@@ -194,7 +194,7 @@ const HW = {
       if (h.ring === 0) out += `<text x="${x}" y="${y - 12}" class="hlabel">HEARTWOOD</text><text x="${x}" y="${y + 6}" class="ticon">💛</text>`;
       else if (tok) out += `<text x="${x - 22}" y="${y - 18}" class="ticon small used">${HW.tokenIcons[tok] || ''}</text>`;
       else if (peek) out += `<text x="${x}" y="${y - 14}" class="ticon">${HW.tokenIcons[peek]}</text>`;
-      else out += `<text x="${x}" y="${y - 16}" class="ticon hidden">✦</text>`;
+      else if (i in v.tokens) out += `<text x="${x}" y="${y - 16}" class="ticon hidden">✦</text>`; // face down; a clearing has none
       const trees = v.trees[i] || 0;
       if (trees) out += `<text x="${x + 22}" y="${y - 18}" class="ticon small">${'🌳'.repeat(Math.min(trees, 2))}${trees > 2 ? '+' : ''}</text>`;
       const here = v.players.filter(p => p.pos === i);
