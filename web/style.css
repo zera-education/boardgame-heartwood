@@ -70,10 +70,12 @@ table.scores tr.win { background: rgba(224,163,46,.18); }
 .swatches { display: flex; flex-wrap: wrap; gap: 8px; }
 .swatches button { width: 40px; height: 40px; border-radius: 50%; padding: 0; border: 3px solid transparent; }
 .swatches button.sel { border-color: #fff; }
-.types { display: grid; grid-template-columns: 1fr; gap: 6px; }
-.types button { text-align: left; background: var(--panel2); color: var(--ink); border: 1px solid var(--line); font-weight: 600; }
-.types button.sel { border-color: var(--accent); background: #3a3518; }
-.types b.rank { color: var(--accent); margin-right: .4em; }
+.assign .arow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 4px 0; border-bottom: 1px solid var(--line); }
+.assign .arow > span:first-child { min-width: 7em; }
+.assign .atypes { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
+.assign .atypes button { width: 2.2em; padding: .3em 0; }
+.assign .atypes button.sel { outline: 2px solid #fff; }
+.assign .kick { padding: .3em .6em; }
 .secret { filter: blur(6px); cursor: pointer; user-select: none; }
 .big { font-size: 1.25rem; }
 #toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%) translateY(120px); background: #000c; color: #fff; padding: .7em 1.1em; border-radius: 10px; transition: transform .25s; z-index: 9; max-width: 90vw; }

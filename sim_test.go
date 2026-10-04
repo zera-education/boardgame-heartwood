@@ -98,8 +98,9 @@ func simGame(t *testing.T, o botOpts, st *simStats) {
 		for k := range types {
 			types[k]++
 		}
-		p, err := g.Join(fmt.Sprintf("P%d", i), Colors[i], types)
+		p, err := g.Join(fmt.Sprintf("P%d", i), Colors[i])
 		must(err, "join")
+		must(host("assignPowers", Action{Target: p.ID, Types: types}), "assign powers")
 		openness[p.ID] = 0.7 + 0.6*rand.Float64() // some people's stories land harder than others'
 	}
 	must(host("start", Action{Forest: o.forest}), "start")
@@ -370,13 +371,6 @@ func botTurn(g *Game, p *Player, o botOpts, buddy string, regionTaken map[int]bo
 	as(p, "endMove", Action{})
 	if g.Turn.Teleport {
 		as(p, "endMove", Action{})
-	}
-	if g.Turn.NeedsHand {
-		for _, x := range g.Players {
-			if x.ID != p.ID && x.Sun >= 1 && as(x, "help", Action{}) == nil {
-				break
-			}
-		}
 	}
 	if hasPower(p, 1) && !p.Used[1] && g.Turn.Tier < 4 && as(p, "power", Action{Power: 1}) == nil {
 		as(p, "pickChoice", Action{Card: g.Turn.Choices[0]})

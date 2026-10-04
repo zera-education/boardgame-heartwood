@@ -19,14 +19,30 @@ func TestFullGame(t *testing.T) {
 
 	var ps []*Player
 	for i, n := range []string{"Ann", "Ben", "Cat", "Dan"} {
-		p, err := g.Join(n, Colors[i], []int{i + 1, i + 5, 9})
+		p, err := g.Join(n, Colors[i])
 		must(err)
 		ps = append(ps, p)
 	}
-	if _, err := g.Join("Ann", Colors[5], []int{1, 2, 3}); err == nil {
+	if _, err := g.Join("Ann", Colors[5]); err == nil {
 		t.Fatal("duplicate name accepted")
 	}
+	// The Keeper assigns 1 to 3 powers to each player before the start.
+	if host("start", Action{}) == nil {
+		t.Fatal("started before powers were assigned")
+	}
+	if host("assignPowers", Action{Target: ps[0].ID, Types: []int{1, 2, 3, 4}}) == nil {
+		t.Fatal("accepted 4 powers")
+	}
+	if host("assignPowers", Action{Target: ps[0].ID, Types: []int{2, 2}}) == nil {
+		t.Fatal("accepted a repeated power")
+	}
+	for i, p := range ps {
+		must(host("assignPowers", Action{Target: p.ID, Types: []int{i + 1, i + 5, 9}[:i%3+1]}))
+	}
 	must(host("start", Action{}))
+	if host("assignPowers", Action{Target: ps[0].ID, Types: []int{3}}) == nil {
+		t.Fatal("powers changed after the start")
+	}
 
 	// Plant everyone on the outer ring, in two neighbouring pairs.
 	outer := []int{}
@@ -174,7 +190,8 @@ func TestPlaytestFixes(t *testing.T) {
 	g := NewGame("FIX", "host")
 	var ps []*Player
 	for i, n := range []string{"A", "B", "C"} {
-		p, _ := g.Join(n, Colors[i], []int{5, 1, 2})
+		p, _ := g.Join(n, Colors[i])
+		g.Apply(Action{Host: "host", Type: "assignPowers", Target: p.ID, Types: []int{5, 1, 2}})
 		ps = append(ps, p)
 	}
 	as := func(p *Player, typ string, a Action) error {

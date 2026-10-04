@@ -149,6 +149,7 @@ const W = [
 <h3>What the Keeper does</h3>
 <ul>
   <li>Creates the game and shows the 4-letter join code on the big screen.</li>
+  <li>Gives each player 1 to 3 [[enneagram-powers]] in the lobby, before the start.</li>
   <li>Reads the [[forest-pact]] at the start.</li>
   <li>Starts each [[season]] and keeps an eye on the clock.</li>
   <li>Taps <b>Set the pairs</b> at [[dusk]].</li>
@@ -216,7 +217,6 @@ const W = [
   <li>Phones down. Listen to understand: no advice, no fixing, no debating.</li>
   <li>If it moved you, tap <b>Give trust 🌰</b>. See [[trust-acorn]].</li>
   <li>If you hold a [[squirrel]], you can ask a follow-up question.</li>
-  <li>If they found a [[fallen-log]], you can help them over it.</li>
   <li>Keep watching the colleague you're the [[secret-owl]] for.</li>
 </ul>` },
 
@@ -404,7 +404,6 @@ const W = [
 <h3>Spend it on</h3>
 <ul>
   <li>1 per step when [[moving]], +1 extra to step inward onto the [[sapling-path]].</li>
-  <li>1 to help someone over a [[fallen-log]] (you both gain 2 ✨).</li>
 </ul>
 <h3>Get more from</h3>
 <ul>
@@ -464,7 +463,6 @@ const W = [
 <div class="tablewrap"><table>
 <tr><th>Source</th><th>✨</th></tr>
 <tr><td>🍄 [[mushroom-patch]] discovery</td><td>+2</td></tr>
-<tr><td>🪵 Helping over a [[fallen-log]] (both of you)</td><td>+2 each</td></tr>
 <tr><td>🐿️ Playing a [[squirrel]]</td><td>+1</td></tr>
 <tr><td>[[true-north]], [[adventure]], [[champion]]</td><td>+1</td></tr>
 <tr><td>[[open-hands]], [[rope-team]] (both players)</td><td>+1 each</td></tr>
@@ -492,10 +490,9 @@ const W = [
 <tr><th>Discovery</th><th>How many</th><th>What happens</th></tr>
 <tr><td>💧 [[spring]]</td><td>9</td><td>+2 💧</td></tr>
 <tr><td>☀️ [[sunbeam]]</td><td>7</td><td>+2 ☀</td></tr>
-<tr><td>🍄 [[mushroom-patch]]</td><td>5</td><td>+2 ✨</td></tr>
+<tr><td>🍄 [[mushroom-patch]]</td><td>7</td><td>+2 ✨</td></tr>
 <tr><td>🐿️ [[squirrel]]</td><td>6</td><td>Store it to ask a follow-up later</td></tr>
-<tr><td>🔥 [[campfire]]</td><td>3</td><td>Everyone answers in one sentence</td></tr>
-<tr><td>🪵 [[fallen-log]]</td><td>4</td><td>Ask for a hand; you and your helper gain 2 ✨ each</td></tr>
+<tr><td>🔥 [[campfire]]</td><td>5</td><td>Everyone answers in one sentence</td></tr>
 <tr><td>🍃 [[hidden-path]]</td><td>2</td><td>Free move within your ring</td></tr>
 </table></div>
 <p>The [[field-notes]] power lets you see the hidden discoveries next to you and claim one.</p>
@@ -511,25 +508,14 @@ const W = [
 
 { id: 'mushroom-patch', cat: 'discoveries', icon: '🍄', title: 'Mushroom patch',
   short: 'Discovery: +2 bonus points.',
-  body: `<p>A [[discovery]] (5 on the board). You take <b>+2 [[bonus-point|bonus points]]</b>, which are 2 points in [[growth]].</p>` },
+  body: `<p>A [[discovery]] (7 on the board). You take <b>+2 [[bonus-point|bonus points]]</b>, which are 2 points in [[growth]].</p>` },
 
 { id: 'campfire', cat: 'discoveries', icon: '🔥', title: 'Campfire',
   short: 'Discovery: everyone answers one quick question, around the table.',
   body: `
-<p>A [[discovery]] (3 on the board). The app shows a Campfire question, and everyone answers it in one sentence, around the table.</p>
+<p>A [[discovery]] (5 on the board). The app shows a Campfire question, and everyone answers it in one sentence, around the table.</p>
 <div class="box"><p class="muted">Examples</p><p><i>One word for how you feel right now.</i><br><i>A song that always lifts you.</i><br><i>Mountain, beach or city?</i></p></div>
 <p>It's just for warmth: no points. It also gives you a quick, low-key clue when you're someone's [[secret-owl]].</p>` },
-
-{ id: 'fallen-log', cat: 'discoveries', icon: '🪵', title: 'Fallen log',
-  short: 'Discovery: ask for a hand. You and your helper each gain 2 bonus points.',
-  body: `
-<p>A [[discovery]] (4 on the board). A log blocks your path, so you ask the room for a hand.</p>
-<ol>
-  <li>Everyone else sees a <b>Give 1 ☀ to help</b> button.</li>
-  <li>The first player to tap it spends 1 [[sunlight]].</li>
-  <li>You and your helper each take <b>+2 [[bonus-point|✨]]</b>.</li>
-</ol>
-<div class="tip"><h3>Tip</h3><p>If you have a spare ☀ when someone hits a log, help. It's 2 points for 1 sunlight.</p></div>` },
 
 { id: 'hidden-path', cat: 'discoveries', icon: '🍃', title: 'Hidden path',
   short: 'Discovery: move free to any open space in your ring.',
@@ -610,9 +596,9 @@ const W = [
 
 // ───────────── Powers
 { id: 'enneagram-powers', cat: 'powers', icon: '⚡', title: 'Enneagram powers',
-  short: 'Pick your top 3 Enneagram types; you get their 3 powers, each once.',
+  short: 'The Keeper gives you 1 to 3 Enneagram types. Each type gives a power that works once.',
   body: `
-<p>The Enneagram describes nine personality types, each with its own gift. When you join, you tap your <b>top three types</b>: the ones most like you. You get those three powers, and <b>each one works once in the whole game</b>.</p>
+<p>The Enneagram describes nine personality types, each with its own gift. Before the start, the [[keeper]] gives each player <b>1 to 3 types</b>, and you get those types' powers. <b>Each one works once in the whole game</b>.</p>
 <h3>Using a power</h3>
 <ul>
   <li>Your powers are at the bottom of your phone. Tap <b>Activate</b> at the right moment; the power then fades and says <b>Used</b>.</li>

@@ -79,8 +79,6 @@ type TurnState struct {
 	ScoreTier  int            `json:"scoreTier"` // set by Deep Water: the tier the share scores at
 	Event      string         `json:"event"`
 	EventText  string         `json:"eventText"`
-	NeedsHand  bool           `json:"needsHand"`
-	Helped     string         `json:"helped"`
 	Trusted    map[string]int `json:"trusted"`
 	FollowUps  []string       `json:"followUps"`
 }
@@ -151,6 +149,7 @@ type Action struct {
 	N        int    `json:"n"`
 	Card     int    `json:"card"`
 	Forest   bool   `json:"forest"`
+	Types    []int  `json:"types"`
 }
 
 func buildHexes() []Hex {
@@ -264,7 +263,7 @@ func contains(xs []string, s string) bool {
 
 // ---- lobby ----
 
-func (g *Game) Join(name, color string, types []int) (*Player, error) {
+func (g *Game) Join(name, color string) (*Player, error) {
 	if g.Phase != PhaseLobby {
 		return nil, errors.New("the game has already started")
 	}
@@ -274,16 +273,6 @@ func (g *Game) Join(name, color string, types []int) (*Player, error) {
 	if name == "" {
 		return nil, errors.New("enter your name")
 	}
-	if len(types) != 3 {
-		return nil, errors.New("pick your top three Enneagram types")
-	}
-	seen := map[int]bool{}
-	for _, t := range types {
-		if t < 1 || t > 9 || seen[t] {
-			return nil, errors.New("pick three different types from 1 to 9")
-		}
-		seen[t] = true
-	}
 	for _, p := range g.Players {
 		if p.Color == color {
 			return nil, errors.New("that colour is taken")
@@ -292,11 +281,35 @@ func (g *Game) Join(name, color string, types []int) (*Player, error) {
 			return nil, errors.New("that name is taken")
 		}
 	}
-	p := &Player{ID: randID(6), Secret: randID(16), Name: name, Color: color, Types: types,
+	p := &Player{ID: randID(6), Secret: randID(16), Name: name, Color: color,
 		Used: map[int]bool{}, Pos: -1, Pot: map[string]int{}, Peek: map[int]string{}}
 	g.Players = append(g.Players, p)
 	g.logf("%s joined", name)
 	return p, nil
+}
+
+// assignPowers is the Keeper giving a player 1 to 3 Enneagram types in the
+// lobby; each type's power can be used once. An empty list clears them.
+func (g *Game) assignPowers(pid string, types []int) error {
+	if g.Phase != PhaseLobby {
+		return errors.New("powers are assigned in the lobby")
+	}
+	p := g.player(pid)
+	if p == nil {
+		return errors.New("no such player")
+	}
+	if len(types) > 3 {
+		return errors.New("up to 3 powers per player")
+	}
+	seen := map[int]bool{}
+	for _, t := range types {
+		if t < 1 || t > 9 || seen[t] {
+			return errors.New("choose different types from 1 to 9")
+		}
+		seen[t] = true
+	}
+	p.Types = append([]int(nil), types...)
+	return nil
 }
 
 func (g *Game) start(forest bool) error {
@@ -305,6 +318,11 @@ func (g *Game) start(forest bool) error {
 	}
 	if len(g.Players) < 2 {
 		return errors.New("need at least 2 players")
+	}
+	for _, p := range g.Players {
+		if len(p.Types) == 0 {
+			return fmt.Errorf("assign at least one Enneagram power to %s", p.Name)
+		}
 	}
 	g.ForestGoal = forest
 	for _, p := range g.Players {
@@ -382,9 +400,6 @@ func (g *Game) resolveToken(p *Player, hex int) {
 		tu.EventText = "Squirrel: store it. Right after someone else's share, play it to ask them a follow-up question."
 	case "campfire":
 		tu.EventText = "Campfire! Everyone answers in one sentence: " + CampfireCards[rand.Intn(len(CampfireCards))]
-	case "log":
-		tu.NeedsHand = true
-		tu.EventText = "Fallen log: if anyone spends 1 ☀ to help " + p.Name + ", you both take 2 ✨ bonus points."
 	case "path":
 		tu.Teleport = true
 		tu.EventText = "Hidden path: move free to any open space in this ring, or stay."
@@ -695,6 +710,8 @@ func (g *Game) hostAction(a Action) error {
 	switch a.Type {
 	case "start":
 		return g.start(a.Forest)
+	case "assignPowers":
+		return g.assignPowers(a.Target, a.Types)
 	case "kick":
 		if g.Phase != PhaseLobby {
 			return errors.New("only in the lobby")
@@ -798,19 +815,6 @@ func (g *Game) playerAction(me *Player, a Action) error {
 		q := SquirrelCards[rand.Intn(len(SquirrelCards))]
 		g.Turn.FollowUps = append(g.Turn.FollowUps, me.Name+" asks: "+q)
 		g.setTimer(30, "Follow-up")
-		return nil
-	case "help":
-		if g.Phase != PhaseTurn || !g.Turn.NeedsHand || g.Turn.Helped != "" || g.Turn.Player == me.ID {
-			return errors.New("no one needs a hand right now")
-		}
-		if me.Sun < 1 {
-			return errors.New("you need 1 ☀ to help")
-		}
-		me.Sun--
-		me.Bonus += 2
-		g.current().Bonus += 2
-		g.Turn.Helped = me.ID
-		g.logf("%s helped %s over the fallen log", me.Name, g.current().Name)
 		return nil
 	case "duskChoice":
 		if g.Phase != PhaseDusk || g.Dusk.Resolved {

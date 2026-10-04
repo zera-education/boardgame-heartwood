@@ -110,7 +110,7 @@ var Powers = []Power{
 
 // 36 discovery tokens, one per space except the Heartwood.
 var TokenMix = map[string]int{
-	"spring": 9, "sunbeam": 7, "mushroom": 5, "squirrel": 6, "campfire": 3, "log": 4, "path": 2,
+	"spring": 9, "sunbeam": 7, "mushroom": 7, "squirrel": 6, "campfire": 5, "path": 2,
 }
 
 var Colors = []string{"#e53935", "#fb8c00", "#fdd835", "#43a047", "#00897b", "#1e88e5", "#5e35b1", "#d81b60", "#6d4c41", "#546e7a"}

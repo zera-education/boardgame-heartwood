@@ -89,7 +89,7 @@ function mainHTML(v) {
     const t = v.turn, p = HW.player(t.player);
     const ring = p.pos >= 0 ? v.hexes[p.pos] : null;
     let h = `<p class="big">${HW.chip(t.player)}'s turn · <span class="muted">${ring ? (ring.region >= 0 ? v.regions[ring.region] + ', ' : '') + HW.ringNames[ring.ring] : ''}</span></p>`;
-    if (t.eventText) h += `<div class="event">${HW.esc(t.eventText)}${t.helped ? ` <b>${HW.esc(HW.name(t.helped))} helped!</b>` : ''}</div>`;
+    if (t.eventText) h += `<div class="event">${HW.esc(t.eventText)}</div>`;
     if (t.step === 'move') h += `<p class="muted">Moving… (☀ ${p.sun} · 💧 ${p.water}${t.freeSteps ? ` · ${t.freeSteps} free steps` : ''})</p>`;
     if (t.step !== 'move') {
       h += `<span class="tier">${HW.tierNames[t.tier]}${t.region >= 0 ? ' · ' + HW.regionIcons[t.region] + ' ' + v.regions[t.region] : ''}</span>`;
@@ -136,8 +136,13 @@ function renderHost(v) {
   let h = '';
   if (v.phase === 'lobby') {
     h += `<label><input type="checkbox" id="forest" style="width:auto" ${forestGoal ? 'checked' : ''}> Forest Goal: no winner unless every region gets an Oak story</label>
-      <p><button id="start" ${v.players.length < 2 ? 'disabled' : ''}>Start the expedition</button></p>`;
-    h += v.players.map(p => `<button class="ghost" data-kick="${p.id}">Remove ${HW.esc(p.name)}</button>`).join('');
+      <p class="muted">Give each player 1 to 3 Enneagram powers (tap a type to add or remove it). Each power works once.</p>
+      <div class="assign">${v.players.map(p => `<div class="arow"><span>${HW.chip(p.id)}</span><span class="atypes">${v.powers.map(pw =>
+        `<button class="${p.types?.includes(pw.type) ? 'sel' : 'ghost'}" data-assign="${p.id}" data-type="${pw.type}" title="${pw.type} ${pw.name}: ${HW.esc(pw.title)}">${pw.type}</button>`).join('')}</span>
+        <button class="ghost kick" data-kick="${p.id}" title="Remove ${HW.esc(p.name)}">✕</button></div>`).join('') || '<p class="muted">No one has joined yet.</p>'}</div>
+      <p class="muted" style="font-size:.85rem">${v.powers.map(pw => `${pw.type} ${pw.title}`).join(' · ')}</p>
+      <p><button id="start" ${v.players.length < 2 || v.players.some(p => !p.types?.length) ? 'disabled' : ''}>Start the expedition</button>
+        ${v.players.some(p => !p.types?.length) ? '<span class="muted">Everyone needs at least one power.</span>' : ''}</p>`;
   }
   if (v.phase === 'turn' && v.turn) {
     if (v.turn.step === 'trust') h += `<button id="endTrust">Next player →</button>`;
@@ -160,6 +165,14 @@ function renderHost(v) {
     on('nextTrib', () => act('nextTribute'));
     const f = $('forest'); if (f) f.onchange = () => { forestGoal = f.checked; };
     $('hostActions').querySelectorAll('[data-kick]').forEach(b => b.onclick = () => act('kick', { target: b.dataset.kick }));
+    $('hostActions').querySelectorAll('[data-assign]').forEach(b => b.onclick = () => {
+      const p = HW.player(b.dataset.assign), t = +b.dataset.type, types = (p.types || []).slice();
+      const i = types.indexOf(t);
+      if (i >= 0) types.splice(i, 1);
+      else if (types.length >= 3) return HW.toast(`${p.name} already has 3 powers. Tap one to remove it.`);
+      else types.push(t);
+      act('assignPowers', { target: p.id, types });
+    });
   }
   const tools = `<label for="rejoinWho">Give a player a rejoin code (for a new phone or browser):</label>
     <div class="row"><select id="rejoinWho" style="flex:1">${v.players.map(p => `<option value="${p.id}">${HW.esc(p.name)}</option>`).join('')}</select>

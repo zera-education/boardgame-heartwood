@@ -145,7 +145,7 @@ const HW = {
 
   regionColors: ['#e0a32e', '#e0703a', '#3f9e9a', '#c8463f', '#cf6f97', '#4f74b0'],
   regionIcons: ['🔍', '🎨', '🤝', '🦁', '💗', '⚓'],
-  tokenIcons: { spring: '💧', sunbeam: '☀️', mushroom: '🍄', squirrel: '🐿️', campfire: '🔥', log: '🪵', path: '🍃' },
+  tokenIcons: { spring: '💧', sunbeam: '☀️', mushroom: '🍄', squirrel: '🐿️', campfire: '🔥', path: '🍃' },
   tierNames: ['', '🌱 Seed', '🌿 Sapling', '🌳 Oak', '💛 Heartwood'],
   ringNames: ['Heartwood', 'Oak Circle', 'Sapling Path', 'Seedlands'],
 
@@ -191,7 +191,7 @@ const HW = {
       const tok = v.tokens[i];
       const peek = opts.peek?.[i];
       if (h.ring === 0) out += `<text x="${x}" y="${y - 12}" class="hlabel">HEARTWOOD</text><text x="${x}" y="${y + 6}" class="ticon">💛</text>`;
-      else if (tok) out += `<text x="${x - 22}" y="${y - 18}" class="ticon small used">${HW.tokenIcons[tok]}</text>`;
+      else if (tok) out += `<text x="${x - 22}" y="${y - 18}" class="ticon small used">${HW.tokenIcons[tok] || ''}</text>`;
       else if (peek) out += `<text x="${x}" y="${y - 14}" class="ticon">${HW.tokenIcons[peek]}</text>`;
       else out += `<text x="${x}" y="${y - 16}" class="ticon hidden">✦</text>`;
       const trees = v.trees[i] || 0;

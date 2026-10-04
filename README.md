@@ -30,11 +30,12 @@ Locally, the server prints the address phones on the same Wi-Fi should use, and 
 ## Screens
 
 - **`/` → Create a new game**: opens the **board** (`board.html?g=CODE`) for the projector. Whoever creates the game is
-  the Keeper; the Keeper controls (start, next player, Dusk pairs, next season, tributes, timers) appear only on that
+  the Keeper; the Keeper controls (Enneagram powers, start, next player, Dusk pairs, next season, tributes, timers) appear only on that
   browser. Under **Help a player rejoin · Keeper on another device** the Keeper can issue a 4-digit rejoin code
   (one use, 10 minutes) or get a link that moves the Keeper controls to another device.
-- **Players** scan the QR code or open `play.html?g=CODE`. They pick a name, a colour and their **top three Enneagram
-  types**; each type gives one power they can activate once per game. Their seat is kept in the URL (`&p=…`) and on the
+- **Players** scan the QR code or open `play.html?g=CODE`. They pick a name and a colour. In the lobby the Keeper gives
+  each player **1 to 3 Enneagram types** (the game can't start until everyone has one); each type gives one power
+  they can activate once per game. Their seat is kept in the URL (`&p=…`) and on the
   device, so a reload or a reopened browser goes straight back to it.
 - Every screen shows a connection badge: **● Live**, **● Reconnecting…** or **● Offline**.
 
@@ -59,7 +60,7 @@ one is told why.
 
 ## Powers (one per Enneagram type, used once)
 
-Balanced with the simulation: in 10-player games every power wins 8–12% of the time (fair share 10%).
+Balanced with the simulation: in 10-player games every power wins 8–13% of the time (fair share 10%).
 
 | Type | Power | When | Effect |
 |---|---|---|---|

@@ -189,7 +189,6 @@ func (s *Server) join(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Name  string `json:"name"`
 		Color string `json:"color"`
-		Types []int  `json:"types"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		fail(w, 400, "bad request")
@@ -201,7 +200,7 @@ func (s *Server) join(w http.ResponseWriter, r *http.Request) {
 	if g == nil {
 		return
 	}
-	p, err := g.Join(strings.TrimSpace(req.Name), req.Color, req.Types)
+	p, err := g.Join(strings.TrimSpace(req.Name), req.Color)
 	if err != nil {
 		fail(w, 400, err.Error())
 		return
@@ -301,7 +300,7 @@ func (s *Server) action(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err.Error())
 		return
 	}
-	payload, _ := json.Marshal(map[string]any{"hex": a.Hex, "target": a.Target, "power": a.Power, "n": a.N})
+	payload, _ := json.Marshal(map[string]any{"hex": a.Hex, "target": a.Target, "power": a.Power, "n": a.N, "types": a.Types})
 	actor := a.Pid
 	if a.Host != "" {
 		actor = "host"
@@ -472,7 +471,7 @@ func buildView(g *Game, pid, secret, host string) map[string]any {
 			"player": t.Player, "step": t.Step, "discovered": t.Discovered, "freeSteps": t.FreeSteps,
 			"teleport": t.Teleport, "canClaim": t.CanClaim, "region": t.Region, "tier": t.Tier,
 			"prompt": t.Prompt, "redrawn": t.Redrawn, "started": t.Started, "event": t.Event,
-			"eventText": t.EventText, "needsHand": t.NeedsHand, "helped": t.Helped,
+			"eventText":  t.EventText,
 			"trustCount": n, "followUps": t.FollowUps,
 		}
 		if me != nil {
