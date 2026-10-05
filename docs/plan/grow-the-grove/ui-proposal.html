@@ -1,0 +1,846 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grow the Grove</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Product tokens, copied from web/style.css:1-5 (Heartwood is dark-only on the projector and phones). */
+:root { --bg:#13241b; --panel:#1c3326; --panel2:#24402f; --ink:#f3efe2; --muted:#b9c4b3; --accent:#e0a32e; --good:#7bc47f; --bad:#e57373; --line:#345a42;
+  --sun:#f6d36b; --shade:#0b1a10; --pbar:#0b0f0d; }
+* { box-sizing:border-box }
+body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.45 "Nunito",system-ui,-apple-system,sans-serif }
+h1,h2,h3 { margin:0 0 .5em; font-weight:800 } h1 { font-size:1.6rem } h2 { font-size:1.3rem; margin-top:1.6em } h3 { font-size:1.05rem }
+a { color:var(--accent) }
+button { font:inherit; font-weight:700; border:0; border-radius:10px; padding:.6em 1em; cursor:pointer; background:var(--accent); color:#1a1a1a; margin:.2em .2em .2em 0 }
+button.ghost { background:var(--panel2); color:var(--ink); border:1px solid var(--line) }
+button:disabled { opacity:.4; cursor:default }
+button.sel { outline:3px solid #fff }
+.panel { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:12px }
+.muted { color:var(--muted) } small { color:var(--muted) } .good { color:var(--good) } .bad { color:var(--bad) }
+.row { display:flex; gap:8px; flex-wrap:wrap; align-items:center }
+.prompt { font-size:1.45rem; font-weight:800; line-height:1.25; margin:.3em 0 }
+.tier { display:inline-block; padding:.2em .7em; border-radius:99px; background:var(--panel2); font-weight:700; font-size:.9rem }
+.tier.sun { background:#4a3d12; color:var(--sun) } .tier.shade { background:#0d1d14; color:#cfe3d2; border:1px solid var(--line) }
+.event { background:#2d2a17; border-left:4px solid var(--accent); padding:.6em .8em; border-radius:8px; margin:.5em 0 }
+.log { font-size:.85rem; color:var(--muted); max-height:200px; overflow:auto } .log div { padding:2px 0; border-bottom:1px solid rgba(255,255,255,.05) }
+.chip { display:inline-flex; align-items:center; gap:.35em; white-space:nowrap } .chip i { width:.8em; height:.8em; border-radius:50%; display:inline-block }
+
+/* Proposal chrome: visibly not product UI */
+.pbar { position:sticky; top:0; z-index:10; background:var(--pbar); color:#e8e8e8; border-bottom:2px solid var(--accent); padding:8px 16px; display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; font-size:.9rem }
+.pbar b { color:#fff } .pbar .tag { background:#2a2a2a; border-radius:6px; padding:1px 7px; font-size:.78rem; color:#bbb }
+.pbar nav { display:flex; flex-wrap:wrap; gap:4px; margin-left:auto }
+.pbar nav button { background:#222; color:#ddd; border:1px solid #444; padding:.3em .7em; font-size:.85rem; border-radius:8px; margin:0 }
+.pbar nav button.on { background:var(--accent); color:#1a1a1a; border-color:var(--accent) }
+section.state { display:none; max-width:78rem; margin:0 auto; padding:18px 16px 60px } section.state.on { display:block }
+.lead { font-size:1.08rem; color:var(--muted); max-width:52rem }
+table { width:100%; border-collapse:collapse; font-size:.92rem } th,td { text-align:left; padding:7px 8px; border-bottom:1px solid var(--line); vertical-align:top }
+th { color:var(--muted); font-weight:700; font-size:.82rem; text-transform:uppercase; letter-spacing:.04em }
+.tw { overflow-x:auto; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:4px 8px; margin:.8em 0 }
+.st { font-size:.75rem; font-weight:800; padding:.1em .55em; border-radius:99px; white-space:nowrap }
+.st.settled { background:#244a2c; color:#9fdca2 } .st.open { background:#4a3d12; color:var(--sun) } .st.deferred { background:#333; color:#bbb }
+.rec { color:var(--good); font-weight:700 }
+.note { display:inline-grid; place-items:center; width:1.35em; height:1.35em; border-radius:50%; background:var(--accent); color:#1a1a1a; font-size:.72rem; font-weight:800; vertical-align:middle; margin-left:.3em; cursor:help }
+ol.notes { padding-left:1.4em } ol.notes li { margin:.35em 0 } code { font-size:.86em; background:#0f1d16; padding:.05em .35em; border-radius:5px; color:#d8e6d6 }
+.grid2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr)); gap:14px }
+.grid3 { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr)); gap:12px }
+.flow { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:.6em 0 } .flow span { background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:.35em .7em; font-weight:700; font-size:.9rem } .flow em { color:var(--muted); font-style:normal }
+.caption { text-align:center; color:var(--muted); font-size:.88rem; margin-top:4px }
+svg.board { width:100%; height:auto; display:block }
+.hex polygon.base { stroke:#0c1711; stroke-width:2.5 }
+.hex.hl polygon.base { stroke:#fff; stroke-width:4; cursor:pointer }
+.hex.hl:hover polygon.base { fill-opacity:1 }
+.ticon { font-size:15px; text-anchor:middle; dominant-baseline:middle; pointer-events:none }
+.tree { font-size:21px; text-anchor:middle; dominant-baseline:middle; pointer-events:none }
+.hlabel { font-size:8px; font-weight:800; letter-spacing:.08em; fill:#f3efe2; text-anchor:middle; pointer-events:none }
+.rlabel { font-size:13px; font-weight:800; dominant-baseline:middle }
+.pawn { stroke:#fff; stroke-width:2 } .pawn.cur { stroke-width:3.5; filter:drop-shadow(0 0 5px #fff) }
+.pinit { font-size:9.5px; font-weight:800; fill:#fff; text-anchor:middle; pointer-events:none; paint-order:stroke; stroke:rgba(0,0,0,.6); stroke-width:2px }
+.boardscreen { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(300px,1fr); gap:16px }
+@media (max-width:820px) { .boardscreen { grid-template-columns:1fr } }
+.plist div { display:flex; justify-content:space-between; gap:8px; padding:3px 6px; border-radius:8px } .plist div.cur { background:var(--panel2) }
+.legend { display:flex; flex-wrap:wrap; gap:4px 14px; justify-content:center; font-size:.82rem; color:var(--muted); margin-top:6px }
+.roots { display:flex; gap:6px; flex-wrap:wrap } .roots span { background:var(--panel2); border-radius:8px; padding:.15em .5em; font-size:.88rem }
+.shell { border:1px solid var(--line); border-radius:16px; padding:14px; background:#0f1d16 }
+.shell .crumbs { font-size:.8rem; color:var(--muted); margin-bottom:8px }
+.phone { width:min(100%,390px); margin:0 auto; border:10px solid #000; border-radius:34px; background:var(--bg); padding:16px; min-height:560px }
+.phone .big { font-size:1.2rem; font-weight:800 }
+.phone .opt { display:flex; justify-content:space-between; padding:.55em .7em; border:1px solid var(--line); border-radius:10px; margin:.35em 0; background:var(--panel) }
+.phone .opt.off { opacity:.45 }
+.cmp td:first-child { font-weight:700; white-space:nowrap }
+.kbd { display:inline-block; padding:.05em .45em; border:1px solid var(--line); border-radius:6px; background:var(--panel2); font-weight:700 }
+</style></head>
+<body>
+<div class="pbar">
+  <b>Grow the Grove</b><span>Heartwood board game · 2026-10-05</span><span class="tag">UI proposal · traced from code on main @ 8ad24ef</span>
+  <nav>
+    <button data-tab="overview" class="on">Overview</button>
+    <button data-tab="rules">How to play</button>
+    <button data-tab="play">▶ Play it</button>
+    <button data-tab="phone">Phone</button>
+    <button data-tab="today">Today vs Grove</button>
+    <button data-tab="balance">Balance</button>
+    <button data-tab="build">Build notes</button>
+  </nav>
+</div>
+
+<!-- ============ OVERVIEW ============ -->
+<section class="state on" id="overview">
+  <h1>Grow the Grove: a board where where you stand matters</h1>
+  <p class="lead">Today the map is only a clock: the season opens the next ring and sets how deep your question goes, so everyone walks Seed → Sapling → Oak and nobody's position matters to anyone else. In <b>Grow the Grove</b> the clearing starts bare. Every story the team tells plants or grows a tree, the trees make the Shade, and the Shade is where the vulnerable stories happen. When the grove reaches the Heartwood, it wakes.</p>
+
+  <div class="grid3" id="snaps"></div>
+
+  <h2>The problem, traced from the code</h2>
+  <div class="tw"><table>
+    <tr><th>Today</th><th>Why it doesn't feel like a game</th></tr>
+    <tr><td>The season opens the rings: only the outer ring in season 1, then the middle, then all <span class="note" title="game.go:257 ringOpen">1</span></td><td>Depth is a timer. Nobody chooses to go deeper.</td></tr>
+    <tr><td>The ring you stop on sets the card tier: outer = Seed, middle = Sapling, inner = Oak <span class="note" title="game.go:426 dealCard: tu.Tier = 4 - h.Ring">2</span></td><td>Everyone tells the same depth at the same time.</td></tr>
+    <tr><td>3 free steps; any number of players can share a space <span class="note" title="game.go:1160 step only checks distance and canEnter; no occupancy check">3</span></td><td>No one is ever in anyone's way, and no one needs anyone nearby.</td></tr>
+    <tr><td>26 of 36 spaces hide a discovery <span class="note" title="content.go:196 TokenMix: 9+10+5+2 = 26">4</span></td><td>Discoveries are everywhere, so a space is rarely worth going to on purpose.</td></tr>
+  </table></div>
+
+  <h2>Who does what</h2>
+  <div class="tw"><table>
+    <tr><th>Who</th><th>Does</th><th>Where</th></tr>
+    <tr><td>Player</td><td>Says where to walk, Sun or Shade, and tells the story. Holds the lantern for a Neighbour. Gives trust; makes the Dusk choice.</td><td>Aloud; private parts on the phone (unchanged rule: phones down)</td></tr>
+    <tr><td>Keeper</td><td>Taps the walk, the stop, the side and the lantern on the big screen, acting for the player</td><td>Board (projector)</td></tr>
+    <tr><td>The grove</td><td>Grows by the rules: a Sun story plants a sapling, a Shade story grows it into an oak, an oak drops a seed further in</td><td>Board</td></tr>
+  </table></div>
+
+  <h2>The game from start to end</h2>
+  <div class="flow"><span>🌰 Lobby</span><em>→</em><span>🌱 Plant your seed at the forest edge</span><em>→</em><span>Season 1</span><em>→</em><span>Dusk</span><em>→</em><span>Season 2</span><em>→</em><span>Dusk</span><em>→</em><span>Season 3</span><em>→</em><span>💛 Heartwood wakes, or 🍂 it sleeps on</span><em>→</em><span>Alliance stories · Secret Owl · Scores</span></div>
+  <div class="flow"><b>A space:</b><span>☀️ open ground</span><em>— Sun story →</em><span>🌱 sapling (Shade)</span><em>— Shade story →</em><span>🌳 oak (Shade)</span><em>+ drops a 🌱 one step closer to the Heartwood</em></div>
+
+  <h2>Decisions</h2>
+  <div class="tw"><table>
+    <tr><th>#</th><th>Question</th><th>Options</th><th>Recommendation</th><th>Status</th></tr>
+    <tr><td>1</td><td>How big is the forest?</td><td>37 spaces (today) · 61 spaces</td><td class="rec">61: the Heartwood, 6 Roots, then rings of 12, 18 and 24 (the forest edge)</td><td><span class="st settled">settled</span></td></tr>
+    <tr><td>2</td><td>Can players share a space?</td><td>Yes (today) · No</td><td class="rec">No. One player per space, and you walk only through empty spaces</td><td><span class="st settled">settled</span></td></tr>
+    <tr><td>3</td><td>What makes a space Sun or Shade?</td><td>Printed on the board · Set by the season · Trees the players plant</td><td class="rec">Trees the players plant (story B)</td><td><span class="st settled">settled</span></td></tr>
+    <tr><td>4</td><td>Do trees block walking?</td><td>Yes · No</td><td class="rec">No. Only people block; you can stand under a tree, which is how you get into the Shade</td><td><span class="st open">open</span></td></tr>
+    <tr><td>5</td><td>Who can tell a Shade story?</td><td>Anyone under a tree · Only with a Neighbour</td><td class="rec">Only with a Neighbour next to you (no one goes into the Shade alone). A Firefly lets you go alone once</td><td><span class="st open">open</span></td></tr>
+    <tr><td>6</td><td>Where can a sapling take root?</td><td>Anywhere · At the edge or next to a tree</td><td class="rec">At the edge or next to a tree, so the grove grows inward and the team has to build a path to the Heartwood</td><td><span class="st open">open</span></td></tr>
+    <tr><td>7</td><td>Does the grove spread by itself?</td><td>No · An oak drops one seed</td><td class="rec">When a sapling becomes an oak, it drops a seed: a new sapling one step closer to the Heartwood. Without it the Heartwood almost never wakes (Balance tab)</td><td><span class="st open">open</span></td></tr>
+    <tr><td>8</td><td>When does the Heartwood wake?</td><td>All six Roots are oaks · The Roots of the values at the table are oaks</td><td class="rec">The Roots of every value someone stands for. Your value is literally one of the Heartwood's roots</td><td><span class="st open">open</span></td></tr>
+    <tr><td>9</td><td>How long is a game?</td><td>3 turns each · 6 turns each</td><td class="rec">6 turns each (2 rounds a season) up to 6 players; 3 turns each from 7. That gives 18–36 stories</td><td><span class="st open">open</span></td></tr>
+    <tr><td>10</td><td>Which prompts are Sun and Shade?</td><td>Write 60 new · Reuse today's</td><td class="rec">Sun = today's Sapling prompt, Shade = today's Oak prompt, Seed = the lighter question. A later content pass rewrites the Oak prompts that are bright, not shade</td><td><span class="st open">open</span></td></tr>
+    <tr><td>11</td><td>Who can ally at Dusk?</td><td>Anyone (today) · Only players you crossed paths with</td><td class="rec">Only someone who was your Neighbour at some point this season, so you walk toward who you want to ally with</td><td><span class="st open">open</span></td></tr>
+    <tr><td>12</td><td>Which discoveries?</td><td>Today's 4 · A smaller set</td><td class="rec">18 on 54 spaces: 🌱 Seed pouch 5, 🔥 Campfire 4, 🍄 Mushrooms 4, 🐾 Hidden path 3, ✨ Firefly 2. The Squirrel goes: the lantern holder's follow-up replaces it</td><td><span class="st open">open</span></td></tr>
+    <tr><td>13</td><td>How does scoring change?</td><td>—</td><td class="rec">Trust and Secret Owl stay. Growth becomes: Sun 1, Shade 2, Heartwood 4, +1 each for the lantern, +1 per value, +1 Gardener when someone grows your sapling. Advocacy: +3 for each value in your alliance whose Root is an oak. Heartwood awake: +3 for everyone</td><td><span class="st open">open</span></td></tr>
+    <tr><td>14</td><td>Enneagram powers</td><td>—</td><td>Six powers lean on the old map (Momentum, Field Notes, Rope Team, Deep Water, Common Ground, Open Hands); redesign them after these rules settle</td><td><span class="st deferred">deferred</span></td></tr>
+  </table></div>
+  <ol class="notes">
+    <li><code>game.go:257</code> <code>ringOpen</code>: season 1 opens ring 3 only, season 2 rings 2–3, season 3 all. Same rule mirrored in <code>web/common.js:170</code>.</li>
+    <li><code>game.go:418-431</code> <code>dealCard</code>: the tier is <code>4 - ring</code>, the Heartwood is tier 4.</li>
+    <li><code>game.go:1140-1172</code> <code>step</code>: checks distance 1, steps left and <code>canEnter</code> (ring open, ally for the Heartwood); nothing checks who else is there. The board draws several pawns in a circle on one space (<code>web/common.js:213</code>).</li>
+    <li><code>content.go:196</code>: mushroom 9, squirrel 10, campfire 5, path 2 on 36 spaces.</li>
+  </ol>
+</section>
+
+<!-- ============ HOW TO PLAY ============ -->
+<section class="state" id="rules">
+  <h1>How to play Grow the Grove</h1>
+  <p class="lead">An empty clearing. In the middle sleeps the Heartwood. Around it are six Roots, one for each ZERAOS value. Grow a grove with your stories until it reaches the Roots and the Heartwood wakes.</p>
+  <div class="grid2">
+    <div class="panel">
+      <h3>🌱 Start: plant your seed</h3>
+      <p>In turn, each player says which value they stand for and why, and stands on an empty space at the <b>forest edge</b> of that value's wedge. A sapling grows there: the first shade.</p>
+      <h3>🚶 Walk</h3>
+      <p>Up to <b>3 steps</b>, each onto an <b>empty</b> space next to you. Nobody shares a space and you can't walk through people. Trees don't block. The Heartwood is closed until it wakes.</p>
+      <h3>✦ Discover</h3>
+      <p>Stop on a face-down discovery and turn it over.</p>
+    </div>
+    <div class="panel">
+      <h3>☀️ / 🌑 Tell your story: the space decides</h3>
+      <table>
+        <tr><th>You stand on</th><th>You may tell</th><th>Then</th></tr>
+        <tr><td>☀️ Open ground</td><td>a <b>Sun</b> story: the bright side of this value</td><td>A 🌱 sapling takes root here, if this is the forest edge or it's next to a tree. You're its gardener.</td></tr>
+        <tr><td>🌱 / 🌳 Under a tree, with a <b>Neighbour</b> next to you</td><td>a <b>Shade</b> story: the side you don't usually show (or Sun)</td><td>A sapling grows into an 🌳 oak and <b>drops a seed</b> one step closer to the Heartwood.</td></tr>
+        <tr><td>Under a tree, alone</td><td>a Sun story only</td><td>No one goes into the Shade alone.</td></tr>
+      </table>
+      <p class="muted">You can always ask for the lighter question, or pass.</p>
+    </div>
+    <div class="panel">
+      <h3>🏮 Neighbours and the lantern</h3>
+      <p>Your <b>Neighbours</b> are the players on the six spaces touching yours. After a Shade story, one Neighbour <b>holds the lantern</b>: they ask you one follow-up question, and you both get +1.</p>
+      <p>Being someone's Neighbour also lets you <b>ally with them at Dusk</b> (you must have crossed paths this season).</p>
+    </div>
+    <div class="panel">
+      <h3>💛 The end</h3>
+      <p>The Heartwood <b>wakes</b> when the Root of every value someone at the table stands for is an oak. From then on, alliance members can step into the Heartwood to tell a Heartwood story (4 points).</p>
+      <p>After season 3 the game ends either way: alliance stories, Secret Owl guesses, the tribute chain, scores. If the Heartwood woke, everyone gets +3.</p>
+    </div>
+  </div>
+  <h2>Discoveries (18, face down on the rings outside the Roots)</h2>
+  <div class="tw"><table id="tokTable"><tr><th></th><th>Discovery</th><th>How many</th><th>What it does</th></tr></table></div>
+  <h2>Scoring</h2>
+  <div class="tw"><table class="cmp">
+    <tr><th>Points</th><th>How</th><th>Today</th></tr>
+    <tr><td>Stories</td><td>Sun 1 · Shade 2 · Heartwood 4</td><td>Seed 1 · Sapling 2 · Oak 3 · Heartwood 4 <span class="muted">(game.go:891)</span></td></tr>
+    <tr><td>Lantern</td><td>+1 for the teller and +1 for the lantern holder</td><td>new</td></tr>
+    <tr><td>Values</td><td>+1 for each different value you told a story in</td><td>same <span class="muted">(game.go:896)</span></td></tr>
+    <tr><td>Gardener</td><td>+1 each time someone else grows your sapling into an oak</td><td>new</td></tr>
+    <tr><td>Advocacy</td><td>+3 for each value in your alliance whose Root is an oak</td><td>+3 per alliance value that got an Oak story <span class="muted">(game.go:837)</span></td></tr>
+    <tr><td>Heartwood awake</td><td>+3 for everyone</td><td>new</td></tr>
+    <tr><td>Trust · Secret Owl · bonus ✨</td><td>unchanged</td><td>same</td></tr>
+  </table></div>
+  <h2>Cards: same themes, two sides</h2>
+  <p class="muted">Each value has five themes. Sun = today's Sapling prompt, Shade = today's Oak prompt, the lighter question = today's Seed. A few examples:</p>
+  <div class="tw"><table id="cardTable"><tr><th>Value · theme</th><th>☀️ Sun</th><th>🌑 Shade</th></tr></table></div>
+  <p class="muted">Some Oak prompts are bright rather than shade (e.g. Excellence “What do you wish your team could do really well together?”). A content pass, like the accepted card-language rewrite (P67), would rewrite those as a separate proposal.</p>
+</section>
+
+<!-- ============ PLAY ============ -->
+<section class="state" id="play">
+  <div class="shell">
+    <div class="crumbs">heartwood.zera.edu.my › board.html?g=GROVE · projector screen · prototype: the Keeper taps everything here</div>
+    <div class="boardscreen">
+      <div>
+        <svg class="board" id="psvg"></svg>
+        <div class="legend"><span>☀️ open ground (Sun)</span><span>🌱 sapling · 🌳 oak (Shade)</span><span>◌ gold ring: a Root still needed</span><span>✦ face-down discovery</span><span>white outline: you can stop here</span></div>
+      </div>
+      <div>
+        <div class="panel"><div class="row" style="justify-content:space-between"><h1 id="ptitle" style="margin:0">Grow the Grove</h1></div><div class="roots" id="proots" style="margin-top:.5em"></div></div>
+        <div class="panel" id="pmain"></div>
+        <div class="panel"><h3>Expedition</h3><div class="plist" id="plist"></div></div>
+        <div class="panel"><h3>Prototype controls</h3>
+          <div class="row"><span class="muted">New game with</span><span id="pcount"></span></div>
+          <div class="row" style="margin-top:.4em"><button class="ghost" id="botTurn">🤖 Bot plays this turn</button><button class="ghost" id="botAll">🤖 Bots play to the end</button></div>
+          <p class="muted" style="font-size:.85rem;margin:.4em 0 0">Not in the prototype (unchanged by this proposal): timers, trust acorns, the Dusk choice and statements, Secret Owl, powers. Advocacy here counts only your own value's Root.</p>
+        </div>
+        <div class="panel"><h3>Trail log</h3><div class="log" id="plog"></div></div>
+      </div>
+    </div>
+  </div>
+  <ol class="notes">
+    <li>Same layout as today's board screen: board left, side panels right (<code>web/board.html:10-37</code>). The <b>Roots</b> strip replaces the season ring hint; the Keeper panel keeps the same tap-for-the-player flow (<code>README.md</code> “Players say it, the Keeper taps it”).</li>
+    <li>Highlighted spaces come from a walk through empty spaces only (up to 3 steps), replacing the one-step distance check at <code>game.go:1160</code>.</li>
+    <li>After the stop, the panel offers only what the space allows: Sun, Shade (with the reason when it's not allowed), or Heartwood.</li>
+    <li>When an oak drops its seed, the prototype puts it on the free space closest to the Heartwood; in the real game the Keeper would tap where it lands.</li>
+  </ol>
+</section>
+
+<!-- ============ PHONE ============ -->
+<section class="state" id="phone">
+  <h1>Phone: only the Dusk choice changes</h1>
+  <p class="lead">Phones keep the private jobs. The one change: at Dusk you can only ally with someone you crossed paths with this season. Talking with anyone stays open.</p>
+  <div class="grid2">
+    <div>
+      <div class="phone">
+        <div class="muted" style="font-size:.8rem">play.html · Wei Ling · Excellence ⭐</div>
+        <p class="big">Dusk: who do you want to talk with?</p>
+        <div class="opt"><span><b>Aisyah</b> · Zealous</span><span class="good">crossed paths ✓</span></div>
+        <div class="opt"><span><b>Daniel</b> · Resilience</span><span class="good">crossed paths ✓</span></div>
+        <div class="opt"><span><b>Priya</b> · Excellence</span><span class="muted">same value as you</span></div>
+        <div class="opt off"><span><b>Farid</b> · Sustainability</span><span class="muted">talk only</span></div>
+        <label style="display:block;margin:.8em 0"><input type="checkbox" checked> Make it an alliance <span class="note" title="New: only with someone you crossed paths with this season">1</span></label>
+        <button>Send my choice</button>
+        <p class="muted" style="font-size:.88rem">You can ally only with someone you <b>crossed paths</b> with this season (you stood next to each other). An alliance joins different values: 2 or 3 people.</p>
+        <hr style="border-color:var(--line)">
+        <p class="muted" style="font-size:.88rem;margin:0">Your powers · ✨ Firefly ×1 <span class="note" title="Fireflies show with the powers reminder">2</span></p>
+      </div>
+    </div>
+    <div>
+      <ol class="notes">
+        <li>Today the list is a <code>&lt;select&gt;</code> where only “already talked” is disabled (<code>web/play.html:218-225</code>). Proposed: the same select gets a “crossed paths ✓” tag, and picking someone you didn't cross paths with keeps the talk but greys out “Make it an alliance”. The server checks it in <code>allyCheck</code> (<code>game.go:564</code>), next to the same-value and full-alliance reasons, so a refused pair is told why.</li>
+        <li>A Firefly is kept like a power, so it joins the powers reminder the phone already shows.</li>
+        <li>Unchanged: Secret Owl name, Give trust, Bond card or statement, the guess.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TODAY vs GROVE ============ -->
+<section class="state" id="today">
+  <h1>Today vs Grow the Grove</h1>
+  <div class="grid2">
+    <div class="panel"><h3>Today · season 1</h3><svg class="board" id="tsvg"></svg><p class="caption">37 spaces. Only the outer ring is open; three players share one space; 26 discoveries.</p></div>
+    <div class="panel"><h3>Grove · start</h3><svg class="board" id="gsvg"></svg><p class="caption">61 spaces, all open. One player per space; each starts on a sapling at the edge; 18 discoveries.</p></div>
+  </div>
+  <div class="tw"><table class="cmp">
+    <tr><th></th><th>Today</th><th>Grow the Grove</th></tr>
+    <tr><td>Board</td><td>37 spaces, 3 rings</td><td>61 spaces, 4 rings; ring 1 = the six Roots</td></tr>
+    <tr><td>What opens the map</td><td>The season (ring by ring)</td><td>Nothing is locked; the grove decides where Shade is</td></tr>
+    <tr><td>Depth of the question</td><td>The ring: Seed / Sapling / Oak</td><td>The space: Sun on open ground, Shade under a tree with a Neighbour</td></tr>
+    <tr><td>Other players</td><td>Don't matter</td><td>Block your way, make Shade possible, hold the lantern, grow your saplings, decide who you can ally with</td></tr>
+    <tr><td>Goal</td><td>Points over 3 seasons</td><td>Points, and a shared goal: wake the Heartwood</td></tr>
+    <tr><td>End</td><td>After season 3</td><td>After season 3, with the Heartwood awake or asleep</td></tr>
+    <tr><td>Removed</td><td colspan="2">Ring locks by season · Squirrel · tiers by ring</td></tr>
+  </table></div>
+</section>
+
+<!-- ============ BALANCE ============ -->
+<section class="state" id="balance">
+  <h1>Balance check: 800 bot games per row</h1>
+  <p class="lead">The same rules as the prototype, played by two kinds of bots: <b>points</b> bots take whatever scores most this turn; <b>team</b> bots also favour growing the grove toward the Heartwood. Real tables will sit somewhere between, and will probably tell fewer Shade stories than bots do.</p>
+  <div class="tw"><table><tr><th>Players</th><th>Turns each</th><th>Stories</th><th>Heartwood wakes<br><small>points bots · team bots</small></th><th>…in season 3</th><th>Shade stories</th><th>Pairs who crossed paths, per season</th></tr><tr><td>4</td><td>6 <span class="st settled">rule</span></td><td>24</td><td><b>56%</b> · <b>90%</b></td><td>29% · 45%</td><td>79% · 51%</td><td>74%</td></tr><tr><td>5</td><td>6 <span class="st settled">rule</span></td><td>30</td><td><b>66%</b> · <b>97%</b></td><td>28% · 34%</td><td>83% · 59%</td><td>67%</td></tr><tr class="muted"><td>6</td><td>3</td><td>18</td><td><b>23%</b> · <b>27%</b></td><td>21% · 26%</td><td>80% · 55%</td><td>43%</td></tr><tr><td>6</td><td>6 <span class="st settled">rule</span></td><td>36</td><td><b>81%</b> · <b>99%</b></td><td>31% · 21%</td><td>87% · 64%</td><td>61%</td></tr><tr><td>7</td><td>3 <span class="st settled">rule</span></td><td>21</td><td><b>32%</b> · <b>43%</b></td><td>28% · 42%</td><td>85% · 62%</td><td>39%</td></tr><tr><td>8</td><td>3 <span class="st settled">rule</span></td><td>24</td><td><b>44%</b> · <b>59%</b></td><td>37% · 56%</td><td>87% · 66%</td><td>37%</td></tr><tr><td>10</td><td>3 <span class="st settled">rule</span></td><td>30</td><td><b>59%</b> · <b>78%</b></td><td>47% · 71%</td><td>92% · 73%</td><td>33%</td></tr></table></div>
+  <h2>What the simulation changed</h2>
+  <div class="tw"><table>
+    <tr><th>Try</th><th>Result</th><th>Kept?</th></tr>
+    <tr><td>Saplings anywhere, all six Roots needed</td><td>The Heartwood woke in 0–6% of 3-turn games</td><td>No</td></tr>
+    <tr><td>Only the Roots of the values at the table</td><td>Points bots ignored the Roots: 0–1% woke</td><td>Yes (goal)</td></tr>
+    <tr><td>Root stories count double</td><td>Everyone rushed the centre; woke in season 2 in ~90% of games and the outer forest stayed empty</td><td>No</td></tr>
+    <tr><td>Saplings only at the edge or next to a tree</td><td>The grove has to grow inward, but too slowly: 0–30% woke</td><td>Yes</td></tr>
+    <tr><td>+ each player starts on a sapling, and an oak drops a seed one step in</td><td>The numbers above: wakes mostly in season 3, more often when the table plays as a team</td><td>Yes</td></tr>
+    <tr><td>8 Seed pouches instead of 5</td><td>+1–5 points of wake rate only</td><td>No</td></tr>
+  </table></div>
+  <ol class="notes">
+    <li><b>Getting stuck</b> (no empty space to walk to) happened in at most 0.3% of turns, even with 10 players: one player per space blocks a little, not a lot.</li>
+    <li><b>Weak spot:</b> 6–8 players at 3 turns each wake the Heartwood only about a third to half of the time. Options: 4 turns each for 6–8 players, or keep it hard on purpose.</li>
+    <li><b>Crossed paths:</b> per season, a third to three quarters of all pairs of players stand next to each other at some point, so “ally only with someone you crossed paths with” leaves plenty of choice.</li>
+  </ol>
+</section>
+
+<!-- ============ BUILD NOTES ============ -->
+<section class="state" id="build">
+  <h1>Build notes</h1>
+  <h2>What changes, where</h2>
+  <div class="tw"><table>
+    <tr><th>Area</th><th>Today</th><th>Change</th></tr>
+    <tr><td>Map</td><td><code>game.go:170</code> <code>buildHexes</code> loops rings 1–3</td><td>Rings 1–4 (61 spaces). The ZERAOS wedge order stays.</td></tr>
+    <tr><td>Ring locks</td><td><code>game.go:257</code> <code>ringOpen</code>, <code>web/common.js:170</code></td><td>Remove. <code>canEnter</code> (<code>game.go:378</code>) checks: no one there, Heartwood awake + alliance.</td></tr>
+    <tr><td>Walking</td><td><code>game.go:1140</code> <code>step</code></td><td>Refuse occupied spaces. The board highlights the reachable set (walk through empty spaces, up to 3 steps).</td></tr>
+    <tr><td>Start</td><td><code>game.go:1051</code> <code>plant</code> on ring 3</td><td>Ring 4, empty, in the player's value wedge; plants a sapling.</td></tr>
+    <tr><td>Trees</td><td><code>Trees map[int]int</code> counts stories per space; <code>Oak map[int]bool</code> per value</td><td><code>Trees map[int]Tree{Stage, Gardener}</code>. Sapling on a Sun story (edge or next to a tree); oak on a Shade story, which drops one sapling inward.</td></tr>
+    <tr><td>Cards</td><td><code>game.go:418</code> <code>dealCard</code> tier from ring; <code>lighter</code> at <code>game.go:1205</code></td><td>Side from the space: Sun → Sapling prompt, Shade → Oak prompt, lighter → Seed prompt. <code>RegionCards</code> (<code>content.go</code>) unchanged for now.</td></tr>
+    <tr><td>Lantern</td><td>Squirrel: <code>game.go:406</code>, <code>game.go:1074</code></td><td>New Keeper action <code>lantern</code> after a Shade story (picks a Neighbour, +1 each); remove the Squirrel token, cards and action.</td></tr>
+    <tr><td>Discoveries</td><td><code>content.go:196</code> <code>TokenMix</code>, <code>game.go:394</code> <code>resolveToken</code></td><td>Seed pouch, Firefly new; Squirrel out; 18 on rings 2–4.</td></tr>
+    <tr><td>Dusk</td><td><code>game.go:564</code> <code>allyCheck</code></td><td>Add “you didn't cross paths this season”. Track Neighbour pairs after every turn.</td></tr>
+    <tr><td>End</td><td><code>game.go:787</code> <code>nextSeason</code></td><td>Heartwood wakes when the needed Roots are oaks; game length 2 rounds a season up to 6 players.</td></tr>
+    <tr><td>Scores</td><td><code>game.go:879</code> <code>Scores</code>, <code>game.go:837</code> <code>advocated</code></td><td>Stories by side, lantern, gardener, Advocacy by Roots, +3 awake.</td></tr>
+    <tr><td>Board drawing</td><td><code>web/common.js:177</code> <code>renderBoard</code>, size 50, viewBox for 3 rings</td><td>4 rings: smaller hexes (about 40) and a bigger viewBox; Sun/Shade shading, tree icons, Roots ring, reachable highlight.</td></tr>
+    <tr><td>Rules pages</td><td><code>web/howto.html</code>, <code>web/wiki.html</code></td><td>Rewrite for the Grove; add wiki pages for Root, Sun, Shade, Neighbour, Lantern, Gardener, Seed pouch, Firefly.</td></tr>
+    <tr><td>Tests and sim</td><td><code>game_test.go</code>, <code>sim_test.go</code></td><td>A full 4-player game on the new rules; port this page's bots into the Go sim (<code>make sim</code>).</td></tr>
+  </table></div>
+  <h2>Phases</h2>
+  <ol>
+    <li><b>Rules engine</b>: map, occupancy, trees, Sun/Shade, lantern, Roots, wake, scoring, with tests and the sim. Deploy resets games in progress (state shape changes).</li>
+    <li><b>Board and phone</b>: drawing, Keeper flow, Dusk “crossed paths”.</li>
+    <li><b>How to play and wiki</b>.</li>
+    <li><b>Content pass</b> (separate proposal): rewrite the Oak prompts that aren't truly Shade.</li>
+    <li><b>Enneagram powers</b> redesign (deferred, decision 14).</li>
+  </ol>
+  <h2>Still unverified</h2>
+  <ul>
+    <li>How often real players choose Shade (bots: 50–90%). Fewer Shade stories means fewer oaks and fewer wakes.</li>
+    <li>How long a turn takes with walking and the lantern; the game-length rule assumes about 2–3 minutes a story.</li>
+    <li>Whether 61 spaces stay readable on the projector from the back of the room, and tappable on a phone.</li>
+  </ul>
+</section>
+
+<script>
+// Tab switcher
+function show(id) { document.querySelectorAll('section.state').forEach(s => s.classList.toggle('on', s.id === id));
+  document.querySelectorAll('.pbar nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === id)); history.replaceState(null, '', '#' + id); window.scrollTo(0, 0); }
+document.querySelectorAll('.pbar nav button').forEach(b => b.onclick = () => show(b.dataset.tab));
+if (location.hash && document.getElementById(location.hash.slice(1))) show(location.hash.slice(1));
+</script>
+<script>
+/* The prototype: the rules engine (also run by the balance sim) and the board screen. */
+// Grow the Grove: rules engine for the proposal prototype and the balance sim.
+const Grove = (() => {
+  const VALUES = [
+    { l: 'Z', name: 'Zealous', icon: '☀️', color: '#e0703a' },
+    { l: 'E', name: 'Excellence', icon: '⭐', color: '#e0a32e' },
+    { l: 'R', name: 'Resilience', icon: '🎋', color: '#c8463f' },
+    { l: 'A', name: 'Authenticity', icon: '🪞', color: '#cf6f97' },
+    { l: 'O', name: 'Open-mindedness', icon: '💡', color: '#4f74b0' },
+    { l: 'S', name: 'Sustainability', icon: '🌍', color: '#3f9e9a' },
+  ];
+  // 18 face-down discoveries on rings 2-4 (54 spaces). The Squirrel is gone: the lantern does its job.
+  const MIX = { seeds: 5, campfire: 4, mushroom: 4, path: 3, firefly: 2 };
+  const TOKENS = {
+    seeds: ['🌱', 'Seed pouch', 'Plant a sapling on an empty open space next to you. You are its gardener.'],
+    campfire: ['🔥', 'Campfire', 'Everyone answers in one sentence.'],
+    mushroom: ['🍄', 'Mushrooms', '+2 bonus points.'],
+    path: ['🐾', 'Hidden path', 'Move to any empty space in this ring, then tell your story there.'],
+    firefly: ['✨', 'Firefly', 'Keep it: once, it is your own lantern, so you can go into the Shade with no Neighbour.'],
+  };
+  const SEASONS = ['Planting the Seed', 'The Sprout', 'Growing into a Tree'];
+
+  function buildHexes(R) {
+    const hs = [{ q: 0, r: 0, ring: 0, region: -1 }];
+    const dirs = [[1, 0], [1, -1], [0, -1], [-1, 0], [-1, 1], [0, 1]];
+    for (let k = 1; k <= R; k++) {
+      let q = dirs[4][0] * k, r = dirs[4][1] * k;
+      for (let side = 0; side < 6; side++)
+        for (let s = 0; s < k; s++) {
+          hs.push({ q, r, ring: k, region: (3 - side + 6) % 6 });
+          q += dirs[side][0]; r += dirs[side][1];
+        }
+    }
+    return hs;
+  }
+
+  function rng(seed) { // small seeded PRNG so a sim run can be repeated
+    let s = seed >>> 0 || 1;
+    return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
+  }
+
+  function newGame(names, o = {}) {
+    const rand = o.rand || Math.random;
+    const hexes = buildHexes(4);
+    const key = h => h.q + ',' + h.r, at = {};
+    hexes.forEach((h, i) => (at[key(h)] = i));
+    const adj = hexes.map(h => [[1, 0], [1, -1], [0, -1], [-1, 0], [-1, 1], [0, 1]]
+      .map(([dq, dr]) => at[(h.q + dq) + ',' + (h.r + dr)]).filter(i => i !== undefined));
+    const spots = hexes.map((h, i) => i).filter(i => hexes[i].ring >= 2);
+    for (let i = spots.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [spots[i], spots[j]] = [spots[j], spots[i]]; }
+    const tokens = {};
+    let n = 0;
+    for (const [k, c] of Object.entries(MIX)) for (let x = 0; x < c; x++) tokens[spots[n++]] = { kind: k, up: false };
+    const g = {
+      hexes, adj, tokens, trees: {}, rand, log: [],
+      team: !!o.team, rootX2: !!o.rootX2, seedStart: o.seedStart !== false, oakSeeds: o.oakSeeds !== false, roundsPerSeason: o.roundsPerSeason || (names.length <= 6 ? 2 : 1),
+      players: names.map((nm, i) => ({ id: i, name: nm, color: o.colors?.[i] || '#888', value: -1, pos: -1,
+        sun: 0, shade: 0, pts: 0, lantern: 0, bonus: 0, fireflies: 0, regions: new Set(), gardener: 0 })),
+      phase: 'plant', season: 0, turnIdx: 0, turnsTaken: 0, turn: null,
+      met: new Set(), metBySeason: [], awake: false, awakeAt: 0,
+      stats: { stuck: 0, shadeAlone: 0, turns: 0, shadeTold: 0, sunTold: 0 },
+    };
+    return g;
+  }
+
+  const roots = g => g.hexes.map((h, i) => i).filter(i => g.hexes[i].ring === 1);
+  // The Roots that must become oaks: one for each value someone at the table stands for.
+  const neededRoots = g => roots(g).filter(i => g.players.some(p => p.value === g.hexes[i].region));
+  // The grove grows inward: a sapling takes root at the forest edge or next to a tree.
+  const plantable = (g, i) => g.hexes[i].ring === 4 || g.adj[i].some(j => g.trees[j]);
+  const occupant = (g, i) => g.players.find(p => p.pos === i);
+  const neighbours = (g, i, except) => g.adj[i].map(j => occupant(g, j)).filter(p => p && p !== except);
+  const cur = g => g.players[g.turnIdx];
+
+  // Edge spaces a player may plant on: the empty ones in the wedge of their value
+  // (or any empty edge space once that wedge is full).
+  function plantSpots(g, value) {
+    const edge = g.hexes.map((h, i) => i).filter(i => g.hexes[i].ring === 4 && !occupant(g, i));
+    const mine = edge.filter(i => g.hexes[i].region === value);
+    return mine.length ? mine : edge;
+  }
+
+  function plant(g, hex, value) {
+    const p = cur(g);
+    p.pos = hex; p.value = value;
+    if (g.seedStart) g.trees[hex] = { stage: 1, gardener: p.id };
+    g.log.push(`${p.name} plants a seed for ${VALUES[value].name}.`);
+    g.turnIdx++;
+    if (g.turnIdx >= g.players.length) { recordMeetings(g); startSeason(g, 1); }
+  }
+
+  function startSeason(g, s) {
+    g.season = s; g.phase = 'turn'; g.turnIdx = 0; g.turnsTaken = 0; g.met = new Set();
+    recordMeetings(g);
+    g.log.push(`Season ${s}: ${SEASONS[s - 1]}.`);
+    newTurn(g);
+  }
+
+  function newTurn(g) {
+    g.turn = { steps: 3, stopped: false, teleport: false, event: null, options: null, sowing: false };
+    g.stats.turns++;
+    if (!reachable(g, cur(g)).size) g.stats.stuck++;
+  }
+
+  // Spaces the player can end on this turn: up to `steps` steps through empty spaces.
+  // People block; trees don't. The Heartwood opens only once it has woken.
+  function reachable(g, p, steps = g.turn ? g.turn.steps : 3) {
+    const seen = new Map([[p.pos, 0]]), out = new Set(), q = [p.pos];
+    while (q.length) {
+      const i = q.shift(), d = seen.get(i);
+      if (d >= steps) continue;
+      for (const j of g.adj[i]) {
+        if (seen.has(j) || occupant(g, j) || (g.hexes[j].ring === 0 && !g.awake)) continue;
+        seen.set(j, d + 1); out.add(j); q.push(j);
+      }
+    }
+    return out;
+  }
+
+  function step(g, j) {
+    const p = cur(g), t = g.turn;
+    if (t.teleport) {
+      if (g.hexes[j].ring !== g.hexes[p.pos].ring || occupant(g, j)) throw new Error('the hidden path leads to an empty space in this ring');
+      p.pos = j; t.teleport = false; return afterStop(g);
+    }
+    if (t.stopped || t.steps < 1 || !g.adj[p.pos].includes(j) || occupant(g, j)) throw new Error('step onto an empty space next to you');
+    if (g.hexes[j].ring === 0 && !g.awake) throw new Error('the Heartwood is still asleep');
+    p.pos = j; t.steps--;
+  }
+
+  function stop(g) {
+    const p = cur(g), t = g.turn, tok = g.tokens[p.pos];
+    t.stopped = true;
+    if (tok && !tok.up) {
+      tok.up = true; t.event = tok.kind;
+      g.log.push(`${p.name} finds ${TOKENS[tok.kind][1]}.`);
+      if (tok.kind === 'mushroom') p.bonus += 2;
+      if (tok.kind === 'firefly') p.fireflies++;
+      if (tok.kind === 'path') { t.teleport = true; return; }
+      if (tok.kind === 'seeds') t.sowing = sowSpots(g, p).length > 0;
+    }
+    afterStop(g);
+  }
+
+  const sowSpots = (g, p) => g.adj[p.pos].filter(j => g.hexes[j].ring > 0 && !g.trees[j] && !occupant(g, j));
+  function sow(g, j) {
+    const p = cur(g);
+    if (!sowSpots(g, p).includes(j)) throw new Error('sow on an empty open space next to you');
+    g.trees[j] = { stage: 1, gardener: p.id }; g.turn.sowing = false;
+    afterStop(g);
+  }
+
+  function afterStop(g) {
+    const p = cur(g), t = g.turn, h = g.hexes[p.pos], tree = g.trees[p.pos];
+    const nb = neighbours(g, p.pos, p);
+    t.options = {
+      heartwood: h.ring === 0,
+      sun: h.ring > 0,
+      shade: h.ring > 0 && !!tree && (nb.length > 0 || p.fireflies > 0),
+      shadeNeedsFirefly: !!tree && nb.length === 0 && p.fireflies > 0,
+      tree: tree ? tree.stage : 0, neighbours: nb.map(x => x.id), plants: !tree && h.ring > 0 && plantable(g, p.pos),
+    };
+    if (tree && !t.options.shade && h.ring > 0) g.stats.shadeAlone++;
+  }
+
+  // side: 'sun' | 'shade' | 'heartwood' | 'pass'
+  function tell(g, side, lanternId) {
+    const p = cur(g), t = g.turn, i = p.pos, h = g.hexes[i], o = t.options;
+    if (!t.stopped || t.teleport || t.sowing) throw new Error('stop first');
+    if (side === 'shade' && !o.shade) throw new Error('no one goes into the Shade alone');
+    if (side === 'heartwood' && !o.heartwood) throw new Error('only in the Heartwood');
+    if (side === 'sun') {
+      p.sun++; p.pts += h.ring === 1 && g.rootX2 ? 2 : 1; p.regions.add(h.region); g.stats.sunTold++;
+      if (!g.trees[i] && plantable(g, i)) { g.trees[i] = { stage: 1, gardener: p.id }; g.log.push(`${p.name} tells a Sun story and plants a sapling.`); }
+      else g.log.push(`${p.name} tells a Sun story.`);
+    } else if (side === 'shade') {
+      p.shade++; p.pts += h.ring === 1 && g.rootX2 ? 4 : 2; p.regions.add(h.region); g.stats.shadeTold++;
+      if (o.shadeNeedsFirefly) p.fireflies--;
+      const tr = g.trees[i];
+      if (tr.stage === 1) {
+        tr.stage = 2;
+        if (tr.gardener !== p.id) g.players[tr.gardener].gardener++;
+        if (g.oakSeeds) { // an oak drops a seed: a new sapling inward, on an empty open space next to it
+          const c = g.adj[i].filter(j => g.hexes[j].ring > 0 && !g.trees[j]).sort((a, b) => g.hexes[a].ring - g.hexes[b].ring);
+          if (c.length) g.trees[c[0]] = { stage: 1, gardener: p.id };
+        }
+        g.log.push(`${p.name} tells a Shade story; the sapling grows into an oak.`);
+      } else g.log.push(`${p.name} tells a Shade story under an oak.`);
+      const l = g.players[lanternId];
+      if (l && o.neighbours.includes(l.id)) { l.lantern++; p.lantern++; g.log.push(`${l.name} holds the lantern and asks a follow-up.`); }
+      if (!g.awake && neededRoots(g).every(r => g.trees[r]?.stage === 2)) {
+        g.awake = true; g.awakeAt = g.season;
+        g.log.push('Every Root the table stands for is an oak. The Heartwood wakes!');
+      }
+    } else if (side === 'heartwood') {
+      p.heart = (p.heart || 0) + 1;
+      g.log.push(`${p.name} tells a Heartwood story.`);
+      const out = g.adj[i].find(j => !occupant(g, j));
+      if (out !== undefined) p.pos = out; // step back out to a Root so the Heartwood stays free
+    } else g.log.push(`${p.name} passes.`);
+    endTurn(g);
+  }
+
+  function recordMeetings(g) {
+    for (const p of g.players) if (p.pos >= 0)
+      for (const q of neighbours(g, p.pos, p)) g.met.add([p.id, q.id].sort((a, b) => a - b).join('-'));
+  }
+
+  function endTurn(g) {
+    recordMeetings(g);
+    g.turnsTaken++;
+    if (g.turnsTaken >= g.players.length * g.roundsPerSeason) {
+      g.metBySeason.push([...g.met]);
+      if (g.season >= 3) { g.phase = 'end'; g.turn = null; return; }
+      g.phase = 'dusk'; g.turn = null; return;
+    }
+    g.turnIdx = (g.turnIdx + 1) % g.players.length;
+    newTurn(g);
+  }
+
+  function nextSeason(g) { startSeason(g, g.season + 1); }
+
+  function score(g, p) {
+    const rootOak = r => g.trees[roots(g).find(i => g.hexes[i].region === r)]?.stage === 2;
+    const s = {
+      stories: p.pts + (p.heart || 0) * 4, // Sun 1, Shade 2, double at a Root; Heartwood 4
+      lantern: p.lantern, values: p.regions.size, gardener: p.gardener, bonus: p.bonus,
+      advocacy: p.value >= 0 && rootOak(p.value) ? 3 : 0, // stand-in: the real game counts every value in your alliance
+      awake: g.awake ? 3 : 0,
+    };
+    s.total = Object.values(s).reduce((a, b) => a + b, 0);
+    return s;
+  }
+
+  // ---- a simple bot, for the sim and the prototype's "let bots play" ----
+  function botTurn(g) {
+    const p = cur(g), r = g.rand;
+    let best = p.pos, bv = -1;
+    for (const d of [p.pos, ...reachable(g, p)]) {
+      const v = valueOf(g, p, d) + r() * 0.6;
+      if (v > bv) { bv = v; best = d; }
+    }
+    walkTo(g, p, best);
+    stop(g);
+    if (g.turn.teleport) {
+      const ring = g.hexes[p.pos].ring;
+      const c = g.hexes.map((h, i) => i).filter(i => g.hexes[i].ring === ring && !occupant(g, i));
+      let b = p.pos, v = -1;
+      for (const d of c) { const x = valueOf(g, p, d); if (x > v) { v = x; b = d; } }
+      step(g, b);
+    }
+    if (g.turn.sowing) {
+      const sp = sowSpots(g, p);
+      sow(g, sp.sort((a, b) => g.hexes[a].ring - g.hexes[b].ring)[0]);
+    }
+    const o = g.turn.options;
+    const side = o.heartwood ? 'heartwood' : o.shade ? 'shade' : 'sun';
+    const lantern = o.neighbours.length ? o.neighbours[Math.floor(r() * o.neighbours.length)] : null;
+    tell(g, side, lantern);
+  }
+
+  function valueOf(g, p, d) {
+    const h = g.hexes[d], tree = g.trees[d];
+    if (h.ring === 0) return 6;
+    const nb = g.adj[d].map(j => occupant(g, j)).filter(x => x && x !== p).length;
+    const newValue = p.regions.has(h.region) ? 0 : 1;
+    let v;
+    if (tree && (nb > 0 || p.fireflies > 0)) {
+      v = (h.ring === 1 && g.rootX2 ? 4 : 2) + (nb > 0 ? 1 : 0) + newValue;
+      if (h.ring === 1 && tree.stage === 1 && neededRoots(g).includes(d)) v += (p.value === h.region ? 1.5 : 0) + (g.team ? 1.5 : 0);
+    } else {
+      v = (h.ring === 1 && g.rootX2 ? 2 : 1) + newValue + (tree ? -0.5 : 0);
+      if (!tree && plantable(g, d) && g.team) v += (4 - h.ring) * 0.4;
+      if (h.ring === 1 && !tree && neededRoots(g).includes(d)) v += (p.value === h.region ? 1 : 0) + (g.team ? 1 : 0);
+    }
+    if (g.tokens[d] && !g.tokens[d].up) v += 0.7;
+    return v;
+  }
+
+  function walkTo(g, p, target) {
+    if (target === p.pos) return;
+    const prev = new Map([[p.pos, -1]]), q = [p.pos];
+    while (q.length) {
+      const i = q.shift();
+      if (i === target) break;
+      for (const j of g.adj[i]) if (!prev.has(j) && !occupant(g, j) && (g.hexes[j].ring > 0 || g.awake)) { prev.set(j, i); q.push(j); }
+    }
+    const path = [];
+    for (let i = target; i !== p.pos; i = prev.get(i)) path.unshift(i);
+    for (const j of path) step(g, j);
+  }
+
+  function botPlant(g) {
+    const v = Math.floor(g.rand() * 6), s = plantSpots(g, v);
+    plant(g, s[Math.floor(g.rand() * s.length)], s.some(i => g.hexes[i].region === v) ? v : g.hexes[s[0]].region);
+  }
+
+  return { buildHexes, plantable, neededRoots, VALUES, TOKENS, SEASONS, MIX, newGame, rng, roots, occupant, neighbours, cur, plantSpots, plant, reachable,
+    step, stop, sow, sowSpots, tell, nextSeason, score, botTurn, botPlant };
+})();
+
+const CARDS = [[{"theme":"What lights you up","seed":"What could you do for hours without noticing the time?","sun":"Tell us about a time you got other people excited about something you love.","shade":"What makes you care so much about your work?"},{"theme":"Cheering, not comparing","seed":"Whose good news made you really happy this year?","sun":"Tell us about a time someone else's success made you want to try harder.","shade":"If you stopped comparing yourself with others, what would you do differently?"},{"theme":"Stepping up first","seed":"When someone asks for a volunteer, are you the first to raise your hand, or the last?","sun":"Tell us about a time you helped before anyone asked you to.","shade":"What have you been wanting to start, but haven't yet?"},{"theme":"In young people's corner","seed":"What's the best thing a child or student has ever said to you?","sun":"Tell us about a time you did something extra for a young person who needed it.","shade":"Which students do you think are easiest to miss? (No names needed.)"},{"theme":"Joining in wholeheartedly","seed":"What will you always say yes to, even when you're tired?","sun":"Tell us about the last time you tried something new. How did it go?","shade":"What makes you hesitate to join in?"}],[{"theme":"Beyond what was asked","seed":"What's the best service you've ever had in a shop, café or restaurant?","sun":"Tell us about someone who did far more than you expected of them.","shade":"What would you like to do much better this year?"},{"theme":"Doing it right when no one's looking","seed":"What do you do that nobody notices when it's done well?","sun":"Tell us about a time you did something properly even though no one would check. Why did you?","shade":"What rule do you keep for yourself that nobody asked you to keep?"},{"theme":"Heart comes first","seed":"Who was the strictest but kindest teacher or boss you've had?","sun":"Tell us about a time you chose to be kind instead of getting it perfect.","shade":"How do you push for high standards and still stay kind?"},{"theme":"Raising the bar together","seed":"What's the best team you've ever been part of?","sun":"Tell us about a time your team did better than anyone expected.","shade":"What do you wish your team could do really well together?"},{"theme":"Getting better, kindly","seed":"Name something you're much better at now than five years ago.","sun":"Tell us how you got good at something that once felt impossible.","shade":"How do you know when something is good enough?"}],[{"theme":"Stronger because of it","seed":"What's the funniest story behind a scar, or something of yours that's broken?","sun":"Tell us about a hard time, big or small, that made you stronger.","shade":"What did a hard time teach you that you're now glad to know?"},{"theme":"When plans go wrong","seed":"What's the best thing that happened to you because a plan went wrong?","sun":"Tell us about a time something went wrong and you found a better way.","shade":"When your plans go wrong, how do you usually react?"},{"theme":"Hard words that helped","seed":"What advice did you ignore at first, but later realised was right?","sun":"Tell us about some hard feedback that ended up helping you.","shade":"What kind of feedback is still hard for you to hear?"},{"theme":"Steady for others","seed":"What's your secret trick for keeping calm when everything happens at once?","sun":"Tell us about a time you stayed calm because others needed you to.","shade":"What helps you stay strong for others when you're struggling inside?"},{"theme":"Not going it alone","seed":"What always cheers you up on a bad day?","sun":"Tell us about someone who helped you keep going when you wanted to give up.","shade":"Is it easy or hard for you to ask for help? Why?"}],[{"theme":"Belonging, not just fitting in","seed":"Where do you feel most relaxed?","sun":"Tell us about a time you felt left out, and what helped you feel welcome.","shade":"What makes you feel you truly belong somewhere?"},{"theme":"Dropping the act","seed":"What did you once pretend to like, just to fit in?","sun":"Tell us about a time you were honest about who you are, and it went better than you expected.","shade":"When do you feel most like yourself?"},{"theme":"Not having all the answers","seed":"What does everyone assume you can do, but you can't?","sun":"Tell us about a time saying “I don't know” helped.","shade":"When do you feel you have to pretend you know all the answers?"},{"theme":"Where you come from","seed":"What's a word or food from home that you always have to explain?","sun":"Tell us about a time sharing where you come from brought you closer to someone.","shade":"Which part of where you come from do you most want to bring into your work here?"},{"theme":"Many ways to learn","seed":"How do you learn a new gadget: read the manual, watch a video, or just try?","sun":"Tell us about someone who explained something hard in a way you finally understood.","shade":"What have you learned from someone who sees or learns things very differently from you?"}],[{"theme":"Changing your mind","seed":"What did you believe as a child that turned out to be completely untrue?","sun":"Tell us about a time someone changed your mind about something that mattered.","shade":"What's something you find very hard to change your mind about?"},{"theme":"Learning from mistakes","seed":"What's something you're bad at, and don't mind?","sun":"Tell us about a mistake that taught you a lot.","shade":"What has failure taught you that success never could?"},{"theme":"First impressions","seed":"Name a food you were sure you'd hate, until you tried it.","sun":"Tell us about a time your first impression of someone was completely wrong. (No names needed.)","shade":"When are you most likely to judge too quickly?"},{"theme":"Disagreeing well","seed":"What silly debate could you argue about forever? (Pineapple on pizza?)","sun":"Tell us about a time a disagreement led to a better decision.","shade":"How do you react when someone disagrees with you?"},{"theme":"Learning across differences","seed":"What's one thing from another culture that's now part of your everyday life?","sun":"Tell us about someone very different from you who taught you something you still use.","shade":"How do you feel when someone sees life very differently from you?"}],[{"theme":"Habits that last","seed":"What small habit have you kept for years?","sun":"Tell us about a habit that changed your life.","shade":"What habit are you trying to build right now?"},{"theme":"Things that run without you","seed":"What simple trick makes your daily life easier?","sun":"Tell us about something you set up that still worked well when you weren't there.","shade":"What part of your work would be hardest to hand over to someone else?"},{"theme":"Planting for others","seed":"If you could plant one tree anywhere in the world, where would it go?","sun":"Tell us about something someone started long ago that you're grateful for today.","shade":"What would you gladly start, even if someone else got the credit for finishing it?"},{"theme":"The long game","seed":"What's the longest you've ever waited for something, and was it worth it?","sun":"Tell us about something you worked on for years before you saw the results.","shade":"When are you tempted to take a shortcut?"},{"theme":"Starting with the end in mind","seed":"What would you put in a time capsule to open in 2050?","sun":"Tell us about a big goal you planned step by step. How did it go?","shade":"Ten years from now, what do you hope you'll thank yourself for doing this year?"}]];
+const HEARTWOOD = ["What do you want the people at this table to know about you that they might not?", "Who at this table has helped you grow, and how?", "What legacy do you want to leave in ZERA's forest?", "What would you want a student to say about you in 2035?", "What did today show you about this team?", "What promise would you make to this team for the year ahead?"];
+const NAMES = ['Aisyah', 'Wei Ling', 'Daniel', 'Priya', 'Farid', 'Mei', 'Hafiz', 'Kavitha', 'Jun Hao', 'Sarah'];
+const COLORS = ['#e53935', '#fb8c00', '#fdd835', '#43a047', '#00897b', '#1e88e5', '#5e35b1', '#d81b60', '#6d4c41', '#546e7a'];
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const V = Grove.VALUES;
+
+// Draws a forest. s: {hexes, trees, tokens, players, cur, need, awake, closedRing(ring), hl:Set, lit:Set}
+function drawBoard(svg, s, onClick) {
+  const S = 30, s3 = Math.sqrt(3), R = Math.max(...s.hexes.map(h => h.ring));
+  const px = h => [S * s3 * (h.q + h.r / 2), S * 1.5 * h.r];
+  const pts = (cx, cy, k = S - 1.5) => [...Array(6)].map((_, i) => { const a = Math.PI / 180 * (60 * i - 30); return `${(cx + k * Math.cos(a)).toFixed(1)},${(cy + k * Math.sin(a)).toFixed(1)}`; }).join(' ');
+  const op = R === 3 ? [1, 1, .78, .55] : [1, 1, .85, .68, .52];
+  let out = '';
+  for (let r = 0; r < 6; r++) {
+    const o = s.hexes.filter(h => h.ring === R && h.region === r).map(px);
+    const x = o.reduce((a, p) => a + p[0], 0) / o.length, y = o.reduce((a, p) => a + p[1], 0) / o.length;
+    const len = Math.hypot(x, y), ux = x / len, uy = y / len, D = len + S * 1.3;
+    const anchor = ux > .3 ? 'start' : ux < -.3 ? 'end' : 'middle';
+    out += `<text class="rlabel" text-anchor="${anchor}" x="${ux * D}" y="${uy * D}" fill="${V[r].color}">${V[r].icon} ${V[r].name}</text>`;
+  }
+  s.hexes.forEach((h, i) => {
+    const [x, y] = px(h), tree = s.trees[i], closed = s.closedRing?.(h.ring);
+    const base = h.ring === 0 ? '#7a4b2a' : V[h.region].color;
+    out += `<g class="hex ${s.hl?.has(i) ? 'hl' : ''}" data-i="${i}"><polygon class="base" points="${pts(x, y)}" fill="${base}" fill-opacity="${closed ? .16 : op[h.ring]}"/>`;
+    if (tree) out += `<polygon points="${pts(x, y, S - 5)}" fill="var(--shade)" fill-opacity=".5" pointer-events="none"/><text class="tree" x="${x}" y="${y - 6}">${tree.stage === 2 ? '🌳' : '🌱'}</text>`;
+    if (h.ring === 1 && s.need?.includes(i) && !(tree && tree.stage === 2)) out += `<polygon points="${pts(x, y, S - 4)}" fill="none" stroke="#f6d36b" stroke-width="2.2" stroke-dasharray="4 3" pointer-events="none"/>`;
+    if (h.ring === 0) out += `<text x="${x}" y="${y - 11}" class="hlabel">HEARTWOOD</text><text x="${x}" y="${y + 5}" class="tree">${s.awake ? '💛' : '💤'}</text>`;
+    const tok = s.tokens[i];
+    if (tok && !tok.up) out += `<text class="ticon" x="${x - 14}" y="${y - 14}" fill="rgba(255,255,255,.6)">✦</text>`;
+    else if (tok) out += `<text class="ticon" x="${x - 14}" y="${y - 14}" opacity=".55">${Grove.TOKENS[tok.kind][0]}</text>`;
+    const here = s.players.filter(p => p.pos === i);
+    here.forEach((p, k) => {
+      const n = here.length, ang = k / n * 2 * Math.PI, rad = n > 1 ? 11 : 0;
+      const cx = x + rad * Math.cos(ang), cy = y + 9 + rad * Math.sin(ang) * .7, cur = s.cur === p.id;
+      if (s.lit?.has(p.id)) out += `<circle cx="${cx}" cy="${cy}" r="15" fill="none" stroke="#f6d36b" stroke-width="2.5"/>`;
+      out += `<circle cx="${cx}" cy="${cy}" r="${cur ? 11 : 9.5}" fill="${p.color}" class="pawn ${cur ? 'cur' : ''}"/><text x="${cx}" y="${cy + 3.3}" class="pinit">${esc(p.name.slice(0, 2))}</text>`;
+    });
+    out += '</g>';
+  });
+  const xs = s.hexes.map(h => px(h)[0]), ys = s.hexes.map(h => px(h)[1]);
+  const W = Math.max(...xs) - Math.min(...xs) + 2 * S, H = Math.max(...ys) - Math.min(...ys) + 2 * S;
+  svg.setAttribute('viewBox', `${-W / 2 - 95} ${-H / 2 - 32} ${W + 190} ${H + 64}`);
+  svg.innerHTML = out;
+  svg.onclick = e => { const el = e.target.closest('.hex'); if (el && onClick) onClick(+el.dataset.i); };
+}
+
+// ---- the playable board ----
+let g, ui = {};
+function newProto(n) {
+  g = Grove.newGame(NAMES.slice(0, n), { colors: COLORS, roundsPerSeason: n <= 6 ? 2 : 1 });
+  ui = { value: null };
+  render();
+}
+const neededRoots = () => Grove.neededRoots(g);
+const nameOf = id => g.players[id].name;
+
+function render() {
+  const p = g.phase === 'end' || g.phase === 'dusk' ? null : Grove.cur(g), t = g.turn;
+  let hl = new Set(), lit = new Set();
+  if (g.phase === 'plant' && ui.value != null) hl = new Set(Grove.plantSpots(g, ui.value));
+  if (g.phase === 'turn' && t) {
+    if (t.teleport) hl = new Set(g.hexes.map((h, i) => i).filter(i => g.hexes[i].ring === g.hexes[p.pos].ring && !Grove.occupant(g, i)));
+    else if (t.sowing) hl = new Set(Grove.sowSpots(g, p));
+    else if (!t.stopped) hl = Grove.reachable(g, p);
+    if (t.stopped && t.options) t.options.neighbours.forEach(id => lit.add(id));
+  }
+  drawBoard($('psvg'), { hexes: g.hexes, trees: g.trees, tokens: g.tokens, players: g.players, cur: p?.id, need: g.phase === 'plant' ? [] : neededRoots(), awake: g.awake, hl, lit }, onBoardClick);
+  $('ptitle').textContent = g.phase === 'plant' ? 'Plant your seed' : g.phase === 'end' ? (g.awake ? 'The Heartwood is awake' : 'The Heartwood sleeps on') :
+    `Season ${g.season} · ${Grove.SEASONS[g.season - 1]}${g.phase === 'dusk' ? ' · Dusk' : ''}`;
+  const need = g.phase === 'plant' ? [] : neededRoots();
+  $('proots').innerHTML = g.phase === 'plant' ? '<span class="muted">The Roots needed depend on which values the table stands for.</span>' :
+    `<b style="margin-right:.3em">Roots</b>` + need.map(i => { const tr = g.trees[i], v = V[g.hexes[i].region]; return `<span title="${v.name}">${v.icon} ${tr ? (tr.stage === 2 ? '🌳' : '🌱') : '·'}</span>`; }).join('') +
+    `<span class="muted">${need.filter(i => g.trees[i]?.stage === 2).length}/${need.length} oaks</span>`;
+  $('pmain').innerHTML = mainHTML(p, t);
+  $('plist').innerHTML = g.players.map(q => { const sc = Grove.score(g, q);
+    return `<div class="${p && q.id === p.id ? 'cur' : ''}"><span class="chip"><i style="background:${q.color}"></i>${esc(q.name)} ${q.value >= 0 ? V[q.value].icon : ''}${q.fireflies ? ' ✨' : ''}</span><span class="muted">${q.sun}☀️ ${q.shade}🌑 · <b style="color:var(--ink)">${sc.total}</b></span></div>`; }).join('');
+  $('plog').innerHTML = g.log.slice(-14).reverse().map(l => `<div>${esc(l)}</div>`).join('');
+  $('botTurn').disabled = g.phase === 'end';
+  $('botAll').disabled = g.phase === 'end';
+}
+
+function mainHTML(p, t) {
+  if (g.phase === 'plant') {
+    return `<h3>${esc(p.name)}: which value do you stand for?</h3><div class="row">${V.map((v, i) => `<button class="ghost ${ui.value === i ? 'sel' : ''}" data-val="${i}">${v.icon} ${v.name}</button>`).join('')}</div>
+      ${ui.value != null ? `<p class="muted">Tap a glowing space at the forest edge of ${V[ui.value].name}. A sapling grows where you stand.</p>` : '<p class="muted">They say it aloud, and why. The Keeper taps it.</p>'}`;
+  }
+  if (g.phase === 'dusk') {
+    const pairs = g.metBySeason[g.metBySeason.length - 1].map(k => k.split('-').map(Number));
+    return `<h3>🌙 Dusk</h3><p>Crossed paths this season: these pairs could ally tonight.</p>
+      <p>${pairs.length ? pairs.map(([a, b]) => `<span class="tier" style="margin:2px">${esc(nameOf(a))} · ${esc(nameOf(b))}</span>`).join(' ') : '<span class="muted">nobody stood next to anyone</span>'}</p>
+      <p class="muted">The real Dusk (choices on phones, Bond cards, statements) is unchanged and not in the prototype.</p><button data-act="season">Next season →</button>`;
+  }
+  if (g.phase === 'end') {
+    const rows = g.players.map(q => ({ q, s: Grove.score(g, q) })).sort((a, b) => b.s.total - a.s.total);
+    return `<h3>${g.awake ? `💛 The Heartwood woke in season ${g.awakeAt}. Everyone +3.` : '🍂 The grove didn\'t reach every Root. The Heartwood sleeps on.'}</h3>
+      <div style="overflow-x:auto"><table><tr><th>Player</th><th>Stories</th><th>🏮</th><th>Values</th><th>Gardener</th><th>✨</th><th>Root</th><th>💛</th><th>Total</th></tr>
+      ${rows.map(({ q, s }) => `<tr><td>${esc(q.name)}</td><td>${s.stories}</td><td>${s.lantern}</td><td>${s.values}</td><td>${s.gardener}</td><td>${s.bonus}</td><td>${s.advocacy}</td><td>${s.awake}</td><td><b>${s.total}</b></td></tr>`).join('')}</table></div>
+      <p class="muted">Then, as today: alliance stories, Secret Owl guesses, the tribute chain; trust adds to these scores.</p><button data-act="again">Play again</button>`;
+  }
+  const turnNo = Math.floor(g.turnsTaken / g.players.length) + 1;
+  let h = `<div class="row" style="justify-content:space-between"><h3 style="margin:0">${esc(p.name)}'s turn</h3><span class="muted">round ${turnNo} of ${g.roundsPerSeason}</span></div>`;
+  if (t.event) h += `<div class="event">${Grove.TOKENS[t.event][0]} <b>${Grove.TOKENS[t.event][1]}</b>: ${Grove.TOKENS[t.event][2]}</div>`;
+  if (t.teleport) return h + '<p>Tap any empty space in this ring.</p>';
+  if (t.sowing) return h + '<p>Tap an empty open space next to you to plant a sapling.</p>';
+  if (!t.stopped) {
+    const here = g.hexes[p.pos], tree = g.trees[p.pos], nb = Grove.neighbours(g, p.pos, p).length;
+    const what = here.ring === 0 ? 'the Heartwood' : tree ? `under ${tree.stage === 2 ? 'an oak 🌳' : 'a sapling 🌱'} · ${nb ? `${nb} Neighbour${nb > 1 ? 's' : ''}: Shade possible` : 'no Neighbour: Sun only'}` :
+      `open ground ☀️ · ${Grove.plantable(g, p.pos) ? 'a sapling would take root' : 'too far from a tree for a sapling'}`;
+    return h + `<p><b>Walk:</b> ${t.steps} step${t.steps === 1 ? '' : 's'} left. Tap a glowing space.</p><p class="muted">Here: ${what}</p><button data-act="stop">Stop here and discover</button>`;
+  }
+  const o = t.options, region = g.hexes[p.pos].region;
+  if (!ui.side) {
+    if (o.heartwood) return h + `<p>The Heartwood is awake. Tell a Heartwood story (4 points), then step back out to a Root.</p><button data-side="heartwood">💛 Heartwood story</button><button class="ghost" data-side="pass">Pass</button>`;
+    const why = !o.tree ? 'Open ground: no shade here.' : o.neighbours.length ? '' : o.shadeNeedsFirefly ? 'No Neighbour, but your Firefly lights the way (used up).' : 'No one goes into the Shade alone: nobody is next to you.';
+    return h + `<p>${V[region].icon} <b>${V[region].name}</b> · ${o.tree ? (o.tree === 2 ? 'under an oak 🌳' : 'under a sapling 🌱') : 'open ground ☀️'}</p>
+      <button data-side="sun">☀️ Sun story${o.plants ? ' · plants a sapling' : ''}</button>
+      <button data-side="shade" ${o.shade ? '' : 'disabled'}>🌑 Shade story${o.tree === 1 ? ' · grows an oak' : ''}</button>
+      <button class="ghost" data-side="pass">Pass</button>${why ? `<p class="muted">${why}</p>` : ''}`;
+  }
+  const card = ui.side === 'heartwood' ? HEARTWOOD[ui.card % HEARTWOOD.length] : CARDS[region][ui.card][ui.lighter ? 'seed' : ui.side];
+  const theme = ui.side === 'heartwood' ? 'Heartwood' : CARDS[region][ui.card].theme;
+  h += `<span class="tier ${ui.side === 'shade' ? 'shade' : 'sun'}">${ui.side === 'shade' ? '🌑 Shade' : ui.side === 'heartwood' ? '💛 Heartwood' : '☀️ Sun'} · ${esc(theme)}${ui.lighter ? ' · lighter' : ''}</span><p class="prompt">${esc(card)}</p>`;
+  if (ui.side === 'shade' && o.neighbours.length) h += `<p><b>🏮 Who holds the lantern?</b> They ask one follow-up; you both get +1.</p><div class="row">${o.neighbours.map(id => `<button class="ghost ${ui.lantern === id ? 'sel' : ''}" data-lantern="${id}">${esc(nameOf(id))}</button>`).join('')}</div>`;
+  h += `<div class="row" style="margin-top:.5em"><button data-act="done">They're done sharing ✓</button>${ui.side !== 'heartwood' && !ui.lighter ? '<button class="ghost" data-act="lighter">Lighter question</button>' : ''}</div>`;
+  return h;
+}
+
+function act(fn) { try { fn(); } catch (e) { flash(e.message); } render(); }
+function flash(m) { g.log.push('⚠️ ' + m); }
+
+function onBoardClick(i) {
+  const t = g.turn;
+  if (g.phase === 'plant') { if (ui.value != null && Grove.plantSpots(g, ui.value).includes(i)) act(() => { Grove.plant(g, i, ui.value); ui.value = null; }); return; }
+  if (g.phase !== 'turn' || !t) return;
+  if (t.teleport) return act(() => Grove.step(g, i));
+  if (t.sowing) return act(() => Grove.sow(g, i));
+  if (t.stopped) return;
+  if (!Grove.reachable(g, Grove.cur(g)).has(i)) return;
+  act(() => walk(i));
+}
+function walk(target) { // step along the shortest path through empty spaces
+  const p = Grove.cur(g), prev = new Map([[p.pos, -1]]), q = [p.pos];
+  while (q.length) { const i = q.shift(); if (i === target) break;
+    for (const j of g.adj[i]) if (!prev.has(j) && !Grove.occupant(g, j) && (g.hexes[j].ring > 0 || g.awake)) { prev.set(j, i); q.push(j); } }
+  const path = []; for (let i = target; i !== p.pos; i = prev.get(i)) path.unshift(i);
+  path.forEach(j => Grove.step(g, j));
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || !b.closest('#play')) return;
+  if (b.dataset.val) { ui.value = +b.dataset.val; return render(); }
+  if (b.dataset.side) { const s = b.dataset.side;
+    if (s === 'pass') return act(() => { Grove.tell(g, 'pass'); ui = {}; });
+    ui.side = s; ui.card = Math.floor(Math.random() * (s === 'heartwood' ? HEARTWOOD.length : 5)); ui.lantern = null; return render(); }
+  if (b.dataset.lantern) { ui.lantern = +b.dataset.lantern; return render(); }
+  if (b.dataset.n) return newProto(+b.dataset.n);
+  switch (b.dataset.act) {
+    case 'stop': return act(() => Grove.stop(g));
+    case 'lighter': ui.lighter = true; return render();
+    case 'done': return act(() => { const side = ui.lighter && ui.side === 'shade' ? 'sun' : ui.side; Grove.tell(g, side, side === 'shade' ? ui.lantern : null); ui = {}; });
+    case 'season': return act(() => Grove.nextSeason(g));
+    case 'again': return newProto(g.players.length);
+  }
+});
+function botFinishTurn() {
+  if (g.phase === 'plant') { ui.value = null; return Grove.botPlant(g); }
+  if (g.phase === 'dusk') return Grove.nextSeason(g);
+  const t = g.turn; ui = {};
+  if (!t.stopped) return Grove.botTurn(g);
+  const p = Grove.cur(g);
+  if (t.teleport) { const c = g.hexes.map((h, i) => i).filter(i => g.hexes[i].ring === g.hexes[p.pos].ring && !Grove.occupant(g, i)); Grove.step(g, c[0] ?? p.pos); }
+  if (t.sowing) Grove.sow(g, Grove.sowSpots(g, p)[0]);
+  const o = t.options; Grove.tell(g, o.heartwood ? 'heartwood' : o.shade ? 'shade' : 'sun', o.neighbours[0] ?? null);
+}
+$('botTurn').onclick = () => act(botFinishTurn);
+$('botAll').onclick = () => act(() => { let n = 0; while (g.phase !== 'end' && n++ < 500) botFinishTurn(); });
+$('pcount').innerHTML = [4, 5, 6, 8, 10].map(n => `<button class="ghost" data-n="${n}">${n}</button>`).join('');
+
+// ---- static pictures: tables, snapshots, today's board ----
+$('tokTable').innerHTML += Object.entries(Grove.MIX).map(([k, n]) => `<tr><td style="font-size:1.3rem">${Grove.TOKENS[k][0]}</td><td><b>${Grove.TOKENS[k][1]}</b></td><td>${n}</td><td>${Grove.TOKENS[k][2]}</td></tr>`).join('') +
+  `<tr><td style="font-size:1.3rem">🐿️</td><td><s>Squirrel</s></td><td>0 (was 10)</td><td>Removed: the lantern holder's follow-up does its job.</td></tr>`;
+$('cardTable').innerHTML += [[2, 1], [3, 1], [4, 1], [0, 4], [5, 3]].map(([r, c]) => `<tr><td>${V[r].icon} ${V[r].name} · ${esc(CARDS[r][c].theme)}</td><td>${esc(CARDS[r][c].sun)}</td><td>${esc(CARDS[r][c].shade)}</td></tr>`).join('');
+
+function snapshots() {
+  const sg = Grove.newGame(NAMES.slice(0, 6), { colors: COLORS, rand: Grove.rng(43), roundsPerSeason: 2 });
+  while (sg.phase === 'plant') Grove.botPlant(sg);
+  const shot = label => ({ label, trees: JSON.parse(JSON.stringify(sg.trees)), tokens: JSON.parse(JSON.stringify(sg.tokens)), players: sg.players.map(p => ({ ...p })), awake: sg.awake });
+  const shots = [shot('Start: six seeds at the forest edge')];
+  while (sg.phase !== 'end') { if (sg.phase === 'dusk') { shots.push(shot(`After season ${sg.season}`)); Grove.nextSeason(sg); } else Grove.botTurn(sg); }
+  shots.push(shot(sg.awake ? `End: the Heartwood woke in season ${sg.awakeAt}` : 'End: the Heartwood sleeps on'));
+  const pick = [shots[0], shots[2], shots[shots.length - 1]];
+  $('snaps').innerHTML = pick.map((s, k) => `<div class="panel" style="padding:8px"><svg class="board" id="snap${k}"></svg><div class="caption">${s.label}</div></div>`).join('');
+  pick.forEach((s, k) => drawBoard($('snap' + k), { hexes: sg.hexes, trees: s.trees, tokens: s.tokens, players: s.players, need: Grove.neededRoots(sg), awake: s.awake }));
+  // Grove start for the comparison tab
+  drawBoard($('gsvg'), { hexes: sg.hexes, trees: shots[0].trees, tokens: shots[0].tokens, players: shots[0].players, need: Grove.neededRoots(sg) });
+}
+function todayBoard() {
+  const hexes = Grove.buildHexes(3), r = Grove.rng(7), tokens = {};
+  hexes.forEach((h, i) => { if (i && r() < 26 / 36) tokens[i] = { kind: 'mushroom', up: false }; });
+  const edge = hexes.map((h, i) => i).filter(i => hexes[i].ring === 3);
+  const players = NAMES.slice(0, 6).map((n, k) => ({ id: k, name: n, color: COLORS[k], pos: k < 3 ? edge[4] : edge[2 + k * 3] }));
+  drawBoard($('tsvg'), { hexes, trees: {}, tokens, players, closedRing: ring => ring < 3 });
+}
+snapshots(); todayBoard(); newProto(6);
+</script>
+</body></html>
