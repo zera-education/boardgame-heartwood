@@ -750,7 +750,8 @@ function sharePanel(v, me) {
       <div class="tbox"><div class="rays"></div>${t ? A.treasure(t.id, 92) : MYSTERY(80)}</div>
       <h2 class="tname">${esc(t?.name || 'A treasure')}</h2>
       ${t?.meaning ? `<p class="meaning">${esc(t.meaning)}</p>` : ''}
-      <p class="small center">${who} found it! <b>Everyone answers in one sentence:</b></p>
+      <p class="small center">${s.by ? (s.by === me.id ? 'You' : esc(player(s.by)?.name || '?')) : who} found it. Everyone answers in one sentence, one at a time${s.of ? ` (${s.seq} of ${s.of})` : ''}.</p>
+      <p class="center"><b>${isMe ? 'Your turn: answer in one sentence.' : `Now: ${who}`}</b></p>
       <div class="prompt">${esc(s.prompt)}</div>${timer}
       ${trustBlock(v, me, s, isMe)}` };
   }

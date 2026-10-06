@@ -59,7 +59,7 @@ var valueCards = [6][][3]string{
 		{"What did you believe as a child that turned out to be completely untrue?", "Tell us about a time someone changed your mind about something that mattered.", "What's something you find very hard to change your mind about?"},                // Changing your mind
 		{"What's something you're bad at, and don't mind?", "Tell us about a mistake that taught you a lot.", "What has failure taught you that success never could?"},                                                                                 // Learning from mistakes
 		{"Name a food you were sure you'd hate, until you tried it.", "Tell us about a time your first impression of someone was completely wrong. (No names needed.)", "When are you most likely to judge too quickly?"},                              // First impressions
-		{"What silly debate could you argue about forever? (Pineapple on pizza?)", "Tell us about a time a disagreement led to a better decision.", "How do you react when someone disagrees with you?"},                                               // Disagreeing well
+		{"What silly debate could you argue about forever?", "Tell us about a time a disagreement led to a better decision.", "How do you react when someone disagrees with you?"},                                                                     // Disagreeing well
 		{"What's one thing from another culture that's now part of your everyday life?", "Tell us about someone very different from you who taught you something you still use.", "How do you feel when someone sees life very differently from you?"}, // Learning across differences
 	},
 	{ // Sustainability

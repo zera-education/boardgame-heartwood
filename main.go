@@ -521,7 +521,7 @@ func buildView(g *Game, pid, secret, host string) map[string]any {
 	}
 	if s := g.openShare(); s != nil {
 		sv := map[string]any{"idx": s.Idx, "kind": s.Kind, "player": s.Player, "prompt": s.Prompt, "sub": s.Sub,
-			"trustCount": len(s.Trusted), "iGave": me != nil && s.Trusted[me.ID]}
+			"trustCount": len(s.Trusted), "iGave": me != nil && s.Trusted[me.ID], "by": s.By, "seq": s.Seq, "of": s.Of}
 		if s.Kind == "ring" {
 			sv["sub"] = s.Ring
 		}

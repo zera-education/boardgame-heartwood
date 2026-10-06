@@ -557,12 +557,33 @@ func TestSpringsTreasuresAndFog(t *testing.T) {
 		t.Fatalf("treasure share %+v", s)
 	}
 	v := buildView(g, q.ID, q.Secret, "")
-	if sv := v["share"].(map[string]any); sv["sub"] != "lantern" || sv["kind"] != "treasure" {
+	sv := v["share"].(map[string]any)
+	if sv["sub"] != "lantern" || sv["kind"] != "treasure" {
 		t.Fatalf("view share %v", sv)
 	}
 	x.fails(x.phone(q, "trust", Action{}), "trust for a treasure moment")
 	x.fails(x.as(p, "take", own), "taking while the group answers")
-	x.must(x.host("doneShare", Action{}))
+	// everyone answers in turn, the finder first, each with their own 10-second timer
+	if len(g.Shares) != len(g.Order) || s.By != p.ID || s.Seq != 1 || s.Of != len(g.Order) || sv["by"] != p.ID {
+		t.Fatalf("treasure round: %d shares for %d players, first %+v", len(g.Shares), len(g.Order), s)
+	}
+	seen := map[string]bool{}
+	for k := 1; k <= len(g.Order); k++ {
+		s := g.openShare()
+		if s == nil || s.Kind != "treasure" || s.Seq != k || seen[s.Player] || g.TimerShare != s.Idx || g.TimerEnd == 0 {
+			t.Fatalf("treasure answer %d: %+v (timer for %d, ends %d)", k, s, g.TimerShare, g.TimerEnd)
+		}
+		seen[s.Player] = true
+		end := g.TimerEnd
+		g.TimerEnd = end - 1 // the next answer must get a fresh timer
+		x.must(x.host("doneShare", Action{}))
+		if k < len(g.Order) && g.TimerEnd == end-1 {
+			t.Fatal("the timer did not reset for the next person")
+		}
+	}
+	if g.TimerEnd != 0 || g.TimerShare != 0 {
+		t.Fatal("the share timer outlived the treasure round")
+	}
 	x.fails(x.as(p, "sow", own), "sowing where a treasure lies")
 	x.must(x.as(p, "take", own))
 	if p.Treasure != "lantern" || g.Tiles[tr].Treasure != "" || g.Tiles[tr].Kind != "treasure" {

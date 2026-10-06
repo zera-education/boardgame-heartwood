@@ -140,7 +140,11 @@ body.k-lost .k-night { filter: brightness(.55) saturate(.7); }
 .k-h.on .k-rim-o { stroke: #241204; stroke-width: 7.5; stroke-linejoin: round; opacity: .5; }
 .k-h.on .k-rim { stroke: var(--rc, #fff2a0); fill: var(--rc, #fff2a0); stroke-width: 3.6; stroke-linejoin: round; animation: k-rim 1.15s ease-in-out infinite; }
 .k-h.two .k-rim { stroke: #8fe6ff; fill: #8fe6ff; stroke-dasharray: 8 5; }
-.k-h.on:hover .k-rim { fill-opacity: .42 !important; animation: none; }
+.k-h.on:hover .k-rim, .k-h.on.hov .k-rim { fill-opacity: .42 !important; animation: none; }
+/* the hex under the pointer (or under the medallion you point at) shows itself, target or not */
+.k-h:not(.on):hover .k-rim, .k-h:not(.on).hov .k-rim { stroke: rgba(255, 255, 255, .75); fill: #fff; fill-opacity: .1; stroke-width: 2.4; }
+.k-Lmed .k-med { pointer-events: visiblePainted; cursor: pointer; }
+.k-foot { pointer-events: none; }
 .k-hitp { fill: transparent; pointer-events: all; }
 .k-h.on .k-hitp { cursor: pointer; }
 @keyframes k-rim { 0%, 100% { stroke-opacity: 1; fill-opacity: .1; } 50% { stroke-opacity: .5; fill-opacity: .3; } }

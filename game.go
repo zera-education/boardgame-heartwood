@@ -195,6 +195,11 @@ type Share struct {
 	Sub     string          `json:"sub"`  // tagline, or treasure id
 	Ring    int             `json:"ring"` // ring cards: the ring
 	Trusted map[string]bool `json:"trusted"`
+	// A treasure's question goes round the whole table, one share per person:
+	// By found it, and this is answer Seq of Of.
+	By  string `json:"by,omitempty"`
+	Seq int    `json:"seq,omitempty"`
+	Of  int    `json:"of,omitempty"`
 }
 
 // Event is one thing that happened, for the Keeper screen's animation.
@@ -228,6 +233,7 @@ type Game struct {
 	EventSeq    int                  `json:"eventSeq"`
 	TimerEnd    int64                `json:"timerEnd"`
 	TimerLabel  string               `json:"timerLabel"`
+	TimerShare  int                  `json:"timerShare"` // the share the running timer belongs to (0: none)
 	Version     int                  `json:"version"`
 	Rejoin      map[string]RejoinPin `json:"rejoin"`
 }
@@ -494,6 +500,30 @@ func (g *Game) share(kind string, p *Player, prompt, sub string, ring int) {
 		Ring: ring, Trusted: map[string]bool{}})
 }
 
+// ShareSeconds is the timer that starts by itself when a share opens: the
+// opening "why" and each person's one sentence for a treasure. Other shares
+// start with no timer (the Keeper can start one).
+var ShareSeconds = map[string]int{"why": 10, "treasure": 10}
+
+// syncShareTimer gives every share its own timer: when the open share changes,
+// the old share's timer goes, and the new one's starts if its kind has one.
+func (g *Game) syncShareTimer() {
+	s, idx := g.openShare(), 0
+	if s != nil {
+		idx = s.Idx
+	}
+	if idx == g.TimerShare {
+		return
+	}
+	if g.TimerShare != 0 || s != nil {
+		g.TimerEnd, g.TimerLabel = 0, ""
+	}
+	g.TimerShare = idx
+	if s != nil && ShareSeconds[s.Kind] > 0 {
+		g.setTimer(ShareSeconds[s.Kind], "Share")
+	}
+}
+
 func (g *Game) openShare() *Share {
 	if len(g.Shares) == 0 {
 		return nil
@@ -733,7 +763,20 @@ func (g *Game) explore(me *Player, peekHex int) error {
 		tr := treasureByID(t.Treasure)
 		g.logf("%s explores and finds %s %s!", me.Name, tr.Icon, tr.Name)
 		g.event("treasure", Event{"hex": me.Pos, "treasure": tr.ID})
-		g.share("treasure", me, tr.Question, tr.ID, 0)
+		// everyone answers, one at a time, starting with the finder and going round the table
+		start := 0
+		for k, id := range g.Order {
+			if id == me.ID {
+				start = k
+			}
+		}
+		for k := range g.Order {
+			if p := g.player(g.Order[(start+k)%len(g.Order)]); p != nil {
+				g.share("treasure", p, tr.Question, tr.ID, 0)
+				s := g.Shares[len(g.Shares)-1]
+				s.By, s.Seq, s.Of = me.ID, k+1, len(g.Order)
+			}
+		}
 	case "spring":
 		g.logf("%s explores and finds a spring 💧.", me.Name)
 	default:
@@ -1220,6 +1263,7 @@ func (g *Game) Recognition() []Recognition {
 // ---- actions ----
 
 func (g *Game) Apply(a Action) error {
+	defer g.syncShareTimer()
 	isHost := a.Host != "" && a.Host == g.HostSecret
 	if isHost && a.As == "" && keeperActs[a.Type] && (g.Phase == PhaseEnter || g.Phase == PhaseTurn) {
 		// Without "as", the Keeper acts for whoever's turn it is.

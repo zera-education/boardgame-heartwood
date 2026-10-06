@@ -36,6 +36,7 @@
 <div id="k-moment" hidden></div>
 <script src="common.js"></script>
 <script src="art.js"></script>
+<script src="recorder.js"></script>
 <script>
 'use strict';
 const $ = id => document.getElementById(id);
@@ -246,6 +247,11 @@ function buildBoard(v) {
   const hg = [];
   L.hit.querySelectorAll('.k-h').forEach(g => (hg[+g.dataset.i] = g));
   L.hit.addEventListener('click', e => { const g = e.target.closest('.k-h'); if (g) onHex(+g.dataset.i); });
+  // tapping a medallion means the hex it stands on; pointing at one lights that hex
+  L.med.addEventListener('click', e => { const m = e.target.closest('.k-med'); if (m && m.dataset.hex) onHex(+m.dataset.hex); });
+  const hov = i => { L.hit.querySelector('.k-h.hov')?.classList.remove('hov'); if (i != null) L.hit.querySelector(`.k-h[data-i="${i}"]`)?.classList.add('hov'); };
+  L.med.addEventListener('mouseover', e => { const m = e.target.closest('.k-med'); hov(m ? m.dataset.hex : null); });
+  L.med.addEventListener('mouseout', e => { if (!e.relatedTarget?.closest?.('.k-med')) hov(null); });
   L.med.innerHTML = order.map(i => `<g data-m="${i}"></g>`).join('');
   const mg = [];
   L.med.querySelectorAll('[data-m]').forEach(g => (mg[+g.dataset.m] = g));
@@ -347,22 +353,23 @@ function patchObj(v, i, force) {
 const release = (m, i) => { m.delete(i); const v = HW.view; if (!v || !B) return; m === hold.tile ? patchTile(v, i, true) : patchObj(v, i, true); };
 
 // where players stand on a hex: [dx, dy, scale] for the k-th of n (up to 12 ring the World Tree's trunk)
+// Where a medallion stands on its hex: [dx, dy, scale] from the hex centre (its ground point). Everyone stays
+// inside their own hex, in front of the plant (which grows at the centre), so it is clear where each player is.
 function spot(i, k, n) {
   if (i === 0) {
-    if (n === 1) return [0, 30, .95];
-    // a horseshoe open at the back, so nobody stands in front of the hollow: front first, then alternating sides
-    const sc = n <= 4 ? .85 : n <= 8 ? .72 : .62, rx = n <= 4 ? 52 : 62, ry = n <= 4 ? 24 : 30;
-    const span = n <= 4 ? Math.PI * .8 : Math.PI * 1.62, F = Math.PI / 2;
-    const angs = [...Array(n)].map((_, j) => F - span / 2 + j * span / (n - 1)).sort((a, b) => Math.abs(a - F) - Math.abs(b - F) || a - b);
-    const a = angs[k];
-    return [rx * Math.cos(a), 8 + ry * Math.sin(a), sc];
+    // the World Tree: a crowd in front of the trunk, rows of up to 5, still on the centre hex
+    if (n === 1) return [0, 16, .82];
+    const sc = n <= 3 ? .7 : n <= 6 ? .58 : .5, per = n <= 3 ? n : n <= 6 ? 3 : n <= 10 ? 5 : 6;
+    const rows = Math.ceil(n / per), row = Math.floor(k / per), inRow = Math.min(per, n - row * per), col = k % per;
+    const gap = n <= 3 ? 22 : n <= 6 ? 19 : 13;
+    return [(col - (inRow - 1) / 2) * gap, 20 - (rows - 1 - row) * 9, sc];
   }
-  // beside the plant, not on it: front-right first, then front-left, then the front
-  if (n === 1) return [21, 10, 1];
-  if (n === 2) return [[-21, 8, .92], [21, 10, .92]][k];
-  if (n === 3) return [[-22, 5, .82], [22, 5, .82], [0, 16, .82]][k];
-  const sc = n <= 6 ? .68 : .56, a = Math.PI / 2 + (k - (n - 1) / 2) * (2 * Math.PI / n) * .9;
-  return [24 * Math.cos(a), 4 + 13 * Math.sin(a), sc];
+  if (n === 1) return [13, 12, .9];
+  if (n === 2) return [[-12, 11, .8], [13, 13, .8]][k];
+  if (n === 3) return [[-15, 8, .68], [15, 8, .68], [0, 16, .68]][k];
+  // a little crowd: an oval in front of the centre
+  const sc = n <= 6 ? .58 : .5, a = Math.PI / 2 + (k - (n - 1) / 2) * (2 * Math.PI / n) * .95;
+  return [19 * Math.cos(a), 9 + 7 * Math.sin(a), sc];
 }
 function medState(v, p) {
   if ((v.phase === 'enter' || v.phase === 'turn') && v.current === p.id) return 'turn';
@@ -389,7 +396,7 @@ function patchMeds(v, moved) {
       m = B.meds[p.id] = { g, mv: g.firstChild, sq: g.firstChild.firstChild, mb: g.firstChild.firstChild.firstChild, key: '', hex: -1 };
     }
     if (m.hex !== at) {
-      B.mg[at].appendChild(m.g); m.hex = at;
+      B.mg[at].appendChild(m.g); m.hex = at; m.g.dataset.hex = at;
       // a player who just joined pops in
       if (v.phase === 'lobby' && prevView && !matchMedia('(prefers-reduced-motion: reduce)').matches)
         m.mv.animate([{ transform: 'translateY(-60px) scale(.3)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 650, easing: SPRING });
@@ -418,7 +425,9 @@ function paintMed(v, p, label) {
   const key = [photoURL(p), p.name, p.color, o.water, o.fruit, o.treasure, st, label ? 1 : 0].join('|');
   if (m.key === key) return;
   m.key = key;
-  m.mb.innerHTML = ART.medallion({ photo: photoURL(p), name: p.name, color: p.color, water: o.water, fruit: o.fruit, treasure: o.treasure, state: st, r: MED_R, label });
+  // a ring in the player's colour on the hex floor marks exactly where they stand
+  m.mb.innerHTML = `<ellipse class="k-foot" rx="${(MED_R * 1.3).toFixed(1)}" ry="${(MED_R * .62).toFixed(1)}" fill="${esc(p.color)}" fill-opacity=".38" stroke="${esc(p.color)}" stroke-width="2.4"/>`
+    + ART.medallion({ photo: photoURL(p), name: p.name, color: p.color, water: o.water, fruit: o.fruit, treasure: o.treasure, state: st, r: MED_R, label });
 }
 const repaintMed = pid => { const v = HW.view, p = HW.player(pid); if (v && p && B?.meds[pid]) { const n = v.players.filter(q => q.pos === p.pos).length; paintMed(v, p, n <= 2); } };
 
@@ -927,6 +936,8 @@ function render(v) {
   renderPop(v);
   renderDrawer(v);
   renderModal(v);
+  // recording each share (web/recorder.js): it watches the open share and records the Keeper's microphone
+  window.HWRec?.view(v);
   if (v.phase === 'lobby' || prevView?.phase === 'lobby') fit();
   prevView = v;
 }
@@ -1209,7 +1220,7 @@ function shareHTML(v) {
   let h = `<div class="k-card k-card-${s.kind}" style="--cc:${color}"><span class="k-sprig tr big">${I.sprig(80, true)}</span><div class="k-card-head"><div class="k-card-art">${head}</div><div class="k-card-kind">${kind}</div></div>
     <div class="k-card-body">${tre ? `<div class="k-card-mean">${esc(tre.meaning)}</div>` : ''}<div class="k-card-q">${esc(s.prompt)}</div>${sub ? `<div class="k-card-sub">${esc(sub)}</div>` : ''}`;
   h += s.kind === 'treasure'
-    ? `<div class="k-card-who">${p ? `${chip(p, 40)}<span>found it · everyone answers in one sentence</span>` : ''}</div>`
+    ? `<div class="k-card-who">${p ? `${chip(p, 46)}<span><b>${s.of ? `answer ${s.seq} of ${s.of}` : 'answers'}</b> · one sentence each, round the table${s.by && HW.player(s.by) ? ` · found by ${esc(HW.player(s.by).name)}` : ''}</span>` : ''}</div>`
     : `<div class="k-card-who">${chip(p, 46)}<span>shares · listeners give trust on their phones</span><span class="k-trust">${I.acorn(34)}<b id="trustN">${s.trustCount || 0}</b></span></div>`;
   h += `<div class="timer k-cardtimer" data-timer></div>`;
   if (v.isHost) h += `<div class="k-card-btns"><button class="k-btn big" data-k="doneShare">Done sharing ✓</button><button class="k-btn cream" data-t="60">1 min</button><button class="k-btn cream" data-t="90">90 s</button></div>`;
@@ -1324,7 +1335,9 @@ document.addEventListener('click', async e => {
     if (d.do === 'move') { ui.mode = null; ui.pass = false; render(v); return HW.toast('Tap a glowing hex to move'); }
     if (d.do === 'pass') { ui.pass = !ui.pass; ui.mode = null; return render(v); }
     if (d.do === 'end') {
-      if (v.turn.actions > 0 && !twice('end', `${cur.name} still has ${v.turn.actions} action${v.turn.actions > 1 ? 's' : ''}. Tap End turn again to end it.`)) return;
+      // ask twice only when there is still something they could do (not when, say, they have no water left)
+      const canStill = moveTargets(v, cur).one.length > 0 || Object.values(turnOptions(v, cur)).some(o => o.ok);
+      if (v.turn.actions > 0 && canStill && !twice('end', `${cur.name} still has ${v.turn.actions} action${v.turn.actions > 1 ? 's' : ''}. Tap End turn again to end it.`)) return;
       const ok = await actAs(cur.id, 'endTurn');
       if (ok && HW.view.phase === 'turn' && HW.view.turn) HW.toast(`Next: ${HW.name(HW.view.turn.player)}`, 'ok');
       return;
