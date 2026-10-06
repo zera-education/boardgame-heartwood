@@ -3,42 +3,48 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Heartwood</title>
+<title>World Tree</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E🌳%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="phone">
   <div class="panel" style="text-align:center">
-    <div style="font-size:3rem">🌰</div>
-    <h1>HEARTWOOD</h1>
-    <p class="muted">A ZERA leadership expedition, from the seed to the forest.</p>
+    <div style="font-size:3rem">🌳</div>
+    <h1>WORLD TREE</h1>
+    <p class="muted">A Heartwood game for ZERA leaders. The forest is asleep: explore it together, grow a Big Tree for every value, share your stories, find three treasures and gather on the World Tree to wake it.</p>
+    <p class="muted" style="font-size:.9rem">Cooperative · 6 to 12 players · one big screen, a phone each</p>
     <p><a href="howto.html">How to play</a> · <a href="wiki.html">Wiki</a></p>
   </div>
   <div class="panel">
     <h2>Join a game</h2>
     <label for="code">Game code</label>
-    <input id="code" maxlength="4" placeholder="ABCD" style="text-transform:uppercase">
+    <input id="code" maxlength="4" placeholder="ABCD" style="text-transform:uppercase" autocomplete="off">
     <p><button id="join">Join on this device</button></p>
   </div>
   <div class="panel">
     <h2>Host a game</h2>
-    <p class="muted">Opens the board for the big screen. You run it as the Keeper.</p>
+    <p class="muted">Opens the forest on this screen, for the projector. You run it as the Keeper: you give each player their Enneagram types, and you tap what the players say they do.</p>
     <button id="create" class="ghost">Create a new game</button>
   </div>
 </div>
 <script src="common.js"></script>
 <script>
-document.getElementById('join').onclick = () => {
+const go = () => {
   const c = document.getElementById('code').value.trim().toUpperCase();
   if (c.length === 4) location.href = `play.html?g=${c}`;
-  else HW.toast('Enter the 4-letter code from the board');
+  else HW.toast('Enter the 4-letter code from the big screen', 'bad');
 };
-document.getElementById('create').onclick = async () => {
+document.getElementById('join').onclick = go;
+document.getElementById('code').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+document.getElementById('create').onclick = async e => {
+  e.target.disabled = true;
   try {
     const r = await HW.post('/api/games');
     localStorage.setItem('hw-host-' + r.code, r.host);
+    HW.toast(`Game ${r.code} created`, 'ok');
     location.href = `board.html?g=${r.code}`;
-  } catch (e) { HW.toast(e.message); }
+  } catch (err) { HW.toast(err.message, 'bad'); e.target.disabled = false; }
 };
 </script>
 </body>

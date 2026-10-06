@@ -1,4 +1,5 @@
-// Shared helpers: API calls, live updates, the hex board and timers.
+// Shared helpers: API calls, live updates, timers and small World Tree lookups.
+// The Keeper screen's board drawing lives in board.html; phones only use what is here.
 const HW = {
   code: (new URLSearchParams(location.search).get('g') || '').toUpperCase(),
   view: null,
@@ -20,10 +21,11 @@ const HW = {
 
   // Go sends empty lists as null.
   normalise(v) {
-    v.log ||= []; v.order ||= []; v.alliances ||= [];
-    v.alliances.forEach(a => { a.members ||= []; });
-    v.players = (v.players || []).map(p => ({ ...p, allies: p.allies || [], partners: p.partners || [], cards: p.cards || [], types: p.types || [], used: p.used || {} }));
-    if (v.turn) v.turn.followUps ||= [];
+    v.log ||= []; v.order ||= []; v.events ||= []; v.hexes ||= []; v.tiles ||= []; v.weather ||= [];
+    v.values ||= []; v.roles ||= []; v.treasures ||= []; v.colors ||= []; v.recognition ||= [];
+    v.goals ||= {}; v.goals.trees ||= []; v.goals.treasures ||= [];
+    v.players = (v.players || []).map(p => ({ ...p, types: p.types || [], reached: p.reached || [] }));
+    if (v.me) { v.me.peeks ||= []; v.me.breath ||= []; }
     return v;
   },
 
@@ -38,13 +40,14 @@ const HW = {
     HW.onView?.(HW.view);
   },
 
-  // Sends an action and shows the caller's own result at once.
+  // Sends an action and shows the caller's own result at once. Errors are
+  // plain sentences from the server, shown as a toast.
   async act(creds, type, extra) {
     try {
       const r = await HW.post(`/api/games/${HW.code}/action`, { ...creds, type, ...extra });
       HW.apply(r.view);
       return true;
-    } catch (e) { HW.toast(e.message); return false; }
+    } catch (e) { HW.toast(e.message, 'bad'); return false; }
   },
 
   // Live connection: one WebSocket per screen. The server pushes this viewer's
@@ -127,11 +130,12 @@ const HW = {
     return true;
   },
 
-  toast(msg) {
+  // kind: 'ok' (green, a success) or 'bad' (red, a refusal); plain otherwise.
+  toast(msg, kind) {
     let t = document.getElementById('toast');
     if (!t) { t = document.createElement('div'); t.id = 'toast'; document.body.appendChild(t); }
-    t.textContent = msg; t.classList.add('show');
-    clearTimeout(HW._tt); HW._tt = setTimeout(() => t.classList.remove('show'), 3200);
+    t.textContent = msg; t.className = `show ${kind || ''}`;
+    clearTimeout(HW._tt); HW._tt = setTimeout(() => t.classList.remove('show'), kind === 'ok' ? 1800 : 3600);
   },
 
   esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); },
@@ -151,80 +155,21 @@ const HW = {
     const x = HW.view?.values?.[i];
     return x ? `${x.icon} ${x.name}` : '';
   },
-  // An alliance's members and statement, for the board and the phone.
-  allianceHTML(al) {
-    if (!al) return '';
-    return `<div class="alliance">${al.members.map(m => `${HW.chip(m)} <small>${HW.valueName(HW.player(m)?.value)}</small>`).join(' · ')}
-      <div class="statement">${al.statement ? `“${HW.esc(al.statement)}”` : '<span class="muted">Writing their statement…</span>'}</div></div>`;
-  },
-  tokenIcons: { mushroom: '🍄', squirrel: '🐿️', campfire: '🔥', path: '🍃' },
-  tokenNames: { mushroom: 'Mushroom patch', squirrel: 'Squirrel', campfire: 'Campfire', path: 'Hidden path' },
-  tierNames: ['', '🌱 Seed', '🌿 Sapling', '🌳 Oak', '💛 Heartwood'],
-  ringNames: ['Heartwood', 'Oak Circle', 'Sapling Path', 'Seedlands'],
+
+  // ---- World Tree lookups ----
+  WEATHER: { sun: ['☀️', 'Sun'], rain: ['🌧️', 'Rain'], fog: ['🌫️', 'Fog'] },
+  STAGES: ['', 'Seeded', 'Grass', 'Shrub', 'Big Tree'],
+  STAGE_ICON: ['', '🫘', '🌱', '🌿', '🌳'],   // 🌰 means trust only
+  MAX_WATER: 5, MAX_FRUIT: 2,
+  roleName(t) { return HW.view?.roles?.find(r => r.type === t)?.name || `Type ${t}`; },
+  roleText(t) { return HW.view?.roles?.find(r => r.type === t)?.text || ''; },
+  treasure(id) { return HW.view?.treasures?.find(x => x.id === id) || null; },
+  treasureIcon(id) { return HW.treasure(id)?.icon || (id ? '💎' : ''); },
+  weatherName(w) { return w ? HW.WEATHER[w].join(' ') : ''; },
 
   dist(a, b) {
     const dq = a.q - b.q, dr = a.r - b.r;
     return (Math.abs(dq) + Math.abs(dr) + Math.abs(dq + dr)) / 2;
-  },
-
-  ringOpen(ring) {
-    const s = HW.view.season;
-    if (HW.view.phase === 'plant') return ring === 3;
-    return s <= 1 ? ring === 3 : s === 2 ? ring >= 2 : true;
-  },
-
-  // Draws the forest into an <svg>. opts: {highlight: Set of hex ids, onClick(i), peek: {i: kind}}
-  renderBoard(svg, opts = {}) {
-    const v = HW.view, size = 50, s3 = Math.sqrt(3);
-    const px = h => [size * s3 * (h.q + h.r / 2), size * 1.5 * h.r];
-    const pts = (cx, cy) => [...Array(6)].map((_, k) => {
-      const a = Math.PI / 180 * (60 * k - 30);
-      return `${(cx + (size - 2) * Math.cos(a)).toFixed(1)},${(cy + (size - 2) * Math.sin(a)).toFixed(1)}`;
-    }).join(' ');
-    // compact (phones): no rim labels, so the board can be bigger and easier to tap.
-    const W = size * s3 * (opts.compact ? 7.1 : 10.6), H = size * 1.5 * (opts.compact ? 6.6 : 8.4);
-    let out = '';
-    // Region labels around the rim.
-    for (let r = 0; r < 6 && !opts.compact; r++) {
-      const outer = v.hexes.filter(h => h.ring === 3 && h.region === r).map(px);
-      const x = outer.reduce((a, p) => a + p[0], 0) / outer.length, y = outer.reduce((a, p) => a + p[1], 0) / outer.length;
-      // Push the label out past the rim, and anchor it away from the board so long names don't overlap it.
-      const len = Math.hypot(x, y), ux = x / len, uy = y / len, R = len + size * 1.25;
-      const anchor = ux > 0.3 ? 'start' : ux < -0.3 ? 'end' : 'middle';
-      out += `<text class="rlabel" text-anchor="${anchor}" x="${ux * R}" y="${uy * R}" fill="${HW.regionColors[r]}">${HW.regionIcons[r]} ${v.regions[r]}</text>`;
-    }
-    v.hexes.forEach((h, i) => {
-      const [x, y] = px(h);
-      const base = h.region < 0 ? '#7a4b2a' : HW.regionColors[h.region];
-      const op = [1, 1, 0.78, 0.55][h.ring];
-      const open = HW.ringOpen(h.ring);
-      const hl = opts.highlight?.has(i);
-      out += `<g class="hex ${hl ? 'hl' : ''} ${open ? '' : 'closed'}" data-i="${i}">`;
-      out += `<polygon points="${pts(x, y)}" fill="${base}" fill-opacity="${op}" />`;
-      const tok = v.tokens[i];
-      const peek = opts.peek?.[i];
-      if (h.ring === 0) out += `<text x="${x}" y="${y - 12}" class="hlabel">HEARTWOOD</text><text x="${x}" y="${y + 6}" class="ticon">💛</text>`;
-      else if (tok) out += `<text x="${x - 22}" y="${y - 18}" class="ticon small used">${HW.tokenIcons[tok] || ''}</text>`;
-      else if (peek) out += `<text x="${x}" y="${y - 14}" class="ticon">${HW.tokenIcons[peek]}</text>`;
-      else if (i in v.tokens) out += `<text x="${x}" y="${y - 16}" class="ticon hidden">✦</text>`; // face down; a clearing has none
-      const trees = v.trees[i] || 0;
-      if (trees) out += `<text x="${x + 22}" y="${y - 18}" class="ticon small">${'🌳'.repeat(Math.min(trees, 2))}${trees > 2 ? '+' : ''}</text>`;
-      const here = v.players.filter(p => p.pos === i);
-      here.forEach((p, k) => {
-        const n = here.length, ang = (k / n) * 2 * Math.PI, rad = n > 1 ? 18 : 0;
-        const cx = x + rad * Math.cos(ang), cy = y + 12 + rad * Math.sin(ang) * 0.7;
-        const cur = v.current === p.id;
-        out += `<circle cx="${cx}" cy="${cy}" r="${cur ? 13 : 11}" fill="${p.color}" class="pawn ${cur ? 'cur' : ''}"/>`;
-        out += `<text x="${cx}" y="${cy + 4}" class="pinit">${HW.esc(p.name.slice(0, 2))}</text>`;
-      });
-      out += '</g>';
-    });
-    svg.setAttribute('viewBox', `${-W / 2 - 20} ${-H / 2 - 30} ${W + 40} ${H + 60}`);
-    HW.patch(svg, out);
-    svg.onclick = e => {
-      const g = e.target.closest('.hex');
-      if (g && opts.onClick) opts.onClick(+g.dataset.i);
-    };
   },
 
   startTimers() {
@@ -242,19 +187,22 @@ const HW = {
 
   phaseTitle(v) {
     return {
-      lobby: 'Gathering the expedition', plant: 'Plant your seed',
-      turn: `Season ${v.season} · ${v.seasonName}`, dusk: `Dusk · Season ${v.season}`,
-      stories: 'The Vision of a Forest', guess: 'The Vision of a Forest', chain: 'The Vision of a Forest', scores: 'The forest is grown',
+      lobby: 'Gathering the team', enter: 'Entering the forest', turn: `Round ${v.round || 1}`,
+      guess: 'Who was your Secret Owl?', chain: 'The tribute chain',
+      end: v.result === 'won' ? 'The forest is awake!' : v.result === 'lost' ? 'The forest sleeps on' : v.result === 'ended' ? 'The game is closed' : 'The end',
     }[v.phase] || v.phase;
   },
 
-  scoresTable(v) {
-    let h = `<table class="scores"><tr><th></th><th>Player</th><th>Trust</th><th>Growth</th><th>Advocacy</th><th>Secret Owl</th><th>Total</th></tr>`;
-    v.scores.forEach((s, i) => {
-      h += `<tr class="${s.winner ? 'win' : ''}"><td>${s.winner ? '🏆' : i + 1}</td><td>${HW.chip(s.id)}</td><td>${s.trust} <small>(${s.givers} people)</small></td><td>${s.growth}</td><td>${s.advocacy} <small>${(s.advocated || []).map(x => v.values[x].icon).join('')}</small></td><td>${s.secret} <small>🦉 ${HW.esc(s.owlName)}</small></td><td><b>${s.total}</b></td></tr>`;
-    });
-    h += '</table>';
-    return h;
+  // The end of the game: recognition, not points. No winner among players.
+  recognitionTable(v) {
+    const rows = (v.recognition || []).map(r => `<tr><td><span class="chip"><i style="background:${r.color}"></i>${HW.esc(r.name)}</span></td>
+      <td>🌰 <b>${r.trust}</b> ${r.givers ? `<small>from ${r.givers} ${r.givers === 1 ? 'person' : 'people'}</small>` : ''}</td>
+      <td>🦉 ${HW.esc(r.owlName || '')}</td>
+      <td>${r.guessedRight ? '<span class="good">✓ guessed right</span>' : '<span class="muted">not this time</span>'}</td>
+      <td>${r.owlHidden ? '🤫 stayed hidden' : '<span class="muted">spotted</span>'}</td></tr>`).join('');
+    return `<table class="scores"><tr><th>Player</th><th>Trust received</th><th>Their Secret Owl</th><th>Their guess</th><th>As an Owl</th></tr>${rows}</table>`;
   },
+  // Older name, kept so any page still calling it shows the recognition table.
+  scoresTable(v) { return HW.recognitionTable(v); },
 };
 HW.startTimers();

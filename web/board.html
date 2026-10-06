@@ -3,35 +3,50 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Heartwood Board</title>
+<title>World Tree · Keeper</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E🌳%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="boardscreen">
-  <div>
-    <svg class="board" id="svg"></svg>
+<div class="keeper">
+  <div class="boardcol">
+    <div class="boardwrap">
+      <svg class="board" id="svg" aria-label="The forest board"></svg>
+      <div class="overlay" id="overlay" hidden></div>
+    </div>
+    <div class="legend"><span>✦ face down</span><span>🫘🌱🌿🌳 growing</span><span>💧 spring</span><span>🧭🏮🪢 treasures</span><span>🍂 dead leaves · dashed: sealed</span><span>glowing: tap to move or act</span></div>
   </div>
   <div class="side">
     <div class="panel">
       <div class="row" style="justify-content:space-between">
-        <h1 id="title">Heartwood</h1>
-        <span class="muted">Game <b id="code"></b> · <a href="howto.html" target="_blank">How to play</a> · <a href="wiki.html" target="_blank">Wiki</a></span>
+        <h1 id="title" style="margin:0">World Tree</h1>
+        <span class="muted" id="roundInfo"></span>
+      </div>
+      <div class="row muted" style="justify-content:space-between;font-size:.9rem;margin-top:.2em">
+        <span>Game <b id="code"></b><span id="viewOnly"></span></span>
+        <span><a href="howto.html" target="_blank">How to play</a> · <a href="wiki.html" target="_blank">Wiki</a></span>
       </div>
       <div class="timer" data-timer></div>
     </div>
+    <div class="panel" id="goalsp" hidden><div class="goals" id="goals"></div></div>
+    <div class="panel" id="wxp" hidden>
+      <div class="row" style="justify-content:space-between;margin-bottom:.3em"><b>Weather</b><span class="muted" id="breathInfo"></span></div>
+      <div class="wx" id="wx"></div>
+    </div>
     <div class="panel" id="main"></div>
+    <div class="panel" id="playersp"><h3>Players</h3><div class="plist" id="plist"></div></div>
     <div class="panel" id="host" hidden>
-      <h3>Keeper</h3>
-      <div id="hostActions"></div>
-      <div class="row" style="margin-top:.5em"><span class="muted">Timer:</span>
+      <h3>Keeper tools</h3>
+      <div class="row"><span class="muted">Timer:</span>
         <button class="ghost" data-t="60">1 min</button><button class="ghost" data-t="90">90 s</button><button class="ghost" data-t="240">4 min</button></div>
       <details style="margin-top:.6em"><summary class="muted">Help a player rejoin · Keeper on another device</summary>
         <div id="hostTools"></div>
         <div id="hostOut"></div>
       </details>
+      <details id="endEarly" style="margin-top:.4em" hidden><summary class="muted">End the game early</summary>
+        <div id="endBox"></div>
+      </details>
     </div>
-    <div class="panel"><h3>Expedition</h3><div class="plist" id="plist"></div></div>
-    <div class="panel" id="alliancesp" hidden><h3>Alliances</h3><div id="alliances"></div></div>
     <div class="panel"><h3>Trail log</h3><div class="log" id="log"></div></div>
   </div>
 </div>
@@ -48,45 +63,417 @@ if (params.get('k')) {
 const host = localStorage.getItem('hw-host-' + HW.code) || '';
 const creds = host ? { host } : {};
 $('code').textContent = HW.code;
-const keep = {};      // Keeper dropdown choices not yet sent, so a redraw doesn't reset them
 
-const act = (type, extra) => HW.act(creds, type, extra);
-// Players say it aloud; the Keeper taps it here, acting for them.
-const actAs = (pid, type, extra) => act(type, { as: pid, ...extra });
+// ---------- actions ----------
+// Players say it aloud; the Keeper taps it here, acting for them (`as`).
+// Every tap gets visible feedback: the board animates, and a toast says what
+// happened (green) or why the server refused (red).
+let busy = false;
+async function act(type, extra = {}, okMsg) {
+  if (busy) return false;
+  busy = true;
+  document.body.classList.add('busy');
+  try {
+    const ok = await HW.act(creds, type, extra);
+    if (ok && okMsg) HW.toast(okMsg, 'ok');
+    return ok;
+  } finally { busy = false; document.body.classList.remove('busy'); }
+}
+const actAs = (pid, type, extra, okMsg) => act(type, { as: pid, ...extra }, okMsg);
 
+// Keeper choices on this screen that aren't sent yet.
+const ui = { value: null, mode: null, bring: '', passFrom: '', scope: '', confirmEnd: false };
+
+// ---------- the board: hex geometry ----------
+const S = 30, s3 = Math.sqrt(3), NS = 'http://www.w3.org/2000/svg';
+const DIRS = [[1, 0], [1, -1], [0, -1], [-1, 0], [-1, 1], [0, 1]];
+const TINT = { sun: ['#ffd76b', .13], rain: ['#4f8fe0', .24], fog: ['#d9e2dc', .32] };
+const px = h => [S * s3 * (h.q + h.r / 2), S * 1.5 * h.r];
+const pts = (k = S - 1.2) => [...Array(6)].map((_, i) => { const a = Math.PI / 180 * (60 * i - 30); return `${(k * Math.cos(a)).toFixed(1)},${(k * Math.sin(a)).toFixed(1)}`; }).join(' ');
+let B = null;   // the built board: {n, adj, nodes, pawns:{id: g}, pos:{id: [x,y]}}
+
+const has = (p, t) => (p?.types || []).includes(t);
+const wxOf = (v, i) => (i > 0 && v.hexes[i] ? v.weather[v.hexes[i].sector] : null);
+const tileOf = (v, i) => (i > 0 ? v.tiles[i] : null);
+const sealed = (v, i) => !!tileOf(v, i) && tileOf(v, i).leaves >= 2;
+
+function svgEl(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+
+// Built once per game, then updated in place, so pawns can slide and tiles can flip.
+function buildBoard(v) {
+  const svg = $('svg');
+  svg.innerHTML = '';
+  const at = {};
+  v.hexes.forEach((h, i) => (at[h.q + ',' + h.r] = i));
+  const adj = v.hexes.map(h => DIRS.map(([dq, dr]) => at[(h.q + dq) + ',' + (h.r + dr)]).filter(i => i !== undefined));
+  const xs = v.hexes.map(h => px(h)[0]), ys = v.hexes.map(h => px(h)[1]);
+  const W = Math.max(...xs) - Math.min(...xs) + 2 * S, H = Math.max(...ys) - Math.min(...ys) + 2 * S;
+  svg.setAttribute("viewBox", `${-W / 2 - 128} ${-H / 2 - 26} ${W + 256} ${H + 52}`);
+  const layer = svgEl('g', {}, svg), rim = svgEl('g', {}, svg);
+  const nodes = v.hexes.map((h, i) => {
+    const [x, y] = px(h);
+    const g = svgEl('g', { class: i ? 'hex' : 'hex tree', 'data-i': i, transform: `translate(${x},${y})` }, layer);
+    const face = svgEl('g', { class: 'face' }, g);
+    svgEl('polygon', { class: 'base', points: pts(), fill: i ? (v.values[h.sector]?.color || '#557') : '#7a4b2a' }, face);
+    svgEl('polygon', { class: 'tint', points: pts(S - 2), fill: 'transparent' }, face);
+    if (i) {
+      const c = svgEl('g', { class: 'cover' }, face);
+      svgEl('polygon', { points: pts(S - 3), fill: '#1a2a20', 'fill-opacity': .82 }, c);
+      svgEl('text', { class: 'ico', 'font-size': 12, fill: 'rgba(255,255,255,.45)' }, c).textContent = '✦';
+    }
+    svgEl('text', { class: 'ico content', 'font-size': i ? 17 : 26, y: i ? -3 : -6 }, face);
+    if (i) {
+      svgEl('text', { class: 'ico leaves', 'font-size': 10, y: 14 }, face);
+      svgEl('text', { class: 'ico ripe', 'font-size': 8, x: 14, y: -13 }, face);
+    } else {
+      svgEl('text', { class: 'ico', 'font-size': 6.5, 'font-weight': 800, fill: '#f3efe2', y: 13, 'letter-spacing': '.06em' }, face).textContent = 'WORLD TREE';
+      svgEl('text', { class: 'ico placed', 'font-size': 9, y: -21 }, face);
+    }
+    return g;
+  });
+  for (let s = 0; s < 6; s++) {
+    const o = v.hexes.filter(h => h.ring === 4 && h.sector === s).map(px);
+    if (!o.length) continue;
+    const x = o.reduce((a, p) => a + p[0], 0) / o.length, y = o.reduce((a, p) => a + p[1], 0) / o.length;
+    const len = Math.hypot(x, y), ux = x / len, uy = y / len, D = len + S * 1.25;
+    svgEl('text', { class: 'rim', 'data-s': s, x: ux * D, y: uy * D, fill: v.values[s]?.color || '#fff', 'text-anchor': ux > .3 ? 'start' : ux < -.3 ? 'end' : 'middle' }, rim);
+  }
+  svgEl('g', { id: 'pawns' }, svg);
+  svgEl('g', { id: 'fxl' }, svg);
+  svg.onclick = e => { const h = e.target.closest('.hex'); if (h) onHex(+h.dataset.i); };
+  B = { n: v.hexes.length, code: v.code, adj, nodes, pawns: {}, pos: {} };
+}
+
+// Where a pawn stands on its hex, k of n players there (up to 12 on the World Tree).
+function pawnSpot(v, i, k, n) {
+  const [x, y] = px(v.hexes[i]), oy = i === 0 ? 2 : 5;
+  if (n === 1) return [x, y + (i ? 6 : 4)];
+  if (n <= 6) {
+    const r = i === 0 ? 15 : n <= 3 ? 9 : 12, a = -Math.PI / 2 + k / n * 2 * Math.PI;
+    return [x + r * Math.cos(a), y + oy + r * Math.sin(a) * .8];
+  }
+  if (k === 0) return [x, y + oy];
+  if (k <= 6) { const a = -Math.PI / 2 + (k - 1) / 6 * 2 * Math.PI; return [x + 11 * Math.cos(a), y + oy + 11 * Math.sin(a) * .85]; }
+  const m = n - 7, a = -Math.PI / 2 + Math.PI / 6 + (k - 7) / Math.max(m, 1) * 2 * Math.PI;
+  return [x + 21 * Math.cos(a), y + oy + 21 * Math.sin(a) * .85];
+}
+
+function drawPawns(v) {
+  const layer = $('pawns');
+  const ids = new Set(v.players.map(p => p.id));
+  for (const id in B.pawns) if (!ids.has(id)) { B.pawns[id].remove(); delete B.pawns[id]; delete B.pos[id]; }
+  const by = {};
+  v.players.forEach(p => { if (p.pos >= 0 && p.pos < B.n) (by[p.pos] ||= []).push(p); });
+  const playing = v.phase === 'enter' || v.phase === 'turn';
+  v.players.forEach(p => {
+    let g = B.pawns[p.id];
+    if (!g) {
+      g = svgEl('g', { class: 'pawn' }, layer);
+      svgEl('circle', { r: 7.5 }, g);
+      svgEl('text', {}, g);
+      B.pawns[p.id] = g;
+    }
+    g.querySelector('circle').setAttribute('fill', p.color);
+    g.querySelector('text').textContent = p.name.slice(0, 2);
+    if (!(p.pos >= 0 && p.pos < B.n)) { g.style.display = 'none'; delete B.pos[p.id]; return; }
+    const list = by[p.pos], n = list.length, [x, y] = pawnSpot(v, p.pos, list.indexOf(p), n);
+    const k = n > 6 ? .72 : n > 3 ? .86 : 1;
+    const tf = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) scale(${k})`;
+    if (g.style.display === 'none' || !B.pos[p.id]) {
+      // First time on the board: appear in place, don't slide in from the corner.
+      g.style.transition = 'none'; g.style.transform = tf; g.style.display = '';
+      g.getBoundingClientRect();
+      g.style.transition = '';
+    } else g.style.transform = tf;
+    B.pos[p.id] = [x, y];
+    g.classList.toggle('cur', playing && v.current === p.id);
+    g.classList.toggle('dry', playing && p.water <= 0);
+  });
+}
+
+function tileIcon(v, t) {
+  if (!t || !t.up) return '';
+  if (t.stage) return HW.STAGE_ICON[t.stage];
+  if (t.treasure) return HW.treasureIcon(t.treasure);
+  if (t.kind === 'spring') return '💧';
+  return '';
+}
+
+// Paints every hex from the view. fresh: the events about to be animated.
+function drawState(v, hl, hl2, fresh) {
+  const tide = fresh.find(e => e.type === 'tide');
+  const drift = new Map();
+  (tide?.leaves || []).forEach((b, k) => drift.set(b.to, k));
+  v.hexes.forEach((h, i) => {
+    const node = B.nodes[i];
+    node.classList.toggle('hl', hl.has(i) || hl2.has(i));
+    node.classList.toggle('hl2', hl2.has(i));
+    if (!i) {
+      node.querySelector('.content').textContent = v.result === 'won' ? '🌳' : '🌲';
+      node.classList.toggle('awake', v.result === 'won');
+      node.querySelector('.placed').textContent = (v.goals.treasures || []).map(id => HW.treasureIcon(id)).join(' ');
+      return;
+    }
+    const t = v.tiles[i] || { up: false, stage: 0, leaves: 0 };
+    const w = v.weather[h.sector], tint = node.querySelector('.tint');
+    tint.style.transitionDelay = tide ? `${h.sector * 140}ms` : '0ms';
+    tint.style.fill = TINT[w]?.[0] || 'transparent';
+    tint.style.fillOpacity = TINT[w]?.[1] ?? 0;
+    node.querySelector('.cover').style.display = t.up ? 'none' : '';
+    node.querySelector('.base').style.fillOpacity = t.up ? .82 : .45;
+    node.classList.toggle('sealed', t.leaves >= 2);
+    node.querySelector('.content').textContent = tileIcon(v, t);
+    const lv = node.querySelector('.leaves'), leaves = '🍂'.repeat(Math.min(t.leaves, 2));
+    if (lv.textContent !== leaves) {
+      lv.textContent = leaves;
+      // Leaves blown in by the Forest Tide appear when their drift lands.
+      if (drift.has(i)) lv.animate([{ opacity: 0 }, { opacity: 0, offset: .85 }, { opacity: 1 }], { duration: 1150 + 160 * drift.get(i) });
+    }
+    node.querySelector('.ripe').textContent = t.stage === 4 && !t.harvested && t.leaves < 2 ? '🍎' : '';
+  });
+  $('svg').querySelectorAll('.rim').forEach(r => {
+    const s = +r.dataset.s, x = v.values[s];
+    r.textContent = `${HW.WEATHER[v.weather[s]]?.[0] || ''} ${x?.icon || ''} ${x?.name || ''}`;
+  });
+  $('svg').classList.toggle('asleep', v.result === 'lost');
+  drawPawns(v);
+}
+
+// ---------- animation, driven by view.events ----------
+let lastEv = null;   // the newest event id already shown
+function takeEvents(v) {
+  const evs = v.events || [];
+  const maxId = evs.reduce((m, e) => Math.max(m, e.id), 0);
+  // First view (or a restarted game): don't replay history.
+  if (lastEv === null || maxId < lastEv) { lastEv = maxId; return []; }
+  const fresh = evs.filter(e => e.id > lastEv).sort((a, b) => a.id - b.id);
+  lastEv = maxId;
+  return fresh.slice(-30);
+}
+const hexXY = (v, i) => (v.hexes[i] ? px(v.hexes[i]) : [0, 0]);
+const pawnXY = (v, id) => B.pos[id] || hexXY(v, HW.player(id)?.pos ?? 0);
+
+function fxText(txt, [x, y], to, ms = 900, size = 14, delay = 0) {
+  const t = svgEl('text', { class: 'fx', 'font-size': size }, $('fxl'));
+  t.textContent = txt;
+  const [tx, ty] = to || [x, y - 24];
+  t.style.transform = `translate(${x}px,${y}px)`;
+  t.style.opacity = delay ? 0 : 1;
+  const a = t.animate([{ transform: `translate(${x}px,${y}px)`, opacity: 1 }, { transform: `translate(${tx}px,${ty}px)`, opacity: to ? 1 : 0 }],
+    { duration: ms, delay, easing: 'ease-in-out', fill: 'forwards' });
+  a.onfinish = () => t.remove();
+}
+function fxRing([x, y], color = '#f6d36b', ms = 1100, delay = 0) {
+  const c = svgEl('circle', { r: 10, fill: 'none', stroke: color, 'stroke-width': 3, 'vector-effect': 'non-scaling-stroke' }, $('fxl'));
+  c.style.opacity = 0;
+  const a = c.animate([{ transform: `translate(${x}px,${y}px) scale(.6)`, opacity: 1 }, { transform: `translate(${x}px,${y}px) scale(4)`, opacity: 0 }],
+    { duration: ms, delay, easing: 'ease-out', fill: 'forwards' });
+  a.onfinish = () => c.remove();
+}
+function pop(i, delay = 0, ms = 560) {
+  const c = B.nodes[i]?.querySelector('.content');
+  c?.animate([{ transform: 'scale(.4)' }, { transform: 'scale(1.4)' }, { transform: 'scale(1)' }], { duration: ms, delay, easing: 'ease-out' });
+}
+function flip(v, i) {
+  const node = B.nodes[i];
+  if (!node || !i) return;
+  const face = node.querySelector('.face'), cover = node.querySelector('.cover');
+  // One animation that ends at its natural state: the cover shows until the
+  // tile is edge-on, then the face opens up.
+  cover.style.display = '';
+  face.animate([{ transform: 'scaleX(1)' }, { transform: 'scaleX(0)', offset: .42 }, { transform: 'scaleX(1)' }], { duration: 520, easing: 'ease-in-out' });
+  setTimeout(() => { cover.style.display = HW.view?.tiles?.[i]?.up ? 'none' : ''; }, 220);
+}
+const ITEM = { water: '💧', fruit: '🍎' };
+
+function animate(v, e) {
+  switch (e.type) {
+    case 'move': break; // the pawn slides on its own (CSS transition)
+    case 'enter': fxRing(hexXY(v, e.hex), v.values[e.value]?.color || '#fff', 1000); break;
+    case 'flip': flip(v, e.hex); break;
+    case 'grow': pop(e.hex, 0, 600); break;
+    case 'harvest': pop(e.hex); fxText('🍎', hexXY(v, e.hex), pawnXY(v, e.pid), 900, 15); break;
+    case 'clear': fxText('🍂', hexXY(v, e.hex), null, 800, 14); fxText('🧹', hexXY(v, e.hex), null, 700, 12, 120); break;
+    case 'drink': fxText('💧', hexXY(v, e.hex), pawnXY(v, e.pid), 800, 15); fxText('+💧', pawnXY(v, e.pid), null, 1200, 11, 600); break;
+    case 'treasure': {
+      const xy = hexXY(v, e.hex);
+      fxRing(xy); fxRing(xy, '#fff3c4', 1300, 250); pop(e.hex, 100, 900);
+      fxText(HW.treasureIcon(e.treasure), xy, [xy[0], xy[1] - 34], 1500, 24);
+      break;
+    }
+    case 'take': { const xy = hexXY(v, e.hex); fxRing(xy); fxText(HW.treasureIcon(e.treasure), xy, pawnXY(v, e.pid), 900, 18); break; }
+    case 'pass': {
+      const icon = ITEM[e.item] || HW.treasureIcon(HW.player(e.to)?.treasure) || '💎';
+      fxText(icon, pawnXY(v, e.from), pawnXY(v, e.to), 800, 15);
+      break;
+    }
+    case 'place': {
+      const from = pawnXY(v, e.pid), items = [];
+      for (let k = 0; k < (e.fruit || 0); k++) items.push('🍎');
+      if (e.treasure) items.push(HW.treasureIcon(e.treasure));
+      items.forEach((icon, k) => fxText(icon, from, [0, -14], 800, 16, k * 260));
+      setTimeout(() => { fxRing([0, -4], '#f6d36b', 1000); pop(0, 0, 700); }, items.length * 260 + 500);
+      break;
+    }
+    case 'tide': {
+      const svg = $('svg');
+      svg.animate([{ filter: 'brightness(1)' }, { filter: 'brightness(.6)' }, { filter: 'brightness(1)' }], { duration: 1200 });
+      (e.leaves || []).forEach((b, k) => fxText('🍂', hexXY(v, b.from), hexXY(v, b.to), 1100, 13, 400 + 160 * k));
+      (e.growth || []).forEach((i, k) => pop(i, 900 + 40 * k, 700));
+      (e.dry || []).forEach((id, k) => fxText('−1💧', pawnXY(v, id), null, 1400, 10, 700 + 60 * k));
+      (e.sealed || []).forEach(i => B.nodes[i]?.querySelector('.base').animate(
+        [{ stroke: '#0c1711' }, { stroke: '#ffb74d', strokeWidth: 5 }, { stroke: '#b07a3f' }], { duration: 900, delay: 1300 }));
+      fxText('🌬️ Forest Tide', [0, 0], [0, -40], 1800, 22);
+      break;
+    }
+    case 'wake': {
+      for (let k = 0; k < 36; k++) {
+        const a = Math.random() * 6.28, r = 60 + Math.random() * 200;
+        fxText(['🌳', '✨', '🍃', '🍎'][k % 4], [0, 0], [r * Math.cos(a), r * Math.sin(a)], 1600, 16, k * 55);
+      }
+      fxRing([0, 0], '#fff3c4', 1600); fxRing([0, 0], '#f6d36b', 1800, 400);
+      fxText('The forest wakes!', [0, -30], [0, -70], 3200, 26, 300);
+      break;
+    }
+    case 'dry': fxText('The forest sleeps on…', [0, -30], [0, -60], 3200, 22); break;
+  }
+}
+function playEvents(v, fresh) {
+  let delay = 0;
+  for (const e of fresh) {
+    setTimeout(() => animate(HW.view || v, e), delay);
+    delay += e.type === 'tide' ? 1800 : e.type === 'move' ? 60 : 160;
+  }
+}
+
+// ---------- rules the Keeper screen checks before offering a tap ----------
+// The server checks again and its refusal is shown; these only decide what glows.
+function moveTargets(v, p) {
+  if (!p || p.pos < 0 || p.water <= 0 || !v.turn || v.turn.actions < 1) return { one: [], two: [] };
+  const one = B.adj[p.pos].filter(j => !sealed(v, j) || has(p, 8));
+  const two = [];
+  if (has(p, 7) && !v.turn.enthusiastUsed && wxOf(v, p.pos) !== 'fog')
+    for (const m of B.adj[p.pos].filter(j => !sealed(v, j) && wxOf(v, j) !== 'fog'))
+      for (const j of B.adj[m]) if (j !== p.pos && !sealed(v, j) && wxOf(v, j) !== 'fog' && !one.includes(j) && !two.includes(j)) two.push(j);
+  return { one, two };
+}
+// Passing: same hex, or a chain of up to 2 steps over occupied hexes through a Peacemaker.
+function canPass(v, a, b) {
+  if (!a || !b || a.id === b.id || a.pos < 0 || b.pos < 0) return false;
+  if (a.pos === b.pos) return true;
+  const peace = v.players.filter(p => has(p, 9)).map(p => p.pos);
+  if (!peace.length) return false;
+  const occ = new Set(v.players.map(p => p.pos));
+  const nb = i => B.adj[i].filter(j => occ.has(j));
+  if (nb(a.pos).includes(b.pos)) return peace.includes(a.pos) || peace.includes(b.pos);
+  for (const m of nb(a.pos)) if (nb(m).includes(b.pos) && [a.pos, m, b.pos].some(i => peace.includes(i))) return true;
+  return false;
+}
+const reachable = (v, p) => [p.pos, ...(has(p, 2) ? B.adj[p.pos] : [])].filter(i => i > 0);
+function targetsFor(v, p, mode) {
+  if (mode === 'water') return reachable(v, p).filter(i => [1, 2].includes(v.tiles[i].stage) && v.tiles[i].leaves < 2);
+  if (mode === 'tend') return reachable(v, p).filter(i => v.tiles[i].stage === 3 && v.tiles[i].leaves < 2);
+  if (mode === 'clear') return [p.pos, ...B.adj[p.pos]].filter(i => i > 0 && v.tiles[i].leaves > 0)
+    .filter(i => v.turn.actions >= clearCost(v, p, i));
+  return [];
+}
+const clearCost = (v, p, i) => (wxOf(v, i) === 'rain' && !has(p, 1) ? 2 : 1);
+
+// What the current player can do, with the reason when they can't.
+function turnOptions(v, p) {
+  const t = v.turn, left = t.actions, pos = p.pos, tile = tileOf(v, pos), w = wxOf(v, pos);
+  const onTree = pos === 0, helper = has(p, 2);
+  const o = {};
+  const need = (n, ok, why) => (left < n ? { ok: false, why: left ? `needs ${n} actions` : 'no actions left' } : ok ? { ok: true } : { ok: false, why });
+  const exploreCost = w === 'fog' ? 2 : 1;
+  o.explore = need(exploreCost, tile && !tile.up, onTree ? 'nothing to explore here' : 'already explored');
+  o.explore.cost = exploreCost;
+  o.sow = need(1, tile && tile.up && tile.kind !== 'spring' && !tile.treasure && !tile.stage && tile.leaves < 2,
+    onTree ? 'not on the World Tree' : !tile.up ? 'explore it first' : tile.kind === 'spring' ? 'a spring' : tile.treasure ? 'a treasure lies here'
+      : tile.stage ? 'already growing' : 'sealed by leaves');
+  const wt = targetsFor(v, p, 'water');
+  o.water = need(1, p.water > 0 && wt.length, p.water <= 0 ? 'no water to give' : helper ? 'no Seeded or Grass here or next door' : 'not Seeded or Grass');
+  o.water.targets = wt;
+  const tt = targetsFor(v, p, 'tend');
+  o.tend = need(1, tt.length, helper ? 'no Shrub here or next door' : 'no Shrub here');
+  o.tend.targets = tt;
+  const near = [pos, ...B.adj[pos]].filter(i => i > 0 && v.tiles[i].leaves > 0);
+  const ct = targetsFor(v, p, 'clear');
+  o.clear = need(1, ct.length, !near.length ? 'no leaves nearby' : 'needs 2 actions in rain');
+  o.clear.targets = ct;
+  o.clear.cost = near.length && near.every(i => clearCost(v, p, i) === 2) ? 2 : 1;
+  o.harvest = need(1, tile && tile.stage === 4 && tile.leaves < 2 && w !== 'rain' && !tile.harvested && p.fruit < HW.MAX_FRUIT,
+    !tile || tile.stage !== 4 ? 'no Big Tree here' : tile.leaves >= 2 ? 'sealed by leaves' : w === 'rain' ? 'not in the rain'
+      : tile.harvested ? 'picked since the Tide' : 'carrying 2 fruit');
+  o.take = need(1, tile && tile.up && tile.treasure && !p.treasure, tile && tile.up && tile.treasure ? 'carrying a treasure' : 'no treasure here');
+  o.drink = need(1, tile && tile.up && tile.kind === 'spring' && p.water < HW.MAX_WATER, tile && tile.up && tile.kind === 'spring' ? 'already full' : 'no spring here');
+  return o;
+}
+
+// ---------- rendering ----------
 function render(v) {
+  if (!B || B.n !== v.hexes.length || B.code !== v.code) { if (v.hexes.length) buildBoard(v); }
+  // A new turn or phase drops half-made choices (a picked value, a Water target…).
+  const scope = `${v.phase}|${v.current || ''}|${v.round}`;
+  if (scope !== ui.scope) { ui.scope = scope; ui.value = null; ui.mode = null; ui.bring = ''; ui.passFrom = ''; }
+  if (v.share) ui.mode = null;
   $('title').textContent = HW.phaseTitle(v);
-  HW.renderBoard($('svg'), boardOpts(v));
+  $('roundInfo').textContent = ['turn', 'guess', 'chain', 'end'].includes(v.phase) && v.round ? `Round ${v.round} · Tide ${v.tide || 0}` : '';
+  $('viewOnly').textContent = v.isHost ? '' : ' · view only (open the Keeper link to run the game)';
+  const playing = v.phase !== 'lobby';
+  $('goalsp').hidden = !playing; $('wxp').hidden = !playing;
+  if (B) {
+    const { hl, hl2 } = highlights(v);
+    const fresh = takeEvents(v);
+    drawState(v, hl, hl2, fresh);
+    playEvents(v, fresh);
+  }
+  if (playing) renderGoals(v);
   HW.patch($('main'), mainHTML(v));
+  restoreKeeps();
+  renderPlayers(v);
+  renderShare(v);
   renderHost(v);
-  HW.patch($('plist'), v.players.map(p => `<div class="${v.current === p.id ? 'cur' : ''}">
-    <span>${HW.chip(p.id)} <small>${p.value >= 0 ? HW.valueName(p.value) : ''}</small></span>
-    <span class="muted">🌰${p.trustLeft} left · 🤝${p.allies.length} · 🃏${p.cards.length}${p.squirrels ? ' · 🐿️' + p.squirrels : ''}</span>
-    <span class="pw">${(p.types || []).map(t => `<span class="${p.used?.[t] ? 'used' : ''}">${HW.esc(v.powers[t - 1].title)}</span>`).join(' · ')}</span></div>`).join(''));
-  $('alliancesp').hidden = !v.alliances.length;
-  HW.patch($('alliances'), v.alliances.map(HW.allianceHTML).join(''));
   HW.patch($('log'), v.log.slice().reverse().map(l => `<div>${HW.esc(l)}</div>`).join(''));
 }
 
-// On the Keeper's screen the board is tappable: plant, step, Hidden path.
-function boardOpts(v) {
-  const opts = { highlight: new Set() };
-  if (!v.isHost) return opts;
-  if (v.phase === 'plant' && v.current) {
-    v.hexes.forEach((h, i) => { if (h.ring === 3) opts.highlight.add(i); });
-    opts.onClick = i => opts.highlight.has(i) && actAs(v.current, 'plant', { hex: i });
+function highlights(v) {
+  const hl = new Set(), hl2 = new Set();
+  if (!v.isHost || v.share) return { hl, hl2 };
+  if (v.phase === 'enter' && ui.value != null)
+    v.hexes.forEach((h, i) => { if (h.ring === 4 && h.sector === ui.value) hl.add(i); });
+  if (v.phase === 'turn' && v.turn) {
+    const p = HW.player(v.turn.player);
+    if (ui.mode) targetsFor(v, p, ui.mode).forEach(i => hl.add(i));
+    else { const m = moveTargets(v, p); m.one.forEach(i => hl.add(i)); m.two.forEach(i => hl2.add(i)); }
   }
-  const t = v.turn;
-  if (v.phase === 'turn' && t && t.step === 'move') {
-    const me = HW.player(t.player), here = v.hexes[me.pos];
-    opts.peek = t.peek || {};
-    v.hexes.forEach((h, i) => {
-      if (t.teleport) { if (h.ring === here.ring && HW.ringOpen(h.ring)) opts.highlight.add(i); }
-      else if (!t.discovered && t.stepsLeft > 0 && HW.dist(h, here) === 1 && HW.ringOpen(h.ring) && (h.ring !== 0 || me.allies.length)) opts.highlight.add(i);
-    });
-    opts.onClick = i => opts.highlight.has(i) && actAs(me.id, 'step', { hex: i });
-  }
-  return opts;
+  return { hl, hl2 };
+}
+
+function renderGoals(v) {
+  const g = v.goals, n = v.players.length;
+  const trees = [0, 1, 2, 3, 4, 5].map(s => `<span class="${g.trees[s] ? '' : 'dim'}" title="${HW.esc(v.values[s]?.name)}">${g.trees[s] ? '🌳' : v.values[s]?.icon || '·'}</span>`).join('');
+  const nTrees = g.trees.filter(Boolean).length;
+  const tr = v.treasures.map(x => `<span class="${g.treasures.includes(x.id) ? '' : 'dim'}" title="${HW.esc(x.name)}">${x.icon}</span>`).join('');
+  HW.patch($('goals'), `<div class="${nTrees >= 6 ? 'ok' : ''}"><b>${trees}</b>Big Trees ${nTrees}/6</div>
+    <div class="${n && g.placedPlayers >= n ? 'ok' : ''}"><b>🍎 ${g.placedPlayers || 0}/${n}</b>placed a fruit</div>
+    <div class="${g.treasures.length >= 3 ? 'ok' : ''}"><b>${tr}</b>treasures ${g.treasures.length}/3</div>
+    <div class="${n && g.onTree >= n ? 'ok' : ''}"><b>🧍 ${g.onTree || 0}/${n}</b>on the World Tree</div>`);
+  HW.patch($('wx'), v.values.map((x, s) => `<div style="border-bottom-color:${x.color}" title="${HW.esc(HW.weatherName(v.weather[s]))}"><b>${HW.WEATHER[v.weather[s]]?.[0] || '·'}</b><span>${x.icon} ${HW.esc(x.name)}</span></div>`).join(''));
+  $('breathInfo').textContent = `🌬️ next Forest Breath: ${v.breathCount || 0} hex${v.breathCount === 1 ? '' : 'es'}`;
+}
+
+function renderPlayers(v) {
+  const playing = v.phase === 'enter' || v.phase === 'turn';
+  HW.patch($('plist'), v.players.map(p => `<div class="p ${playing && v.current === p.id ? 'cur' : ''}">
+    <span class="chip"><i style="background:${p.color}"></i>${HW.esc(p.name)} ${p.value >= 0 ? `<span title="${HW.esc(v.values[p.value]?.name)}">${v.values[p.value]?.icon || ''}</span>` : ''}</span>
+    <span class="stat">${v.phase === 'lobby' ? '' : `<span class="w ${p.water <= 0 ? 'zero' : ''}">💧${p.water}</span> 🍎${p.fruit}${p.treasure ? ' ' + HW.treasureIcon(p.treasure) : ''}${p.placed ? ' ✅' : ''}`}</span>
+    <span class="types">${p.types.map(t => `${t} ${HW.esc(HW.roleName(t))}`).join(' · ') || 'no type yet'}</span></div>`).join('') || '<p class="muted">No one has joined yet.</p>');
 }
 
 // Phones can't reach "localhost": when the board was opened that way, show the
@@ -96,186 +483,185 @@ function phoneOrigin(v) {
   return local && v.lan?.length ? v.lan[0] : location.origin;
 }
 
+const btn = (label, data, cls = '', dis = false, title = '') =>
+  `<button class="${cls}" ${Object.entries(data).map(([k, x]) => `data-${k}="${HW.esc(String(x))}"`).join(' ')} ${dis ? 'disabled' : ''} ${title ? `title="${HW.esc(title)}"` : ''}>${label}</button>`;
+
 function mainHTML(v) {
-  const origin = phoneOrigin(v);
-  const joinUrl = `${origin}/play.html?g=${v.code}`;
-  if (v.phase === 'lobby') {
-    return `<div class="row" style="align-items:flex-start;gap:16px">
-      <img class="qr" src="/api/qr?u=${encodeURIComponent(joinUrl)}" alt="QR code to join">
-      <div style="flex:1;min-width:200px"><p>Scan to join, or open:</p><div class="joinurl">${HW.esc(joinUrl)}</div>
-      <p class="muted">or open ${HW.esc(origin)} and enter code <b>${v.code}</b>. Phones must be on the same Wi-Fi as this computer.</p></div></div>
-      <p>${v.players.length} of 10 joined: ${v.players.map(p => HW.chip(p.id)).join(' ')}</p>`;
+  switch (v.phase) {
+    case 'lobby': return lobbyHTML(v);
+    case 'enter': return enterHTML(v);
+    case 'turn': return turnHTML(v);
+    case 'guess': case 'chain': case 'end': return finaleHTML(v);
   }
-  if (v.phase === 'plant') {
-    return `<p class="big">${HW.chip(v.current)} is planting their seed.</p>
-      <p class="muted">Which ZERAOS value do you stand for? Tell us why, in one sentence. The Keeper places your seed in it.</p>
-      <div class="values">${v.values.map(x => `<div><b style="color:${x.color}">${x.icon} ${HW.esc(x.name)}</b> <span class="muted">${HW.esc(x.tagline)}</span></div>`).join('')}</div>`;
-  }
-  if (v.phase === 'turn' && v.turn) {
-    const t = v.turn, p = HW.player(t.player);
-    const ring = p.pos >= 0 ? v.hexes[p.pos] : null;
-    let h = '';
-    const fresh = v.alliances.filter(al => al.season === v.season - 1 && al.statement);
-    if (v.turnsTaken === 0 && fresh.length) h += `<div class="event"><b>New alliances: say your statement aloud.</b>${fresh.map(HW.allianceHTML).join('')}</div>`;
-    h += `<p class="big">${HW.chip(t.player)}'s turn · <span class="muted">${ring ? (ring.region >= 0 ? HW.valueName(ring.region) + ', ' : '') + HW.ringNames[ring.ring] : ''}</span></p>`;
-    if (t.eventText) h += `<div class="event">${HW.esc(t.eventText)}</div>`;
-    if (t.campfire) h += `<div class="event">🔥 Campfire! Everyone answers in one sentence: ${HW.esc(t.campfire)}</div>`;
-    if (t.invited) h += `<div class="event">🤲 ${HW.chip(t.invited)} answers this question too, after ${HW.chip(t.player)}.</div>`;
-    if (t.step === 'move') h += `<p class="muted">Where to? Say it, and the Keeper moves you. (${t.stepsLeft} step${t.stepsLeft === 1 ? '' : 's'} left)</p>`;
-    if (t.step !== 'move') {
-      h += `<span class="tier">${HW.tierNames[t.tier]}${t.region >= 0 ? ' · ' + HW.valueName(t.region) : ''}</span>`;
-      if (t.choices?.length) h += `<p class="muted">True North: choose one of three cards.</p>` + t.choices.map(c => `<div class="choice">${HW.esc(c)}</div>`).join('');
-      else h += `<div class="prompt">${HW.esc(t.prompt)}</div>`;
-    }
-    if (t.step === 'share' && !t.started) h += `<p class="muted">Getting ready to share… Not this one? Ask for another card, a lighter question, or pass.</p>`;
-    if (t.step === 'trust') h += `<p class="big">🌰 Trust given: <b>${t.trustCount}</b></p><p class="muted">Listeners: give trust on your phone if this moved you. Holding a 🐿️? Raise your hand to ask a follow-up.</p>`;
-    t.followUps.forEach(f => h += `<div class="event">🐿️ ${HW.esc(f)}</div>`);
-    return h;
-  }
-  if (v.phase === 'dusk') {
-    if (!v.dusk.resolved) {
-      const waiting = v.players.filter(p => !p.duskChosen).map(p => HW.chip(p.id)).join(' ');
-      return `<p class="big">Dusk falls. Choose a partner on your phone.</p>
-        <p class="muted">To ally, choose each other and both tick alliance. An alliance joins different values (up to 3 people), and finds one statement that holds them all. Everyone else has a Fireside chat.</p>
-        <p>Still choosing: ${waiting || '<b>everyone has chosen</b>'}</p>`;
-    }
-    return `<p class="big">Talk for 4 minutes.</p>` + v.dusk.pairs.map(pr => {
-      const al = pr.ally && v.alliances.find(a => a.id === pr.alliance);
-      return `<div class="pair">
-      ${HW.chip(pr.a)} &amp; ${HW.chip(pr.b)}${pr.c ? ' &amp; ' + HW.chip(pr.c) : ''}
-      ${pr.ally ? '<span class="badge">ALLIANCE</span>' : '<span class="muted">fireside</span>'}
-      ${al ? `<div class="statement">${al.statement ? `“${HW.esc(al.statement)}”` : '<span class="muted">Writing their statement…</span>'}</div>` : `<div class="muted">${HW.esc(pr.bond)}</div>`}
-      ${pr.note ? `<div class="note">${HW.esc(pr.note)}</div>` : ''}</div>`;
-    }).join('');
-  }
-  if (v.phase === 'stories' && v.story) {
-    const al = v.alliances.find(a => a.id === v.story.alliance);
-    return `<p class="muted">Alliance ${v.story.idx + 1} of ${v.story.total}</p>
-      <p class="big">Tell your alliance's story: your statement, and how you found it.</p>${HW.allianceHTML(al)}`;
-  }
-  if (v.phase === 'guess') {
-    const waiting = v.players.filter(p => !p.guessed).map(p => HW.chip(p.id)).join(' ');
-    return `<p class="big">Who was your Secret Owl?</p><p class="muted">Guess on your phone.</p>
-      <p>Still guessing: ${waiting || '<b>everyone has guessed</b>'}</p>`;
-  }
-  if (v.phase === 'chain' && v.tribute) {
-    const tr = v.tribute;
-    return `<p class="muted">Tribute ${tr.idx + 1} of ${tr.total}</p>
-      <div class="prompt">${HW.chip(tr.giver)} → ${HW.chip(tr.receiver)}</div>
-      <p>"Three things I discovered about you today, and one thing I appreciate."</p>
-      <p class="muted">Then ${HW.esc(HW.name(tr.receiver))} says how many of the three were true, and gives their own tribute.</p>`;
-  }
-  if (v.phase === 'scores') return HW.scoresTable(v);
   return '';
 }
 
-// ---------- Keeper controls ----------
-const btn = (label, data, cls = '', dis = false) =>
-  `<button class="${cls}" ${Object.entries(data).map(([k, x]) => `data-${k}="${HW.esc(String(x))}"`).join(' ')} ${dis ? 'disabled' : ''}>${label}</button>`;
-const sel = (key, options) => `<select data-keep="${key}">${options.map(([val, label]) =>
-  `<option value="${HW.esc(val)}" ${keep[key] === val ? 'selected' : ''}>${HW.esc(label)}</option>`).join('')}</select>`;
-
-// Powers the Keeper can activate right now, for whoever holds them.
-function readyPowers(v) {
-  const t = v.turn, out = [];
-  const unused = p => (p.types || []).filter(x => !p.used?.[x]);
-  if (v.phase === 'turn' && t) {
-    const p = HW.player(t.player);
-    const moving = t.step === 'move' && !t.discovered;
-    const beforeShare = t.step === 'share' && !t.started && !t.choices?.length;
-    for (const x of unused(p)) {
-      if ((x === 1 && beforeShare && t.tier < 4) || (x === 4 && beforeShare && t.tier < 3) ||
-          (x === 2 && beforeShare) || ([3, 5].includes(x) && moving) || (x === 7 && t.step !== 'trust' && !t.campfire) ||
-          (x === 6 && moving && p.allies.length)) out.push([p, x]);
-    }
-    if (t.step === 'trust') v.players.forEach(o => { if (o.id !== p.id && unused(o).includes(8)) out.push([o, 8]); });
-  }
-  if (v.phase === 'dusk' && !v.dusk.resolved) v.players.forEach(o => { if (unused(o).includes(9)) out.push([o, 9]); });
-  return out;
+function lobbyHTML(v) {
+  const origin = phoneOrigin(v), joinUrl = `${origin}/play.html?g=${v.code}`;
+  const min = v.minPlayers || 6, max = v.maxPlayers || 12, n = v.players.length;
+  let h = `<div class="row" style="align-items:flex-start;gap:16px">
+    <img class="qr" src="/api/qr?u=${encodeURIComponent(joinUrl)}" alt="QR code to join">
+    <div style="flex:1;min-width:200px"><p style="margin-top:0">Scan to join, or open:</p><div class="joinurl">${HW.esc(joinUrl)}</div>
+    <p class="muted">or open ${HW.esc(origin)} and enter code <b>${v.code}</b>. Phones must be on the same Wi-Fi as this computer.</p></div></div>
+    <p><b>${n} of ${min}–${max}</b> joined ${n < min ? `<span class="muted">· ${min - n} more to start</span>` : ''}</p>`;
+  if (!v.isHost) return h + `<p class="muted">The Keeper gives each player 1 to 3 Enneagram types, then starts.</p>`;
+  const roles = v.roles.length ? v.roles : [...Array(9)].map((_, k) => ({ type: k + 1, name: `Type ${k + 1}`, text: '' }));
+  h += `<h3>Enneagram types</h3><p class="muted" style="margin-top:0">Tap a number to give a type or take it away: 1 to 3 per player. Several players may hold the same type.</p>
+    <div class="assign">${v.players.map(p => `<div class="arow">${HW.chip(p.id)}<span class="atypes">${roles.map(r =>
+      `<button class="${p.types.includes(r.type) ? 'sel' : 'ghost'}" data-assign="${p.id}" data-type="${r.type}" title="${r.type} ${HW.esc(r.name)}: ${HW.esc(r.text)}">${r.type}</button>`).join('')}</span>
+      <button class="ghost kick" data-kick="${p.id}" title="Remove ${HW.esc(p.name)}">✕</button></div>`).join('') || '<p class="muted">No one has joined yet.</p>'}</div>
+    <div class="rolekey">${roles.map(r => `<b>${r.type}</b> ${HW.esc(r.name)}`).join(' · ')}</div>`;
+  const untyped = v.players.filter(p => !p.types.length);
+  const why = n < min ? `Needs at least ${min} players (${n} joined).` : n > max ? `At most ${max} players.`
+    : untyped.length ? `Give every player a type: ${untyped.map(p => HW.esc(p.name)).join(', ')}.` : '';
+  return h + `<p style="margin-bottom:0">${btn('Start: enter the forest', { k: 'start' }, '', !!why)} ${why ? `<span class="muted">${why}</span>` : ''}</p>`;
 }
 
-function powerRow(v, [p, x]) {
-  const pw = v.powers[x - 1];
-  let extra = '';
-  if (x === 2) extra = sel('p2t', v.players.filter(o => o.id !== p.id).map(o => [o.id, o.name]));
-  if (x === 6) extra = sel('p6t', p.allies.map(a => [a, HW.name(a)]));
-  return `<div class="row">${HW.chip(p.id)} ${extra}${btn(`⚡ ${HW.esc(pw.title)}`, { k: 'power', as: p.id, power: x }, 'ghost')}
-    <span class="muted" style="font-size:.85rem">${HW.esc(pw.text)}</span></div>`;
+const sharing = v => v.share ? `<div class="blocked"><b>${HW.chip(v.share.player)}</b> is sharing. Play continues when they're done.
+  ${v.isHost ? `<div style="margin-top:.4em">${btn('Done sharing ✓', { k: 'doneShare' })}</div>` : ''}</div>` : '';
+
+function enterHTML(v) {
+  const p = HW.player(v.current);
+  if (!p) return '<p class="muted">Waiting…</p>';
+  if (v.share) return sharing(v);
+  let h = `<h3>${HW.chip(p.id)}: which value do you stand for?</h3>`;
+  if (!v.isHost) return h + `<p class="muted">They say it aloud and tell us why; the Keeper places their pawn on the outer ring of that value.</p>`;
+  h += `<div class="valbtns">${v.values.map((x, i) => `<button class="ghost ${ui.value === i ? 'sel' : ''}" data-val="${i}" style="border-left:5px solid ${x.color}">${x.icon} ${HW.esc(x.name)}<small>${HW.esc(x.tagline)}</small></button>`).join('')}</div>`;
+  h += `<p class="muted" style="margin-bottom:0">${ui.value == null ? 'They say it aloud; tap it.' : `Now tap a glowing hex on the outer ring of <b>${HW.esc(v.values[ui.value].name)}</b>. Then they say why.`}</p>`;
+  return h;
 }
 
-function turnControls(v) {
-  const t = v.turn, p = HW.player(t.player), id = p.id;
-  let h = `<p><b>For ${HW.chip(id)}:</b></p>`;
-  if (t.step === 'move') {
-    if (t.teleport) return h + `<p class="muted">Hidden path: tap a highlighted space in this ring, or</p>` + btn('Stay here', { k: 'endMove', as: id });
-    if (t.canClaim) h += `<p class="muted">Field Notes: claim one discovery next to them.</p><div class="row">${Object.entries(t.peek || {}).map(([i, k]) =>
-      btn(`${HW.tokenIcons[k] || ''} ${HW.tokenNames[k] || k}`, { k: 'claim', as: id, hex: i }, 'ghost')).join('')}</div>`;
-    const here = v.hexes[p.pos];
-    const near = v.players.filter(o => o.id !== id && HW.dist(v.hexes[o.pos], here) <= 1);
-    h += `<p class="muted">Tap a highlighted space to step: up to 3 a turn through open rings; the Heartwood needs an ally. <b>${t.stepsLeft} step${t.stepsLeft === 1 ? '' : 's'} left.</b>
-      ${near.length ? `Here, next to ${near.map(o => HW.chip(o.id)).join(' ')}.` : ''}</p>`;
-    return h + btn(t.discovered ? 'Draw the card' : 'Stop here and discover', { k: 'endMove', as: id });
+function turnHTML(v) {
+  const t = v.turn;
+  if (!t) return '';
+  const p = HW.player(t.player);
+  if (!p) return '';
+  const pos = p.pos, h0 = v.hexes[pos], tile = tileOf(v, pos), w = wxOf(v, pos);
+  const max = v.actionsPerTurn || 2;
+  const where = pos === 0 ? 'On the World Tree (no weather)'
+    : `${v.values[h0.sector]?.icon} ${HW.esc(v.values[h0.sector]?.name)}, Ring ${h0.ring} · ${HW.weatherName(w)} · ${!tile.up ? 'face down'
+      : tile.stage ? HW.STAGES[tile.stage] + (tile.stage === 4 && tile.harvested ? ' (picked)' : '') : tile.kind === 'spring' ? 'a spring'
+      : tile.treasure ? `${HW.treasureIcon(tile.treasure)} ${HW.esc(HW.treasure(tile.treasure)?.name || 'a treasure')}` : 'empty'}${tile.leaves ? ` · 🍂×${tile.leaves}${tile.leaves >= 2 ? ' sealed' : ''}` : ''}`;
+  let h = `<div class="row" style="justify-content:space-between"><span class="big"><b>${HW.chip(p.id)}</b>'s turn</span>
+    <span class="dots" title="${t.actions} of ${max} actions left">${'●'.repeat(Math.max(0, t.actions))}${'○'.repeat(Math.max(0, max - t.actions))}</span></div>
+    <div class="where">${where}<br>💧 ${p.water}/${HW.MAX_WATER} · 🍎 ${p.fruit}/${HW.MAX_FRUIT}${p.treasure ? ` · ${HW.treasureIcon(p.treasure)} ${HW.esc(HW.treasure(p.treasure)?.name || '')}` : ''}
+    · ${p.types.map(x => `<span title="${HW.esc(HW.roleText(x))}">${x} ${HW.esc(HW.roleName(x))}</span>`).join(', ')}</div>`;
+  if (v.share) return h + sharing(v);
+  if (!v.isHost) return h + `<p class="muted">They say what they do; the Keeper taps it.</p>`;
+  const o = turnOptions(v, p);
+  const m = moveTargets(v, p);
+  const canMove = m.one.length + m.two.length > 0;
+  h += `<p style="margin:.2em 0 .5em">${p.water <= 0 ? `<span class="bad">${HW.esc(p.name)} has no water and can't move until someone passes 1.</span>`
+    : !t.actions ? 'No actions left: pass things, or end the turn.'
+    : ui.mode ? `Tap a glowing hex to <b>${ui.mode}</b> (or tap ${ui.mode} again to cancel).`
+    : canMove ? `Tap a glowing hex to <b>move</b>${m.two.length ? ' (dashed: the Enthusiast\'s double step)' : ''}, or:` : 'No hex to move to. Choose an action:'}</p>`;
+  const b = (k, label, extra = '') => {
+    const x = o[k];
+    return `<button class="${ui.mode === k ? 'sel' : ''}" data-do="${k}" ${x.ok ? '' : 'disabled'}>${label}${extra}${x.ok ? '' : `<small>${HW.esc(x.why)}</small>`}</button>`;
+  };
+  h += `<div class="acts">${b('explore', '✦ Explore', o.explore.cost > 1 ? ' (2)' : '')}${b('sow', '🫘 Sow')}${b('water', '💧 Water')}${b('tend', '🌳 Tend')}
+    ${b('clear', '🍂 Clear', o.clear.cost > 1 ? ' (2)' : '')}${b('harvest', '🍎 Harvest')}${b('take', `${tile?.up && tile.treasure ? HW.treasureIcon(tile.treasure) : '💎'} Take`)}${b('drink', '🚰 Drink')}</div>`;
+  // Challenger: bring a teammate from the same hex on the next move.
+  if (has(p, 8) && t.actions && p.water > 0) {
+    const mates = v.players.filter(q => q.id !== p.id && q.pos === pos);
+    if (mates.length) h += `<p style="margin:.5em 0 0">Challenger: bring <select data-keep="bring" style="width:auto;padding:.3em .5em">
+      <option value="">nobody</option>${mates.map(q => `<option value="${q.id}">${HW.esc(q.name)}</option>`).join('')}</select> on the next move.</p>`;
   }
-  if (t.step === 'share') {
-    if (t.choices?.length) return h + `<p class="muted">True North: which card?</p>` + t.choices.map((c, k) =>
-      btn(HW.esc(c), { k: 'pickChoice', as: id, card: t.choiceIds[k] }, 'ghost seat')).join('');
-    if (t.started) return h + btn("They're done sharing", { k: 'doneShare', as: id });
-    return h + `<div class="row">${btn('Start sharing', { k: 'startShare', as: id })}
-      ${btn('Draw again', { k: 'redraw', as: id }, 'ghost', t.redrawn)}
-      ${btn('Lighter tier', { k: 'lighter', as: id }, 'ghost', t.tier <= 1 || t.tier >= 4)}
-      ${btn('Pass this turn', { k: 'pass', as: id }, 'ghost')}</div>`;
+  h += passHTML(v, p);
+  h += `<div class="row" style="margin-top:.6em">${btn('End turn →', { k: 'endTurn' }, 'ghost')}${t.actions ? `<span class="muted">${t.actions} action${t.actions > 1 ? 's' : ''} left</span>` : ''}</div>`;
+  return h;
+}
+
+// Passing is free: water, fruit or a treasure, between any two players the rules allow.
+function passHTML(v, cur) {
+  const holds = q => q.water > 0 || q.fruit > 0 || !!q.treasure;
+  const givers = v.players.filter(q => holds(q) && v.players.some(r => canPass(v, q, r)));
+  if (!givers.length) return '';
+  if (!givers.some(q => q.id === ui.passFrom)) ui.passFrom = givers.some(q => q.id === cur.id) ? cur.id : givers[0].id;
+  const a = HW.player(ui.passFrom);
+  const mates = v.players.filter(r => canPass(v, a, r));
+  const item = (r, k, icon, ok, why) => `<button class="ghost" data-pass="${r.id}" data-item="${k}" ${ok ? '' : 'disabled'} title="${HW.esc(ok ? `pass ${k} to ${r.name}` : why)}">${icon}</button>`;
+  return `<div class="passbox"><b>Pass (free)</b> from <select data-keep="passFrom">${givers.map(q => `<option value="${q.id}" ${q.id === a.id ? 'selected' : ''}>${HW.esc(q.name)}</option>`).join('')}</select> to
+    <div style="margin-top:.3em">${mates.map(r => `<span class="mate">${HW.chip(r.id)}
+      ${a.water > 0 ? item(r, 'water', '💧', r.water < HW.MAX_WATER, `${r.name} is full`) : ''}
+      ${a.fruit > 0 ? item(r, 'fruit', '🍎', r.fruit < HW.MAX_FRUIT, `${r.name} carries 2 fruit`) : ''}
+      ${a.treasure ? item(r, 'treasure', HW.treasureIcon(a.treasure), !r.treasure, `${r.name} carries a treasure`) : ''}</span>`).join('')}</div></div>`;
+}
+
+function finaleHTML(v) {
+  let h = '';
+  if (v.result === 'won') h += `<div class="banner won">🌳 The forest woke${v.round ? ` in round ${v.round}` : ''}!</div>`;
+  if (v.result === 'lost') h += `<div class="banner lost">💧 Everyone ran dry${v.round ? ` in round ${v.round}` : ''}. The forest sleeps on.</div>`;
+  if (v.result === 'ended') h += `<div class="banner lost">The Keeper closed the game; the forest is still asleep.</div>`;
+  if (v.phase === 'guess') {
+    const done = v.players.filter(p => p.guessed).length, waiting = v.players.filter(p => !p.guessed);
+    h += `<p class="big">Who was your Secret Owl? Guess on your phone.</p>
+      <p><b>${done}/${v.players.length}</b> guessed${waiting.length ? ` · still guessing: ${waiting.map(p => HW.chip(p.id)).join(' ')}` : ' · <b>everyone has guessed</b>'}</p>`;
+    if (v.isHost) h += btn('Start the tribute chain →', { k: 'startChain' }, waiting.length ? 'ghost' : '');
   }
-  if (t.step === 'trust') {
-    const sq = v.players.filter(o => o.id !== id && o.squirrels > 0);
-    h += btn('Next player →', { k: 'endTrust', as: id });
-    if (sq.length) h += `<p class="muted" style="margin-top:.6em">A hand up for a follow-up?</p><div class="row">${sq.map(o =>
-      btn(`🐿️ ${HW.esc(o.name)} asks`, { k: 'squirrel', as: o.id }, 'ghost')).join('')}</div>`;
+  if (v.phase === 'chain' && v.tribute) {
+    const tr = v.tribute;
+    h += `<p class="muted" style="margin:0">Tribute ${tr.idx + 1} of ${tr.total}</p>
+      <div class="tribute">${HW.chip(tr.giver)} → ${HW.chip(tr.receiver)}</div>
+      <p>“Three things I discovered about you today, and one thing I appreciate.”</p>
+      <p class="muted">Then ${HW.esc(HW.name(tr.receiver))} says how many of the three were true, and gives their own tribute.</p>`;
+    if (v.isHost) h += `<div class="row">${btn('Next tribute →', { k: 'nextTribute' })}${btn('1 min', { t: 60 }, 'ghost')}${btn('90 s', { t: 90 }, 'ghost')}</div>`;
+  }
+  if (v.phase === 'end') {
+    h += `<h3>Recognition</h3><p class="muted" style="margin-top:0">No points and no winner: the team ${v.result === 'won' ? 'woke the forest' : 'played'} together. Here is what each of you received.</p>`;
+    h += HW.recognitionTable(v);
   }
   return h;
 }
 
+// ---------- the share card over the board ----------
+let shownShare = '';
+const RING_DEPTH = { 3: 'light', 2: 'a story', 1: 'deep' };
+function renderShare(v) {
+  const s = v.share, ov = $('overlay');
+  if (!s) { ov.hidden = true; shownShare = ''; return; }
+  const key = `${s.idx}|${s.kind}|${s.player}|${v.isHost}`;
+  if (key !== shownShare) {
+    shownShare = key;
+    const p = HW.player(s.player), tre = s.kind === 'treasure' ? HW.treasure(s.sub) : null;
+    const kind = {
+      why: 'Entering the forest', ring: `Ring ${s.sub} card · ${RING_DEPTH[+s.sub] || ''}`, harvest: 'Harvest story 🍎',
+      heartwood: 'Heartwood question · a fruit on the World Tree', treasure: `Treasure found: ${tre ? `${tre.icon} ${tre.name}` : 'a treasure'}`,
+    }[s.kind] || s.kind;
+    const sub = s.kind === 'why' || s.kind === 'harvest' ? s.sub : '';
+    let h = `<div class="card">${tre ? `<div class="treasure-icon">${tre.icon}</div>` : ''}<div class="kind">${HW.esc(kind)}</div>
+      ${tre ? `<div class="sub">${HW.esc(tre.meaning)}</div>` : ''}
+      <div class="q">${HW.esc(s.prompt)}</div>${sub ? `<div class="sub">${HW.esc(sub)}</div>` : ''}`;
+    h += s.kind === 'treasure'
+      ? `<p class="who">${p ? `Found by ${HW.chip(p.id)}` : ''} · everyone answers in one sentence</p>`
+      : `<p class="who">${HW.chip(s.player)} shares · listeners give trust on their phones</p><div class="trust">🌰 Trust so far: <span id="trustN">${s.trustCount || 0}</span></div>`;
+    h += `<div class="timer" data-timer></div>`;
+    if (v.isHost) h += `<div class="row" style="margin-top:.5em">${btn('Done sharing ✓', { k: 'doneShare' })}${btn('1 min', { t: 60 }, 'ghost')}${btn('90 s', { t: 90 }, 'ghost')}</div>`;
+    h += '</div>';
+    ov.innerHTML = h;
+    ov.hidden = false;
+  } else {
+    const n = $('trustN');
+    if (n && n.textContent !== String(s.trustCount || 0)) {
+      n.textContent = s.trustCount || 0;
+      n.animate([{ transform: 'scale(1.6)' }, { transform: 'scale(1)' }], { duration: 400 });
+    }
+  }
+}
+
+// ---------- Keeper tools ----------
 function renderHost(v) {
   const el = $('host');
   if (!v.isHost) { el.hidden = true; return; }
   el.hidden = false;
-  let h = '';
-  if (v.phase === 'lobby') {
-    h += `<p class="muted">Give each player 1 to 3 Enneagram powers (tap a type to add or remove it). Each power works once.</p>
-      <div class="assign">${v.players.map(p => `<div class="arow"><span>${HW.chip(p.id)}</span><span class="atypes">${v.powers.map(pw =>
-        `<button class="${p.types?.includes(pw.type) ? 'sel' : 'ghost'}" data-assign="${p.id}" data-type="${pw.type}" title="${pw.type} ${pw.name}: ${HW.esc(pw.title)}">${pw.type}</button>`).join('')}</span>
-        <button class="ghost kick" data-kick="${p.id}" title="Remove ${HW.esc(p.name)}">✕</button></div>`).join('') || '<p class="muted">No one has joined yet.</p>'}</div>
-      <p class="muted" style="font-size:.85rem">${v.powers.map(pw => `${pw.type} ${pw.title}`).join(' · ')}</p>
-      <p>${btn('Start the expedition', { k: 'start' }, '', v.players.length < 2 || v.players.some(p => !p.types?.length))}
-        ${v.players.some(p => !p.types?.length) ? '<span class="muted">Everyone needs at least one power.</span>' : ''}</p>`;
-  }
-  if (v.phase === 'plant') h += `<p>Tap an outer space of the value ${HW.chip(v.current)} stands for, on the board.</p>`;
-  if (v.phase === 'turn' && v.turn) h += turnControls(v);
-  if (v.phase === 'dusk') {
-    if (!v.dusk.resolved) h += btn('Set the pairs', { k: 'resolveDusk' });
-    else {
-      // Help for each alliance writing its statement tonight.
-      const writing = v.alliances.filter(al => al.season === v.season);
-      writing.forEach(al => {
-        const tip = v.tips?.[v.allianceKeys?.[al.id]];
-        h += `<div class="tip">${HW.allianceHTML(al)}${tip ? `<p class="muted" style="margin:.3em 0">Common ground: ${HW.esc(tip.common)}</p>
-          <details><summary class="muted">Example lines to offer if they're stuck</summary><ul>${tip.examples.map(x => `<li>${HW.esc(x)}</li>`).join('')}</ul></details>` : ''}</div>`;
-      });
-      const missing = writing.filter(al => !al.statement).length;
-      if (missing) h += `<p class="muted">Waiting for ${missing} statement${missing > 1 ? 's' : ''}. You can still go on; they can say it aloud.</p>`;
-      h += btn(v.season >= 3 ? 'Go to the finale →' : `Start Season ${v.season + 1} →`, { k: 'nextSeason' });
-    }
-  }
-  if (v.phase === 'stories') h += btn('Next alliance →', { k: 'nextStory' });
-  if (v.phase === 'guess') h += btn('Start the tributes', { k: 'startChain' });
-  if (v.phase === 'chain' && v.tribute) {
-    const r = v.tribute.receiver;
-    h += `<p>${HW.chip(r)}, how many of the three were true?</p><div class="row">${[0, 1, 2, 3].map(n =>
-      btn(String(n), { k: 'confirm', as: r, n })).join('')}</div>` + btn('Skip to next tribute', { k: 'nextTribute' }, 'ghost');
-  }
-  const ready = readyPowers(v);
-  if (ready.length) h += `<div class="powers-now"><p class="muted">Powers they can use now (when they say so):</p>${ready.map(r => powerRow(v, r)).join('')}</div>`;
-  if (v.phase === 'turn' && v.turn) h += `<p style="margin-top:.6em">${btn('Skip this turn', { k: 'skipTurn' }, 'ghost')}</p>`;
-  HW.patch($('hostActions'), h);
+  // Ending early (Keeper only, during play, not while someone shares): a second, in-page confirm.
+  const canEnd = v.phase === 'turn';
+  $('endEarly').hidden = !canEnd;
+  if (!canEnd) ui.confirmEnd = false;
+  HW.patch($('endBox'), !canEnd ? '' : v.share ? '<p class="muted">Finish the share first.</p>'
+    : ui.confirmEnd ? `<p>End the game now? The forest stays asleep, and everyone goes on to the Secret Owl guesses, the tribute chain and trust.</p>
+      <div class="row">${btn('Yes, end the game', { k: 'endGame' })}${btn('Cancel', { k: 'cancelEnd' }, 'ghost')}</div>`
+    : `<p class="muted">Out of time? Close the game here and go on to the Secret Owl and the tribute chain.</p>${btn('End the game early…', { k: 'askEnd' }, 'ghost')}`);
   const tools = `<label for="rejoinWho">Give a player a rejoin code (for a new phone or browser):</label>
     <div class="row"><select id="rejoinWho" style="flex:1">${v.players.map(p => `<option value="${p.id}">${HW.esc(p.name)}</option>`).join('')}</select>
     <button class="ghost" id="rejoinGo" ${v.players.length ? '' : 'disabled'}>Get code</button></div>
@@ -285,7 +671,8 @@ function renderHost(v) {
       try {
         const r = await HW.post(`/api/games/${HW.code}/rejoin-code`, { host, pid: $('rejoinWho').value });
         $('hostOut').innerHTML = `<p>${HW.esc(r.name)}: open the game on the phone, choose <b>Rejoin with a code</b>, and enter</p><div class="pin">${r.pin}</div><p class="muted">Works once, for 10 minutes.</p>`;
-      } catch (e) { HW.toast(e.message); }
+        HW.toast(`Rejoin code ready for ${r.name}`, 'ok');
+      } catch (e) { HW.toast(e.message, 'bad'); }
     };
     $('keeperLink').onclick = () => {
       const url = `${phoneOrigin(HW.view)}/board.html?g=${HW.code}&k=${host}`;
@@ -294,7 +681,21 @@ function renderHost(v) {
   }
 }
 
-// Taps that need a second tap within 3 s, so a stray tap doesn't pass or skip.
+// Dropdowns in the main panel keep their choice across redraws.
+function restoreKeeps() {
+  $('main').querySelectorAll('select[data-keep]').forEach(s => {
+    const k = s.dataset.keep;
+    if ([...s.options].some(o => o.value === ui[k])) s.value = ui[k];
+  });
+}
+$('main').addEventListener('change', e => {
+  const s = e.target.closest('select[data-keep]');
+  if (!s) return;
+  ui[s.dataset.keep] = s.value;
+  if (s.dataset.keep === 'passFrom') render(HW.view);
+});
+
+// Taps that need a second tap within 3 s, so a stray tap doesn't end a turn early.
 const armed = {};
 function twice(key, msg) {
   if (Date.now() - (armed[key] || 0) < 3000) { armed[key] = 0; return true; }
@@ -303,38 +704,99 @@ function twice(key, msg) {
   return false;
 }
 
-$('hostActions').addEventListener('change', e => {
-  const s = e.target.closest('select[data-keep]');
-  if (s) keep[s.dataset.keep] = s.value;
-});
-$('hostActions').addEventListener('click', e => {
+// ---------- taps ----------
+const VERB = { explore: 'explores', sow: 'sows a seed', water: 'waters', tend: 'tends the Shrub', clear: 'clears leaves', harvest: 'harvests a fruit 🍎', take: 'takes the treasure', drink: 'drinks at the spring 💧' };
+
+async function onHex(i) {
+  const v = HW.view;
+  if (!v?.isHost) return;
+  if (v.share) return HW.toast(`${HW.name(v.share.player)} is sharing: tap Done sharing first.`, 'bad');
+  const { hl, hl2 } = highlights(v);
+  if (v.phase === 'enter') {
+    if (ui.value == null) return HW.toast('First tap the value they stand for.', 'bad');
+    if (!hl.has(i)) return HW.toast(`Tap a glowing hex on the outer ring of ${v.values[ui.value].name}.`, 'bad');
+    const p = HW.player(v.current), val = ui.value;
+    if (await actAs(p.id, 'enter', { n: val, hex: i }, `✓ ${p.name} stands for ${v.values[val].name}`)) ui.value = null;
+    return;
+  }
+  if (v.phase !== 'turn' || !v.turn) return;
+  const p = HW.player(v.turn.player);
+  if (ui.mode) {
+    if (!hl.has(i)) return HW.toast(`Tap a glowing hex to ${ui.mode}.`, 'bad');
+    const mode = ui.mode;
+    ui.mode = null;
+    await actAs(p.id, mode, { hex: i }, `✓ ${p.name} ${VERB[mode]}`);
+    return render(HW.view);
+  }
+  if (!hl.has(i) && !hl2.has(i)) {
+    return HW.toast(p.water <= 0 ? `${p.name} has no water: someone must pass them 1 first.` : !v.turn.actions ? 'No actions left: end the turn.' : 'Tap a glowing hex next to them to move.', 'bad');
+  }
+  const bring = ui.bring && HW.player(ui.bring)?.pos === p.pos ? ui.bring : '';
+  if (await actAs(p.id, 'move', { hex: i, target: bring }, bring ? `✓ ${p.name} moves with ${HW.name(bring)}` : '')) ui.bring = '';
+}
+
+document.addEventListener('click', async e => {
   const b = e.target.closest('button');
-  if (!b || b.disabled) return;
-  const d = b.dataset;
-  if (d.kick) return act('kick', { target: d.kick });
+  if (!b || b.disabled || !b.closest('#main, #overlay, #host')) return;
+  const d = b.dataset, v = HW.view;
+  if (!v) return;
+  if (d.t) return act('timer', { n: +d.t }, `⏱ ${+d.t % 60 === 0 ? +d.t / 60 + ' min' : d.t + ' s'} timer started`);
+  if (d.kick) {
+    const p = HW.player(d.kick);
+    return twice('kick' + d.kick, `Tap ✕ again to remove ${p?.name}`) && act('kick', { target: d.kick }, `${p?.name} removed`);
+  }
   if (d.assign) {
-    const p = HW.player(d.assign), t = +d.type, types = (p.types || []).slice();
+    const p = HW.player(d.assign), t = +d.type, types = p.types.slice();
     const i = types.indexOf(t);
     if (i >= 0) types.splice(i, 1);
-    else if (types.length >= 3) return HW.toast(`${p.name} already has 3 powers. Tap one to remove it.`);
+    else if (types.length >= 3) return HW.toast(`${p.name} already has 3 types. Tap one to take it away.`, 'bad');
     else types.push(t);
-    return act('assignPowers', { target: p.id, types });
+    types.sort((a, b) => a - b);
+    return act('assignPowers', { target: p.id, types }, `✓ ${p.name}: ${types.map(x => HW.roleName(x)).join(', ') || 'no type'}`);
   }
-  const val = key => b.closest('.row')?.querySelector(`select[data-keep="${key}"]`)?.value || '';
+  if (d.val != null && d.val !== '') { ui.value = ui.value === +d.val ? null : +d.val; return render(v); }
+  const cur = v.turn ? HW.player(v.turn.player) : null;
+  if (d.do && cur) {
+    const o = turnOptions(v, cur)[d.do];
+    // Water, Tend and Clear pick a hex when more than one is possible.
+    if (['water', 'tend', 'clear'].includes(d.do)) {
+      if (ui.mode === d.do) { ui.mode = null; return render(v); }
+      if (o.targets.length > 1) { ui.mode = d.do; HW.toast(`Tap the glowing hex to ${d.do}.`); return render(v); }
+      return actAs(cur.id, d.do, { hex: o.targets[0] }, `✓ ${cur.name} ${VERB[d.do]}`);
+    }
+    return actAs(cur.id, d.do, {}, `✓ ${cur.name} ${VERB[d.do]}`);
+  }
+  if (d.pass) {
+    const from = HW.player(ui.passFrom), to = HW.player(d.pass);
+    return actAs(from.id, 'pass', { target: to.id, text: d.item }, `✓ ${from.name} passes ${d.item === 'treasure' ? 'the treasure' : d.item} to ${to.name}`);
+  }
   switch (d.k) {
-    case 'start': return act('start');
-    case 'skipTurn': return twice('skip', 'Tap "Skip this turn" again to confirm') && act('skipTurn');
-    case 'pass': return twice('pass', 'Tap "Pass this turn" again to pass. No card, no points.') && actAs(d.as, 'pass');
-    case 'claim': return actAs(d.as, 'claim', { hex: +d.hex });
-    case 'pickChoice': return actAs(d.as, 'pickChoice', { card: +d.card });
-    case 'confirm': return actAs(d.as, 'confirm', { n: +d.n });
-    case 'power': return actAs(d.as, 'power', { power: +d.power, target: val(d.power === '2' ? 'p2t' : 'p6t') });
-    case 'resolveDusk': case 'nextSeason': case 'nextStory': case 'startChain': case 'nextTribute': return act(d.k);
-    default: if (d.k && d.as) return actAs(d.as, d.k); // endMove, redraw, lighter, startShare, doneShare, endTrust, squirrel
+    case 'start': return act('start', {}, '✓ The game begins: enter the forest');
+    case 'doneShare': return act('doneShare', {}, '✓ Thank you');
+    case 'endTurn': {
+      if (!cur) return;
+      if (v.turn.actions > 0 && !twice('end', `${cur.name} still has ${v.turn.actions} action${v.turn.actions > 1 ? 's' : ''}. Tap End turn again to end it.`)) return;
+      const ok = await actAs(cur.id, 'endTurn');
+      if (ok && HW.view.phase === 'turn' && HW.view.turn) HW.toast(`Next: ${HW.name(HW.view.turn.player)}`, 'ok');
+      return;
+    }
+    case 'startChain': {
+      const waiting = v.players.filter(p => !p.guessed).length;
+      if (waiting && !twice('chain', `${waiting} still guessing. Tap again to start anyway.`)) return;
+      return act('startChain', {}, '✓ The tribute chain begins');
+    }
+    case 'nextTribute': return act('nextTribute', {}, '✓ Next tribute');
+    case 'askEnd': ui.confirmEnd = true; return render(v);
+    case 'cancelEnd': ui.confirmEnd = false; return render(v);
+    case 'endGame': {
+      ui.confirmEnd = false;
+      const ok = await act('endGame', {}, '✓ The game is closed: on to the Secret Owl guesses');
+      if (!ok) render(HW.view);
+      return;
+    }
   }
 });
 
-document.querySelectorAll('[data-t]').forEach(b => b.onclick = () => act('timer', { n: +b.dataset.t }));
 HW.connect(creds, render, msg => { $('main').innerHTML = `<p class="bad">${HW.esc(msg)}</p>`; });
 </script>
 </body>

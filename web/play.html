@@ -2,66 +2,165 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Heartwood Player</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#13241b">
+<title>World Tree Player</title>
 <link rel="stylesheet" href="style.css">
+<style>
+/* Phone page for World Tree. Tokens fall back to the house values if style.css changes. */
+:root { --water: #6fb7ff; }
+body { background: var(--bg, #13241b); color: var(--ink, #f3efe2); }
+.wt { max-width: 430px; margin: 0 auto; padding: 12px 14px 64px; }
+.wt .pcard { color: var(--ink, #f3efe2); background: var(--panel, #1c3326); border: 1px solid var(--line, #345a42); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+.wt .pcard.hot { border-color: var(--accent, #e0a32e); box-shadow: 0 0 0 1px var(--accent, #e0a32e) inset; }
+.wt h1 { font-size: 1.5rem; margin: 0 0 .4em; }
+.wt h2 { font-size: 1.25rem; margin: 0 0 .4em; }
+.wt h3 { font-size: 1.02rem; margin: 0 0 .5em; }
+.wt p { margin: .45em 0; }
+.wt .muted { color: var(--muted, #b9c4b3); }
+.wt .small { font-size: .88rem; }
+.wt .good { color: var(--good, #7bc47f); } .wt .bad { color: var(--bad, #e57373); }
+.wt .big { font-size: 1.2rem; font-weight: 800; line-height: 1.3; }
+.wt .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.wt .between { justify-content: space-between; }
+.wt button { min-height: 48px; font: inherit; font-weight: 800; border: 0; border-radius: 12px; padding: .7em 1em; cursor: pointer;
+  background: var(--accent, #e0a32e); color: #1a1a1a; margin: .25em 0; touch-action: manipulation; }
+.wt button.ghost { background: var(--panel2, #24402f); color: var(--ink, #f3efe2); border: 1px solid var(--line, #345a42); }
+.wt button.block { display: block; width: 100%; }
+.wt button.huge { font-size: 1.3rem; min-height: 64px; }
+.wt button:disabled { opacity: .4; cursor: default; }
+.wt button.busy { opacity: .6; }
+.wt input { font: inherit; font-size: 1.05rem; padding: .7em .8em; border-radius: 10px; border: 1px solid var(--line, #345a42);
+  background: #0f1d16; color: var(--ink, #f3efe2); width: 100%; min-height: 48px; }
+.wt label { display: block; margin: .7em 0 .3em; color: var(--muted, #b9c4b3); font-size: .9rem; }
+.wt a { color: var(--accent, #e0a32e); }
+.wt .chip { display: inline-flex; align-items: center; gap: .35em; white-space: nowrap; font-weight: 800; }
+.wt .chip i { width: .85em; height: .85em; border-radius: 50%; display: inline-block; flex: none; }
+.wt .head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.wt .head .who { flex: 1; min-width: 0; }
+.wt .head .who .chip { font-size: 1.15rem; }
+.wt .head .phase { display: block; font-size: .8rem; color: var(--muted, #b9c4b3); }
+.wt .owlbtn { min-height: 44px; width: 48px; padding: 0; font-size: 1.4rem; margin: 0; }
+.wt .owlbtn.on { outline: 2px solid var(--accent, #e0a32e); }
+.wt .owl { background: #1d2433; border-color: #3b4a66; }
+.wt .owl .name { font-weight: 800; font-size: 1.2rem; }
+.wt .blur { filter: blur(7px); cursor: pointer; user-select: none; }
+/* Swatches: 12 colours in a 6 x 2 grid of big taps */
+.wt .swatches { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+.wt .swatches button { width: 100%; height: auto; aspect-ratio: 1; min-height: 44px; border-radius: 50%; padding: 0; margin: 0; border: 3px solid transparent; }
+.wt .swatches button.sel { border-color: #fff; box-shadow: 0 0 0 2px #000 inset; }
+.wt .swatches button:disabled { opacity: .18; }
+/* Pack */
+.wt .pack { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
+.wt .pack div { background: var(--panel2, #24402f); border-radius: 12px; padding: 8px 4px; }
+.wt .pack b { display: block; font-size: 1.35rem; line-height: 1.2; }
+.wt .pack small { color: var(--muted, #b9c4b3); font-size: .78rem; }
+.wt .pack .water b { color: var(--water); }
+.wt .pack .empty b { color: var(--bad, #e57373); }
+.wt .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.wt .pill { background: var(--panel2, #24402f); border-radius: 99px; padding: .25em .7em; font-size: .86rem; font-weight: 700; }
+.wt .pill.ok { background: #244a2c; color: #9fdca2; }
+.wt .alert { background: #3a1c1c; border-left: 4px solid var(--bad, #e57373); border-radius: 10px; padding: .6em .8em; margin: .6em 0 0; font-weight: 800; }
+.wt .dots { letter-spacing: .15em; color: var(--accent, #e0a32e); font-size: 1.1rem; }
+/* Private info */
+.wt .peek { background: #1d2a3a; border-left: 4px solid var(--water); border-radius: 10px; padding: .55em .75em; margin: .45em 0; font-size: .95rem; }
+.wt .sectors { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.wt .sectors button { margin: 0; padding: .4em .2em; font-size: .82rem; line-height: 1.15; }
+.wt .sectors button b { display: block; font-size: 1.3rem; }
+/* Roles */
+.wt .role { border: 1px solid var(--line, #345a42); border-radius: 12px; padding: 10px 12px; margin: 8px 0; background: var(--panel2, #24402f); }
+.wt .role b { display: block; }
+/* Share */
+.wt .pprompt { font-size: 1.3rem; font-weight: 800; line-height: 1.3; margin: .4em 0 .6em; }
+.wt .pkind { font-size: .75rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--accent, #e0a32e); }
+.wt .ptimer { font-weight: 800; color: var(--accent, #e0a32e); font-variant-numeric: tabular-nums; }
+.wt .ptimer:empty { display: none; }
+.wt .ptimer.over { color: var(--bad, #e57373); }
+.wt .acorns { font-size: 1.05rem; font-weight: 800; text-align: center; margin-top: .3em; }
+/* Lists */
+.wt .plist { list-style: none; padding: 0; margin: .4em 0; }
+.wt .plist li { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 4px; border-bottom: 1px solid rgba(255,255,255,.06); }
+.wt .plist li:last-child { border-bottom: 0; }
+.wt .pick { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; }
+.wt .pick.sel { outline: 3px solid #fff; }
+.wt .values .v { padding: .5em .7em; border-radius: 10px; background: var(--panel2, #24402f); margin: .35em 0; }
+.wt .rec { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; align-items: baseline; }
+.wt .rec b { font-size: 1.4rem; }
+.wt .seat { display: block; width: 100%; text-align: left; }
+.wt .foot { text-align: center; font-size: .88rem; margin-top: 16px; }
+#flash { position: fixed; left: 50%; bottom: 52px; z-index: 10; max-width: min(92vw, 400px); transform: translate(-50%, 140px);
+  background: #0b140f; color: #fff; border: 2px solid var(--good, #7bc47f); padding: .7em 1.1em; border-radius: 12px; font-weight: 700;
+  transition: transform .25s; box-shadow: 0 6px 24px rgba(0,0,0,.5); }
+#flash.err { border-color: var(--bad, #e57373); }
+#flash.show { transform: translate(-50%, 0); }
+</style>
 </head>
 <body>
-<div class="phone">
+<div class="wt">
   <div id="entry" hidden>
-    <div class="panel" id="seatsBox" hidden></div>
-    <div class="panel" id="joinBox">
-      <h1>🌰 Join game <span id="joinCode"></span></h1>
+    <div class="pcard" id="seatsBox" hidden></div>
+    <div class="pcard" id="joinBox">
+      <h1>🌳 Join World Tree <span id="joinCode"></span></h1>
       <div id="joinOpen">
-        <label for="name">Your name</label><input id="name" maxlength="20" autocomplete="off">
+        <label for="name">Your name</label><input id="name" maxlength="20" autocomplete="off" autocapitalize="words">
         <label>Your colour</label><div class="swatches" id="swatches"></div>
-        <p><button data-act="join">Join the expedition</button></p>
+        <p><button class="block huge" data-act="join">Join the forest</button></p>
       </div>
       <p id="joinClosed" class="muted" hidden>This game has already started. If you were playing, continue below or ask the Keeper for a rejoin code.</p>
     </div>
-    <div class="panel">
+    <div class="pcard">
       <h3>Rejoin with a code</h3>
-      <p class="muted">Lost your seat (new phone, closed browser)? The Keeper can give you a 4-digit code.</p>
-      <div class="row"><input id="pin" inputmode="numeric" maxlength="4" placeholder="1234" style="flex:1"><button class="ghost" data-act="rejoin">Rejoin</button></div>
+      <p class="muted small">Lost your seat (new phone, closed browser)? The Keeper can give you a 4-digit code.</p>
+      <div class="row"><input id="pin" inputmode="numeric" maxlength="4" placeholder="1234" style="flex:1;width:auto"><button class="ghost" data-act="rejoin">Rejoin</button></div>
     </div>
-    <p class="muted"><a href="howto.html">How to play</a> · <a href="wiki.html">Wiki</a></p>
+    <p class="muted foot"><a href="howto.html">How to play</a> · <a href="wiki.html">Wiki</a></p>
   </div>
 
   <div id="game" hidden>
-    <div class="panel" id="top"></div>
-    <div class="panel" id="action"></div>
-    <div class="panel" id="secret" hidden></div>
-    <div class="panel" id="powersp"><h3>Your powers</h3><div id="powers"></div></div>
-    <p class="muted"><a href="howto.html" target="_blank">How to play</a> · <a href="wiki.html" target="_blank">Wiki</a></p>
+    <div class="head" id="head"></div>
+    <div class="pcard owl" id="owl" hidden></div>
+    <div class="pcard" id="main"></div>
+    <div class="pcard" id="pack" hidden></div>
+    <div class="pcard" id="private" hidden></div>
+    <div class="pcard" id="roles" hidden></div>
+    <p class="muted foot"><a href="howto.html" target="_blank">How to play</a> · <a href="wiki.html" target="_blank">Wiki</a></p>
   </div>
 </div>
+<div id="flash" role="status" aria-live="polite"></div>
 <script src="common.js"></script>
 <script>
 const $ = id => document.getElementById(id);
+const esc = s => HW.esc(s);
 const params = new URLSearchParams(location.search);
 
-// Seats this device holds for this game, one localStorage key each
-// (hw-seat-CODE-PID), so tabs joining at the same time can't overwrite each
-// other. The seat in use is in the URL (?p=…), so each tab can be a different
-// player and a reload keeps the same one.
+// ---------- seats on this device ----------
+// One localStorage key per seat (hw-seat-CODE-PID), so tabs joining at the same
+// time can't overwrite each other. The seat in use is in the URL (?p=…), so each
+// tab can be a different player and a reload keeps the same one.
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+  del(k) { try { localStorage.removeItem(k); } catch {} },
+  keys() { try { return Object.keys(localStorage); } catch { return []; } },
+};
 const seatPrefix = `hw-seat-${HW.code}-`;
 function loadSeats() {
   const out = {};
-  for (let i = 0; i < localStorage.length; i++) {
-    const k = localStorage.key(i);
-    if (k.startsWith(seatPrefix)) { try { out[k.slice(seatPrefix.length)] = JSON.parse(localStorage.getItem(k)); } catch {} }
+  for (const k of store.keys()) {
+    if (k.startsWith(seatPrefix)) { try { out[k.slice(seatPrefix.length)] = JSON.parse(store.get(k)); } catch {} }
   }
   return out;
 }
-const putSeat = (pid, seat) => localStorage.setItem(seatPrefix + pid, JSON.stringify(seat));
-const dropSeat = pid => localStorage.removeItem(seatPrefix + pid);
+const putSeat = (pid, seat) => store.set(seatPrefix + pid, JSON.stringify(seat));
+const dropSeat = pid => store.del(seatPrefix + pid);
 // Earlier versions kept seats in one shared key.
 for (const k of ['hw-seats-' + HW.code, 'hw-p-' + HW.code]) {
-  const old = JSON.parse(localStorage.getItem(k) || 'null');
+  let old = null;
+  try { old = JSON.parse(store.get(k) || 'null'); } catch {}
   if (!old) continue;
   if (old.pid) putSeat(old.pid, { secret: old.secret, name: '' });
   else for (const [id, seat] of Object.entries(old)) if (!loadSeats()[id]) putSeat(id, seat);
-  localStorage.removeItem(k);
+  store.del(k);
 }
 
 let creds = null;
@@ -69,26 +168,90 @@ const pid = params.get('p');
 const mySeat = pid && loadSeats()[pid];
 if (mySeat) creds = { pid, secret: mySeat.secret };
 
-const joinState = { color: '' };
-const keep = {};      // dropdown choices not yet sent, so a redraw doesn't reset them
-let keepScope = '';
-let busy = false;
+// Local, unsent choices that survive a redraw.
+const ui = { color: '', owlOpen: false, owlShown: false, guessPick: '', busy: '' };
+
+// ---------- small helpers (own copies, so the board rewrite can't break the phone) ----------
+const V = () => HW.view;
+const player = id => (V()?.players || []).find(p => p.id === id);
+const pname = id => player(id)?.name || '?';
+const chip = id => { const p = player(id); return p ? `<span class="chip"><i style="background:${esc(p.color)}"></i>${esc(p.name)}</span>` : ''; };
+const valueOf = i => V()?.values?.[i];
+const valueName = i => { const x = valueOf(i); return x ? `${x.icon} ${esc(x.name)}` : ''; };
+const WEATHER = { sun: ['☀️', 'Sun'], rain: ['🌧️', 'Rain'], fog: ['🌫️', 'Fog'] };
+const wxText = w => WEATHER[w] ? `${WEATHER[w][0]} ${WEATHER[w][1]}` : esc(w || '?');
+const treasureOf = id => (V()?.treasures || []).find(t => t.id === id);
+const treasureText = id => { const t = treasureOf(id); return t ? `${t.icon} ${esc(t.name)}` : esc(id); };
+const roleOf = type => (V()?.roles || []).find(r => r.type === type);
+const has = (p, type) => (p?.types || []).includes(type);
+// Where a hex is, in words: "⭐ Excellence · Ring 3" or "the World Tree".
+const hexText = i => {
+  const h = V()?.hexes?.[i];
+  if (!h) return '?';
+  if (h.ring === 0) return 'the World Tree';
+  return `${valueName(h.sector)} · Ring ${h.ring}`;
+};
+const kindText = k => ({ treasure: 'a treasure 💎', spring: 'a spring 💧', empty: 'nothing' }[k] || esc(k || 'nothing'));
+
+// Go sends empty lists as null; the shared normaliser may not know the new fields yet.
+function normalise(v) {
+  v.players = (v.players || []).map(p => ({ ...p, types: p.types || [], reached: p.reached || [] }));
+  v.order ||= []; v.values ||= []; v.roles ||= []; v.treasures ||= []; v.hexes ||= []; v.colors ||= [];
+  if (v.me) { v.me.peeks ||= []; v.me.breath ||= []; }
+  v.recognition ||= [];
+  return v;
+}
+
+function setURL() { history.replaceState(null, '', `${location.pathname}?${params}`); }
 
 function takeSeat(r) {
   putSeat(r.pid, { secret: r.secret, name: r.name });
   creds = { pid: r.pid, secret: r.secret };
-  params.set('p', r.pid);
-  history.replaceState(null, '', `${location.pathname}?${params}`);
+  params.set('p', r.pid); setURL();
   HW.view = null;
   HW.reconnect(creds);
 }
 
+// ---------- feedback ----------
+let flashT = null;
+function flash(msg, bad) {
+  const f = $('flash');
+  f.textContent = msg; f.className = bad ? 'err show' : 'show';
+  clearTimeout(flashT); flashT = setTimeout(() => f.classList.remove('show'), bad ? 4200 : 2600);
+}
+
+async function post(url, body) {
+  const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || `Something went wrong (${r.status}). Try again.`);
+  return j;
+}
+
+// Sends a phone action with this seat; shows the result either way.
+async function send(type, extra, okMsg) {
+  if (ui.busy || !creds) return false;
+  ui.busy = type; draw();
+  try {
+    const r = await post(`/api/games/${HW.code}/action`, { ...creds, type, ...extra });
+    if (r.view) (HW.apply ? HW.apply(r.view) : null);
+    if (okMsg) flash(okMsg);
+    return true;
+  } catch (e) {
+    flash(e.message === 'Failed to fetch' ? 'No connection. Check the Wi-Fi and try again.' : e.message, true);
+    return false;
+  } finally { ui.busy = ''; draw(); }
+}
+
+// ---------- render ----------
+function draw() { if (V()) render(V()); }
+
 function render(v) {
+  normalise(v);
   if (creds && !v.me) {
     // Our seat is gone (removed in the lobby) or this view isn't ours yet.
     if (v.players.every(p => p.id !== creds.pid)) {
       dropSeat(creds.pid); creds = null;
-      params.delete('p'); history.replaceState(null, '', `${location.pathname}?${params}`);
+      params.delete('p'); setURL();
       HW.reconnect({});
     }
     return renderEntry(v);
@@ -101,173 +264,289 @@ function render(v) {
 // ---------- join / continue / rejoin ----------
 function renderEntry(v) {
   $('entry').hidden = false; $('game').hidden = true;
-  $('joinCode').textContent = v.code;
+  $('joinCode').textContent = v.code || HW.code;
   const mine = Object.entries(loadSeats()).filter(([id]) => v.players.some(p => p.id === id));
   $('seatsBox').hidden = !mine.length;
   HW.patch($('seatsBox'), `<h3>Continue on this device</h3>` + mine.map(([id]) =>
-    `<button class="ghost seat" data-act="seat" data-pid="${id}">Continue as ${HW.chip(id)}</button>`).join(''));
-  const open = v.phase === 'lobby';
+    `<button class="ghost seat" data-act="seat" data-pid="${esc(id)}">Continue as ${chip(id)}</button>`).join(''));
+  const open = v.phase === 'lobby' && v.players.length < (v.maxPlayers || 12);
   $('joinOpen').hidden = !open; $('joinClosed').hidden = open;
+  $('joinClosed').textContent = v.phase === 'lobby'
+    ? `This game is full (${v.maxPlayers || 12} players). If you were playing, continue below or ask the Keeper for a rejoin code.`
+    : 'This game has already started. If you were playing, continue below or ask the Keeper for a rejoin code.';
   if (!open) return;
   const taken = new Set(v.players.map(p => p.color));
-  if (taken.has(joinState.color)) joinState.color = '';
+  if (taken.has(ui.color)) ui.color = '';
   HW.patch($('swatches'), v.colors.map(c =>
-    `<button style="background:${c}" data-act="color" data-c="${c}" class="${joinState.color === c ? 'sel' : ''}" ${taken.has(c) ? 'disabled' : ''} aria-label="colour ${c}"></button>`).join(''));
+    `<button style="background:${esc(c)}" data-act="color" data-c="${esc(c)}" class="${ui.color === c ? 'sel' : ''}" ${taken.has(c) ? 'disabled' : ''} aria-label="colour ${esc(c)}${taken.has(c) ? ' (taken)' : ''}"></button>`).join(''));
 }
 
 // ---------- game ----------
-// The phone stays quiet: your Secret Owl, giving trust, Dusk, your guess, and
-// your powers as a reminder. Everything public happens on the big screen, where
-// the Keeper taps what you say aloud.
+// Phones down: the phone shows only what is yours (pack, roles, private looks,
+// your Secret Owl) and the three private actions: trust, Investigator look, guess.
 function renderGame(v) {
-  const me = HW.player(v.me.id), mv = v.me;
-  const scope = `${v.phase}|${v.season}|${v.turn?.player || ''}`;
-  if (scope !== keepScope) { keepScope = scope; for (const k in keep) delete keep[k]; }
+  const me = player(v.me.id), mv = v.me;
+  if (!me) return;
+  const owlKnown = !!(mv.target || mv.targetName);
+  const phaseName = { lobby: 'Gathering in the lobby', enter: 'Entering the forest', turn: `Round ${v.round || 1}${v.tide ? ` · after ${v.tide} Tide${v.tide > 1 ? 's' : ''}` : ''}`,
+    guess: 'Who was your Secret Owl?', chain: 'The tribute chain', end: v.result === 'won' ? 'The forest wakes' : v.result === 'ended' ? 'Game closed by the Keeper' : 'The forest sleeps' }[v.phase] || v.phase;
+  HW.patch($('head'), `<div class="who">${chip(me.id)}<span class="phase">${esc(phaseName)}</span></div>
+    ${owlKnown ? `<button class="ghost owlbtn ${ui.owlOpen ? 'on' : ''}" data-act="owl" aria-label="Your Secret Owl">🦉</button>` : ''}`);
 
-  HW.patch($('top'), `<div class="row" style="justify-content:space-between"><h2 style="margin:0">${HW.chip(me.id)}</h2><span class="muted">${HW.esc(HW.phaseTitle(v))}</span></div>
-    ${me.value >= 0 ? `<p style="margin:.5em 0 0">You stand for <b>${HW.valueName(me.value)}</b>${me.allies.length ? ` · allied with ${me.allies.map(a => HW.chip(a)).join(' ')}` : ''}</p>` : ''}
-    ${v.phase === 'lobby' ? '' : `<p class="muted" style="margin:.5em 0 0">🌰 ${me.trustLeft} trust acorns to give${me.squirrels ? ` · 🐿️ ${me.squirrels} follow-up${me.squirrels > 1 ? 's' : ''}: raise your hand after a share` : ''}</p>`}`);
-  patchKeep($('action'), actionPanel(v, me, mv));
+  // Secret Owl: tucked behind the 🦉 button; the name stays blurred until tapped.
+  $('owl').hidden = !(owlKnown && ui.owlOpen);
+  if (owlKnown) HW.patch($('owl'), `<h3>🦉 Your Secret Owl</h3>
+    <p>You are the Secret Owl of <span class="name ${ui.owlShown ? '' : 'blur'}" data-act="owlname">${esc(mv.targetName || pname(mv.target))}</span>${ui.owlShown ? '' : ' <small class="muted">(tap to show)</small>'}.</p>
+    <p class="muted small">Watch them quietly all game: something they love, something that shaped them, something they hope for. Don't let them catch you.</p>
+    <button class="ghost block" data-act="owl">Hide</button>`);
 
-  const showSecret = v.phase !== 'lobby' && v.phase !== 'scores';
-  $('secret').hidden = !showSecret;
-  if (showSecret) HW.patch($('secret'), `<h3>🦉 You're the Secret Owl for…</h3><p>Watch <span class="secret" data-act="reveal">${HW.esc(mv.targetName || '')}</span> <small>(tap to reveal)</small> quietly today. Notice something they love, something that shaped them, something they hope for.</p>`);
-  $('powersp').hidden = v.phase === 'scores';
-  HW.patch($('powers'), me.types?.length ? `<p class="muted" style="margin-top:0">When it's time, say it aloud: the Keeper activates it on the big screen.</p>` + me.types.map(t => powerCard(v, me, t)).join('')
-    : '<p class="muted">The Keeper will give you your Enneagram powers before the start.</p>');
+  HW.patch($('main'), mainPanel(v, me, mv));
+  $('main').classList.toggle('hot', !!(v.share || (v.phase === 'turn' && v.turn?.player === me.id) || (v.phase === 'enter' && v.current === me.id && !v.share)
+    || (v.phase === 'guess' && !mv.guess) || (v.phase === 'chain' && v.tribute?.giver === me.id)));
+
+  const inPlay = v.phase === 'enter' || v.phase === 'turn';
+  $('pack').hidden = !inPlay || me.pos == null || me.pos < 0;
+  if (!$('pack').hidden) HW.patch($('pack'), packPanel(v, me));
+
+  const priv = inPlay ? privatePanel(v, me, mv) : '';
+  $('private').hidden = !priv;
+  if (priv) HW.patch($('private'), priv);
+
+  const showRoles = v.phase === 'lobby' || inPlay;
+  $('roles').hidden = !showRoles;
+  if (showRoles) HW.patch($('roles'), rolesPanel(v, me));
 }
 
-// Patch a section, then put back any dropdown choices the player hadn't sent yet.
-function patchKeep(el, html) {
-  if (!HW.patch(el, html)) return;
-  el.querySelectorAll('select[data-keep]').forEach(s => {
-    const k = s.dataset.keep;
-    if (k in keep && [...s.options].some(o => o.value === keep[k])) s.value = keep[k];
-  });
-}
-document.addEventListener('input', e => {
-  if (e.target.id === 'statement') keep.statement = e.target.value;
-});
-document.addEventListener('change', e => {
-  const s = e.target.closest('select[data-keep]');
-  if (s) keep[s.dataset.keep] = s.value;
-});
-
-const lookUp = msg => `<p class="big">${msg}</p><p class="muted">Phone down: everything happens on the big screen.</p>`;
-
-function actionPanel(v, me, mv) {
-  const t = v.turn;
+function mainPanel(v, me, mv) {
+  if (v.share && (v.phase === 'enter' || v.phase === 'turn')) return sharePanel(v, me);
   switch (v.phase) {
-    case 'lobby': return `<p class="big">You're in. Waiting for the Keeper to start…</p><p class="muted">The Keeper gives each player 1 to 3 Enneagram powers. While you wait, read <a href="howto.html" target="_blank">how to play</a>.</p>`;
-    case 'plant':
-      return v.current === me.id
-        ? lookUp('Your turn to plant: say which ZERAOS value you stand for, and why, in one sentence. The Keeper places your seed in it.')
-        : lookUp(`Listen to ${HW.chip(v.current)}.`);
-    case 'turn':
-      if (t.player === me.id) return lookUp(t.step === 'move' ? 'Your turn. Say where you want to go; the Keeper moves you.' : 'Your turn. Your question is on the big screen.');
-      if (t.step === 'trust') return t.iGave ? `<p class="good big">You gave trust to ${HW.chip(t.player)}. 🌰</p>`
-        : `<button data-act="trust" class="big" ${me.trustLeft < 1 ? 'disabled' : ''}>Give trust to ${HW.esc(HW.name(t.player))} 🌰</button>
-           <p class="muted">Trust is a gift, not a grade. Give it if this share moved you. ${me.trustLeft} left.</p>`;
-      if (t.invited === me.id) return lookUp(`Open Hands: you answer this question too, right after ${HW.chip(t.player)}.`);
-      return lookUp(`Listen to ${HW.chip(t.player)}.`);
-    case 'dusk': return duskPanel(v, me, mv);
-    case 'stories': {
-      const al = v.alliances.find(a => a.id === v.story?.alliance);
-      if (al?.members.includes(me.id)) return lookUp('Your alliance tells its story now: your statement, and how you found it.');
-      return lookUp('Listen to this alliance\'s story.');
-    }
-    case 'guess': {
-      const opts = v.players.filter(p => p.id !== me.id).map(p => `<option value="${p.id}" ${mv.guess === p.id ? 'selected' : ''}>${HW.esc(p.name)}</option>`).join('');
-      return `<p class="big">Who was <b>your</b> Secret Owl?</p>
-        <select id="guess" data-keep="guess"><option value="">Choose…</option>${opts}</select>
-        <p><button data-act="guess">${mv.guess ? 'Change my guess' : 'Lock in my guess'}</button></p>
-        ${mv.guess ? `<p class="good">You guessed ${HW.esc(HW.name(mv.guess))}.</p>` : ''}`;
-    }
-    case 'chain': {
-      const tr = v.tribute;
-      if (tr.giver === me.id) return `<p class="big">Your tribute to ${HW.chip(tr.receiver)}</p>
-        <p>Three things you discovered about them today, and one thing you appreciate. Then hand them an acorn: your trust. 🌰</p>`;
-      if (tr.receiver === me.id) return lookUp(`${HW.chip(tr.giver)} is honouring you. Then say how many of the three were true.`);
-      return lookUp(`${HW.chip(tr.giver)} → ${HW.chip(tr.receiver)}. Listen.`);
-    }
-    case 'scores': return HW.scoresTable(v);
+    case 'lobby': return lobbyPanel(v, me);
+    case 'enter': return enterPanel(v, me);
+    case 'turn': return turnPanel(v, me);
+    case 'guess': return guessPanel(v, me, mv);
+    case 'chain': return chainPanel(v, me);
+    case 'end': return endPanel(v, me, mv);
   }
+  return `<p class="muted">Waiting for the Keeper…</p>`;
+}
+
+function lobbyPanel(v, me) {
+  const n = v.players.length, min = v.minPlayers || 6, max = v.maxPlayers || 12;
+  const need = Math.max(0, min - n);
+  return `<p class="big">You're in. Waiting for the Keeper to start…</p>
+    <p class="muted small">${min}–${max} players · ${n} here${need ? ` · ${need} more to start` : ''}</p>
+    <ul class="plist">${v.players.map(p => `<li><span>${chip(p.id)}${p.id === me.id ? ' <small class="muted">(you)</small>' : ''}</span><small class="muted">${p.types.length ? p.types.map(t => esc(`${t} ${roleOf(t)?.name || ''}`.trim())).join(' · ') : 'no type yet'}</small></li>`).join('')}</ul>
+    <p class="muted small">The Keeper gives each player 1 to 3 Enneagram types. While you wait, read <a href="howto.html" target="_blank">how to play</a>.</p>`;
+}
+
+function enterPanel(v, me) {
+  if (v.current === me.id) return `<p class="pkind">Your turn to enter</p>
+    <p class="big">Choose your value and tell everyone why.</p>
+    <p class="muted small">Say it aloud: the Keeper taps your value and your starting hex on the outer ring.</p>
+    <div class="values">${v.values.map(x => `<div class="v">${x.icon} <b>${esc(x.name)}</b> <small class="muted">· ${esc(x.tagline || '')}</small></div>`).join('')}</div>`;
+  const mine = me.value >= 0 ? `<p>You stand for <b>${valueName(me.value)}</b>.</p>` : '';
+  return `<p class="pkind">Entering the forest</p><p class="big">${chip(v.current)} is entering.</p>${mine}<p class="muted">Phones down: listen to why they chose their value.</p>`;
+}
+
+function turnPanel(v, me) {
+  const t = v.turn || {};
+  const per = v.actionsPerTurn || 2;
+  if (t.player === me.id) {
+    const left = Math.max(0, t.actions ?? per);
+    return `<p class="pkind">Your turn</p>
+      <div class="row between"><p class="big" style="margin:0">Say your moves aloud.</p><span class="dots" aria-label="${left} actions left">${'●'.repeat(left)}${'○'.repeat(Math.max(0, per - left))}</span></div>
+      <p class="muted small">${left} of ${per} actions left. The Keeper taps them on the big screen. Passing water, fruit or treasure is free.</p>
+      ${me.water === 0 ? zeroWater() : ''}`;
+  }
+  const nextUp = (() => { const o = v.order, i = o.indexOf(t.player); return i >= 0 && o.length ? o[(i + 1) % o.length] : ''; })();
+  return `<p class="pkind">Round ${v.round || 1}</p>
+    <p class="big">${chip(t.player)}'s turn.</p>
+    <p class="muted small">${nextUp === me.id ? "You're next: think about your 2 actions." : 'Phones down: help them plan out loud.'}</p>
+    ${me.water === 0 ? zeroWater() : ''}`;
+}
+const zeroWater = () => `<div class="alert">💧 0 water. You can't move until someone passes you 1 water.</div>`;
+
+function sharePanel(v, me) {
+  const s = v.share, isMe = s.player === me.id;
+  const timer = v.timerEnd ? `<p class="ptimer" data-timer></p>` : '';
+  if (s.kind === 'treasure') {
+    const t = treasureOf(s.sub);
+    return `<p class="pkind">Group moment</p>
+      <p class="big">${isMe ? 'You' : chip(s.player)} found ${t ? `${t.icon} <b>${esc(t.name)}</b>` : 'a treasure'}!</p>
+      ${t?.meaning ? `<p class="muted small">${esc(t.meaning)}</p>` : ''}
+      <p><b>Everyone answers in one sentence:</b></p>
+      <div class="pprompt">${esc(s.prompt)}</div>${timer}`;
+  }
+  const what = {
+    why: isMe ? `Tell everyone why you chose ${valueName(me.value) || 'your value'}` : `${chip(s.player)} tells why they chose ${valueName(player(s.player)?.value) || 'their value'}`,
+    ring: isMe ? `Your Ring ${esc(s.sub)} card` : `${chip(s.player)} reached Ring ${esc(s.sub)}`,
+    harvest: isMe ? 'Your harvest story' : `${chip(s.player)} tells a harvest story`,
+    heartwood: isMe ? 'Your Heartwood question' : `${chip(s.player)} answers a Heartwood question`,
+  }[s.kind] || (isMe ? 'Your turn to share' : `${chip(s.player)} is sharing`);
+  let h = `<p class="pkind">${isMe ? 'You share' : 'Listen'}</p><p class="big">${what}</p>
+    ${s.prompt ? `<div class="pprompt">“${esc(s.prompt)}”</div>` : ''}
+    ${(s.kind === 'harvest' || s.kind === 'why') && s.sub ? `<p class="muted small">${esc(s.sub)}</p>` : ''}${timer}`;
+  if (isMe) return h + `<p class="muted">Phone down, speak to the table. The Keeper closes the share when you're done.</p>`;
+  const left = me.trustLeft ?? 0;
+  if (s.iGave) return h + `<p class="good big">You gave ${esc(pname(s.player))} 1 trust acorn. 🌰</p><p class="acorns muted">${left} acorn${left === 1 ? '' : 's'} left</p>`;
+  return h + `<button class="block huge" data-act="trust" ${left < 1 || ui.busy ? 'disabled' : ''}>${ui.busy === 'trust' ? 'Giving…' : 'Give 1 trust 🌰'}</button>
+    <p class="acorns ${left < 1 ? 'bad' : 'muted'}">${left < 1 ? 'No acorns left to give.' : `🌰 ${left} acorn${left === 1 ? '' : 's'} left`}</p>
+    <p class="muted small">Trust is a gift, not a grade. Give it if this share moved you.</p>`;
+}
+
+function packPanel(v, me) {
+  const tr = me.treasure ? treasureOf(me.treasure) : null;
+  const reached = [3, 2, 1].map(r => `<span class="pill ${me.reached[r - 1] ? 'ok' : ''}">Ring ${r} ${me.reached[r - 1] ? '✅' : '·'}</span>`).join('');
+  const h = v.hexes[me.pos];
+  const here = h ? (h.ring === 0 ? '🌳 the World Tree' : `${hexText(me.pos)} · ${wxText(v.weather?.[h.sector])}`) : '';
+  return `<h3>Your pack</h3>
+    <div class="pack">
+      <div class="water ${me.water === 0 ? 'empty' : ''}"><b>💧 ${me.water ?? 0}/5</b><small>water</small></div>
+      <div><b>🍎 ${me.fruit ?? 0}/2</b><small>fruit</small></div>
+      <div><b>${tr ? tr.icon : '💎'} ${me.treasure ? '1' : '0'}/1</b><small>${tr ? esc(tr.name) : 'treasure'}</small></div>
+    </div>
+    <div class="pills"><span class="pill ${me.placed ? 'ok' : ''}">Fruit placed ${me.placed ? '✅' : 'not yet'}</span>${reached}</div>
+    ${here ? `<p class="muted small" style="margin-top:.6em">You stand on ${here}</p>` : ''}`;
+}
+
+function privatePanel(v, me, mv) {
+  let h = '';
+  // Individualist: private peeks at face-down neighbours.
+  // Weather looks are shown from me.weatherPeek below; here only the tiles peeked at.
+  const tilePeeks = mv.peeks.filter(e => !(e && (e.type === 'weather' || (e.weather && !(e.hex >= 0)))));
+  if (has(me, 4) || tilePeeks.length) {
+    const peeks = tilePeeks.slice(-3).reverse();
+    h += `<h3>🔎 Your peeks <small class="muted">· Individualist</small></h3>` + (peeks.length ? peeks.map(peekLine).join('')
+      : `<p class="muted small">When you Explore, you also peek at one face-down hex next to you. It shows up here, only for you.</p>`);
+  }
+  if (has(me, 5)) {
+    h += `<h3 style="margin-top:.8em">🔭 Investigator</h3>`;
+    const br = mv.breath;
+    h += br.length ? `<div class="peek"><b>Next Forest Breath</b> drops dead leaves on:<br>${breathLines(br)}</div>`
+      : `<div class="peek muted">The next Forest Breath list isn't known yet.</div>`;
+    if (mv.weatherPeek) h += `<div class="peek">Next weather in ${valueName(mv.weatherPeek.sector)}: <b>${wxText(mv.weatherPeek.weather)}</b></div>`;
+    const myTurn = v.phase === 'turn' && v.turn?.player === me.id;
+    if (myTurn && !v.turn.investigated) {
+      h += `<p style="margin:.6em 0 .3em"><b>Investigate:</b> look at one sector's next weather (once a round).</p>
+        <div class="sectors">${v.values.map((x, s) => `<button class="ghost" data-act="investigate" data-n="${s}" ${v.share || ui.busy ? 'disabled' : ''}><b>${x.icon}</b>${esc(x.name)}</button>`).join('')}</div>
+        ${v.share ? '<p class="muted small">You can look after the share closes.</p>' : ''}`;
+    } else if (myTurn) {
+      h += `<p class="muted small">You've looked this round.</p>`;
+    } else if (!mv.weatherPeek) {
+      h += `<p class="muted small">During your own turn you can look at one sector's next weather, once a round.</p>`;
+    }
+  }
+  return h;
+}
+// The Breath list grouped by hex: two drifts on one hex seal it.
+function breathLines(br) {
+  const n = new Map();
+  for (const b of br) n.set(b.to, (n.get(b.to) || 0) + 1);
+  return [...n].map(([to, k]) => `• ${hexText(to)}${k > 1 ? ` <b>×${k}</b>` : ''}`).join('<br>');
+}
+function peekLine(e) {
+  if (typeof e === 'string') return `<div class="peek">${esc(e)}</div>`;
+  if (e && e.weather && e.sector != null) return `<div class="peek">Next weather in ${valueName(e.sector)}: <b>${wxText(e.weather)}</b></div>`;
+  if (e && e.hex != null) {
+    const seen = V()?.tiles?.[e.hex]?.up;
+    return `<div class="peek">The hex at ${esc(hexText(e.hex))} hides <b>${kindText(e.kind)}</b>${e.treasure ? ` (${treasureText(e.treasure)})` : ''}.${seen ? ' <small class="muted">(explored since)</small>' : ''}</div>`;
+  }
+  return `<div class="peek">${esc(e?.text || JSON.stringify(e))}</div>`;
+}
+
+function rolesPanel(v, me) {
+  if (!me.types.length) return `<h3>Your roles</h3><p class="muted small">The Keeper will give you 1 to 3 Enneagram types before the start.</p>`;
+  return `<h3>Your roles</h3>
+    ${me.types.map(t => { const r = roleOf(t); return `<div class="role"><b>${t} ${esc(r?.name || '')}</b>${esc(r?.text || '')}</div>`; }).join('')}
+    <p class="muted small">When it matters, say it aloud: the Keeper uses it on the big screen.</p>`;
+}
+
+// How the game ended, for the guess / chain / end screens.
+function resultLine(v) {
+  if (v.result === 'won') return `<p class="good small" style="margin-top:0">🌳 The forest woke. You did it together.</p>`;
+  if (v.result === 'lost') return `<p class="muted small" style="margin-top:0">🍂 The team ran dry this time.</p>`;
+  if (v.result === 'ended') return `<p class="muted small" style="margin-top:0">The Keeper closed the game; the forest is still asleep.</p>`;
   return '';
 }
 
-function duskPanel(v, me, mv) {
-  if (v.dusk.resolved) {
-    const pr = v.dusk.pairs.find(p => [p.a, p.b, p.c].includes(me.id));
-    if (!pr) return '<p>Rest by the fire.</p>';
-    const others = [pr.a, pr.b, pr.c].filter(x => x && x !== me.id).map(x => HW.chip(x)).join(' & ');
-    let h = `<p class="big">You're with ${others} ${pr.ally ? '<span class="badge">ALLIANCE</span>' : '<span class="muted">(fireside chat)</span>'}</p>
-      ${mv.note ? `<p class="note">${HW.esc(mv.note)}</p>` : ''}${pr.note ? `<p class="note">${HW.esc(pr.note)}</p>` : ''}
-      <div class="prompt" style="font-size:1.3rem">${HW.esc(pr.bond)}</div><p class="muted">Talk for 4 minutes.</p>`;
-    const al = pr.ally && v.alliances.find(a => a.id === pr.alliance);
-    if (al) {
-      const draft = 'statement' in keep ? keep.statement : al.statement;
-      h += `<p style="margin-bottom:.2em"><b>Your values:</b> ${al.members.map(m => HW.valueName(HW.player(m)?.value)).join(' + ')}</p>
-        <input id="statement" maxlength="140" placeholder="We ___ so that ___." value="${HW.esc(draft || '')}">
-        <p><button data-act="statement">${al.statement ? 'Update our statement' : 'Save our statement'}</button></p>
-        ${al.statement ? `<p class="good">Saved: “${HW.esc(al.statement)}”</p>` : ''}`;
-    }
-    return h;
-  }
-  const choice = mv.duskChoice || {};
-  const myAl = v.alliances.find(a => a.members.includes(me.id));
-  const opts = v.players.filter(p => p.id !== me.id).map(p => {
-    const done = me.partners.includes(p.id);
-    const same = p.value === me.value;
-    const theirs = v.alliances.find(a => a.members.includes(p.id));
-    const tags = [HW.valueName(p.value), same ? 'same value as you' : '', done ? 'already talked' : '',
-      me.allies.includes(p.id) ? 'your ally' : theirs ? `in an alliance of ${theirs.members.length}` : ''].filter(Boolean).join(' · ');
-    return `<option value="${p.id}" ${choice.partner === p.id ? 'selected' : ''} ${done ? 'disabled' : ''}>${HW.esc(p.name)} · ${HW.esc(tags)}</option>`;
-  }).join('');
-  return `<p class="big">Dusk: who do you want to talk with?</p>
-    <select id="partner" data-keep="partner"><option value="">Anyone (the Keeper pairs me)</option>${opts}</select>
-    <label><input type="checkbox" id="ally" style="width:auto" ${choice.ally ? 'checked' : ''}> Make it an alliance</label>
-    <p><button data-act="dusk">${mv.duskChoice ? 'Update my choice' : 'Send my choice'}</button></p>
-    ${mv.duskChoice ? `<p class="good">Sent: ${mv.duskChoice.partner ? HW.esc(HW.name(mv.duskChoice.partner)) : 'anyone'}${mv.duskChoice.ally ? ', as an alliance' : ''}.</p>` : ''}
-    <p class="muted">You pair only if you both choose each other. An alliance joins <b>different values</b>: 2 or 3 people, never two who stand for the same one, and two alliances don't merge.${myAl ? ` Yours has ${myAl.members.length}${myAl.members.length < 3 ? ', so it can welcome one more' : ' (full)'}.` : ''} Together you find one statement that holds all your values.</p>`;
+function guessPanel(v, me, mv) {
+  const others = v.players.filter(p => p.id !== me.id);
+  const done = v.players.filter(p => p.guessed).length;
+  if (!ui.guessPick || !others.some(p => p.id === ui.guessPick)) ui.guessPick = mv.guess || '';
+  const changed = ui.guessPick && ui.guessPick !== mv.guess;
+  let h = `${resultLine(v)}<p class="pkind">The forest is quiet</p><p class="big">Who was <u>your</u> Secret Owl?</p>
+    <p class="muted small">Someone watched you all game. Tap who you think it was.</p>
+    ${others.map(p => `<button class="ghost pick ${ui.guessPick === p.id ? 'sel' : ''}" data-act="pick" data-id="${esc(p.id)}">${chip(p.id)}${mv.guess === p.id ? ' <small class="good">· your guess</small>' : ''}</button>`).join('')}`;
+  if (!mv.guess || changed) h += `<button class="block huge" data-act="guess" ${!ui.guessPick || ui.busy ? 'disabled' : ''}>${ui.busy === 'guess' ? 'Sending…' : mv.guess ? 'Change my guess' : 'Lock in my guess'}</button>`;
+  if (mv.guess) h += `<p class="good big" style="margin-top:.6em">You guessed ${esc(pname(mv.guess))}.</p><p class="muted">Waiting for the others… ${done} of ${v.players.length} have guessed.</p>`;
+  return h;
 }
 
-function powerCard(v, me, type) {
-  const p = v.powers[type - 1], used = me.used?.[type];
-  return `<div class="power ${used ? 'used' : ''}"><h3>${p.title} <small>· ${p.type} ${p.name}</small>${used ? ' <small><b>Used</b></small>' : ''}</h3>
-    <div>${HW.esc(p.text)}</div><small>When: ${HW.esc(p.when)}</small></div>`;
+function chainPanel(v, me) {
+  const tr = v.tribute || {};
+  const res = resultLine(v);
+  const step = tr.total ? `<p class="muted small">Tribute ${Math.min((tr.idx ?? 0) + 1, tr.total)} of ${tr.total}</p>` : '';
+  if (tr.giver === me.id) return `${res}<p class="pkind">Your tribute</p><p class="big">Say one thing you saw in ${chip(tr.receiver)} this game.</p>${step}`;
+  if (tr.receiver === me.id) return `${res}<p class="pkind">Listen</p><p class="big">${chip(tr.giver)} is speaking to you.</p><p class="muted">Just listen.</p>${step}`;
+  return `${res}<p class="pkind">The tribute chain</p><p class="big">${chip(tr.giver)} → ${chip(tr.receiver)}</p><p class="muted">Listen.</p>${step}`;
+}
+
+function endPanel(v, me, mv) {
+  const won = v.result === 'won';
+  const r = v.recognition.find(x => x.id === me.id);
+  let h = won ? `<p class="pkind">The forest wakes!</p><p class="big">🌳 You woke the World Tree together.</p>`
+    : v.result === 'ended' ? `<p class="pkind">Game closed</p><p class="big">The Keeper closed the game; the forest is still asleep.</p>`
+    : `<p class="pkind">The forest sleeps</p><p class="big">🍂 The team ran dry this time.</p><p class="muted small">No one plays alone: the forest asks for each other's water.</p>`;
+  if (!r) return h + `<p class="muted">Your recognition is on its way…</p>`;
+  h += `<h3 style="margin-top:1em">Your recognition</h3>
+    <div class="rec">
+      <b>🌰 ${r.trust ?? 0}</b><span>trust acorn${r.trust === 1 ? '' : 's'} received${r.givers ? `, from ${r.givers} ${r.givers === 1 ? 'person' : 'people'}` : ''}</span>
+      <b>🦉</b><span>Your Secret Owl was <b>${esc(r.owlName || '?')}</b>. ${r.guessedRight ? '<span class="good">You guessed right!</span>' : 'You didn\'t guess them.'}</span>
+      <b>👀</b><span>${(r.targetName || mv.targetName) ? `You watched <b>${esc(r.targetName || mv.targetName)}</b>: ` : ''}${r.owlHidden ? '<span class="good">you stayed hidden.</span>' : 'they spotted you.'}</span>
+    </div>`;
+  return h;
 }
 
 // ---------- taps ----------
-async function send(type, extra) {
-  if (busy) return;
-  busy = true;
-  try { await HW.act(creds, type, extra); } finally { busy = false; }
-}
-
 document.addEventListener('click', async e => {
   const b = e.target.closest('[data-act]');
   if (!b || b.disabled) return;
   const d = b.dataset;
   switch (d.act) {
-    case 'reveal': b.classList.toggle('secret'); return;
-    case 'color': joinState.color = d.c; return render(HW.view);
-    case 'join':
-      try { takeSeat(await HW.post(`/api/games/${HW.code}/join`, { name: $('name').value, color: joinState.color })); }
-      catch (err) { HW.toast(err.message); }
+    case 'owl': ui.owlOpen = !ui.owlOpen; if (!ui.owlOpen) ui.owlShown = false; return draw();
+    case 'owlname': ui.owlShown = !ui.owlShown; return draw();
+    case 'color': ui.color = d.c; return draw();
+    case 'join': {
+      const name = $('name').value.trim();
+      if (!name) { flash('Type your name first.', true); $('name').focus(); return; }
+      if (!ui.color) { flash('Pick a colour first.', true); return; }
+      b.disabled = true; b.textContent = 'Joining…';
+      try { const r = await post(`/api/games/${HW.code}/join`, { name, color: ui.color }); flash(`Welcome, ${name}!`); takeSeat(r); }
+      catch (err) { flash(err.message, true); }
+      finally { b.disabled = false; b.textContent = 'Join the forest'; }
       return;
+    }
     case 'rejoin':
-      try { takeSeat(await HW.post(`/api/games/${HW.code}/rejoin`, { pin: $('pin').value })); }
-      catch (err) { HW.toast(err.message); }
+      b.disabled = true;
+      try { const r = await post(`/api/games/${HW.code}/rejoin`, { pin: $('pin').value.trim() }); flash(`Welcome back${r.name ? ', ' + r.name : ''}!`); takeSeat(r); }
+      catch (err) { flash(err.message, true); }
+      finally { b.disabled = false; }
       return;
     case 'seat': { const seat = loadSeats()[d.pid]; if (seat) takeSeat({ pid: d.pid, ...seat }); return; }
-    case 'guess': return send('guess', { target: $('guess').value });
-    case 'dusk': return send('duskChoice', { target: $('partner').value, ally: $('ally').checked });
-    case 'statement': await send('statement', { text: $('statement').value }); delete keep.statement; return;
-    default: return send(d.act); // trust
+    case 'trust': { const to = pname(V()?.share?.player); return send('trust', {}, `You gave ${to} 1 trust acorn 🌰`); }
+    case 'investigate': { const n = +d.n; return send('investigate', { n }, `You looked at ${valueOf(n)?.name || 'the sector'}'s next weather 🔭`); }
+    case 'pick': ui.guessPick = d.id; return draw();
+    case 'guess': if (!ui.guessPick) return flash('Tap a player first.', true);
+      return send('guess', { target: ui.guessPick }, `Guess saved: ${pname(ui.guessPick)}`);
   }
 });
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (e.target.id === 'name') document.querySelector('[data-act="join"]')?.click();
+  if (e.target.id === 'pin') document.querySelector('[data-act="rejoin"]')?.click();
+});
 
-HW.connect(creds || {}, render, msg => { $('entry').hidden = false; $('game').hidden = true; HW.toast(msg); });
+HW.connect(creds || {}, render, msg => { $('entry').hidden = false; $('game').hidden = true; flash(msg, true); });
 </script>
 </body>
 </html>

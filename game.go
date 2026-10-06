@@ -1,176 +1,75 @@
 package main
 
+// World Tree: the rules engine. A cooperative game for 6 to 12 players: the
+// team wakes the forest (a Big Tree in every value, everyone places a fruit, the
+// three treasures on the World Tree, everyone gathered there), or everyone runs
+// out of water. Players say what they do and the Keeper taps it on the big
+// screen; trust acorns and the Secret Owl stay on the phones.
+
 import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"sort"
 	"strings"
 	"time"
 )
 
+// RulesVersion marks a saved game as made under these rules; load() skips
+// games saved under older ones, which don't fit these structs.
+const RulesVersion = "world-tree-1"
+
 const (
-	PhaseLobby   = "lobby"
-	PhasePlant   = "plant"
-	PhaseTurn    = "turn"
-	PhaseDusk    = "dusk"
-	PhaseStories = "stories" // finale: each alliance tells its story
-	PhaseGuess   = "guess"
-	PhaseChain   = "chain"
-	PhaseScores  = "scores"
+	PhaseLobby = "lobby"
+	PhaseEnter = "enter" // each player picks a value and an outer hex, and says why
+	PhaseTurn  = "turn"
+	PhaseGuess = "guess" // finale: guess your Secret Owl
+	PhaseChain = "chain" // finale: the tribute chain
+	PhaseEnd   = "end"
 )
 
-var SeasonNames = [4]string{"", "Planting the Seed", "The Sprout", "Growing into a Tree"}
+const (
+	MinPlayers     = 6
+	MaxPlayers     = 12
+	ActionsPerTurn = 2
+	StartWater     = 4
+	MaxWater       = 5
+	MaxFruit       = 2
+	StartTrust     = 10
+	SpringCount    = 4
+	MaxBreath      = 6
+	Rings          = 4
+)
+
+// Enneagram types, as role numbers.
+const (
+	Reformer = iota + 1
+	Helper
+	Achiever
+	Individualist
+	Investigator
+	Loyalist
+	Enthusiast
+	Challenger
+	Peacemaker
+)
+
+var StageNames = [5]string{"", "Seeded", "Grass", "Shrub", "Big Tree"}
+
+var WeatherKinds = [3]string{"sun", "rain", "fog"}
 
 type Hex struct {
 	Q      int `json:"q"`
 	R      int `json:"r"`
 	Ring   int `json:"ring"`
-	Region int `json:"region"` // -1 for the Heartwood
+	Sector int `json:"sector"` // the value, 0..5; -1 for the World Tree
 }
 
-type Token struct {
-	Kind    string `json:"kind"`
-	Flipped bool   `json:"flipped"`
-}
+var dirs = [6][2]int{{1, 0}, {1, -1}, {0, -1}, {-1, 0}, {-1, 1}, {0, 1}}
 
-type KeptCard struct {
-	Region int    `json:"region"`
-	Tier   int    `json:"tier"`
-	Text   string `json:"text"`
-}
-
-type Player struct {
-	ID        string         `json:"id"`
-	Secret    string         `json:"secret"`
-	Name      string         `json:"name"`
-	Color     string         `json:"color"`
-	Value     int            `json:"value"` // the ZERAOS value they stand for; -1 until planted
-	Types     []int          `json:"types"`
-	Used      map[int]bool   `json:"used"`
-	Pos       int            `json:"pos"`
-	Bonus     int            `json:"bonus"` // bonus points (✨)
-	TrustLeft int            `json:"trustLeft"`
-	Squirrels int            `json:"squirrels"`
-	Pot       map[string]int `json:"pot"`
-	Cards     []KeptCard     `json:"cards"`
-	Allies    []string       `json:"allies"` // the other members of their alliance
-	Partners  []string       `json:"partners"`
-	Target    string         `json:"target"`
-	Guess     string         `json:"guess"`
-	Confirmed int            `json:"confirmed"`
-	Peek      map[int]string `json:"peek"`
-}
-
-type TurnState struct {
-	Player     string         `json:"player"`
-	Step       string         `json:"step"` // move, share, trust
-	Discovered bool           `json:"discovered"`
-	StepsLeft  int            `json:"stepsLeft"` // up to 3 a turn, more with Momentum
-	Teleport   bool           `json:"teleport"`
-	CanClaim   bool           `json:"canClaim"`
-	Region     int            `json:"region"`
-	Tier       int            `json:"tier"`
-	Card       int            `json:"card"`
-	Prompt     string         `json:"prompt"`
-	Choices    []int          `json:"choices"`
-	Redrawn    bool           `json:"redrawn"`
-	Started    bool           `json:"started"`
-	Bonus      int            `json:"bonus"`
-	ScoreTier  int            `json:"scoreTier"` // set by Deep Water: the tier the share scores at
-	Invited    string         `json:"invited"`   // Open Hands: answers the same question too
-	Campfire   string         `json:"campfire"`  // Adventure: the Campfire question called this turn
-	Event      string         `json:"event"`
-	EventText  string         `json:"eventText"`
-	Trusted    map[string]int `json:"trusted"`
-	FollowUps  []string       `json:"followUps"`
-}
-
-type DuskChoice struct {
-	Partner string `json:"partner"`
-	Ally    bool   `json:"ally"`
-}
-
-type Pair struct {
-	A        string `json:"a"`
-	B        string `json:"b"`
-	C        string `json:"c,omitempty"`
-	Ally     bool   `json:"ally"`               // this pair or trio formed or grew an alliance
-	Alliance string `json:"alliance,omitempty"` // which one
-	Bond     string `json:"bond"`
-	Note     string `json:"note,omitempty"` // why a requested alliance didn't form
-}
-
-type DuskState struct {
-	Choices  map[string]DuskChoice `json:"choices"`
-	Common   map[string]bool       `json:"common"`
-	Pairs    []Pair                `json:"pairs"`
-	Notes    map[string]string     `json:"notes"` // per player: why their own choice was set aside
-	Resolved bool                  `json:"resolved"`
-}
-
-// Alliance is 2 or 3 players who stand for different values, held together by
-// one statement that holds all their values.
-type Alliance struct {
-	ID        string   `json:"id"`
-	Members   []string `json:"members"`
-	Statement string   `json:"statement"`
-	Season    int      `json:"season"` // the Dusk it formed or last grew at
-}
-
-type Game struct {
-	Code       string               `json:"code"`
-	HostSecret string               `json:"hostSecret"`
-	Phase      string               `json:"phase"`
-	Season     int                  `json:"season"`
-	Players    []*Player            `json:"players"`
-	Alliances  []*Alliance          `json:"alliances"`
-	StoryIdx   int                  `json:"storyIdx"` // finale: which alliance is telling its story
-	Order      []string             `json:"order"`
-	TurnIdx    int                  `json:"turnIdx"`
-	StartIdx   int                  `json:"startIdx"`
-	TurnsTaken int                  `json:"turnsTaken"`
-	Hexes      []Hex                `json:"hexes"`
-	Tokens     map[int]*Token       `json:"tokens"`
-	Trees      map[int]int          `json:"trees"`
-	Decks      map[int][]int        `json:"decks"` // 0..5 regions, 6 Heartwood
-	Turn       *TurnState           `json:"turn"`
-	Dusk       *DuskState           `json:"dusk"`
-	Chain      []string             `json:"chain"`
-	ChainIdx   int                  `json:"chainIdx"`
-	Oak        map[int]bool         `json:"oak"`
-	Log        []string             `json:"log"`
-	TimerEnd   int64                `json:"timerEnd"`
-	TimerLabel string               `json:"timerLabel"`
-	Version    int                  `json:"version"`
-	Rejoin     map[string]RejoinPin `json:"rejoin"`
-}
-
-type RejoinPin struct {
-	Pid     string `json:"pid"`
-	Expires int64  `json:"expires"`
-}
-
-type Action struct {
-	Pid    string `json:"pid"`
-	Secret string `json:"secret"`
-	Host   string `json:"host"`
-	Type   string `json:"type"`
-	Hex    int    `json:"hex"`
-	Target string `json:"target"`
-	Power  int    `json:"power"`
-	Ally   bool   `json:"ally"`
-	N      int    `json:"n"`
-	Card   int    `json:"card"`
-	Text   string `json:"text"`
-	Types  []int  `json:"types"`
-	As     string `json:"as"` // the player the Keeper acts for
-}
-
-func buildHexes() []Hex {
+// buildHexes lays out the World Tree and its rings, ring by ring.
+func buildHexes(rings int) []Hex {
 	hs := []Hex{{0, 0, 0, -1}}
-	dirs := [6][2]int{{1, 0}, {1, -1}, {0, -1}, {-1, 0}, {-1, 1}, {0, 1}}
-	for k := 1; k <= 3; k++ {
+	for k := 1; k <= rings; k++ {
 		q, r := dirs[4][0]*k, dirs[4][1]*k
 		for side := 0; side < 6; side++ {
 			for s := 0; s < k; s++ {
@@ -184,40 +83,240 @@ func buildHexes() []Hex {
 	return hs
 }
 
-func abs(x int) int {
-	if x < 0 {
-		return -x
+func buildAdj(hs []Hex) [][]int {
+	at := map[[2]int]int{}
+	for i, h := range hs {
+		at[[2]int{h.Q, h.R}] = i
 	}
-	return x
+	adj := make([][]int, len(hs))
+	for i, h := range hs {
+		for _, d := range dirs {
+			if j, ok := at[[2]int{h.Q + d[0], h.R + d[1]}]; ok {
+				adj[i] = append(adj[i], j)
+			}
+		}
+	}
+	return adj
 }
 
-func (g *Game) dist(a, b int) int {
-	ha, hb := g.Hexes[a], g.Hexes[b]
-	dq, dr := ha.Q-hb.Q, ha.R-hb.R
-	return (abs(dq) + abs(dr) + abs(dq+dr)) / 2
+// Board is the same for every game: 61 hexes, index 0 the World Tree. Adj
+// lists each hex's neighbours.
+var (
+	Board = buildHexes(Rings)
+	Adj   = buildAdj(Board)
+)
+
+func neighbours(a, b int) bool {
+	if a < 0 || a >= len(Adj) {
+		return false
+	}
+	for _, j := range Adj[a] {
+		if j == b {
+			return true
+		}
+	}
+	return false
+}
+
+// Tile is what lies on a hex (every hex but the World Tree).
+type Tile struct {
+	Up        bool   `json:"up"`        // explored
+	Kind      string `json:"kind"`      // empty, spring or treasure
+	Treasure  string `json:"treasure"`  // the treasure still lying here; "" once taken
+	Stage     int    `json:"stage"`     // 0 none, 1 Seeded, 2 Grass, 3 Shrub, 4 Big Tree
+	Leaves    int    `json:"leaves"`    // dead leaves; 2 = sealed
+	Harvested bool   `json:"harvested"` // since the last Forest Tide
+}
+
+// Drift is one gust of the Forest Breath: dead leaves picked up at From land on To.
+type Drift struct {
+	From int `json:"from"`
+	To   int `json:"to"`
+}
+
+// Peek is a private look that goes only to one player's phone: an
+// Individualist's peek at a hidden tile, or an Investigator's look at a
+// sector's next weather.
+type Peek struct {
+	Type    string `json:"type"` // "tile" or "weather"
+	Hex     int    `json:"hex"`  // tile: the hex peeked at (-1 for weather)
+	Kind    string `json:"kind,omitempty"`
+	Sector  int    `json:"sector"`
+	Weather string `json:"weather,omitempty"`
+	Round   int    `json:"round"`
+	Tide    int    `json:"tide"` // the Forest Tide count when it was seen
+}
+
+type Player struct {
+	ID        string         `json:"id"`
+	Secret    string         `json:"secret"`
+	Name      string         `json:"name"`
+	Color     string         `json:"color"`
+	Value     int            `json:"value"` // the ZERAOS value they stand for; -1 until they enter
+	Types     []int          `json:"types"`
+	Pos       int            `json:"pos"` // -1 until they enter
+	Water     int            `json:"water"`
+	Fruit     int            `json:"fruit"`
+	Treasure  string         `json:"treasure"` // the treasure they carry, or ""
+	Placed    int            `json:"placed"`   // fruit placed on the World Tree
+	Reached   [3]bool        `json:"reached"`  // Rings 1, 2, 3: ring card drawn
+	TrustLeft int            `json:"trustLeft"`
+	Pot       map[string]int `json:"pot"` // trust acorns received, by giver
+	Target    string         `json:"target"`
+	Guess     string         `json:"guess"`
+	Peeks     []Peek         `json:"peeks"`
+}
+
+func (p *Player) has(t int) bool {
+	for _, x := range p.Types {
+		if x == t {
+			return true
+		}
+	}
+	return false
+}
+
+type TurnState struct {
+	Player         string `json:"player"`
+	Actions        int    `json:"actions"`
+	EnthusiastUsed bool   `json:"enthusiastUsed"`
+	Investigated   bool   `json:"investigated"`
+}
+
+// Share is one person speaking (or, for a treasure, the whole table). Shares
+// queue; while one is open no play action is taken.
+type Share struct {
+	Idx     int             `json:"idx"`
+	Kind    string          `json:"kind"` // why, ring, harvest, heartwood, treasure
+	Player  string          `json:"player"`
+	Prompt  string          `json:"prompt"`
+	Sub     string          `json:"sub"`  // tagline, or treasure id
+	Ring    int             `json:"ring"` // ring cards: the ring
+	Trusted map[string]bool `json:"trusted"`
+}
+
+// Event is one thing that happened, for the Keeper screen's animation.
+type Event map[string]any
+
+type Game struct {
+	Rules       string               `json:"rules"`
+	Code        string               `json:"code"`
+	HostSecret  string               `json:"hostSecret"`
+	Phase       string               `json:"phase"`
+	Players     []*Player            `json:"players"`
+	Order       []string             `json:"order"`
+	TurnIdx     int                  `json:"turnIdx"`
+	Round       int                  `json:"round"`
+	Tide        int                  `json:"tide"`
+	Result      string               `json:"result"` // "", won, lost, ended (closed early by the Keeper)
+	Tiles       []*Tile              `json:"tiles"`  // index 0 (the World Tree) is nil
+	Weather     [6]string            `json:"weather"`
+	NextWeather [6]string            `json:"nextWeather"`
+	Breath      []Drift              `json:"breath"` // the next Forest Breath, rolled ahead
+	Turn        *TurnState           `json:"turn"`
+	Shares      []*Share             `json:"shares"` // the queue; [0] is open
+	ShareSeq    int                  `json:"shareSeq"`
+	Placed      []string             `json:"placed"` // treasures on the World Tree
+	Decks       map[string][]int     `json:"decks"`
+	Chain       []string             `json:"chain"`
+	ChainIdx    int                  `json:"chainIdx"`
+	Log         []string             `json:"log"`
+	Events      []Event              `json:"events"`
+	EventSeq    int                  `json:"eventSeq"`
+	TimerEnd    int64                `json:"timerEnd"`
+	TimerLabel  string               `json:"timerLabel"`
+	Version     int                  `json:"version"`
+	Rejoin      map[string]RejoinPin `json:"rejoin"`
+}
+
+type RejoinPin struct {
+	Pid     string `json:"pid"`
+	Expires int64  `json:"expires"`
+}
+
+type Action struct {
+	Pid    string `json:"pid"`
+	Secret string `json:"secret"`
+	Host   string `json:"host"`
+	Type   string `json:"type"`
+	Hex    int    `json:"hex"` // -1 when not given: your own hex
+	Target string `json:"target"`
+	N      int    `json:"n"`
+	Text   string `json:"text"`
+	Types  []int  `json:"types"`
+	As     string `json:"as"` // the player the Keeper acts for
 }
 
 func NewGame(code, hostSecret string) *Game {
-	g := &Game{Code: code, HostSecret: hostSecret, Phase: PhaseLobby, Hexes: buildHexes(),
-		Tokens: map[int]*Token{}, Trees: map[int]int{}, Decks: map[int][]int{}, Oak: map[int]bool{}}
-	var kinds []string
-	for k, n := range TokenMix {
-		for i := 0; i < n; i++ {
-			kinds = append(kinds, k)
-		}
+	g := &Game{Rules: RulesVersion, Code: code, HostSecret: hostSecret, Phase: PhaseLobby,
+		Decks: map[string][]int{}, Placed: []string{}}
+	g.lay()
+	for s := range 6 {
+		g.Weather[s] = drawWeather()
 	}
-	sort.Strings(kinds)
-	// Spaces beyond the mix are quiet clearings with nothing to find.
-	for len(kinds) < len(g.Hexes)-1 {
-		kinds = append(kinds, "")
+	for s := range 6 {
+		g.NextWeather[s] = drawWeather()
 	}
-	rand.Shuffle(len(kinds), func(i, j int) { kinds[i], kinds[j] = kinds[j], kinds[i] })
-	for i := 1; i < len(g.Hexes); i++ {
-		if kinds[i-1] != "" {
-			g.Tokens[i] = &Token{Kind: kinds[i-1]}
-		}
-	}
+	g.Breath = g.rollBreath()
 	return g
+}
+
+// lay deals the 60 face-down tiles: the three treasures on random hexes of
+// Rings 1 and 2, four springs anywhere else, the rest empty.
+func (g *Game) lay() {
+	g.Tiles = make([]*Tile, len(Board))
+	for i := 1; i < len(Board); i++ {
+		g.Tiles[i] = &Tile{Kind: "empty"}
+	}
+	var inner, rest []int
+	for i := 1; i < len(Board); i++ {
+		if Board[i].Ring <= 2 {
+			inner = append(inner, i)
+		}
+	}
+	rand.Shuffle(len(inner), func(i, j int) { inner[i], inner[j] = inner[j], inner[i] })
+	ids := rand.Perm(len(Treasures))
+	hidden := map[int]bool{}
+	for k, id := range ids {
+		t := g.Tiles[inner[k]]
+		t.Kind, t.Treasure = "treasure", Treasures[id].ID
+		hidden[inner[k]] = true
+	}
+	for i := 1; i < len(Board); i++ {
+		if !hidden[i] {
+			rest = append(rest, i)
+		}
+	}
+	rand.Shuffle(len(rest), func(i, j int) { rest[i], rest[j] = rest[j], rest[i] })
+	for _, i := range rest[:SpringCount] {
+		g.Tiles[i].Kind = "spring"
+	}
+}
+
+func drawWeather() string { return WeatherKinds[rand.Intn(3)] }
+
+// rollBreath decides the next Forest Breath ahead, so the Investigator can see
+// it: each gust picks a hex, and its dead leaves land one step toward the
+// centre (a Ring 1 hex keeps them; the World Tree never gets any). It grows by
+// one every two Tides, up to 6.
+func (g *Game) rollBreath() []Drift {
+	n := min(MaxBreath, 2+g.Tide/2)
+	out := []Drift{}
+	for range n {
+		from := 1 + rand.Intn(len(Board)-1)
+		var inward []int
+		for _, j := range Adj[from] {
+			if j != 0 && Board[j].Ring == Board[from].Ring-1 {
+				inward = append(inward, j)
+			}
+		}
+		to := from
+		if len(inward) > 0 {
+			to = inward[rand.Intn(len(inward))]
+		}
+		out = append(out, Drift{from, to})
+	}
+	return out
 }
 
 func (g *Game) player(id string) *Player {
@@ -236,51 +335,66 @@ func (g *Game) logf(format string, a ...any) {
 	}
 }
 
+// event records something for the Keeper screen to animate. Ids keep
+// increasing for the whole game.
+func (g *Game) event(typ string, e Event) {
+	if e == nil {
+		e = Event{}
+	}
+	g.EventSeq++
+	e["id"], e["type"] = g.EventSeq, typ
+	g.Events = append(g.Events, e)
+	if len(g.Events) > 200 {
+		g.Events = g.Events[len(g.Events)-200:]
+	}
+}
+
 func (g *Game) setTimer(secs int, label string) {
+	if secs <= 0 {
+		g.TimerEnd, g.TimerLabel = 0, ""
+		return
+	}
 	g.TimerEnd = time.Now().Add(time.Duration(secs) * time.Second).UnixMilli()
 	g.TimerLabel = label
 }
 
-func (g *Game) draw(deck int) int {
+// draw takes the next card of a deck ("ring1".."ring3", "heartwood"),
+// reshuffling it when it runs out.
+func (g *Game) draw(deck string) string {
+	cards := HeartwoodCards
+	switch deck {
+	case "ring1":
+		cards = RingDecks[1]
+	case "ring2":
+		cards = RingDecks[2]
+	case "ring3":
+		cards = RingDecks[3]
+	}
 	if len(g.Decks[deck]) == 0 {
-		n := len(HeartwoodCards)
-		if deck < 6 {
-			n = len(RegionCards[deck])
-		}
-		g.Decks[deck] = rand.Perm(n)
+		g.Decks[deck] = rand.Perm(len(cards))
 	}
 	c := g.Decks[deck][0]
 	g.Decks[deck] = g.Decks[deck][1:]
-	return c
+	return cards[c]
 }
 
-func (g *Game) ringOpen(ring int) bool {
-	switch g.Season {
-	case 1:
-		return ring == 3
-	case 2:
-		return ring >= 2
-	default:
-		return true
+// wx is the weather on a hex ("" on the World Tree).
+func (g *Game) wx(i int) string {
+	if i <= 0 || i >= len(Board) {
+		return ""
 	}
+	return g.Weather[Board[i].Sector]
 }
 
-func hasAlly(p *Player, id string) bool {
-	for _, a := range p.Allies {
-		if a == id {
-			return true
-		}
-	}
-	return false
+func (g *Game) sealed(i int) bool {
+	return i > 0 && i < len(g.Tiles) && g.Tiles[i].Leaves >= 2
 }
 
-func contains(xs []string, s string) bool {
-	for _, x := range xs {
-		if x == s {
-			return true
-		}
+func (g *Game) tile(i int) *Tile {
+	if i <= 0 || i >= len(g.Tiles) {
+		return nil
 	}
-	return false
+	return g.Tiles[i]
 }
 
 // ---- lobby ----
@@ -289,8 +403,8 @@ func (g *Game) Join(name, color string) (*Player, error) {
 	if g.Phase != PhaseLobby {
 		return nil, errors.New("the game has already started")
 	}
-	if len(g.Players) >= 10 {
-		return nil, errors.New("the game is full (10 players)")
+	if len(g.Players) >= MaxPlayers {
+		return nil, fmt.Errorf("the game is full (%d players)", MaxPlayers)
 	}
 	if name == "" {
 		return nil, errors.New("enter your name")
@@ -303,25 +417,25 @@ func (g *Game) Join(name, color string) (*Player, error) {
 			return nil, errors.New("that name is taken")
 		}
 	}
-	p := &Player{ID: randID(6), Secret: randID(16), Name: name, Color: color, Value: -1,
-		Used: map[int]bool{}, Pos: -1, Pot: map[string]int{}, Peek: map[int]string{}}
+	p := &Player{ID: randID(6), Secret: randID(16), Name: name, Color: color, Value: -1, Pos: -1,
+		Water: StartWater, Pot: map[string]int{}}
 	g.Players = append(g.Players, p)
 	g.logf("%s joined", name)
 	return p, nil
 }
 
 // assignPowers is the Keeper giving a player 1 to 3 Enneagram types in the
-// lobby; each type's power can be used once. An empty list clears them.
+// lobby; each type's role is always on. An empty list clears them.
 func (g *Game) assignPowers(pid string, types []int) error {
 	if g.Phase != PhaseLobby {
-		return errors.New("powers are assigned in the lobby")
+		return errors.New("types are assigned in the lobby")
 	}
 	p := g.player(pid)
 	if p == nil {
 		return errors.New("no such player")
 	}
 	if len(types) > 3 {
-		return errors.New("up to 3 powers per player")
+		return errors.New("up to 3 types per player")
 	}
 	seen := map[int]bool{}
 	for _, t := range types {
@@ -338,489 +452,726 @@ func (g *Game) start() error {
 	if g.Phase != PhaseLobby {
 		return errors.New("already started")
 	}
-	if len(g.Players) < 2 {
-		return errors.New("need at least 2 players")
+	if len(g.Players) < MinPlayers {
+		return fmt.Errorf("need at least %d players", MinPlayers)
+	}
+	if len(g.Players) > MaxPlayers {
+		return fmt.Errorf("at most %d players", MaxPlayers)
 	}
 	for _, p := range g.Players {
 		if len(p.Types) == 0 {
-			return fmt.Errorf("assign at least one Enneagram power to %s", p.Name)
+			return fmt.Errorf("give %s at least one Enneagram type", p.Name)
 		}
 	}
+	g.Order = nil
 	for _, p := range g.Players {
 		g.Order = append(g.Order, p.ID)
-		p.TrustLeft = 10
+		p.TrustLeft = StartTrust
+		p.Water = StartWater
 	}
 	// Secret Owl: one loop through a shuffled order. Each player is the Secret
 	// Owl of their Target, watching them quietly all game.
+	g.Chain = nil
 	perm := rand.Perm(len(g.Players))
 	for i, pi := range perm {
 		g.Players[pi].Target = g.Players[perm[(i+1)%len(perm)]].ID
 		g.Chain = append(g.Chain, g.Players[pi].ID)
 	}
-	g.Phase = PhasePlant
-	g.TurnIdx, g.TurnsTaken = 0, 0
-	g.logf("The expedition begins. Plant your seed: say which value you stand for, and why.")
+	g.Phase = PhaseEnter
+	g.TurnIdx = 0
+	g.logf("The forest sleeps. Each of you: choose the value you stand for, step onto its edge, and say why.")
+	return nil
+}
+
+// ---- shares and trust ----
+
+func (g *Game) share(kind string, p *Player, prompt, sub string, ring int) {
+	g.ShareSeq++
+	g.Shares = append(g.Shares, &Share{Idx: g.ShareSeq, Kind: kind, Player: p.ID, Prompt: prompt, Sub: sub,
+		Ring: ring, Trusted: map[string]bool{}})
+}
+
+func (g *Game) openShare() *Share {
+	if len(g.Shares) == 0 {
+		return nil
+	}
+	return g.Shares[0]
+}
+
+// giveTrust is a listener giving one trust acorn to the person sharing.
+func (g *Game) giveTrust(me *Player) error {
+	s := g.openShare()
+	if s == nil {
+		return errors.New("trust is given while someone is sharing")
+	}
+	if s.Kind == "treasure" {
+		return errors.New("everyone answers a treasure's question: no acorns for it")
+	}
+	if s.Player == me.ID {
+		return errors.New("you can't trust your own share")
+	}
+	if s.Trusted[me.ID] {
+		return errors.New("you've already given an acorn for this share")
+	}
+	if me.TrustLeft < 1 {
+		return errors.New("no trust acorns left")
+	}
+	sharer := g.player(s.Player)
+	if sharer == nil {
+		return errors.New("no one to trust")
+	}
+	me.TrustLeft--
+	sharer.Pot[me.ID]++
+	s.Trusted[me.ID] = true
+	return nil
+}
+
+func (g *Game) doneShare() error {
+	if len(g.Shares) == 0 {
+		return errors.New("no one is sharing")
+	}
+	g.Shares = g.Shares[1:]
+	return nil
+}
+
+// ---- entering ----
+
+func (g *Game) current() *Player {
+	if g.TurnIdx < 0 || g.TurnIdx >= len(g.Order) {
+		return nil
+	}
+	return g.player(g.Order[g.TurnIdx])
+}
+
+func (g *Game) enter(me *Player, value, hex int) error {
+	if g.Phase != PhaseEnter {
+		return errors.New("everyone has entered the forest")
+	}
+	if cur := g.current(); cur != me {
+		return fmt.Errorf("it's %s's turn to enter", cur.Name)
+	}
+	if value < 0 || value > 5 {
+		return errors.New("choose a value")
+	}
+	if hex < 0 || hex >= len(Board) || Board[hex].Ring != Rings || Board[hex].Sector != value {
+		return errors.New("stand on the outer ring of your value's sector")
+	}
+	me.Value, me.Pos = value, hex
+	v := Values[value]
+	g.share("why", me, fmt.Sprintf("Why do you stand for %s?", v.Name), v.Tagline, 0)
+	g.event("enter", Event{"pid": me.ID, "hex": hex, "value": value})
+	g.logf("%s stands for %s.", me.Name, v.Name)
+	g.TurnIdx++
+	if g.TurnIdx >= len(g.Order) {
+		g.Phase = PhaseTurn
+		g.TurnIdx, g.Round = 0, 1
+		g.newTurn()
+		g.logf("Round 1.")
+	}
 	return nil
 }
 
 // ---- turns ----
 
-func (g *Game) current() *Player {
-	return g.player(g.Order[g.TurnIdx])
-}
-
 func (g *Game) newTurn() {
-	g.Turn = &TurnState{Player: g.Order[g.TurnIdx], Step: "move", Trusted: map[string]int{}, Region: -1, StepsLeft: 3}
+	g.Turn = &TurnState{Player: g.Order[g.TurnIdx], Actions: ActionsPerTurn}
 	g.TimerEnd, g.TimerLabel = 0, ""
-	g.current().Peek = map[int]string{}
 }
 
-// canEnter says whether p may stand on space to: its ring must be open, and
-// no one reaches the Heartwood without an ally.
-func (g *Game) canEnter(p *Player, to int) error {
-	if to < 0 || to >= len(g.Hexes) {
-		return errors.New("no such space")
+func (g *Game) spend(n int) error {
+	if g.Turn.Actions < n {
+		if n > 1 && g.Turn.Actions > 0 {
+			return fmt.Errorf("that costs %d actions here", n)
+		}
+		return errors.New("no actions left this turn")
 	}
-	h := g.Hexes[to]
-	if !g.ringOpen(h.Ring) {
-		return errors.New("that ring opens in a later season")
+	g.Turn.Actions -= n
+	return nil
+}
+
+func (g *Game) canEnter(p *Player, j int) bool {
+	return !g.sealed(j) || p.has(Challenger)
+}
+
+// doubleStep says whether an Enthusiast may reach `to` with this turn's one
+// 2-hex move: not from fog, and neither hex sealed or in fog.
+func (g *Game) doubleStep(p *Player, to int) bool {
+	if !p.has(Enthusiast) || g.Turn.EnthusiastUsed || g.wx(p.Pos) == "fog" || to == p.Pos {
+		return false
 	}
-	if h.Ring == 0 && len(p.Allies) == 0 {
-		return errors.New("no one reaches the Heartwood alone: you need an alliance")
+	if to < 0 || to >= len(Board) || g.sealed(to) || g.wx(to) == "fog" {
+		return false
+	}
+	for _, m := range Adj[p.Pos] {
+		if !g.sealed(m) && g.wx(m) != "fog" && neighbours(m, to) {
+			return true
+		}
+	}
+	return false
+}
+
+func (g *Game) move(me *Player, to int, bring string) error {
+	if me.Water <= 0 {
+		return fmt.Errorf("%s has no water and can't move until someone passes 1", me.Name)
+	}
+	if to < 0 || to >= len(Board) || to == me.Pos {
+		return errors.New("choose a hex to move to")
+	}
+	one := neighbours(me.Pos, to) && g.canEnter(me, to)
+	two := !one && g.doubleStep(me, to)
+	if !one && !two {
+		if neighbours(me.Pos, to) {
+			return errors.New("that hex is sealed by dead leaves: clear it first")
+		}
+		return errors.New("move to a hex next to you")
+	}
+	var mate *Player
+	if bring != "" {
+		mate = g.player(bring)
+		if mate == nil || mate == me {
+			return errors.New("choose a teammate to bring")
+		}
+		if !me.has(Challenger) {
+			return errors.New("only a Challenger brings a teammate")
+		}
+		if mate.Pos != me.Pos {
+			return errors.New("bring a teammate from your own hex")
+		}
+	}
+	if err := g.spend(1); err != nil {
+		return err
+	}
+	if two {
+		g.Turn.EnthusiastUsed = true
+	}
+	from := me.Pos
+	movers := []*Player{me}
+	if mate != nil {
+		movers = append(movers, mate)
+		g.logf("%s moves, bringing %s.", me.Name, mate.Name)
+	} else {
+		g.logf("%s moves.", me.Name)
+	}
+	for _, p := range movers {
+		p.Pos = to
+		g.event("move", Event{"pid": p.ID, "from": from, "to": to})
+	}
+	for _, p := range movers {
+		g.ringCard(p, from, to)
+	}
+	for _, p := range movers {
+		g.autoPlace(p)
 	}
 	return nil
 }
 
-func (g *Game) resolveToken(p *Player, hex int) {
-	t := g.Tokens[hex]
-	if t == nil || t.Flipped {
+// ringCard: the first time a player moves inward into Ring 3, 2 or 1, they draw
+// that ring's card.
+func (g *Game) ringCard(p *Player, from, to int) {
+	r := Board[to].Ring
+	if r < 1 || r > 3 || from < 0 || r >= Board[from].Ring || p.Reached[r-1] {
 		return
 	}
-	t.Flipped = true
-	tu := g.Turn
-	tu.Event = t.Kind
+	p.Reached[r-1] = true
+	g.share("ring", p, g.draw(fmt.Sprintf("ring%d", r)), "", r)
+	g.logf("%s reaches Ring %d for the first time.", p.Name, r)
+}
+
+// autoPlace: a player standing on the World Tree places everything they carry
+// at once. Fruit brings one Heartwood question, however many there are.
+func (g *Game) autoPlace(p *Player) {
+	if p.Pos != 0 || (p.Fruit == 0 && p.Treasure == "") {
+		return
+	}
+	fruit, tr := p.Fruit, p.Treasure
+	p.Placed += fruit
+	p.Fruit, p.Treasure = 0, ""
+	var what []string
+	if fruit > 0 {
+		what = append(what, plural(fruit, "fruit", "fruit"))
+	}
+	if tr != "" {
+		g.Placed = append(g.Placed, tr)
+		what = append(what, treasureByID(tr).Name)
+	}
+	g.event("place", Event{"pid": p.ID, "fruit": fruit, "treasure": tr})
+	g.logf("%s places %s on the World Tree.", p.Name, strings.Join(what, " and "))
+	if tr != "" && len(g.Placed) == len(Treasures) {
+		g.logf("%s", HeartComplete)
+	}
+	if fruit > 0 {
+		g.share("heartwood", p, g.draw("heartwood"), "", 0)
+	}
+}
+
+func plural(n int, one, many string) string {
+	if n == 1 {
+		return "1 " + one
+	}
+	return fmt.Sprintf("%d %s", n, many)
+}
+
+func (g *Game) explore(me *Player, peekHex int) error {
+	t := g.tile(me.Pos)
+	if t == nil || t.Up {
+		return errors.New("nothing to explore here")
+	}
+	cost := 1
+	if g.wx(me.Pos) == "fog" {
+		cost = 2
+	}
+	if err := g.spend(cost); err != nil {
+		return err
+	}
+	t.Up = true
+	g.event("flip", Event{"hex": me.Pos})
 	switch t.Kind {
-	case "mushroom":
-		p.Bonus += 2
-		tu.EventText = "Mushroom patch: +2 ✨ bonus points"
-	case "squirrel":
-		p.Squirrels++
-		tu.EventText = "Squirrel: store it. Right after someone else's share, play it to ask them a follow-up question."
-	case "campfire":
-		tu.EventText = "Campfire! Everyone answers in one sentence: " + CampfireCards[rand.Intn(len(CampfireCards))]
-	case "path":
-		tu.Teleport = true
-		tu.EventText = "Hidden path: move free to any open space in this ring, or stay."
+	case "treasure":
+		tr := treasureByID(t.Treasure)
+		g.logf("%s explores and finds %s %s!", me.Name, tr.Icon, tr.Name)
+		g.event("treasure", Event{"hex": me.Pos, "treasure": tr.ID})
+		g.share("treasure", me, tr.Question, tr.ID, 0)
+	case "spring":
+		g.logf("%s explores and finds a spring 💧.", me.Name)
+	default:
+		g.logf("%s explores an empty clearing.", me.Name)
 	}
-	g.logf("%s found: %s", p.Name, tu.EventText)
+	if me.has(Individualist) {
+		var hidden []int
+		for _, j := range Adj[me.Pos] {
+			if j != 0 && !g.Tiles[j].Up {
+				hidden = append(hidden, j)
+			}
+		}
+		if len(hidden) > 0 {
+			j := hidden[rand.Intn(len(hidden))]
+			for _, h := range hidden {
+				if h == peekHex {
+					j = h
+				}
+			}
+			me.Peeks = append(me.Peeks, Peek{Type: "tile", Hex: j, Kind: g.Tiles[j].Kind, Sector: Board[j].Sector,
+				Round: g.Round, Tide: g.Tide})
+		}
+	}
+	return nil
 }
 
-func (g *Game) dealCard(p *Player) {
-	tu := g.Turn
-	h := g.Hexes[p.Pos]
-	tu.Region = h.Region
-	if h.Ring == 0 {
-		tu.Tier = 4
-		tu.Card = g.draw(6)
+func sowable(t *Tile) bool {
+	return t != nil && t.Up && t.Kind != "spring" && t.Treasure == "" && t.Stage == 0 && t.Leaves < 2
+}
+
+func (g *Game) sow(me *Player) error {
+	if !sowable(g.tile(me.Pos)) {
+		return errors.New("sow on an explored, empty hex with nothing growing")
+	}
+	if err := g.spend(1); err != nil {
+		return err
+	}
+	t := g.Tiles[me.Pos]
+	t.Stage = 1
+	if me.has(Achiever) {
+		t.Stage = 2
+	}
+	g.event("grow", Event{"hex": me.Pos, "stage": t.Stage})
+	if t.Stage == 2 {
+		g.logf("%s sows a seed and it springs up as Grass.", me.Name)
 	} else {
-		tu.Tier = 4 - h.Ring
-		tu.Card = g.draw(h.Region)
+		g.logf("%s sows a seed.", me.Name)
 	}
-	g.setPrompt()
+	return nil
 }
 
-func (g *Game) setPrompt() {
-	tu := g.Turn
-	if tu.Tier == 4 {
-		tu.Prompt = HeartwoodCards[tu.Card]
-	} else {
-		tu.Prompt = RegionCards[tu.Region][tu.Card][tu.Tier-1]
+// reach is the hex a Water or Tend works on: your own, or one next to you for a Helper.
+func (g *Game) reach(me *Player, hex int) (int, error) {
+	if hex < 0 || hex == me.Pos {
+		return me.Pos, nil
 	}
+	if me.has(Helper) && neighbours(me.Pos, hex) {
+		return hex, nil
+	}
+	return 0, errors.New("stand on it (a Helper can reach a hex next to them)")
 }
 
-func (g *Game) toShare(p *Player) {
-	g.Turn.Step = "share"
-	g.Turn.Teleport = false
-	g.Turn.CanClaim = false
-	g.dealCard(p)
+func (g *Game) water(me *Player, hex int) error {
+	j, err := g.reach(me, hex)
+	if err != nil {
+		return err
+	}
+	t := g.tile(j)
+	if t == nil || (t.Stage != 1 && t.Stage != 2) || t.Leaves >= 2 {
+		return errors.New("water a Seeded or Grass hex that isn't sealed")
+	}
+	if me.Water < 1 {
+		return fmt.Errorf("%s has no water", me.Name)
+	}
+	if err := g.spend(1); err != nil {
+		return err
+	}
+	me.Water--
+	t.Stage++
+	g.event("grow", Event{"hex": j, "stage": t.Stage})
+	g.logf("%s waters it: %s.", me.Name, StageNames[t.Stage])
+	return nil
 }
 
-func shareSecs(tier int) int {
-	switch tier {
-	case 1:
-		return 45
-	case 2:
-		return 60
+func (g *Game) tend(me *Player, hex int) error {
+	j, err := g.reach(me, hex)
+	if err != nil {
+		return err
 	}
-	return 90
+	t := g.tile(j)
+	if t == nil || t.Stage != 3 || t.Leaves >= 2 {
+		return errors.New("tend a Shrub that isn't sealed")
+	}
+	if err := g.spend(1); err != nil {
+		return err
+	}
+	t.Stage = 4
+	g.event("grow", Event{"hex": j, "stage": 4})
+	g.logf("%s tends the Shrub: a Big Tree in %s!", me.Name, Values[Board[j].Sector].Name)
+	return nil
 }
 
-func (g *Game) finishTurn() {
-	p := g.current()
-	tu := g.Turn
-	if tu.Prompt != "" {
-		scored := tu.Tier
-		if tu.ScoreTier > 0 && tu.ScoreTier < scored {
-			scored = tu.ScoreTier
-		}
-		p.Cards = append(p.Cards, KeptCard{tu.Region, scored, tu.Prompt})
-		g.Trees[p.Pos]++
-		if o := g.player(tu.Invited); o != nil {
-			// Open Hands: the invited player answered the same question and keeps it too.
-			o.Cards = append(o.Cards, KeptCard{tu.Region, scored, tu.Prompt})
-			g.Trees[p.Pos]++
-		}
-		if tu.Tier == 3 {
-			g.Oak[tu.Region] = true
-		}
-		n := 0
-		for _, c := range tu.Trusted {
-			n += c
-		}
-		g.logf("%s shared (%s) and received %d trust", p.Name, tierName(tu.Tier), n)
+func (g *Game) clear(me *Player, hex int) error {
+	if hex < 0 {
+		hex = me.Pos
 	}
-	p.Bonus += tu.Bonus
-	g.TurnsTaken++
-	if g.TurnsTaken >= len(g.Order) {
-		g.enterDusk()
-		return
+	if hex != me.Pos && !neighbours(me.Pos, hex) {
+		return errors.New("clear your hex or one next to you")
 	}
-	g.TurnIdx = (g.TurnIdx + 1) % len(g.Order)
+	t := g.tile(hex)
+	if t == nil || t.Leaves == 0 {
+		return errors.New("no dead leaves there")
+	}
+	cost := 1
+	if g.wx(hex) == "rain" && !me.has(Reformer) {
+		cost = 2
+	}
+	if err := g.spend(cost); err != nil {
+		return err
+	}
+	n := 1
+	if me.has(Reformer) {
+		n = 2
+	}
+	t.Leaves = max(0, t.Leaves-n)
+	g.event("clear", Event{"hex": hex})
+	g.logf("%s clears dead leaves.", me.Name)
+	return nil
+}
+
+func (g *Game) harvest(me *Player) error {
+	t := g.tile(me.Pos)
+	if t == nil || t.Stage != 4 || t.Leaves >= 2 {
+		return errors.New("harvest from a Big Tree that isn't sealed")
+	}
+	if g.wx(me.Pos) == "rain" {
+		return errors.New("no harvest in the rain")
+	}
+	if t.Harvested {
+		return errors.New("this tree was harvested since the last Forest Tide")
+	}
+	if me.Fruit >= MaxFruit {
+		return fmt.Errorf("you can carry %d fruit", MaxFruit)
+	}
+	if err := g.spend(1); err != nil {
+		return err
+	}
+	t.Harvested = true
+	me.Fruit++
+	v := Values[Board[me.Pos].Sector]
+	g.share("harvest", me, strings.ReplaceAll(HarvestPrompt, "{value}", v.Name), v.Tagline, 0)
+	g.event("harvest", Event{"hex": me.Pos, "pid": me.ID})
+	g.logf("%s harvests a fruit 🍎.", me.Name)
+	return nil
+}
+
+func (g *Game) take(me *Player) error {
+	t := g.tile(me.Pos)
+	if t == nil || !t.Up || t.Treasure == "" {
+		return errors.New("no treasure here")
+	}
+	if me.Treasure != "" {
+		return errors.New("you can carry 1 treasure")
+	}
+	if err := g.spend(1); err != nil {
+		return err
+	}
+	me.Treasure, t.Treasure = t.Treasure, ""
+	g.event("take", Event{"hex": me.Pos, "pid": me.ID, "treasure": me.Treasure})
+	g.logf("%s takes %s.", me.Name, treasureByID(me.Treasure).Name)
+	return nil
+}
+
+func (g *Game) drink(me *Player) error {
+	t := g.tile(me.Pos)
+	if t == nil || !t.Up || t.Kind != "spring" {
+		return errors.New("drink at a spring")
+	}
+	if me.Water >= MaxWater {
+		return errors.New("already full")
+	}
+	if err := g.spend(1); err != nil {
+		return err
+	}
+	me.Water = MaxWater
+	g.event("drink", Event{"hex": me.Pos, "pid": me.ID})
+	g.logf("%s fills up at the spring 💧.", me.Name)
+	return nil
+}
+
+// canPass: on the same hex, or along a chain of up to 2 steps over
+// neighbouring occupied hexes that runs through a Peacemaker.
+func (g *Game) canPass(a, b *Player) bool {
+	if a == b || a.Pos < 0 || b.Pos < 0 {
+		return false
+	}
+	if a.Pos == b.Pos {
+		return true
+	}
+	peace, occ := map[int]bool{}, map[int]bool{}
+	for _, p := range g.Players {
+		occ[p.Pos] = true
+		if p.has(Peacemaker) {
+			peace[p.Pos] = true
+		}
+	}
+	if len(peace) == 0 {
+		return false
+	}
+	if neighbours(a.Pos, b.Pos) {
+		return peace[a.Pos] || peace[b.Pos]
+	}
+	for _, m := range Adj[a.Pos] {
+		if occ[m] && neighbours(m, b.Pos) && (peace[a.Pos] || peace[m] || peace[b.Pos]) {
+			return true
+		}
+	}
+	return false
+}
+
+// pass is free: water, fruit or a treasure, to a teammate you can reach.
+func (g *Game) pass(a, b *Player, item string) error {
+	if g.Phase != PhaseTurn {
+		return errors.New("pass things during the game")
+	}
+	if b == nil || b == a {
+		return errors.New("choose a teammate to pass to")
+	}
+	if !g.canPass(a, b) {
+		return errors.New("pass on the same hex, or along a chain through a Peacemaker")
+	}
+	switch item {
+	case "water":
+		if a.Water < 1 {
+			return fmt.Errorf("%s has no water to pass", a.Name)
+		}
+		if b.Water >= MaxWater {
+			return fmt.Errorf("%s is full", b.Name)
+		}
+		a.Water--
+		b.Water++
+	case "fruit":
+		if a.Fruit < 1 {
+			return fmt.Errorf("%s has no fruit to pass", a.Name)
+		}
+		if b.Fruit >= MaxFruit {
+			return fmt.Errorf("%s carries %d fruit already", b.Name, MaxFruit)
+		}
+		a.Fruit--
+		b.Fruit++
+	case "treasure":
+		if a.Treasure == "" {
+			return fmt.Errorf("%s has no treasure to pass", a.Name)
+		}
+		if b.Treasure != "" {
+			return fmt.Errorf("%s carries a treasure already", b.Name)
+		}
+		b.Treasure, a.Treasure = a.Treasure, ""
+	default:
+		return errors.New("pass water, fruit or a treasure")
+	}
+	g.event("pass", Event{"from": a.ID, "to": b.ID, "item": item})
+	g.logf("%s passes %s to %s.", a.Name, item, b.Name)
+	g.autoPlace(b)
+	return nil
+}
+
+// investigate: once a round, on their own turn, an Investigator sees one
+// sector's next weather on their phone.
+func (g *Game) investigate(me *Player, sector int) error {
+	if !me.has(Investigator) {
+		return errors.New("only an Investigator looks ahead")
+	}
+	if g.Phase != PhaseTurn || g.Turn == nil || g.Turn.Player != me.ID {
+		return errors.New("look during your own turn")
+	}
+	if g.Turn.Investigated {
+		return errors.New("you've looked once this round")
+	}
+	if sector < 0 || sector > 5 {
+		return errors.New("choose a sector")
+	}
+	g.Turn.Investigated = true
+	me.Peeks = append(me.Peeks, Peek{Type: "weather", Hex: -1, Sector: sector, Weather: g.NextWeather[sector],
+		Round: g.Round, Tide: g.Tide})
+	return nil
+}
+
+func (g *Game) endTurn() {
+	g.TurnIdx++
+	if g.TurnIdx >= len(g.Order) {
+		g.forestTide()
+		if g.Phase != PhaseTurn {
+			return
+		}
+		g.TurnIdx = 0
+		g.Round++
+		g.logf("Round %d.", g.Round)
+	}
 	g.newTurn()
 }
 
-func tierName(t int) string {
-	return [5]string{"", "Seed", "Sapling", "Oak", "Heartwood"}[t]
-}
-
-// ---- dusk ----
-
-func (g *Game) enterDusk() {
-	g.Phase = PhaseDusk
-	g.Turn = nil
-	g.TimerEnd, g.TimerLabel = 0, ""
-	g.Dusk = &DuskState{Choices: map[string]DuskChoice{}, Common: map[string]bool{}}
-	g.logf("Dusk falls on season %d. Choose a partner you haven't talked with yet.", g.Season)
-}
-
-func (g *Game) allianceOf(pid string) *Alliance {
-	for _, al := range g.Alliances {
-		if contains(al.Members, pid) {
-			return al
-		}
+// forestTide runs after everyone's turn: new weather, rain grows plants, sun
+// dries walkers, and the Forest Breath blows dead leaves toward the centre.
+func (g *Game) forestTide() {
+	g.Tide++
+	g.Weather = g.NextWeather
+	for s := range 6 {
+		g.NextWeather[s] = drawWeather()
 	}
-	return nil
-}
-
-func (g *Game) alliance(id string) *Alliance {
-	for _, al := range g.Alliances {
-		if al.ID == id {
-			return al
-		}
-	}
-	return nil
-}
-
-// valueKey is an alliance's values as letters in ZERAOS order, e.g. "ERS":
-// the key for StatementTips.
-func (g *Game) valueKey(members []string) string {
-	has := map[int]bool{}
-	for _, m := range members {
-		if p := g.player(m); p != nil && p.Value >= 0 {
-			has[p.Value] = true
-		}
-	}
-	k := ""
-	for i, v := range Values {
-		if has[i] {
-			k += v.Letter
-		}
-	}
-	return k
-}
-
-func (g *Game) valueName(p *Player) string {
-	if p.Value < 0 {
-		return "no value yet"
-	}
-	return Values[p.Value].Name
-}
-
-// setAllies keeps each member's Allies list in step with their alliance.
-func (g *Game) setAllies(al *Alliance) {
-	for _, m := range al.Members {
-		p := g.player(m)
-		p.Allies = nil
-		for _, o := range al.Members {
-			if o != m {
-				p.Allies = append(p.Allies, o)
-			}
-		}
-	}
-}
-
-// allyCheck says why a and b can't ally tonight, or "" if they can. grown lists
-// alliances that already grew tonight (each grows by one at most per Dusk).
-func (g *Game) allyCheck(a, b *Player, grown map[string]bool) string {
-	alA, alB := g.allianceOf(a.ID), g.allianceOf(b.ID)
-	switch {
-	case a.Value >= 0 && a.Value == b.Value:
-		return fmt.Sprintf("No alliance: you both stand for %s. An alliance joins different values.", g.valueName(a))
-	case alA != nil && alB != nil:
-		return "No alliance: you're each in an alliance already, and alliances don't merge."
-	}
-	al, newcomer := alA, b
-	if al == nil {
-		al, newcomer = alB, a
-	}
-	if al == nil {
-		return ""
-	}
-	if len(al.Members) >= 3 {
-		return "No alliance: that alliance is full (3 at most)."
-	}
-	if grown[al.ID] {
-		return "No alliance: that alliance already welcomed someone tonight."
-	}
-	for _, m := range al.Members {
-		if p := g.player(m); p.Value == newcomer.Value {
-			return fmt.Sprintf("No alliance: %s already stands for %s in that alliance.", p.Name, g.valueName(p))
-		}
-	}
-	return ""
-}
-
-func (g *Game) resolveDusk() {
-	d := g.Dusk
-	d.Notes = map[string]string{}
-	// Mutual choices, in turn order.
-	type mutual struct {
-		a, b *Player
-		ask  bool // both ticked alliance
-		one  bool // only one did
-	}
-	var mutuals []mutual
-	seen := map[string]bool{}
-	for _, id := range g.Order {
-		c, ok := d.Choices[id]
-		if seen[id] || !ok || c.Partner == "" || seen[c.Partner] {
+	growth, dry, leaves, sealed := []int{}, []string{}, []Drift{}, []int{}
+	for i, t := range g.Tiles {
+		if t == nil {
 			continue
 		}
-		oc, ok := d.Choices[c.Partner]
-		if !ok || oc.Partner != id {
+		t.Harvested = false
+		if g.wx(i) == "rain" && (t.Stage == 1 || t.Stage == 2) && t.Leaves < 2 {
+			t.Stage++
+			growth = append(growth, i)
+		}
+	}
+	for _, p := range g.Players {
+		if g.wx(p.Pos) == "sun" && g.Tiles[p.Pos].Stage != 4 && p.Water > 0 {
+			p.Water--
+			dry = append(dry, p.ID)
+		}
+	}
+	safe := map[int]bool{}
+	for _, p := range g.Players {
+		if p.has(Loyalist) && p.Pos >= 0 {
+			safe[p.Pos] = true
+			for _, j := range Adj[p.Pos] {
+				safe[j] = true
+			}
+		}
+	}
+	for _, b := range g.Breath {
+		t := g.Tiles[b.To]
+		if t.Leaves >= 2 {
 			continue
 		}
-		a, b := g.player(id), g.player(c.Partner)
-		if a == nil || b == nil || contains(a.Partners, b.ID) {
-			continue
+		t.Leaves++
+		if t.Stage >= 1 && t.Stage <= 3 && !safe[b.To] {
+			t.Stage--
 		}
-		seen[a.ID], seen[b.ID] = true, true
-		mutuals = append(mutuals, mutual{a, b, c.Ally && oc.Ally, c.Ally != oc.Ally})
-	}
-
-	taken := map[string]bool{}
-	grown := map[string]bool{}
-	var pairs []Pair
-	// First, alliances that grow to three: the existing member joins the
-	// conversation, so all three can find their new statement together.
-	for _, m := range mutuals {
-		alA, alB := g.allianceOf(m.a.ID), g.allianceOf(m.b.ID)
-		if !m.ask || (alA == nil) == (alB == nil) || g.allyCheck(m.a, m.b, grown) != "" {
-			continue
-		}
-		al, newcomer := alA, m.b
-		if al == nil {
-			al, newcomer = alB, m.a
-		}
-		other := ""
-		for _, x := range al.Members {
-			if x != m.a.ID && x != m.b.ID {
-				other = x
-			}
-		}
-		if taken[other] {
-			continue
-		}
-		al.Members = append(al.Members, newcomer.ID)
-		al.Statement, al.Season = "", g.Season
-		g.setAllies(al)
-		grown[al.ID] = true
-		taken[m.a.ID], taken[m.b.ID], taken[other] = true, true, true
-		pairs = append(pairs, Pair{A: m.a.ID, B: m.b.ID, C: other, Ally: true, Alliance: al.ID})
-		g.logf("%s joined the alliance of %s", newcomer.Name, g.namesOf(al.Members, newcomer.ID))
-	}
-	// Then everyone else who chose each other.
-	for _, m := range mutuals {
-		if taken[m.a.ID] && taken[m.b.ID] {
-			continue
-		}
-		if taken[m.a.ID] || taken[m.b.ID] {
-			// One of them was pulled into their alliance's trio tonight.
-			pulled, left := m.a, m.b
-			if taken[m.b.ID] {
-				pulled, left = m.b, m.a
-			}
-			d.Notes[left.ID] = fmt.Sprintf("%s is with their alliance tonight, welcoming a new member, so you're paired with someone else.", pulled.Name)
-			continue
-		}
-		pr := Pair{A: m.a.ID, B: m.b.ID}
-		switch {
-		case m.one:
-			pr.Note = "Only one of you asked for an alliance."
-		case m.ask:
-			if why := g.allyCheck(m.a, m.b, grown); why != "" {
-				pr.Note = why
-				break
-			}
-			if al := g.allianceOf(m.a.ID); al == nil && g.allianceOf(m.b.ID) == nil {
-				al = &Alliance{ID: randID(6), Members: []string{m.a.ID, m.b.ID}, Season: g.Season}
-				g.Alliances = append(g.Alliances, al)
-				g.setAllies(al)
-				pr.Ally, pr.Alliance = true, al.ID
-				g.logf("Alliance: %s & %s (%s + %s)", m.a.Name, m.b.Name, g.valueName(m.a), g.valueName(m.b))
-			} else {
-				// An alliance growing to three whose third member was already taken.
-				pr.Note = "No alliance tonight: the other member of that alliance is already paired."
-			}
-		}
-		taken[m.a.ID], taken[m.b.ID] = true, true
-		pairs = append(pairs, pr)
-	}
-	// Everyone else gets a Fireside chat, avoiding repeat partners where possible.
-	var rest []string
-	for _, id := range g.Order {
-		if !taken[id] {
-			rest = append(rest, id)
+		leaves = append(leaves, b)
+		if t.Leaves >= 2 {
+			sealed = append(sealed, b.To)
 		}
 	}
-	rand.Shuffle(len(rest), func(i, j int) { rest[i], rest[j] = rest[j], rest[i] })
-	for len(rest) >= 2 {
-		a := g.player(rest[0])
-		j := 1
-		for k := 1; k < len(rest); k++ {
-			if !contains(a.Partners, rest[k]) {
-				j = k
-				break
-			}
-		}
-		pairs = append(pairs, Pair{A: rest[0], B: rest[j]})
-		rest = append(rest[1:j], rest[j+1:]...)
+	g.Breath = g.rollBreath()
+	g.event("tide", Event{"weather": g.Weather, "growth": growth, "dry": dry, "leaves": leaves, "sealed": sealed})
+	icons := map[string]string{"sun": "☀️", "rain": "🌧️", "fog": "🌫️"}
+	var ws []string
+	for _, w := range g.Weather {
+		ws = append(ws, icons[w])
 	}
-	if len(rest) == 1 {
-		// The odd one out joins the last Fireside chat, so alliance trios stay
-		// just the alliance.
-		joined := false
-		for i := len(pairs) - 1; i >= 0; i-- {
-			if !pairs[i].Ally && pairs[i].C == "" {
-				pairs[i].C, joined = rest[0], true
-				break
-			}
-		}
-		if !joined && len(pairs) > 0 {
-			pairs[len(pairs)-1].C = rest[0]
-		}
-	}
-	bonds := BondCards[g.Season-1]
-	for i := range pairs {
-		pr := &pairs[i]
-		if pr.Ally {
-			pr.Bond = StatementCard
-		} else {
-			pr.Bond = bonds[rand.Intn(len(bonds))]
-		}
-		members := []string{pr.A, pr.B}
-		if pr.C != "" {
-			members = append(members, pr.C)
-		}
-		for _, m := range members {
-			p := g.player(m)
-			for _, o := range members {
-				if o != m && !contains(p.Partners, o) {
-					p.Partners = append(p.Partners, o)
-				}
-			}
-		}
-	}
-	d.Pairs = pairs
-	d.Resolved = true
-	g.setTimer(240, "Dusk conversations")
+	g.logf("🌬️ Forest Tide %d: %s · %d drifts of dead leaves.", g.Tide, strings.Join(ws, " "), len(leaves))
+	g.check()
 }
 
-func (g *Game) namesOf(ids []string, except string) string {
-	var ns []string
-	for _, id := range ids {
-		if p := g.player(id); p != nil && id != except {
-			ns = append(ns, p.Name)
-		}
-	}
-	return strings.Join(ns, " & ")
+// Goals is how far the team is toward waking the forest.
+type Goals struct {
+	Trees         [6]bool  `json:"trees"` // a Big Tree in each value
+	PlacedPlayers int      `json:"placedPlayers"`
+	Players       int      `json:"players"`
+	Treasures     []string `json:"treasures"` // placed on the World Tree
+	OnTree        int      `json:"onTree"`
 }
 
-// setStatement records an alliance's statement. Any member can write or edit
-// it during the Dusk the alliance formed or grew at.
-func (g *Game) setStatement(me *Player, text string) error {
-	al := g.allianceOf(me.ID)
-	if al == nil {
-		return errors.New("you're not in an alliance")
+func (g *Game) goals() Goals {
+	o := Goals{Players: len(g.Players), Treasures: append([]string{}, g.Placed...)}
+	for i, t := range g.Tiles {
+		if t != nil && t.Stage == 4 {
+			o.Trees[Board[i].Sector] = true
+		}
 	}
-	if g.Phase != PhaseDusk || !g.Dusk.Resolved || al.Season != g.Season {
-		return errors.New("write your statement at the Dusk your alliance formed")
+	for _, p := range g.Players {
+		if p.Placed > 0 {
+			o.PlacedPlayers++
+		}
+		if p.Pos == 0 {
+			o.OnTree++
+		}
 	}
-	text = strings.TrimSpace(text)
-	if text == "" {
-		return errors.New("write a line that holds all your values")
+	return o
+}
+
+func (o Goals) won() bool {
+	for _, t := range o.Trees {
+		if !t {
+			return false
+		}
 	}
-	if len([]rune(text)) > 140 {
-		return errors.New("keep it short: about 12 words")
+	return o.PlacedPlayers == o.Players && len(o.Treasures) >= len(Treasures) && o.OnTree == o.Players
+}
+
+// check ends the game the moment the forest wakes, or everyone is dry.
+func (g *Game) check() {
+	if g.Phase != PhaseTurn || g.Result != "" {
+		return
 	}
-	al.Statement = text
-	g.logf("%s: \"%s\"", g.namesOf(al.Members, ""), text)
-	return nil
+	if g.goals().won() {
+		g.Result = "won"
+		g.logf("🌳 The forest wakes!")
+		g.event("wake", nil)
+		g.toGuess()
+		return
+	}
+	for _, p := range g.Players {
+		if p.Water > 0 {
+			return
+		}
+	}
+	g.Result = "lost"
+	g.logf("Everyone is out of water. The forest sleeps.")
+	g.event("dry", nil)
+	g.toGuess()
 }
 
 func (g *Game) toGuess() {
 	g.Phase = PhaseGuess
+	g.Turn = nil
 	g.TimerEnd, g.TimerLabel = 0, ""
 	g.logf("Everyone: guess who was your Secret Owl.")
 }
 
-func (g *Game) nextSeason() {
-	g.Dusk = nil
-	if g.Season >= 3 {
-		g.TimerEnd, g.TimerLabel = 0, ""
-		if len(g.Alliances) > 0 {
-			g.Phase = PhaseStories
-			g.StoryIdx = 0
-			g.setTimer(120, "Alliance story")
-			g.logf("The Vision of a Forest. Each alliance tells its story: its statement, and how they found it.")
-			return
-		}
-		g.toGuess()
-		return
-	}
-	g.Season++
-	g.Phase = PhaseTurn
-	g.StartIdx = (g.StartIdx + 1) % len(g.Order)
-	g.TurnIdx, g.TurnsTaken = g.StartIdx, 0
-	g.newTurn()
-	g.logf("Season %d: %s", g.Season, SeasonNames[g.Season])
-}
+// ---- recognition ----
 
-// ---- scoring ----
-
-type Score struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Color     string `json:"color"`
-	Trust     int    `json:"trust"`
-	Givers    int    `json:"givers"`
-	Growth    int    `json:"growth"`
-	Advocacy  int    `json:"advocacy"`
-	Advocated []int  `json:"advocated"` // the values that earned Advocacy points
-	Secret    int    `json:"secret"`
-	Total     int    `json:"total"`
-	OwlName   string `json:"owlName"`
-	Winner    bool   `json:"winner"`
+// Recognition is what the end screen shows for each player. No points, no
+// winner among players: the team won or lost together.
+type Recognition struct {
+	ID           string `json:"id"`
+	Name         string `json:"name"`
+	Color        string `json:"color"`
+	Trust        int    `json:"trust"`        // trust acorns received
+	Givers       int    `json:"givers"`       // from how many people
+	OwlName      string `json:"owlName"`      // who was their Secret Owl
+	GuessedRight bool   `json:"guessedRight"` // they spotted their Owl
+	OwlHidden    bool   `json:"owlHidden"`    // as an Owl, they stayed hidden from the one they watched
+	TargetName   string `json:"targetName"`   // the one they watched
 }
 
 func (g *Game) owlOf(id string) *Player {
@@ -832,97 +1183,25 @@ func (g *Game) owlOf(id string) *Player {
 	return nil
 }
 
-// advocated says whether a value was advocated by the end: someone told an Oak
-// story in it, or someone who stands for it told a Heartwood story.
-func (g *Game) advocated(v int) bool {
-	if g.Oak[v] {
-		return true
-	}
+func (g *Game) Recognition() []Recognition {
+	out := []Recognition{}
 	for _, p := range g.Players {
-		if p.Value != v {
-			continue
-		}
-		for _, c := range p.Cards {
-			if c.Tier == 4 {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// alliedValues is every value p's alliance stands for (just p's own without one).
-func (g *Game) alliedValues(p *Player) []int {
-	members := []string{p.ID}
-	if al := g.allianceOf(p.ID); al != nil {
-		members = al.Members
-	}
-	var vs []int
-	for _, m := range members {
-		if o := g.player(m); o != nil && o.Value >= 0 && !containsInt(vs, o.Value) {
-			vs = append(vs, o.Value)
-		}
-	}
-	sort.Ints(vs)
-	return vs
-}
-
-func containsInt(xs []int, x int) bool {
-	for _, y := range xs {
-		if y == x {
-			return true
-		}
-	}
-	return false
-}
-
-func (g *Game) Scores() []Score {
-	var out []Score
-	for _, p := range g.Players {
-		s := Score{ID: p.ID, Name: p.Name, Color: p.Color}
+		r := Recognition{ID: p.ID, Name: p.Name, Color: p.Color}
 		for _, c := range p.Pot {
 			if c > 0 {
-				s.Trust += min(c, 2) + 1
-				s.Givers++
+				r.Trust += c
+				r.Givers++
 			}
-		}
-		regions := map[int]bool{}
-		for _, c := range p.Cards {
-			s.Growth += c.Tier
-			if c.Region >= 0 {
-				regions[c.Region] = true
-			}
-		}
-		s.Growth += len(regions) + p.Bonus
-		for _, v := range g.alliedValues(p) {
-			if g.advocated(v) {
-				s.Advocacy += 3
-				s.Advocated = append(s.Advocated, v)
-			}
-		}
-		s.Secret = p.Confirmed
-		if t := g.player(p.Target); t != nil && t.Guess != p.ID {
-			s.Secret += 2
 		}
 		if owl := g.owlOf(p.ID); owl != nil {
-			s.OwlName = owl.Name
-			if p.Guess == owl.ID {
-				s.Secret += 2
-			}
+			r.OwlName = owl.Name
+			r.GuessedRight = p.Guess == owl.ID
 		}
-		s.Total = s.Trust + s.Growth + s.Advocacy + s.Secret
-		out = append(out, s)
-	}
-	sort.Slice(out, func(i, j int) bool {
-		if out[i].Total != out[j].Total {
-			return out[i].Total > out[j].Total
+		if t := g.player(p.Target); t != nil {
+			r.TargetName = t.Name
+			r.OwlHidden = t.Guess != p.ID
 		}
-		return out[i].Trust > out[j].Trust
-	})
-	for i := range out {
-		if out[i].Total == out[0].Total && out[i].Trust == out[0].Trust {
-			out[i].Winner = true // a true tie shares the win
-		}
+		out = append(out, r)
 	}
 	return out
 }
@@ -931,9 +1210,16 @@ func (g *Game) Scores() []Score {
 
 func (g *Game) Apply(a Action) error {
 	isHost := a.Host != "" && a.Host == g.HostSecret
+	if isHost && a.As == "" && keeperActs[a.Type] && (g.Phase == PhaseEnter || g.Phase == PhaseTurn) {
+		// Without "as", the Keeper acts for whoever's turn it is.
+		if cur := g.current(); cur != nil {
+			a.As = cur.ID
+		}
+	}
 	if isHost && a.As != "" {
 		// Players say it aloud and the Keeper taps it on the big screen. Private
-		// choices (trust, Dusk partner, Secret Owl guess) stay on their phones.
+		// choices (trust, the Investigator's look, the Secret Owl guess) stay on
+		// their phones.
 		if !keeperActs[a.Type] {
 			return errors.New("players do that on their own phone")
 		}
@@ -943,24 +1229,20 @@ func (g *Game) Apply(a Action) error {
 		}
 		return g.playerAction(p, a)
 	}
-	var me *Player
-	if !isHost {
-		me = g.player(a.Pid)
-		if me == nil || me.Secret != a.Secret {
-			return errors.New("not recognised: rejoin the game")
-		}
-	}
 	if isHost {
 		return g.hostAction(a)
+	}
+	me := g.player(a.Pid)
+	if me == nil || me.Secret != a.Secret {
+		return errors.New("not recognised: rejoin the game")
 	}
 	return g.playerAction(me, a)
 }
 
 // keeperActs lists the player actions the Keeper may take for a player.
 var keeperActs = map[string]bool{
-	"plant": true, "step": true, "endMove": true, "claim": true, "redraw": true, "lighter": true,
-	"pickChoice": true, "pass": true, "startShare": true, "doneShare": true, "endTrust": true,
-	"power": true, "squirrel": true, "confirm": true,
+	"enter": true, "move": true, "explore": true, "sow": true, "water": true, "tend": true, "clear": true,
+	"harvest": true, "take": true, "drink": true, "pass": true, "endTurn": true,
 }
 
 func (g *Game) hostAction(a Action) error {
@@ -976,57 +1258,51 @@ func (g *Game) hostAction(a Action) error {
 		for i, p := range g.Players {
 			if p.ID == a.Target {
 				g.Players = append(g.Players[:i], g.Players[i+1:]...)
+				g.logf("%s left", p.Name)
 				return nil
 			}
 		}
 		return errors.New("no such player")
-	case "endTrust":
-		if g.Phase != PhaseTurn || g.Turn == nil || g.Turn.Step != "trust" {
-			return errors.New("not collecting trust now")
-		}
-		g.finishTurn()
-	case "skipTurn":
-		if g.Phase == PhasePlant {
-			return errors.New("players must plant their seed")
-		}
-		if g.Phase != PhaseTurn {
-			return errors.New("no turn to skip")
-		}
-		g.logf("%s's turn was skipped", g.current().Name)
-		g.Turn.Prompt = ""
-		g.finishTurn()
-	case "resolveDusk":
-		if g.Phase != PhaseDusk || g.Dusk.Resolved {
-			return errors.New("not now")
-		}
-		g.resolveDusk()
-	case "nextSeason":
-		if g.Phase != PhaseDusk || !g.Dusk.Resolved {
-			return errors.New("set the Dusk pairs first")
-		}
-		g.nextSeason()
-	case "nextStory":
-		if g.Phase != PhaseStories {
-			return errors.New("not now")
-		}
-		g.StoryIdx++
-		if g.StoryIdx >= len(g.Alliances) {
-			g.toGuess()
-			return nil
-		}
-		g.setTimer(120, "Alliance story")
+	case "doneShare":
+		return g.doneShare()
 	case "startChain":
 		if g.Phase != PhaseGuess {
 			return errors.New("not now")
 		}
+		if len(g.Shares) > 0 {
+			return errors.New("finish the share first")
+		}
 		g.Phase = PhaseChain
 		g.ChainIdx = 0
 		g.setTimer(60, "Tribute")
+		g.logf("The tribute chain: each Secret Owl honours the one they watched.")
 	case "nextTribute":
 		if g.Phase != PhaseChain {
 			return errors.New("not now")
 		}
-		g.advanceChain()
+		g.ChainIdx++
+		if g.ChainIdx >= len(g.Chain) {
+			g.Phase = PhaseEnd
+			g.TimerEnd, g.TimerLabel = 0, ""
+			if g.Result == "won" {
+				g.logf("The forest is awake. Thank you, all of you.")
+			} else {
+				g.logf("The forest sleeps, for now. Thank you, all of you.")
+			}
+			return nil
+		}
+		g.setTimer(60, "Tribute")
+	case "endGame":
+		// The Keeper closes the game early (time's up): straight to the finale.
+		if g.Phase != PhaseTurn {
+			return errors.New("the game can be closed early only during play")
+		}
+		if len(g.Shares) > 0 {
+			return errors.New("finish the share first")
+		}
+		g.Result = "ended"
+		g.logf("The Keeper closed the game early.")
+		g.toGuess()
 	case "timer":
 		g.setTimer(a.N, "Timer")
 	default:
@@ -1035,344 +1311,75 @@ func (g *Game) hostAction(a Action) error {
 	return nil
 }
 
-func (g *Game) advanceChain() {
-	g.ChainIdx++
-	if g.ChainIdx >= len(g.Chain) {
-		g.Phase = PhaseScores
-		g.TimerEnd, g.TimerLabel = 0, ""
-		g.logf("The forest is grown. Final scores!")
-		return
-	}
-	g.setTimer(60, "Tribute")
-}
-
 func (g *Game) playerAction(me *Player, a Action) error {
 	switch a.Type {
-	case "plant":
-		if g.Phase != PhasePlant || g.current().ID != me.ID {
-			return errors.New("not your turn to plant")
-		}
-		if a.Hex < 0 || a.Hex >= len(g.Hexes) || g.Hexes[a.Hex].Ring != 3 {
-			return errors.New("plant on an outer Seedlands space")
-		}
-		me.Pos = a.Hex
-		me.Value = g.Hexes[a.Hex].Region
-		g.logf("%s stands for %s", me.Name, RegionNames[me.Value])
-		g.TurnsTaken++
-		if g.TurnsTaken >= len(g.Order) {
-			g.Phase = PhaseTurn
-			g.Season = 1
-			g.TurnIdx, g.TurnsTaken, g.StartIdx = 0, 0, 0
-			g.newTurn()
-			g.logf("Season 1: %s", SeasonNames[1])
-		} else {
-			g.TurnIdx = (g.TurnIdx + 1) % len(g.Order)
-		}
-		return nil
 	case "trust":
-		return g.giveTrust(me, 1)
-	case "squirrel":
-		if g.Phase != PhaseTurn || g.Turn.Step != "trust" || g.Turn.Player == me.ID {
-			return errors.New("play a Squirrel right after someone else's share")
-		}
-		if me.Squirrels < 1 {
-			return errors.New("you have no Squirrel")
-		}
-		me.Squirrels--
-		me.Bonus++
-		q := SquirrelCards[rand.Intn(len(SquirrelCards))]
-		g.Turn.FollowUps = append(g.Turn.FollowUps, me.Name+" asks: "+q)
-		g.setTimer(30, "Follow-up")
-		return nil
-	case "duskChoice":
-		if g.Phase != PhaseDusk || g.Dusk.Resolved {
-			return errors.New("not Dusk")
-		}
-		if a.Target == me.ID {
-			return errors.New("choose someone else")
-		}
-		if a.Target != "" {
-			if g.player(a.Target) == nil {
-				return errors.New("no such player")
-			}
-			if contains(me.Partners, a.Target) {
-				return errors.New("you've already paired with them; choose someone new")
-			}
-		}
-		g.Dusk.Choices[me.ID] = DuskChoice{Partner: a.Target, Ally: a.Ally}
-		return nil
-	case "statement":
-		return g.setStatement(me, a.Text)
+		return g.giveTrust(me)
 	case "guess":
 		if g.Phase != PhaseGuess {
-			return errors.New("not now")
+			return errors.New("guess at the end of the game")
 		}
 		if a.Target == me.ID || g.player(a.Target) == nil {
 			return errors.New("guess someone else")
 		}
 		me.Guess = a.Target
 		return nil
-	case "confirm":
-		if g.Phase != PhaseChain {
-			return errors.New("not now")
-		}
-		giver := g.player(g.Chain[g.ChainIdx])
-		if giver.Target != me.ID {
-			return errors.New("only the person receiving the tribute confirms")
-		}
-		if a.N < 0 || a.N > 3 {
-			return errors.New("0 to 3")
-		}
-		giver.Confirmed = a.N
-		g.logf("%s honoured %s", giver.Name, me.Name)
-		g.advanceChain()
-		return nil
-	case "power":
-		return g.usePower(me, a)
-	}
-
-	// Everything below is the active player's own turn.
-	if g.Phase != PhaseTurn || g.Turn == nil || g.Turn.Player != me.ID {
-		return errors.New("it's not your turn")
-	}
-	tu := g.Turn
-	switch a.Type {
-	case "step":
-		if tu.Step != "move" {
-			return errors.New("you've finished moving")
-		}
-		if a.Hex < 0 || a.Hex >= len(g.Hexes) {
-			return errors.New("no such space")
-		}
-		if tu.Teleport {
-			h := g.Hexes[a.Hex]
-			if h.Ring != g.Hexes[me.Pos].Ring || !g.ringOpen(h.Ring) {
-				return errors.New("the hidden path leads to a space in this ring")
-			}
-			me.Pos = a.Hex
-			tu.Teleport = false
-			g.toShare(me)
-			return nil
-		}
-		if tu.Discovered {
-			return errors.New("you've finished moving")
-		}
-		if g.dist(me.Pos, a.Hex) != 1 {
-			return errors.New("step to a neighbouring space")
-		}
-		if tu.StepsLeft < 1 {
-			return errors.New("no steps left this turn")
-		}
-		if err := g.canEnter(me, a.Hex); err != nil {
-			return err
-		}
-		tu.StepsLeft--
-		me.Pos = a.Hex
-		tu.CanClaim = false // scouting is about the spaces next to where you used it
-		me.Peek = map[int]string{}
-	case "endMove":
-		if tu.Step != "move" {
-			return errors.New("already done")
-		}
-		if !tu.Discovered {
-			tu.Discovered = true
-			g.resolveToken(me, me.Pos)
-			if tu.Teleport {
-				return nil
-			}
-		}
-		g.toShare(me)
-	case "claim":
-		if !tu.CanClaim || me.Peek[a.Hex] == "" {
-			return errors.New("claim one of the discoveries you scouted")
-		}
-		tu.CanClaim = false
-		me.Peek = map[int]string{}
-		disc := tu.Discovered
-		g.resolveToken(me, a.Hex)
-		tu.Discovered = disc
-	case "redraw":
-		if tu.Step != "share" || tu.Started || tu.Redrawn || len(tu.Choices) > 0 {
-			return errors.New("you can draw again once, before you start")
-		}
-		tu.Redrawn = true
-		if tu.Tier == 4 {
-			tu.Card = g.draw(6)
-		} else {
-			tu.Card = g.draw(tu.Region)
-		}
-		g.setPrompt()
-	case "lighter":
-		if tu.Step != "share" || tu.Started || tu.Tier <= 1 || tu.Tier >= 4 {
-			return errors.New("no lighter tier available")
-		}
-		tu.Tier--
-		g.setPrompt()
-	case "pickChoice":
-		found := false
-		for _, c := range tu.Choices {
-			if c == a.Card {
-				found = true
-			}
-		}
-		if !found {
-			return errors.New("pick one of the three cards")
-		}
-		tu.Card = a.Card
-		tu.Choices = nil
-		g.setPrompt()
-	case "pass":
-		if tu.Started || tu.Step == "trust" {
-			return errors.New("you've already shared this turn")
-		}
-		g.logf("%s passed this turn", me.Name)
-		tu.Prompt = ""
-		g.finishTurn()
-	case "startShare":
-		if tu.Step != "share" || tu.Started || len(tu.Choices) > 0 {
-			return errors.New("not now")
-		}
-		tu.Started = true
-		g.setTimer(shareSecs(tu.Tier), "Sharing")
-	case "doneShare":
-		if tu.Step != "share" || !tu.Started {
-			return errors.New("start sharing first")
-		}
-		tu.Step = "trust"
-		g.TimerEnd, g.TimerLabel = 0, ""
-	case "endTrust":
-		if tu.Step != "trust" {
-			return errors.New("not collecting trust")
-		}
-		g.finishTurn()
+	case "investigate", "enter", "pass", "move", "explore", "sow", "water", "tend", "clear",
+		"harvest", "take", "drink", "endTurn":
 	default:
 		return errors.New("unknown action")
 	}
-	return nil
-}
 
-func (g *Game) giveTrust(me *Player, n int) error {
-	if g.Phase != PhaseTurn || g.Turn == nil || g.Turn.Step != "trust" {
-		return errors.New("trust is given right after a share")
+	// Everything below is play: it waits while someone is sharing.
+	if len(g.Shares) > 0 {
+		return errors.New("wait for the share to finish (the Keeper taps Done)")
 	}
-	if g.Turn.Player == me.ID {
-		return errors.New("you can't trust yourself")
+	switch a.Type {
+	case "investigate":
+		return g.investigate(me, a.N)
+	case "enter":
+		return g.enter(me, a.N, a.Hex)
+	case "pass":
+		err := g.pass(me, g.player(a.Target), a.Text)
+		if err == nil {
+			g.check()
+		}
+		return err
 	}
-	if g.Turn.Trusted[me.ID] > 0 {
-		return errors.New("you've already given trust for this share")
-	}
-	if me.TrustLeft < n {
-		return errors.New("not enough trust acorns left")
-	}
-	me.TrustLeft -= n
-	g.current().Pot[me.ID] += n
-	g.Turn.Trusted[me.ID] = n
-	return nil
-}
 
-func (g *Game) usePower(me *Player, a Action) error {
-	t := a.Power
-	owned := false
-	for _, x := range me.Types {
-		if x == t {
-			owned = true
-		}
+	// The rest is the current player's own turn.
+	if g.Phase != PhaseTurn || g.Turn == nil {
+		return errors.New("not now")
 	}
-	if !owned {
-		return errors.New("that isn't one of your powers")
+	if g.Turn.Player != me.ID {
+		return fmt.Errorf("it's %s's turn", g.current().Name)
 	}
-	if me.Used[t] {
-		return errors.New("you've already used that power")
+	var err error
+	switch a.Type {
+	case "move":
+		err = g.move(me, a.Hex, a.Target)
+	case "explore":
+		err = g.explore(me, a.Hex)
+	case "sow":
+		err = g.sow(me)
+	case "water":
+		err = g.water(me, a.Hex)
+	case "tend":
+		err = g.tend(me, a.Hex)
+	case "clear":
+		err = g.clear(me, a.Hex)
+	case "harvest":
+		err = g.harvest(me)
+	case "take":
+		err = g.take(me)
+	case "drink":
+		err = g.drink(me)
+	case "endTurn":
+		g.endTurn()
+		return nil
 	}
-	tu := g.Turn
-	myTurn := g.Phase == PhaseTurn && tu != nil && tu.Player == me.ID
-	moving := myTurn && tu.Step == "move" && !tu.Discovered
-	beforeShare := myTurn && tu.Step == "share" && !tu.Started
-	switch t {
-	case 1:
-		if !beforeShare || tu.Tier == 4 || len(tu.Choices) > 0 {
-			return errors.New("use True North on your turn, before you start sharing (not in the Heartwood)")
-		}
-		tu.Choices = []int{tu.Card, g.draw(tu.Region), g.draw(tu.Region)}
-		tu.Bonus++
-	case 2:
-		if !beforeShare || len(tu.Choices) > 0 {
-			return errors.New("use Open Hands on your turn, before you start sharing")
-		}
-		o := g.player(a.Target)
-		if o == nil || o.ID == me.ID {
-			return errors.New("choose another player")
-		}
-		tu.Invited = o.ID
-		o.Bonus++
-		me.Bonus++
-		g.logf("%s invited %s to answer the question too", me.Name, o.Name)
-	case 3:
-		if !moving {
-			return errors.New("use Momentum while moving")
-		}
-		tu.StepsLeft += 3
-	case 4:
-		if !beforeShare || tu.Tier >= 3 {
-			return errors.New("use Deep Water before sharing, below the Oak tier")
-		}
-		// The deeper question is the reward; it scores at the ring's tier.
-		if tu.ScoreTier == 0 {
-			tu.ScoreTier = tu.Tier
-		}
-		tu.Tier++
-		g.setPrompt()
-	case 5:
-		if !moving {
-			return errors.New("use Field Notes while moving")
-		}
-		me.Peek = map[int]string{}
-		for i := range g.Hexes {
-			if g.dist(me.Pos, i) == 1 && g.ringOpen(g.Hexes[i].Ring) {
-				if tok := g.Tokens[i]; tok != nil && !tok.Flipped {
-					me.Peek[i] = tok.Kind
-				}
-			}
-		}
-		if len(me.Peek) == 0 {
-			return errors.New("no hidden discoveries next to you")
-		}
-		tu.CanClaim = true
-	case 6:
-		if !moving {
-			return errors.New("use Rope Team while moving")
-		}
-		o := g.player(a.Target)
-		if o == nil || !hasAlly(me, o.ID) {
-			return errors.New("choose one of your allies")
-		}
-		if !g.ringOpen(g.Hexes[o.Pos].Ring) {
-			return errors.New("that ring isn't open yet")
-		}
-		me.Pos = o.Pos
-		me.Bonus++
-		o.Bonus++
-	case 7:
-		if !myTurn || tu.Step == "trust" {
-			return errors.New("use Adventure on your turn, before your share is done")
-		}
-		tu.Campfire = CampfireCards[rand.Intn(len(CampfireCards))]
-		me.Bonus++
-		g.logf("%s called a Campfire: %s", me.Name, tu.Campfire)
-	case 8:
-		if err := g.giveTrust(me, 2); err != nil {
-			return err
-		}
-		me.Bonus++
-	case 9:
-		if g.Phase != PhaseDusk || g.Dusk.Resolved {
-			return errors.New("use Common Ground at Dusk, before pairs are set")
-		}
-		g.Dusk.Common[me.ID] = true
-	default:
-		return errors.New("unknown power")
+	if err == nil {
+		g.check()
 	}
-	me.Used[t] = true
-	g.logf("%s used %s (%s)", me.Name, Powers[t-1].Title, Powers[t-1].Name)
-	return nil
+	return err
 }

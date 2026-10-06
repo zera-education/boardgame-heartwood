@@ -1,386 +1,459 @@
 package main
 
-// Balance playtest: thousands of 10-player games played by bots through the
-// real rules engine (Apply). Run with:
+// Balance playtest: hundreds of World Tree games played by a team bot through
+// the real rules engine (Apply, with the Keeper acting for each player and
+// phones giving trust). Run with:
 //
-//	HW_SIM=1 go test -run TestBalanceSim -v
+//	make sim   (HW_SIM=1 go test -run TestBalanceSim -v)
 //
-// Bots plan like reasonable players: each season they pick a Dusk partner they
-// haven't talked to (one who stands for a different value, when they plan an
-// alliance), then end their move as deep as the season allows. They use their powers when useful and give
-// trust more often to deeper shares.
+// The bot is a port of the team bot in docs/plan/world-tree/sim/engine.js:
+// each player grows a Big Tree in their own value (or a value nobody stands
+// for), harvests a fruit, explores Rings 1-2 for the treasures, walks onto the
+// World Tree to place what they carry, and finally gathers there. Players with
+// water to spare walk to a teammate who has run dry.
 
 import (
 	"fmt"
 	"math/rand"
 	"os"
-	"sort"
 	"strings"
 	"testing"
 )
 
+const simCap = 40 // rounds before a game counts as stalled
+
 type simStats struct {
-	games                                         int
-	alliances, heartwood, advocated, noWinner     float64
-	trustUnused                                   float64
-	oakShares, tierSum, shares                    float64
-	winsByPower                                   [10]float64
-	holdsPower                                    [10]float64
-	scoreSum, trustSum, growthSum, advSum, secSum float64
-	margin, spread                                float64
-	zeroAlliance                                  float64
-	stuckTurns                                    float64
+	games, won, lost, stalled int
+	rounds, actions           float64 // summed over won games
+	shares                    map[string]float64
+	doneTrees, doneFruit      float64 // the round each goal was reached, won games
+	doneTreasure              float64
+	sealedAtEnd, lowestWater  float64 // all games
 }
 
-type botOpts struct {
-	players     int
-	coordinate  bool // Season 3: bots spread across values that have no Oak story yet
-	partnerPlan bool // bots pick Dusk partners they can ally with (different values, room left)
-}
+var shareKinds = []string{"why", "ring", "harvest", "heartwood", "treasure"}
 
 func TestBalanceSim(t *testing.T) {
 	if os.Getenv("HW_SIM") == "" {
 		t.Skip("set HW_SIM=1 to run the balance simulation")
 	}
-	runs := []struct {
-		name string
-		o    botOpts
-	}{
-		{"10 players, planning partners", botOpts{players: 10, partnerPlan: true, coordinate: true}},
-		{"10 players, no partner planning", botOpts{players: 10, partnerPlan: false, coordinate: true}},
-		{"10 players, no region coordination", botOpts{players: 10, partnerPlan: true, coordinate: false}},
-		{"6 players, planning partners", botOpts{players: 6, partnerPlan: true, coordinate: true}},
-	}
-	for _, run := range runs {
-		var st simStats
-		for i := 0; i < 2000; i++ {
-			simGame(t, run.o, &st)
+	const n = 300
+	for _, players := range []int{6, 9, 12} {
+		st := &simStats{shares: map[string]float64{}}
+		for i := 0; i < n; i++ {
+			simGame(t, players, st)
 		}
-		report(t, run.name, &st, run.o)
+		simReport(t, players, st)
 	}
 }
 
-func report(t *testing.T, name string, s *simStats, o botOpts) {
+func simReport(t *testing.T, players int, s *simStats) {
 	n := float64(s.games)
-	pp := n * float64(o.players)
+	w := float64(max(s.won, 1))
 	var b strings.Builder
-	fmt.Fprintf(&b, "\n=== %s (%d games)\n", name, s.games)
-	fmt.Fprintf(&b, "allies per player: %.2f   players with no alliance: %.0f%%\n", s.alliances/pp, 100*s.zeroAlliance/pp)
-	fmt.Fprintf(&b, "Heartwood shares per game: %.2f   Oak shares per game: %.2f   avg tier: %.2f\n", s.heartwood/n, s.oakShares/n, s.tierSum/s.shares)
-	fmt.Fprintf(&b, "values advocated per game: %.1f of 6\n", s.advocated/n)
-	fmt.Fprintf(&b, "end of game per player: trust acorns unused %.1f\n", s.trustUnused/pp)
-	fmt.Fprintf(&b, "avg score %.1f = trust %.1f + growth %.1f + advocacy %.1f + secret %.1f\n", s.scoreSum/pp, s.trustSum/pp, s.growthSum/pp, s.advSum/pp, s.secSum/pp)
-	fmt.Fprintf(&b, "winner margin %.1f points, top-to-bottom spread %.1f\n", s.margin/n, s.spread/n)
-	fmt.Fprintf(&b, "turns where the bot could not move at all: %.1f%%\n", 100*s.stuckTurns/(pp*3))
-	fmt.Fprintf(&b, "win rate when holding each power (fair = %.1f%%):\n", 100/float64(o.players))
-	for ty := 1; ty <= 9; ty++ {
-		fmt.Fprintf(&b, "  %d %-13s %-13s %.1f%%\n", ty, Powers[ty-1].Name, Powers[ty-1].Title, 100*s.winsByPower[ty]/s.holdsPower[ty])
+	fmt.Fprintf(&b, "\n=== %d players, %d games (cap %d rounds)\n", players, s.games, simCap)
+	fmt.Fprintf(&b, "won %.0f%%   lost (everyone dry) %.0f%%   stalled %.0f%%\n",
+		100*float64(s.won)/n, 100*float64(s.lost)/n, 100*float64(s.stalled)/n)
+	fmt.Fprintf(&b, "won games: %.1f rounds, %.0f actions\n", s.rounds/w, s.actions/w)
+	total := 0.0
+	var parts []string
+	for _, k := range shareKinds {
+		total += s.shares[k] / w
+		parts = append(parts, fmt.Sprintf("%s %.1f", k, s.shares[k]/w))
 	}
+	fmt.Fprintf(&b, "shares per won game: %.1f (%s)\n", total, strings.Join(parts, ", "))
+	fmt.Fprintf(&b, "goal reached by round (won games): trees %.1f, fruit %.1f, treasures %.1f\n",
+		s.doneTrees/w, s.doneFruit/w, s.doneTreasure/w)
+	fmt.Fprintf(&b, "rough length: %.0f minutes (1.5 min a share, 1.5 a round, 15 s an action)\n",
+		total*1.5+s.rounds/w*1.5+s.actions/w*0.25)
+	fmt.Fprintf(&b, "all games: sealed hexes at the end %.1f, lowest water seen %.2f\n", s.sealedAtEnd/n, s.lowestWater/n)
 	t.Log(b.String())
 }
 
-func simGame(t *testing.T, o botOpts, st *simStats) {
-	g := NewGame("SIM", "host")
-	host := func(typ string, a Action) error { a.Host, a.Type = "host", typ; return g.Apply(a) }
-	as := func(p *Player, typ string, a Action) error {
-		a.Pid, a.Secret, a.Type = p.ID, p.Secret, typ
-		return g.Apply(a)
-	}
-	must := func(err error, what string) {
-		if err != nil {
-			t.Fatalf("%s: %v", what, err)
-		}
-	}
-	openness := map[string]float64{}
-	for i := 0; i < o.players; i++ {
-		types := rand.Perm(9)[:3]
-		for k := range types {
-			types[k]++
-		}
-		p, err := g.Join(fmt.Sprintf("P%d", i), Colors[i])
-		must(err, "join")
-		must(host("assignPowers", Action{Target: p.ID, Types: types}), "assign powers")
-		openness[p.ID] = 0.7 + 0.6*rand.Float64() // some people's stories land harder than others'
-	}
-	must(host("start", Action{}), "start")
-
-	// Plant: anywhere on the outer ring.
-	for g.Phase == PhasePlant {
-		outer := []int{}
-		for i, h := range g.Hexes {
-			if h.Ring == 3 {
-				outer = append(outer, i)
-			}
-		}
-		must(as(g.current(), "plant", Action{Hex: outer[rand.Intn(len(outer))]}), "plant")
-	}
-
-	for season := 1; season <= 3; season++ {
-		// Each bot picks a Dusk partner for this season.
-		buddy := pickBuddies(g, o.partnerPlan)
-		regionTaken := map[int]bool{}
-		for g.Phase == PhaseTurn {
-			p := g.current()
-			if !botTurn(g, p, o, buddy[p.ID], regionTaken, openness, as) {
-				st.stuckTurns++
-			}
-		}
-		if g.Phase != PhaseDusk {
-			t.Fatalf("expected dusk, got %s", g.Phase)
-		}
-		// Dusk: choose the buddy; ask for an alliance when it can work.
-		for _, p := range g.Players {
-			b := g.player(buddy[p.ID])
-			if b == nil {
-				continue
-			}
-			ally := g.allyCheck(p, b, map[string]bool{}) == ""
-			if hasPower(p, 9) && !p.Used[9] && season == 3 {
-				as(p, "power", Action{Power: 9})
-			}
-			as(p, "duskChoice", Action{Target: b.ID, Ally: ally})
-		}
-		must(host("resolveDusk", Action{}), "resolve")
-		for _, al := range g.Alliances {
-			if al.Season == g.Season && al.Statement == "" {
-				must(as(g.player(al.Members[0]), "statement", Action{Text: "We hold " + g.valueKey(al.Members) + " together."}), "statement")
-			}
-		}
-		must(host("nextSeason", Action{}), "next season")
-	}
-
-	// Finale: alliance stories, then guesses.
-	for g.Phase == PhaseStories {
-		must(host("nextStory", Action{}), "story")
-	}
-	for _, p := range g.Players {
-		guess := g.Players[rand.Intn(len(g.Players))]
-		if rand.Float64() < 0.3 {
-			guess = g.owlOf(p.ID)
-		}
-		if guess.ID != p.ID {
-			as(p, "guess", Action{Target: guess.ID})
-		}
-	}
-	must(host("startChain", Action{}), "chain")
-	for g.Phase == PhaseChain {
-		giver := g.player(g.Chain[g.ChainIdx])
-		must(as(g.player(giver.Target), "confirm", Action{N: 2 + rand.Intn(2)}), "confirm")
-	}
-
-	scores := g.Scores()
-	st.games++
-	for v := range Values {
-		if g.advocated(v) {
-			st.advocated++
-		}
-	}
-	if !scores[0].Winner {
-		st.noWinner++
-	}
-	st.margin += float64(scores[0].Total - scores[1].Total)
-	st.spread += float64(scores[0].Total - scores[len(scores)-1].Total)
-	for _, s := range scores {
-		p := g.player(s.ID)
-		st.scoreSum += float64(s.Total)
-		st.trustSum += float64(s.Trust)
-		st.growthSum += float64(s.Growth)
-		st.advSum += float64(s.Advocacy)
-		st.secSum += float64(s.Secret)
-		st.alliances += float64(len(p.Allies))
-		if len(p.Allies) == 0 {
-			st.zeroAlliance++
-		}
-		st.trustUnused += float64(p.TrustLeft)
-		for _, c := range p.Cards {
-			st.shares++
-			st.tierSum += float64(c.Tier)
-			if c.Tier == 3 {
-				st.oakShares++
-			}
-			if c.Tier == 4 {
-				st.heartwood++
-			}
-		}
-		for _, ty := range p.Types {
-			st.holdsPower[ty]++
-			if s.ID == scores[0].ID {
-				st.winsByPower[ty]++
-			}
-		}
-	}
+// bot plays one game for everyone.
+type bot struct {
+	g      *Game
+	shares map[string]float64
 }
 
-func hasPower(p *Player, ty int) bool {
-	for _, x := range p.Types {
-		if x == ty {
+func simGame(t *testing.T, players int, st *simStats) {
+	g := NewGame("SIM", "host")
+	for i := 0; i < players; i++ {
+		p, err := g.Join(fmt.Sprintf("P%d", i), Colors[i])
+		if err != nil {
+			t.Fatal(err)
+		}
+		// One type in turn (1..9), plus one other at random.
+		types := []int{i%9 + 1}
+		for len(types) < 2 {
+			if ty := 1 + rand.Intn(9); ty != types[0] {
+				types = append(types, ty)
+			}
+		}
+		if err := g.Apply(Action{Host: "host", Type: "assignPowers", Target: p.ID, Types: types}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := g.Apply(Action{Host: "host", Type: "start"}); err != nil {
+		t.Fatal(err)
+	}
+	b := &bot{g: g, shares: map[string]float64{}}
+	for g.Phase == PhaseEnter {
+		v := g.TurnIdx % 6
+		spots := ringHexes(4, v)
+		if !b.act(g.current(), "enter", Action{N: v, Hex: spots[rand.Intn(len(spots))]}) {
+			t.Fatal("bot could not enter")
+		}
+	}
+	at := map[string]int{}
+	lowest, actions := 99, 0
+	for g.Phase == PhaseTurn && g.Round <= simCap {
+		p := g.current()
+		actions += b.turn(p)
+		for _, q := range g.Players {
+			lowest = min(lowest, q.Water)
+		}
+		o := g.goals()
+		done := map[string]bool{"trees": !slicesContainsFalse(o.Trees[:]), "fruit": o.PlacedPlayers == o.Players,
+			"treasure": len(o.Treasures) == len(Treasures)}
+		for k, ok := range done {
+			if _, seen := at[k]; ok && !seen {
+				at[k] = g.Round
+			}
+		}
+	}
+	st.games++
+	switch g.Result {
+	case "won":
+		st.won++
+		st.rounds += float64(g.Round)
+		st.actions += float64(actions)
+		for k, v := range b.shares {
+			st.shares[k] += v
+		}
+		st.doneTrees += float64(at["trees"])
+		st.doneFruit += float64(at["fruit"])
+		st.doneTreasure += float64(at["treasure"])
+	case "lost":
+		st.lost++
+	default:
+		st.stalled++
+	}
+	for _, tl := range g.Tiles {
+		if tl != nil && tl.Leaves >= 2 {
+			st.sealedAtEnd++
+		}
+	}
+	st.lowestWater += float64(lowest)
+}
+
+func slicesContainsFalse(bs []bool) bool {
+	for _, b := range bs {
+		if !b {
 			return true
 		}
 	}
 	return false
 }
 
-// pickBuddies pairs players who haven't talked yet, preferring people close by,
-// and (when planning) people they could ally with.
-func pickBuddies(g *Game, plan bool) map[string]string {
-	ids := append([]string(nil), g.Order...)
-	rand.Shuffle(len(ids), func(i, j int) { ids[i], ids[j] = ids[j], ids[i] })
-	out := map[string]string{}
-	for _, id := range ids {
-		if out[id] != "" {
-			continue
-		}
-		p := g.player(id)
-		best, bestD := "", 99
-		for _, o := range ids {
-			if o == id || out[o] != "" || contains(p.Partners, o) {
-				continue
-			}
-			d := g.dist(p.Pos, g.player(o).Pos) + rand.Intn(3)
-			if plan && g.allyCheck(p, g.player(o), map[string]bool{}) == "" {
-				d -= 10
-			}
-			if d < bestD {
-				best, bestD = o, d
-			}
-		}
-		if best != "" {
-			out[id], out[best] = best, id
-		}
+// act is the Keeper tapping an action for p, then every share it opened being
+// told: listeners give a trust acorn now and then, and the Keeper taps Done.
+func (b *bot) act(p *Player, typ string, a Action) bool {
+	if typ != "enter" && typ != "move" && typ != "pass" && typ != "explore" && a.Hex == 0 {
+		a.Hex = -1
 	}
-	return out
+	a.Host, a.As, a.Type = "host", p.ID, typ
+	if err := b.g.Apply(a); err != nil {
+		return false
+	}
+	for len(b.g.Shares) > 0 {
+		s := b.g.Shares[0]
+		b.shares[s.Kind]++
+		if s.Kind != "treasure" {
+			for _, q := range b.g.Players {
+				if q.ID != s.Player && rand.Intn(10) < 4 {
+					b.g.Apply(Action{Pid: q.ID, Secret: q.Secret, Type: "trust"})
+				}
+			}
+		}
+		b.g.Apply(Action{Host: "host", Type: "doneShare"})
+	}
+	return true
 }
 
-type reach struct {
-	hex  int
-	path []int
-}
-
-// reachable lists every space the player can end on this turn within the steps
-// left, with the shortest path to it.
-func reachable(g *Game, p *Player, steps int) []reach {
-	start := reach{hex: p.Pos}
-	seen := map[int]bool{p.Pos: true}
-	out := []reach{start}
-	queue := []reach{start}
-	for len(queue) > 0 {
-		cur := queue[0]
-		queue = queue[1:]
-		if len(cur.path) >= steps {
-			continue
+// turn plays p's turn and returns the actions spent.
+func (b *bot) turn(p *Player) int {
+	g := b.g
+	spent := 0
+	for guard := 1; g.Phase == PhaseTurn && g.Turn.Player == p.ID && guard <= 12; guard++ {
+		before := g.Turn.Actions
+		if !b.step(p) || g.Phase != PhaseTurn {
+			break
 		}
-		for to := range g.Hexes {
-			if seen[to] || g.dist(cur.hex, to) != 1 || g.canEnter(p, to) != nil {
-				continue
-			}
-			seen[to] = true
-			nx := reach{to, append(append([]int(nil), cur.path...), to)}
-			out = append(out, nx)
-			queue = append(queue, nx)
-		}
-	}
-	return out
-}
-
-func botTurn(g *Game, p *Player, o botOpts, buddy string, regionTaken map[int]bool, openness map[string]float64,
-	as func(*Player, string, Action) error) bool {
-	tu := g.Turn
-	// Powers that help movement.
-	if hasPower(p, 3) && !p.Used[3] && g.Season >= 2 {
-		as(p, "power", Action{Power: 3})
-	}
-	if hasPower(p, 7) && !p.Used[7] {
-		as(p, "power", Action{Power: 7}) // a Campfire round, any time
-	}
-	if hasPower(p, 5) && !p.Used[5] && g.Season == 1 && as(p, "power", Action{Power: 5}) == nil {
-		for hex := range p.Peek {
-			as(p, "claim", Action{Hex: hex})
+		spent += before - g.Turn.Actions
+		if g.Turn.Actions == before && guard > 8 {
 			break
 		}
 	}
-	if hasPower(p, 6) && !p.Used[6] && g.Season == 3 {
-		for _, a := range p.Allies {
-			if ap := g.player(a); ap != nil && g.Hexes[ap.Pos].Ring <= 1 {
-				as(p, "power", Action{Power: 6, Target: a})
+	if g.Phase == PhaseTurn {
+		b.act(p, "endTurn", Action{})
+	}
+	return spent
+}
+
+// path finds a route from `from` to a hex where goal holds, through hexes p may
+// enter (or ignoring dead leaves, to find what to clear). It returns the hexes
+// after `from`, and false when there is no route.
+func (b *bot) path(p *Player, from int, goal func(int) bool, ignoreLeaves bool) ([]int, bool) {
+	prev := map[int]int{from: -1}
+	q := []int{from}
+	for len(q) > 0 {
+		i := q[0]
+		q = q[1:]
+		if goal(i) {
+			var out []int
+			for k := i; k != from; k = prev[k] {
+				out = append([]int{k}, out...)
+			}
+			return out, true
+		}
+		for _, j := range Adj[i] {
+			if _, seen := prev[j]; !seen && (ignoreLeaves || b.g.canEnter(p, j)) {
+				prev[j] = i
+				q = append(q, j)
+			}
+		}
+	}
+	return nil, false
+}
+
+func (b *bot) goToward(p *Player, goal func(int) bool) bool {
+	route, ok := b.path(p, p.Pos, goal, false)
+	if ok && len(route) > 0 {
+		return b.act(p, "move", Action{Hex: route[0]})
+	}
+	if ok {
+		return false
+	}
+	r, ok := b.path(p, p.Pos, goal, true)
+	if !ok || len(r) == 0 {
+		return false
+	}
+	// Blocked by dead leaves: clear the first sealed hex on the way.
+	if b.g.sealed(r[0]) && !b.g.canEnter(p, r[0]) {
+		return b.act(p, "clear", Action{Hex: r[0]})
+	}
+	if b.g.canEnter(p, r[0]) {
+		return b.act(p, "move", Action{Hex: r[0]})
+	}
+	return false
+}
+
+func is(h int) func(int) bool { return func(i int) bool { return i == h } }
+
+func (b *bot) any(f func(int) bool) bool {
+	for i := 1; i < len(Board); i++ {
+		if f(i) {
+			return true
+		}
+	}
+	return false
+}
+
+// step is one action (or a free pass); false when the bot has nothing useful to do.
+func (b *bot) step(p *Player) bool {
+	g := b.g
+	t := g.tile(p.Pos)
+	o := g.goals()
+	allFruit := o.PlacedPlayers == o.Players
+	// Free: water for a dry teammate in reach; a spare fruit for someone who needs one.
+	for _, q := range g.Players {
+		if q != p && q.Water == 0 && p.Water >= 2 && g.canPass(p, q) {
+			return b.act(p, "pass", Action{Target: q.ID, Text: "water"})
+		}
+	}
+	if p.Placed > 0 && p.Fruit > 0 {
+		for _, q := range g.Players {
+			if q != p && q.Placed == 0 && q.Fruit == 0 && g.canPass(p, q) {
+				return b.act(p, "pass", Action{Target: q.ID, Text: "fruit"})
+			}
+		}
+	}
+	if g.Turn.Actions < 1 {
+		return false
+	}
+	// 0. A teammate is out of water: the nearest one who can spare it walks over.
+	var dry *Player
+	for _, q := range g.Players {
+		if q != p && q.Water == 0 {
+			dry = q
+			break
+		}
+	}
+	if dry != nil && p.Water >= 3 {
+		var best *Player
+		bestD := 0
+		for _, q := range g.Players {
+			if q == dry || q.Water < 3 {
+				continue
+			}
+			d := 99
+			if r, ok := b.path(q, q.Pos, is(dry.Pos), false); ok {
+				d = len(r)
+			}
+			if best == nil || d < bestD {
+				best, bestD = q, d
+			}
+		}
+		if best == p && b.goToward(p, is(dry.Pos)) {
+			return true
+		}
+	}
+	// 1. Water low: find a spring.
+	if p.Water <= 1 {
+		if t != nil && t.Up && t.Kind == "spring" {
+			return b.act(p, "drink", Action{})
+		}
+		for i, x := range g.Tiles {
+			if x != nil && x.Up && x.Kind == "spring" {
+				if p.Water > 0 && b.goToward(p, is(i)) {
+					return true
+				}
 				break
 			}
 		}
 	}
-
-	// Choose where to end: deep as the season allows, near the buddy, a hidden discovery, and
-	// in Season 3 a region without an Oak story yet (if bots coordinate).
-	options := reachable(g, p, tu.StepsLeft)
-	b := g.player(buddy)
-	bestScore, best := -1e9, options[0]
-	for _, r := range options {
-		h := g.Hexes[r.hex]
-		s := float64(3-h.Ring) * 3 // deeper is worth more
-		if h.Ring == 0 {
-			s = 10
+	// 2. Carrying a treasure or my first fruit: walk onto the World Tree.
+	if p.Treasure != "" || (p.Fruit > 0 && p.Placed == 0) {
+		return b.goToward(p, is(0))
+	}
+	// 2b. Carrying a spare fruit: walk to someone who still needs one.
+	if p.Placed > 0 && p.Fruit > 0 && !allFruit {
+		needy := func(i int) bool {
+			for _, q := range g.Players {
+				if q.Pos == i && q.Placed == 0 && q.Fruit == 0 {
+					return true
+				}
+			}
+			return false
 		}
-		if o.partnerPlan && b != nil && g.dist(r.hex, b.Pos) <= 1 {
-			s += 4
-		}
-		if t := g.Tokens[r.hex]; t != nil && !t.Flipped {
-			s += 1
-		}
-		if g.Season == 3 && o.coordinate && h.Ring == 1 && !g.Oak[h.Region] && !regionTaken[h.Region] {
-			s += 5
-		}
-		s += rand.Float64()
-		if s > bestScore {
-			bestScore, best = s, r
+		if b.goToward(p, needy) {
+			return true
 		}
 	}
-	moved := len(options) > 1
-	for _, hex := range best.path {
-		if err := as(p, "step", Action{Hex: hex}); err != nil {
-			break
-		}
+	// 3. A treasure lies here: take it.
+	if t != nil && t.Up && t.Treasure != "" {
+		return b.act(p, "take", Action{})
 	}
-	as(p, "endMove", Action{})
-	if g.Turn.Teleport {
-		as(p, "endMove", Action{})
-	}
-	if hasPower(p, 1) && !p.Used[1] && g.Turn.Tier < 4 && as(p, "power", Action{Power: 1}) == nil {
-		as(p, "pickChoice", Action{Card: g.Turn.Choices[0]})
-	}
-	if hasPower(p, 2) && !p.Used[2] && g.Season >= 2 {
-		// Open Hands: invite someone to answer the question too.
-		for _, x := range g.Players {
-			if x.ID != p.ID && rand.Float64() < 0.3 && as(p, "power", Action{Power: 2, Target: x.ID}) == nil {
+	// 4. Grow a Big Tree in my value (or a value nobody stands for).
+	target := -1
+	if !o.Trees[p.Value] {
+		target = p.Value
+	} else {
+		for s := range 6 {
+			taken := false
+			for _, q := range g.Players {
+				taken = taken || q.Value == s
+			}
+			if !o.Trees[s] && !taken {
+				target = s
 				break
 			}
 		}
 	}
-	if hasPower(p, 4) && !p.Used[4] && g.Turn.Tier < 3 && g.Season >= 2 {
-		as(p, "power", Action{Power: 4})
-	}
-	if g.Turn.Tier == 3 {
-		regionTaken[g.Turn.Region] = true
-	}
-	as(p, "startShare", Action{})
-	as(p, "doneShare", Action{})
-	// Listeners: deeper shares and some people's stories draw more trust.
-	rate := []float64{0, 0.25, 0.4, 0.55, 0.65}[g.Turn.Tier] * openness[p.ID]
-	listeners := append([]*Player(nil), g.Players...)
-	sort.Slice(listeners, func(i, j int) bool { return listeners[i].ID < listeners[j].ID })
-	for _, x := range listeners {
-		if x.ID == p.ID {
-			continue
-		}
-		if hasPower(x, 8) && !x.Used[8] && g.Season == 3 && rand.Float64() < 0.3 {
-			if as(x, "power", Action{Power: 8}) == nil {
-				continue
+	if target >= 0 {
+		inT := func(i int) bool { return i > 0 && Board[i].Sector == target }
+		if inT(p.Pos) && t.Leaves < 2 {
+			if t.Stage == 3 {
+				return b.act(p, "tend", Action{})
+			}
+			if (t.Stage == 1 || t.Stage == 2) && p.Water >= 2 && g.wx(p.Pos) != "rain" {
+				return b.act(p, "water", Action{})
+			}
+			if sowable(t) && !b.any(func(i int) bool { return inT(i) && g.Tiles[i].Stage > 0 && g.Tiles[i].Leaves < 2 }) {
+				return b.act(p, "sow", Action{})
+			}
+			if !t.Up && !b.any(func(i int) bool {
+				x := g.Tiles[i]
+				return inT(i) && (x.Stage > 0 || sowable(x)) && x.Leaves < 2
+			}) {
+				return b.act(p, "explore", Action{})
 			}
 		}
-		if rand.Float64() < rate {
-			as(x, "trust", Action{})
+		growing := func(i int) bool {
+			return inT(i) && g.Tiles[i].Stage > 0 && g.Tiles[i].Stage < 4 && g.Tiles[i].Leaves < 2
 		}
-		if x.Squirrels > 0 && rand.Float64() < 0.2 {
-			as(x, "squirrel", Action{})
+		waiting := growing(p.Pos) && (g.wx(p.Pos) == "rain" || p.Water < 2) // the rain grows it, or I need water first
+		if !waiting {
+			goal := func(i int) bool { return inT(i) && !g.Tiles[i].Up && g.Tiles[i].Leaves < 2 }
+			if b.any(growing) {
+				goal = growing
+			} else if b.any(func(i int) bool { return inT(i) && sowable(g.Tiles[i]) }) {
+				goal = func(i int) bool { return inT(i) && sowable(g.Tiles[i]) }
+			}
+			if !goal(p.Pos) && b.goToward(p, goal) {
+				return true
+			}
 		}
 	}
-	as(p, "endTrust", Action{})
-	return moved
+	// 5. Fruit: harvest at a Big Tree out of the rain.
+	if (p.Placed == 0 && p.Fruit == 0) || (p.Placed > 0 && !allFruit && p.Fruit < 1) {
+		ripe := func(i int) bool {
+			x := g.tile(i)
+			return x != nil && x.Stage == 4 && x.Leaves < 2 && !x.Harvested && g.wx(i) != "rain"
+		}
+		if ripe(p.Pos) {
+			return b.act(p, "harvest", Action{})
+		}
+		goal := func(i int) bool { x := g.tile(i); return x != nil && x.Stage == 4 && x.Leaves < 2 }
+		if b.any(ripe) {
+			goal = ripe
+		}
+		if b.goToward(p, goal) {
+			return true
+		}
+	}
+	// 6. Treasures: take a loose one, or explore Rings 1-2 for the hidden ones.
+	hidden, loose, carried := 0, -1, 0
+	for i, x := range g.Tiles {
+		if x == nil {
+			continue
+		}
+		if x.Kind == "treasure" && !x.Up {
+			hidden++
+		}
+		if x.Up && x.Treasure != "" && loose < 0 {
+			loose = i
+		}
+	}
+	for _, q := range g.Players {
+		if q.Treasure != "" {
+			carried++
+		}
+	}
+	if loose > 0 && p.Treasure == "" {
+		return b.goToward(p, is(loose))
+	}
+	if hidden > 0 && len(g.Placed)+carried < len(Treasures) {
+		if t != nil && !t.Up {
+			return b.act(p, "explore", Action{})
+		}
+		claimed := map[int]bool{}
+		for _, q := range g.Players {
+			if q != p {
+				claimed[q.Pos] = true
+			}
+		}
+		open := func(i int) bool { return i > 0 && !g.Tiles[i].Up && !claimed[i] }
+		likely := func(i int) bool { return open(i) && Board[i].Ring <= 2 }
+		if b.any(likely) {
+			return b.goToward(p, likely)
+		}
+		return b.goToward(p, open)
+	}
+	// 7. Everything done for me: gather on the World Tree.
+	if p.Pos != 0 {
+		return b.goToward(p, is(0))
+	}
+	return false
 }

@@ -1,12 +1,11 @@
 package main
 
-// Card text and powers. The six values on the map are ZERA's core values,
-// ZERAOS; each value's card has a Seed (light), Sapling (story) and Oak (deep)
-// prompt.
+// Card text, treasures and roles. The six values on the map are ZERA's core
+// values, ZERAOS; each value has five cards with a Seed (light), Sapling (story)
+// and Oak (deep) prompt, pooled into one deck per ring.
 
 // Value is one of ZERA's core values. The map's wedges follow them clockwise,
-// so the forest spells Z-E-R-A-O-S. Players stand for one, and alliances join
-// different ones.
+// so the forest spells Z-E-R-A-O-S. Each player stands for one.
 type Value struct {
 	Letter      string `json:"letter"`
 	Name        string `json:"name"`
@@ -25,9 +24,9 @@ var Values = [6]Value{
 	{"S", "Sustainability", "Start with the end in mind.", "Long-term thinking built into everything: creating lasting impact and building systems that outlast any single leader or cohort.", "🌍", "#3f9e9a"},
 }
 
-var RegionNames = [6]string{"Zealous", "Excellence", "Resilience", "Authenticity", "Open-mindedness", "Sustainability"}
-
-var RegionCards = [6][][3]string{
+// valueCards is each value's five cards, each with a Seed (light), Sapling
+// (story) and Oak (deep) prompt. The ring decks are built from it.
+var valueCards = [6][][3]string{
 	{ // Zealous
 		{"What could you do for hours without noticing the time?", "Tell us about a time you got other people excited about something you love.", "What makes you care so much about your work?"},                                   // What lights you up
 		{"Whose good news made you really happy this year?", "Tell us about a time someone else's success made you want to try harder.", "If you stopped comparing yourself with others, what would you do differently?"},           // Cheering, not comparing
@@ -72,7 +71,8 @@ var RegionCards = [6][][3]string{
 	},
 }
 
-// RegionThreads names each region card's theme, in RegionCards order (shown in the wiki).
+// RegionThreads names each value card's theme (shown in the wiki): ringDecks[r][v*5+k]
+// comes from value v's card k, whose theme is RegionThreads[v][k].
 var RegionThreads = [6][]string{
 	{"What lights you up", "Cheering, not comparing", "Stepping up first", "In young people's corner", "Joining in wholeheartedly"},
 	{"Beyond what was asked", "Doing it right when no one's looking", "Heart comes first", "Raising the bar together", "Getting better, kindly"},
@@ -82,6 +82,24 @@ var RegionThreads = [6][]string{
 	{"Habits that last", "Things that run without you", "Planting for others", "The long game", "Starting with the end in mind"},
 }
 
+// RingDecks holds the card a player draws the first time they reach a ring
+// (index 1..3; 0 is unused): Ring 3 the Seed prompts, Ring 2 the Sapling ones,
+// Ring 1 the Oak ones, pooled across the six values (30 each).
+var RingDecks = buildRingDecks()
+
+func buildRingDecks() [4][]string {
+	var d [4][]string
+	for _, cards := range valueCards {
+		for _, c := range cards {
+			d[3] = append(d[3], c[0])
+			d[2] = append(d[2], c[1])
+			d[1] = append(d[1], c[2])
+		}
+	}
+	return d
+}
+
+// HeartwoodCards: one is asked each time a player places fruit on the World Tree.
 var HeartwoodCards = []string{
 	"What do you want the people at this table to know about you that they might not?",
 	"Who at this table has helped you grow, and how?",
@@ -89,112 +107,66 @@ var HeartwoodCards = []string{
 	"What would you want a student to say about you in 2035?",
 	"What did today show you about this team?",
 	"What promise would you make to this team for the year ahead?",
+	"What has this team given you that you didn't expect?",
+	"Which value do you want this team to grow in most this year, and why?",
+	"What will you do differently after today?",
+	"Who here would you like to know better, and what would you ask them?",
+	"What makes you proud to work at ZERA?",
+	"Who at this table do you want to thank, and for what?",
+	"What would a 'woken forest' look like at our school?",
+	"When did you last see this team at its best?",
 }
 
-var BondCards = [3][]string{
-	{"Find three things you have in common that have nothing to do with work.", "Swap the stories of how you each came to ZERA.", "Share your favourite childhood food and the memory behind it."},
-	{"Each tell the story of a turning point in your life.", "What's a lesson you each learned the hard way?", "Who shaped you most before you turned 18?"},
-	{"Tell your partner one thing you've learned about them today, and what it meant to you.", "What does each of you need from the other in the year ahead?", "Complete for each other: \"Working with you, I'd love more of ___.\""},
+// HarvestPrompt is the share after a Harvest; {value} is the tree's value.
+// The value's tagline is shown under it.
+const HarvestPrompt = "Tell us a story from your own life about {value}."
+
+// Treasure is one of the three named treasures hidden in Rings 1 and 2. When
+// found, the whole table answers its question in one sentence each.
+type Treasure struct {
+	ID       string `json:"id"`
+	Icon     string `json:"icon"`
+	Name     string `json:"name"`
+	Meaning  string `json:"meaning"`
+	Question string `json:"question"`
 }
 
-// StatementCard replaces the Bond card for a pair or trio forming an alliance:
-// they find one line that holds all their values.
-var StatementCard = "Find one line that holds all your values (a statement, a slogan or a cheer, about 12 words). Try: \"We ___ so that ___.\" One of you types it on your phone."
-
-// StatementTip helps the Keeper when an alliance is stuck on its statement:
-// what the values have in common, and example lines.
-type StatementTip struct {
-	Common   string   `json:"common"`
-	Examples []string `json:"examples"`
+var Treasures = []Treasure{
+	{"compass", "🧭", "The Compass", "Purpose: where we're going.", "Everyone, one sentence: where do you want this team to be a year from now?"},
+	{"lantern", "🏮", "The Lantern", "Lighting the way for others.", "Everyone, one sentence: who lit the way for you when you were new?"},
+	{"rope", "🪢", "The Rope", "Holding together.", "Everyone, one sentence: what holds this team together when things get hard?"},
 }
 
-// StatementTips is keyed by the alliance's value letters in ZERAOS order, e.g.
-// "ZE", "ERS": 15 pairs and 20 trios.
-var StatementTips = map[string]StatementTip{
-	"ZE":  {"Heart first, then the high bar: passion is what lifts good work further.", []string{"We pour our hearts in so that good becomes extraordinary.", "Love the work first, then do it better than anyone asked.", "Heart first, bar high, every child, every day!"}},
-	"ZR":  {"Passion that survives setbacks, and comes back stronger because of them.", []string{"We keep our spark through setbacks so that students learn how.", "A bad day is fuel, not a full stop.", "Knocked down? Fired up! Back again, stronger!"}},
-	"ZA":  {"Speaking up for every child, with energy that is real, not for show.", []string{"We champion every child loudly so that no one feels left out.", "Cheer for every child, especially the one nobody else noticed.", "Loud and proud for every child!"}},
-	"ZO":  {"Passion that still listens: strong convictions, held with an open hand.", []string{"We speak with fire and listen hard so that better ideas win.", "Care deeply, listen widely, change your mind gladly.", "Bring the passion, bring the questions!"}},
-	"ZS":  {"A quick blaze or a steady fire? Passion paced to last for years.", []string{"We pace our passion so that it still burns in ten years.", "Light a fire that still glows long after we have gone.", "Steady flame, long game, keep it burning!"}},
-	"ER":  {"Excellence isn't never falling; it's rising higher after every fall.", []string{"We learn hard from every miss so that next time is better.", "The bar rises every time we get back up.", "Miss it, learn it, raise it, nail it!"}},
-	"EA":  {"High bars for everyone, without pretending everyone starts at the same line.", []string{"We set high hopes for every child so that all can shine.", "Every child's best, honestly measured, is our standard.", "All of us belong! All of us rise!"}},
-	"EO":  {"Aim beyond expectation, yet treat each failure as a lesson, not a verdict.", []string{"We try bold ideas so that our best keeps getting better.", "Ask the question that makes good work great.", "Try it! Test it! Make it better!"}},
-	"ES":  {"Brilliant today versus lasting for years: quality that still holds up later.", []string{"We build things properly so that they still work in ten years.", "Good enough for now is not good enough for later.", "Do it right, make it last!"}},
-	"RA":  {"Strength that comes from honesty: owning the struggle is how we grow together.", []string{"We share our struggles honestly so that nobody struggles alone.", "Real people, real struggles, real growth. Everyone belongs here.", "Fall down, get up, together, as we are!"}},
-	"RO":  {"Both see setbacks as teachers: not just bouncing back, but learning and changing.", []string{"We treat setbacks as lessons so that every failure leaves us wiser.", "Failure is feedback. Read it, then go again.", "Stumble, learn, grow, go!"}},
-	"RS":  {"Built for the long haul: systems that get stronger each time they're tested.", []string{"We build systems that bend, not break, so that they outlast us.", "Plant deep roots; hard seasons only make them stronger.", "Bend, don't break! Grow back stronger!"}},
-	"AO":  {"Every voice is real and welcome, and we're honestly changed by hearing it.", []string{"We listen to every voice so that every child sees themselves here.", "Come as you are; leave with a bigger view.", "Every voice in! Every mind open!"}},
-	"AS":  {"Inclusion that outlasts any one leader: belonging built into how the school runs.", []string{"We build belonging into how we work so that it outlives us.", "Belonging should not depend on who is in charge this year.", "Everyone in, for good!"}},
-	"OS":  {"Hold the end in mind firmly and the route loosely: plans that keep learning.", []string{"We keep asking new questions so that our plans age well.", "A good plan is one that can still learn.", "Eyes on the horizon, minds wide open!"}},
-	"ZER": {"Heart, a high bar and staying power: aim high, fall, rise higher.", []string{"We aim high and get back up so that children learn how.", "The best work comes from people who care enough to try again.", "Heart in! Bar up! Never done!"}},
-	"ZEA": {"Passion and high hopes for every child, not only the easy ones to celebrate.", []string{"We believe big for every child so that each one does too.", "Every child deserves someone who thinks they're extraordinary.", "Big hearts, high hopes, no one left out!"}},
-	"ZEO": {"Ambitious and fired up, yet humble enough to learn from anyone in the room.", []string{"We chase better ideas from anywhere so that students get our best.", "Hungry to improve, happy to be wrong on the way.", "Dream big, ask questions, do better!"}},
-	"ZES": {"Excellence today, passion for tomorrow: brilliant work done at a pace that lasts.", []string{"We do great work at a steady pace so that it lasts.", "Aim for excellence your successors will thank you for.", "Go hard, go well, go the distance!"}},
-	"ZRA": {"Never giving up on any child, and being honest when it's hard.", []string{"We keep showing up for every child so that none feels forgotten.", "Some children take longer. We stay longer.", "No child too hard, no day too long!"}},
-	"ZRO": {"Keen enough to try, tough enough to fail, open enough to change course.", []string{"We try bold things, then learn from flops, so that students dare.", "Try it with heart, learn from the wobble, then try again.", "Dream it! Try it! Flop it! Fix it!"}},
-	"ZRS": {"Passion with stamina: energy that survives hard years with the long goal in sight.", []string{"We rest, recover and return with heart so that the mission lasts.", "Keep the fire lit through hard terms; the finish is years away.", "Still burning! Still standing! Still going!"}},
-	"ZAO": {"Excited by everyone's ideas, so the quiet voices are heard, not just the loudest.", []string{"We get excited about every voice so that quiet ones speak up.", "The best idea in the room might come from the quietest person.", "All voices! All ideas! All in!"}},
-	"ZAS": {"Passion for inclusion that's built to last, not a campaign that fades.", []string{"We build our care into habits so that every child belongs, always.", "Real inclusion isn't an event. It's how we do things here.", "All our heart, all the children, all the years!"}},
-	"ZOS": {"Fired up for a long future, and willing to rethink how we get there.", []string{"We stay curious and keen so that the school keeps growing.", "Love the mission enough to keep rethinking how we get there.", "Fresh ideas! Big heart! Long view!"}},
-	"ERA": {"High standards for every child, honest about the struggle, patient through it.", []string{"We admit what isn't working so that we can make it excellent.", "Honest about the struggle, ambitious about the outcome, for every child.", "Real effort! Real growth! Real results!"}},
-	"ERO": {"Ambition that welcomes failure: the bar goes up because we're willing to be wrong.", []string{"We pilot, review and improve so that each year beats the last.", "Draft, critique, redraft: that's how great work is made.", "First try, try again, best try yet!"}},
-	"ERS": {"Excellence that lasts: quality built to weather hard years, not just shine once.", []string{"We build strong foundations so that tough years make us better.", "Build it well, test it hard, leave it stronger.", "Stronger, better, year after year!"}},
-	"EAO": {"Excellence looks different for each child; it takes an open mind to see it.", []string{"We redefine success child by child so that every gift is seen.", "There's more than one way to be brilliant.", "Many minds! Many gifts! All of them count!"}},
-	"EAS": {"Quality and inclusion built into the bones of the school, not bolted on later.", []string{"We plan for every learner from day one so that all belong.", "Judge a school by how it serves every child, year after year.", "Built for all, built to last!"}},
-	"EOS": {"Keep improving the system without tearing it up: steady progress, open to better.", []string{"We keep reviewing what works so that good systems keep getting better.", "Small improvements every term add up to a great school.", "Better each term! Wiser each year!"}},
-	"RAO": {"A safe place to fail honestly: everyone belongs, mistakes included.", []string{"We own our mistakes openly so that children feel safe making theirs.", "Here, it's safe to be wrong, be yourself and try again.", "Messy, honest, learning, together!"}},
-	"RAS": {"Belonging that holds through hard times: a community strong enough to last.", []string{"We hold together through hard seasons so that every child stays held.", "When it gets hard, nobody gets left behind, this year or next.", "Hard days? All of us, all the way!"}},
-	"ROS": {"Adaptable for the long run: plans that learn and grow stronger from each setback.", []string{"We let every setback teach the system so that it gets wiser.", "Rethink, rebuild, and leave it sturdier for the next team.", "Learn it! Change it! Keep it going!"}},
-	"AOS": {"Listening to every voice now, so tomorrow's school is shaped by all of us.", []string{"We let every voice shape decisions so that the future fits everyone.", "Plan with people, not for them, and it will last.", "Every voice today, a better school tomorrow!"}},
+// HeartComplete is said when all three treasures are on the World Tree.
+const HeartComplete = "Purpose, light and each other: the heart of the forest is complete."
+
+func treasureByID(id string) *Treasure {
+	for i := range Treasures {
+		if Treasures[i].ID == id {
+			return &Treasures[i]
+		}
+	}
+	return nil
 }
 
-var SquirrelCards = []string{
-	"What's the story behind that?",
-	"How did that change you?",
-	"What would ten-year-old you think of that?",
-	"How does that show up in how you lead today?",
-	"Who else was there, and what did they mean to you?",
-	"What did you learn about yourself?",
+// Role is one Enneagram type's gift in the forest. The Keeper gives each player
+// 1 to 3 types in the lobby; they are always on.
+type Role struct {
+	Type int    `json:"type"`
+	Name string `json:"name"`
+	Text string `json:"text"`
 }
 
-var CampfireCards = []string{
-	"One word for how you feel right now.",
-	"Your ultimate comfort food.",
-	"A song that always lifts you.",
-	"The best advice you've ever received, in one line.",
-	"Mountain, beach or city?",
-	"A small win from this week.",
-	"The best holiday you've ever had, in one sentence.",
-	"Something you're looking forward to.",
+var Roles = []Role{
+	{1, "Reformer", "When you Clear, remove 2 layers (still 1 action in rain)."},
+	{2, "Helper", "Water, Tend or Clear a hex next to you without standing on it."},
+	{3, "Achiever", "After you Sow, the hex grows straight to Grass."},
+	{4, "Individualist", "When you Explore, also peek at one unexplored hex next to you."},
+	{5, "Investigator", "See which hexes the next Forest Breath will hit; once a round, see one sector's next weather."},
+	{6, "Loyalist", "Plants on your hex and next to you are safe from dead leaves."},
+	{7, "Enthusiast", "One Move a turn may be 2 hexes (not in fog, not through sealed hexes)."},
+	{8, "Challenger", "You may enter sealed hexes, and bring one teammate from your hex when you Move."},
+	{9, "Peacemaker", "Teammates in a chain up to 2 hexes long through you can pass things to each other."},
 }
 
-// Power is one Enneagram type's gift. Each player picks their top three
-// types and may activate each of those powers once per game.
-type Power struct {
-	Type  int    `json:"type"`
-	Name  string `json:"name"`
-	Gift  string `json:"gift"`
-	Title string `json:"title"`
-	When  string `json:"when"`
-	Text  string `json:"text"`
-}
-
-var Powers = []Power{
-	{1, "Reformer", "integrity", "True North", "your turn, before you start sharing", "Look at 3 cards from your region and choose the one to answer. +1 bonus point."},
-	{2, "Helper", "care", "Open Hands", "your turn, before you start sharing", "Invite another player to answer your question too, after you. You both keep the card, and you both take 1 bonus point."},
-	{3, "Achiever", "drive", "Momentum", "your turn, while moving", "Move up to 3 more spaces this turn."},
-	{4, "Individualist", "depth", "Deep Water", "your turn, before you start sharing", "Answer the question one tier deeper than your ring (up to Oak). It still scores at your ring's tier."},
-	{5, "Investigator", "insight", "Field Notes", "your turn, while moving", "See every hidden discovery next to you, then claim one without moving there."},
-	{6, "Loyalist", "loyalty", "Rope Team", "your turn, while moving", "Jump to an ally's space from anywhere, without using your steps. You both take 1 bonus point."},
-	{7, "Enthusiast", "joy", "Adventure", "your turn", "Call a Campfire: everyone answers a one-sentence question. +1 bonus point."},
-	{8, "Challenger", "strength", "Champion", "after someone else's share", "Give that player 2 trust acorns at once, and take 1 bonus point."},
-	{9, "Peacemaker", "harmony", "Common Ground", "at Dusk, before pairs are set", "Your alliance tonight works at any distance."},
-}
-
-// Discovery tokens: 26 for the 36 spaces around the Heartwood; the other 10
-// spaces are quiet clearings with nothing to find.
-var TokenMix = map[string]int{
-	"mushroom": 9, "squirrel": 10, "campfire": 5, "path": 2,
-}
-
-var Colors = []string{"#e53935", "#fb8c00", "#fdd835", "#43a047", "#00897b", "#1e88e5", "#5e35b1", "#d81b60", "#6d4c41", "#546e7a"}
+var Colors = []string{"#e53935", "#fb8c00", "#fdd835", "#43a047", "#00897b", "#1e88e5", "#5e35b1", "#d81b60", "#6d4c41", "#546e7a", "#00acc1", "#7cb342"}

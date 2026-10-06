@@ -13,7 +13,6 @@ import (
 	"math/big"
 	"net"
 	"net/http"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -119,6 +118,10 @@ func (s *Server) load() error {
 		g := &Game{}
 		if err := json.Unmarshal([]byte(state), g); err != nil {
 			log.Printf("skip game %s: %v", code, err)
+			continue
+		}
+		if g.Rules != RulesVersion {
+			log.Printf("skip game %s: saved under older rules (%q)", code, g.Rules)
 			continue
 		}
 		s.games[code] = g
@@ -301,7 +304,7 @@ func (s *Server) action(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err.Error())
 		return
 	}
-	payload, _ := json.Marshal(map[string]any{"hex": a.Hex, "target": a.Target, "power": a.Power, "n": a.N, "types": a.Types, "as": a.As, "text": a.Text})
+	payload, _ := json.Marshal(map[string]any{"hex": a.Hex, "target": a.Target, "n": a.N, "types": a.Types, "as": a.As, "text": a.Text})
 	actor := a.Pid
 	if a.Host != "" {
 		actor = "host"
@@ -419,38 +422,21 @@ func (s *Server) live(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// buildView returns what one viewer may see: secrets, hidden tokens and
-// other players' pots stay on the server.
-// cards serves every deck in the game, for the wiki's card pages.
+// cards serves every deck in the game, for the how-to and wiki pages.
 func cards(w http.ResponseWriter, r *http.Request) {
-	type tip struct {
-		Key string `json:"key"`
-		StatementTip
-	}
-	var tips []tip
-	for k, t := range StatementTips {
-		tips = append(tips, tip{k, t})
-	}
-	order := "ZERAOS"
-	sort.Slice(tips, func(i, j int) bool {
-		a, b := tips[i].Key, tips[j].Key
-		if len(a) != len(b) {
-			return len(a) < len(b)
-		}
-		for k := range a {
-			if a[k] != b[k] {
-				return strings.IndexByte(order, a[k]) < strings.IndexByte(order, b[k])
-			}
-		}
-		return false
-	})
 	writeJSON(w, 200, map[string]any{
-		"values": Values, "regionCards": RegionCards, "threads": RegionThreads,
-		"heartwood": HeartwoodCards, "bond": BondCards, "statementCard": StatementCard,
-		"statementTips": tips, "squirrel": SquirrelCards, "campfire": CampfireCards,
+		"values":    Values,
+		"ringDecks": map[string][]string{"1": RingDecks[1], "2": RingDecks[2], "3": RingDecks[3]},
+		"threads":   RegionThreads, // ringDecks[r][v*5+k] is value v's card k, theme threads[v][k]
+		"heartwood": HeartwoodCards,
+		"harvest":   HarvestPrompt,
+		"treasures": Treasures,
+		"roles":     Roles,
 	})
 }
 
+// buildView returns what one viewer may see: secrets, face-down tiles, the
+// Secret Owl and private peeks stay on the server.
 func buildView(g *Game, pid, secret, host string) map[string]any {
 	isHost := host != "" && host == g.HostSecret
 	var me *Player
@@ -459,125 +445,103 @@ func buildView(g *Game, pid, secret, host string) map[string]any {
 	}
 	players := []map[string]any{}
 	for _, p := range g.Players {
-		pp := map[string]any{
-			"id": p.ID, "name": p.Name, "color": p.Color, "value": p.Value, "types": p.Types, "used": p.Used,
-			"pos": p.Pos, "bonus": p.Bonus, "trustLeft": p.TrustLeft,
-			"squirrels": p.Squirrels, "cards": p.Cards, "allies": p.Allies, "partners": p.Partners,
-			"guessed": p.Guess != "",
+		types := p.Types
+		if types == nil {
+			types = []int{}
 		}
-		if g.Dusk != nil {
-			_, pp["duskChosen"] = g.Dusk.Choices[p.ID]
-		}
-		players = append(players, pp)
+		players = append(players, map[string]any{
+			"id": p.ID, "name": p.Name, "color": p.Color, "value": p.Value, "types": types, "pos": p.Pos,
+			"water": p.Water, "fruit": p.Fruit, "treasure": p.Treasure, "placed": p.Placed, "reached": p.Reached,
+			"trustLeft": p.TrustLeft, "guessed": p.Guess != "",
+		})
 	}
-	tokens := map[int]string{}
-	for i, t := range g.Tokens {
-		if t.Flipped {
-			tokens[i] = t.Kind
-		} else {
-			tokens[i] = ""
+	tiles := make([]any, len(g.Tiles))
+	for i, t := range g.Tiles {
+		if t == nil {
+			continue
 		}
+		kind, tr := "", ""
+		if t.Up {
+			kind, tr = t.Kind, t.Treasure
+		}
+		tiles[i] = map[string]any{"up": t.Up, "kind": kind, "treasure": tr, "stage": t.Stage, "leaves": t.Leaves,
+			"harvested": t.Harvested}
+	}
+	treasures := []map[string]string{}
+	for _, t := range Treasures {
+		treasures = append(treasures, map[string]string{"id": t.ID, "icon": t.Icon, "name": t.Name, "meaning": t.Meaning,
+			"question": t.Question})
+	}
+	order := g.Order
+	if order == nil {
+		order = []string{}
 	}
 	v := map[string]any{
-		"code": g.Code, "phase": g.Phase, "season": g.Season, "seasonName": SeasonNames[min(g.Season, 3)],
-		"players": players, "alliances": g.Alliances, "order": g.Order, "hexes": g.Hexes,
-		"tokens": tokens, "trees": g.Trees, "oak": g.Oak, "timerEnd": g.TimerEnd, "timerLabel": g.TimerLabel,
-		"now": time.Now().UnixMilli(), "version": g.Version, "isHost": isHost, "turnsTaken": g.TurnsTaken,
-		"powers": Powers, "regions": RegionNames, "values": Values, "colors": Colors, "lan": lan,
+		"code": g.Code, "phase": g.Phase, "version": g.Version, "now": time.Now().UnixMilli(), "isHost": isHost,
+		"lan": lan, "colors": Colors, "values": Values, "roles": Roles, "treasures": treasures,
+		"minPlayers": MinPlayers, "maxPlayers": MaxPlayers, "actionsPerTurn": ActionsPerTurn,
+		"round": g.Round, "tide": g.Tide, "result": g.Result,
+		"hexes": Board, "tiles": tiles, "weather": g.Weather, "breathCount": len(g.Breath),
+		"players": players, "order": order, "current": "", "turn": nil, "share": nil,
+		"goals": g.goals(), "timerEnd": g.TimerEnd, "timerLabel": g.TimerLabel,
+		"tribute": nil, "recognition": nil, "me": nil,
 	}
-	if n := len(g.Log); n > 40 {
-		v["log"] = g.Log[n-40:]
-	} else {
-		v["log"] = g.Log
+	events := g.Events
+	if n := len(events); n > 80 {
+		events = events[n-80:]
 	}
-	if (g.Phase == PhasePlant || g.Phase == PhaseTurn) && len(g.Order) > 0 {
-		v["current"] = g.Order[g.TurnIdx]
+	if events == nil {
+		events = []Event{}
+	}
+	v["events"] = events
+	logs := g.Log
+	if n := len(logs); n > 40 {
+		logs = logs[n-40:]
+	}
+	if logs == nil {
+		logs = []string{}
+	}
+	v["log"] = logs
+	if g.Phase == PhaseEnter || g.Phase == PhaseTurn {
+		if p := g.current(); p != nil {
+			v["current"] = p.ID
+		}
 	}
 	if t := g.Turn; t != nil && g.Phase == PhaseTurn {
-		n := 0
-		for _, c := range t.Trusted {
-			n += c
-		}
-		tv := map[string]any{
-			"player": t.Player, "step": t.Step, "discovered": t.Discovered, "stepsLeft": t.StepsLeft,
-			"teleport": t.Teleport, "canClaim": t.CanClaim, "region": t.Region, "tier": t.Tier,
-			"prompt": t.Prompt, "redrawn": t.Redrawn, "started": t.Started, "event": t.Event,
-			"eventText":  t.EventText,
-			"trustCount": n, "followUps": t.FollowUps,
-			"invited": t.Invited, "campfire": t.Campfire,
-		}
-		if me != nil {
-			tv["iGave"] = t.Trusted[me.ID] > 0
-		}
-		if isHost {
-			// The Keeper runs Field Notes on the big screen, so it sees what was scouted.
-			if p := g.player(t.Player); p != nil {
-				tv["peek"] = p.Peek
-			}
-		}
-		var choices []string
-		for _, c := range t.Choices {
-			choices = append(choices, RegionCards[t.Region][c][t.Tier-1])
-		}
-		tv["choices"] = choices
-		tv["choiceIds"] = t.Choices
-		v["turn"] = tv
+		v["turn"] = map[string]any{"player": t.Player, "actions": t.Actions, "enthusiastUsed": t.EnthusiastUsed,
+			"investigated": t.Investigated}
 	}
-	if d := g.Dusk; d != nil {
-		v["dusk"] = map[string]any{"pairs": d.Pairs, "resolved": d.Resolved}
-		if isHost && d.Resolved {
-			// Tips for the Keeper, for each alliance writing its statement tonight.
-			tips := map[string]StatementTip{}
-			for _, al := range g.Alliances {
-				if al.Season == g.Season {
-					k := g.valueKey(al.Members)
-					if t, ok := StatementTips[k]; ok {
-						tips[k] = t
-					}
-				}
-			}
-			v["tips"] = tips
+	if s := g.openShare(); s != nil {
+		sv := map[string]any{"idx": s.Idx, "kind": s.Kind, "player": s.Player, "prompt": s.Prompt, "sub": s.Sub,
+			"trustCount": len(s.Trusted), "iGave": me != nil && s.Trusted[me.ID]}
+		if s.Kind == "ring" {
+			sv["sub"] = s.Ring
 		}
-	}
-	keys := map[string]string{}
-	for _, al := range g.Alliances {
-		keys[al.ID] = g.valueKey(al.Members)
-	}
-	v["allianceKeys"] = keys
-	if g.Phase == PhaseStories && g.StoryIdx < len(g.Alliances) {
-		v["story"] = map[string]any{"alliance": g.Alliances[g.StoryIdx].ID, "idx": g.StoryIdx, "total": len(g.Alliances)}
+		v["share"] = sv
 	}
 	if g.Phase == PhaseChain && g.ChainIdx < len(g.Chain) {
 		giver := g.player(g.Chain[g.ChainIdx])
 		v["tribute"] = map[string]any{"giver": giver.ID, "receiver": giver.Target, "idx": g.ChainIdx, "total": len(g.Chain)}
 	}
-	if g.Phase == PhaseScores {
-		v["scores"] = g.Scores()
+	if g.Phase == PhaseEnd {
+		v["recognition"] = g.Recognition()
 	}
 	if me != nil {
-		pot, givers := 0, 0
-		for _, c := range me.Pot {
-			pot += c
-			if c > 0 {
-				givers++
-			}
+		peeks := me.Peeks
+		if peeks == nil {
+			peeks = []Peek{}
 		}
-		mv := map[string]any{
-			"id": me.ID, "target": me.Target, "guess": me.Guess, "peek": me.Peek,
-			"potCount": pot, "potGivers": givers,
-		}
+		mv := map[string]any{"id": me.ID, "target": me.Target, "targetName": "", "guess": me.Guess, "peeks": peeks}
 		if t := g.player(me.Target); t != nil {
 			mv["targetName"] = t.Name
 		}
-		if g.Dusk != nil {
-			if c, ok := g.Dusk.Choices[me.ID]; ok {
-				mv["duskChoice"] = c
+		if me.has(Investigator) {
+			mv["breath"] = g.Breath
+			for _, pk := range peeks {
+				if pk.Type == "weather" && pk.Tide == g.Tide {
+					mv["weatherPeek"] = map[string]any{"sector": pk.Sector, "weather": pk.Weather}
+				}
 			}
-			mv["common"] = g.Dusk.Common[me.ID]
-			mv["note"] = g.Dusk.Notes[me.ID]
-		}
-		if al := g.allianceOf(me.ID); al != nil {
-			mv["alliance"] = al.ID
 		}
 		v["me"] = mv
 	}
@@ -614,7 +578,7 @@ func main() {
 	mux.HandleFunc("GET /api/qr", qrCode)
 	mux.HandleFunc("GET /api/cards", cards)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) { fmt.Fprintln(w, "ok") })
-	log.Printf("Heartwood on http://localhost%s (db %s, %d saved games)", *addr, *dbPath, len(s.games))
+	log.Printf("Heartwood (World Tree) on http://localhost%s (db %s, %d saved games)", *addr, *dbPath, len(s.games))
 	for _, u := range lan {
 		log.Printf("Phones on the same Wi-Fi: %s", u)
 	}

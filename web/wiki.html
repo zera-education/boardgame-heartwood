@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Heartwood Wiki</title>
+<title>World Tree Wiki</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
 <style>
@@ -98,12 +98,12 @@ article h3 { font-size: 1.15rem; margin: 1.5rem 0 .5rem; }
 <body>
 <div class="wrap">
   <div class="topbar">
-    <a class="brand" href="#"><span>🌰</span>HEARTWOOD WIKI</a>
+    <a class="brand" href="#"><span>🌲</span>WORLD TREE WIKI</a>
     <nav class="toplinks"><a href="howto.html">How to play</a><a href="/">Game</a></nav>
-    <div class="search"><input id="q" type="search" placeholder="Search terms: alliance, Squirrel, Dusk…" aria-label="Search the wiki" autocomplete="off"></div>
+    <div class="search"><input id="q" type="search" placeholder="Search terms: spring, Forest Tide, Peacemaker…" aria-label="Search the wiki" autocomplete="off"></div>
   </div>
   <main id="main"></main>
-  <p class="foot">🌰 Heartwood · made for the ZERA International School leadership retreat.</p>
+  <p class="foot">🌲 Heartwood · World Tree · made for the ZERA International School leadership retreat.</p>
 </div>
 
 <script>
@@ -111,871 +111,808 @@ article h3 { font-size: 1.15rem; margin: 1.5rem 0 .5rem; }
 // (shown with its title) and [[id|text]] links with custom text.
 const CATS = [
   ['basics', 'The basics'],
-  ['map', 'The map'],
+  ['forest', 'The forest'],
+  ['actions', 'Actions'],
+  ['growing', 'Plants, water and fruit'],
+  ['weather', 'Weather and the Forest Tide'],
+  ['treasures', 'The treasures'],
+  ['talking', 'Stories and trust'],
+  ['roles', 'Enneagram roles'],
+  ['end', 'The end'],
   ['cards', 'All the cards'],
-  ['resources', 'Resources'],
-  ['discoveries', 'Discoveries'],
-  ['dusk', 'Dusk and alliances'],
-  ['powers', 'Enneagram powers'],
-  ['scoring', 'Scoring and the finale'],
   ['phone', 'Your phone'],
+];
+
+// The six value pages share one shape.
+const VALUE_INFO = [
+  ['zealous', '☀️', 'Zealous', 'Z', 'Be zealous, not jealous.', 'Passionate, driven energy channelled into learning and purpose rather than comparison: advocacy for students, initiative, and enthusiastic participation.'],
+  ['excellence', '⭐', 'Excellence', 'E', 'Beyond expectation.', 'Consistently surpassing standards, never merely meeting them: in academics, governance, and personal growth. Heart (zealous) always comes first.'],
+  ['resilience', '🎋', 'Resilience', 'R', 'Anti-fragile.', 'More than bouncing back: growing stronger through challenge. Purpose-driven leadership that persists toward long-term goals and learns from setbacks.'],
+  ['authenticity', '🪞', 'Authenticity', 'A', 'Inclusive education.', 'Genuine representation and honesty. Everyone, including students in zera Plus, belongs and is valued, without pretense.'],
+  ['open-mindedness', '💡', 'Open-mindedness', 'O', 'Growth mindset.', 'Welcoming diverse perspectives and inclusive decision-making: challenging assumptions and treating failure as a place to grow, not an endpoint.'],
+  ['sustainability', '🌍', 'Sustainability', 'S', 'Start with the end in mind.', 'Long-term thinking built into everything: creating lasting impact and building systems that outlast any single leader or cohort.'],
 ];
 
 const W = [
 // ───────────── The basics
-{ id: 'expedition', cat: 'basics', icon: '🧭', title: 'The expedition',
-  short: 'What Heartwood is, in one page.',
+{ id: 'world-tree-game', cat: 'basics', icon: '🌲', title: 'World Tree, the game',
+  short: 'What the game is, in one page.',
   body: `
-<p>Heartwood is a board game about getting to know each other. Up to 10 players sit in one room, looking at each other and at the big screen. Each player has a phone, but it stays mostly face down: you say what you want and the [[keeper]] taps it. See [[your-phone]].</p>
-<p>ZERA's story is a tree's story: the seed planted in 2021, the sprout in 2023, the tree in 2024, and the vision of a forest by 2035. You are an expedition into that forest. You start at its sunny edge, the [[seedlands]], and walk inward toward the [[heartwood]] at its centre. <b>Every step inward is a deeper question.</b></p>
+<p>World Tree is a cooperative game for 6 to 12 school leaders. Its purpose is simple: <b>get to know each other while you work as one team.</b></p>
+<p>The forest is asleep and face down. Together you [[explore]] it, grow a [[big-tree]] in every [[sector]], [[harvest]] fruit while you tell stories, find the three [[treasure|treasures]], and gather on the [[world-tree]] in the centre. Then the forest wakes.</p>
 <div class="facts">
-  <div class="fact"><span>Players</span>Up to 10, phones mostly face down</div>
-  <div class="fact"><span>Time</span>About 2 hours</div>
-  <div class="fact"><span>Rounds</span>3 [[season|seasons]] and a [[finale]]</div>
-  <div class="fact"><span>Winner</span>Most points</div>
+  <div class="fact"><span>Players</span>6 to 12, plus the [[keeper]]</div>
+  <div class="fact"><span>Time</span>A long afternoon (3 to 4 hours)</div>
+  <div class="fact"><span>Team</span>Everyone wins or loses together</div>
+  <div class="fact"><span>Phones</span>Down: see [[phones-down]]</div>
 </div>
-<h3>The two goals</h3>
-<p>The real goal is to know each other more deeply. The game goal is to score the most points. They are built to be the same: every point comes from sharing, listening or bonding. See [[scoring]].</p>
 <h3>The shape of the game</h3>
 <ol>
-  <li>[[plant-your-seed|Plant your seed]] on the outer ring.</li>
-  <li>Three [[season|seasons]]. In each, everyone takes one [[turn]], then everyone pairs up at [[dusk]].</li>
-  <li>The [[finale]]: [[secret-owl]] tributes, then the scores.</li>
-</ol>` },
+  <li>The Keeper gives everyone their [[roles|Enneagram roles]]. Your phone tells you who you watch as a [[secret-owl]].</li>
+  <li>[[entering|Enter the forest]]: choose the [[values|value]] you stand for, and say why.</li>
+  <li>Play [[round|rounds]]. In each, every player takes a [[turn]] of 2 [[action|actions]], then the [[forest-tide]] runs.</li>
+  <li>The game ends when [[wake|the forest wakes]], or [[sleep|the forest sleeps on]].</li>
+  <li>The [[finale]]: the Secret Owl [[guess]], the [[tribute-chain]] and [[recognition]].</li>
+</ol>
+<p>There are no points and no winner among the players. See [[goal]].</p>` },
+
+{ id: 'goal', cat: 'basics', icon: '🎯', title: 'The goal',
+  short: 'Three goals, all true at the same moment: then the forest wakes.',
+  body: `
+<p>The forest [[wake|wakes]] the moment all three goals are true at the same time:</p>
+<ol>
+  <li><b>🌳 A [[big-tree]] in every [[sector]].</b> Six Big Trees, one per value. It doesn't matter who grew them.</li>
+  <li><b>🍎 Fruit from everyone, and all three treasures.</b> Every player has placed at least one [[fruit]] on the [[world-tree]], and [[compass|the Compass]], [[lantern|the Lantern]] and [[rope|the Rope]] are there too.</li>
+  <li><b>🧍 Everyone on the World Tree.</b> Every player stands on it, together.</li>
+</ol>
+<p>The big screen shows how far the team has come on each goal.</p>
+<h3>Losing</h3>
+<p>If every player is at 0 [[water]] at the same moment, [[sleep|the forest sleeps on]].</p>
+<div class="tip"><h3>No winner among players</h3><p>World Tree has no points. You win or lose as one team. At the end, [[recognition]] shows what each person received: trust, and their Secret Owl.</p></div>` },
 
 { id: 'keeper', cat: 'basics', icon: '🎙️', title: 'Keeper',
   short: 'The facilitator who runs the big screen. Not a player.',
   body: `
-<p>The Keeper is the facilitator. They stand outside the game: they don't score and don't take turns.</p>
+<p>The Keeper is the facilitator. They stand outside the game: they don't take turns.</p>
 <h3>What the Keeper does</h3>
 <ul>
-  <li>Creates the game and shows the 4-letter join code on the big screen.</li>
-  <li>Gives each player 1 to 3 [[enneagram-powers]] in the lobby, before the start.</li>
-  <li>Taps what players say on the big screen: planting, moving, the share timer, passing, powers and follow-ups. See [[your-phone]].</li>
-  <li>Reads the [[forest-pact]] at the start.</li>
-  <li>Starts each [[season]] and keeps an eye on the clock.</li>
-  <li>Taps <b>Set the pairs</b> at [[dusk]].</li>
-  <li>Leads the [[finale]].</li>
-  <li>May pause any share, and can skip a [[turn]] if someone is away.</li>
-  <li>Gives out [[rejoin-code|rejoin codes]] when a player changes phone.</li>
-</ul>
-` },
+  <li>Creates the game and shows the 4-letter join code and QR code on the big screen.</li>
+  <li>Gives each player 1 to 3 Enneagram types in the lobby: their [[roles]].</li>
+  <li>Starts the game when 6 to 12 players are in and everyone has a role.</li>
+  <li>Reads the [[forest-pact]].</li>
+  <li>Taps what players say: [[entering]], every [[action]], every [[pass]], and <b>End turn</b>.</li>
+  <li>Taps <b>Done sharing</b> when a [[share]] ends, and can start a [[timer]].</li>
+  <li>Leads the [[finale]]: starts the [[tribute-chain]] and taps <b>Next</b> for each tribute.</li>
+  <li>May pause any story, and gives [[rejoin-code|rejoin codes]] when a player changes phone.</li>
+</ul>` },
 
 { id: 'forest-pact', cat: 'basics', icon: '🌲', title: 'Forest Pact',
-  short: 'The five promises everyone makes before playing.',
+  short: 'The six promises everyone makes before playing.',
   body: `
-<p>The Keeper reads the Forest Pact at the start. It holds for the whole game, and after it.</p>
+<p>The [[keeper]] reads the Forest Pact at the start. It holds for the whole game, and after it.</p>
 <div class="box">
 <p>🌲 <b>What's shared in the forest stays in the forest.</b></p>
-<p>🍃 <b>[[passing|Passing]] is always free.</b></p>
+<p>🍃 <b>Every question is an invitation.</b> You may always say "not this one".</p>
 <p>👂 <b>Listen to understand:</b> no advice, no fixing, no debating.</p>
-<p>🌰 <b>Trust is a gift, not a grade.</b></p>
-<p>📵 <b>Phones down while someone shares.</b> Pick yours up only to play.</p>
+<p>🌰 <b>Trust is a gift, not a grade.</b> See [[trust-acorn]].</p>
+<p>🤝 <b>One team.</b> Plan out loud, and look after each other.</p>
+<p>📵 <b>Phones down.</b> See [[phones-down]].</p>
 </div>
-<p>The [[keeper]] may pause any share.</p>` },
+<p>The Keeper may pause any story.</p>` },
 
-{ id: 'season', cat: 'basics', icon: '🍂', title: 'Season',
-  short: 'One round: everyone takes a turn, then Dusk. There are three.',
+{ id: 'phones-down', cat: 'basics', icon: '📵', title: 'Phones down',
+  short: 'Look at each other and at the big screen, not at your phone.',
   body: `
-<p>The game has three seasons, each named after a moment in ZERA's growth. In each season everyone takes one [[turn]], in order, and then [[dusk]] falls.</p>
-<div class="tablewrap"><table>
-<tr><th>Season</th><th>Name</th><th>What opens</th></tr>
-<tr><td>1</td><td>🌱 Planting the Seed</td><td>[[seedlands]] only: light questions</td></tr>
-<tr><td>2</td><td>🌿 The Sprout</td><td>+ [[sapling-path]]: stories</td></tr>
-<tr><td>3</td><td>🌳 Growing into a Tree</td><td>+ [[oak-circle]] and [[heartwood]]: the deep questions</td></tr>
-<tr><td>Finale</td><td>🌲 The Vision of a Forest</td><td>[[secret-owl]] tributes and the scores</td></tr>
-</table></div>
-<h3>At the start of each new season</h3>
+<p>World Tree is about the people in the room. So your phone stays face down. Everything public happens on the big screen: you say what you want, and the [[keeper]] taps it.</p>
+<p>Pick your phone up only to:</p>
 <ul>
-  <li>The next player in order goes first, so the advantage of moving last goes around the table.</li>
+  <li>🌰 give a [[trust-acorn]] after someone else's [[share]];</li>
+  <li>👀 check your private looks (the [[individualist]]'s peek, the [[investigator]]'s forecast);</li>
+  <li>❓ make your [[guess]] at the end.</li>
+</ul>
+<p>See [[your-phone]] for everything it shows.</p>` },
+
+{ id: 'round', cat: 'basics', icon: '🔁', title: 'Round',
+  short: 'Every player takes one turn, then the Forest Tide.',
+  body: `
+<p>In a round, every player takes one [[turn]], clockwise, in the order they joined. After the last player's turn, the [[forest-tide]] runs by itself. Then the next round begins with the first player again.</p>
+<p>A game has many rounds: often 20 to 30. The game ends the moment [[wake|the forest wakes]] or [[sleep|sleeps on]], even in the middle of a round.</p>` },
+
+{ id: 'turn', cat: 'basics', icon: '👣', title: 'Turn',
+  short: 'Up to 2 actions. Say them, and the Keeper taps them.',
+  body: `
+<p>On your turn you have <b>2 [[action|actions]]</b>. Say what you want to do, and the [[keeper]] taps it on the big screen. You may use fewer. Some actions cost 2 in certain [[weather]]: [[explore]] in [[fog]], [[clear]] in [[rain]].</p>
+<p>When you are done, the Keeper taps <b>End turn</b>. After the last player of the [[round]], the [[forest-tide]] runs.</p>
+<h3>Free things</h3>
+<ul>
+  <li>[[pass|Passing]] water, fruit or a treasure costs no action, on anyone's turn.</li>
+  <li>[[placing|Placing]] on the [[world-tree]] happens by itself.</li>
+  <li>The [[investigator]]'s weather look costs no action.</li>
+</ul>
+<p>When someone starts a [[share]], play waits until the Keeper taps <b>Done sharing</b>.</p>` },
+
+{ id: 'action', cat: 'basics', icon: '✋', title: 'Action',
+  short: 'The nine things you can do on your turn.',
+  body: `
+<p>You have 2 actions a [[turn]]. Each action below costs 1, unless it says otherwise.</p>
+<div class="tablewrap"><table>
+<tr><th>Action</th><th>In short</th></tr>
+<tr><td>🥾 [[move]]</td><td>Step to a hex next to you.</td></tr>
+<tr><td>✦ [[explore]]</td><td>Turn over the hex you stand on (2 in [[fog]]).</td></tr>
+<tr><td>🫘 [[sow]]</td><td>Plant a seed on an empty explored hex.</td></tr>
+<tr><td>💧 [[water-action|Water]]</td><td>Seeded → Grass, Grass → Shrub. Uses 1 [[water]].</td></tr>
+<tr><td>🤲 [[tend]]</td><td>Shrub → [[big-tree]].</td></tr>
+<tr><td>🧹 [[clear]]</td><td>Remove a layer of [[dead-leaves]] (2 in [[rain]]).</td></tr>
+<tr><td>🍎 [[harvest]]</td><td>Take a [[fruit]] from a Big Tree, and tell a [[harvest-story]].</td></tr>
+<tr><td>✋ [[take]]</td><td>Pick up a [[treasure]] on your hex.</td></tr>
+<tr><td>🚰 [[drink]]</td><td>Fill up to 5 water at a [[spring]].</td></tr>
+</table></div>
+<p>Your [[roles]] change some of these a little.</p>` },
+
+{ id: 'entering', cat: 'basics', icon: '📍', title: 'Entering the forest',
+  short: 'Choose the value you stand for, take your place on Ring 4, and say why.',
+  body: `
+<p>Before the first [[round]], in turn order, each player:</p>
+<ol>
+  <li>Chooses the [[values|value]] they <b>stand for</b>. Several players may stand for the same value.</li>
+  <li>Chooses a hex on Ring 4 of that value's [[sector]]. The [[keeper]] places their pawn there. You may share a hex.</li>
+  <li>Tells the room <b>why</b> they stand for this value. This is a [[share]]: listeners may give a [[trust-acorn]].</li>
+</ol>
+<p>Everyone starts with 4 [[water]] and 10 trust acorns to give.</p>
+<p>You stand for your value for the whole game. You will still grow trees and tell stories in other sectors.</p>` },
+
+// ───────────── The forest
+{ id: 'forest', cat: 'forest', icon: '🗺️', title: 'The forest',
+  short: '61 hexes: the World Tree, four rings and six value sectors.',
+  body: `
+<p>The forest is the board on the big screen. It has 61 [[hex|hexes]]:</p>
+<ul>
+  <li>the [[world-tree]] in the centre;</li>
+  <li>four [[ring|rings]] around it: Ring 1 (6 hexes), Ring 2 (12), Ring 3 (18) and Ring 4 (24, the edge);</li>
+  <li>six [[sector|sectors]], one for each of ZERA's [[values]], 10 hexes each.</li>
+</ul>
+<p>The 60 hexes around the World Tree start face down. Under them: 53 empty clearings, 4 [[spring|springs]] and 3 [[treasure|treasures]].</p>
+<p>Any number of players can stand on the same hex.</p>` },
+
+{ id: 'world-tree', cat: 'forest', icon: '🌲', title: 'World Tree',
+  short: 'The centre of the forest. Bring fruit and treasures here, and gather at the end.',
+  body: `
+<p>The World Tree is the hex in the centre of the [[forest]]. It is face up from the start.</p>
+<ul>
+  <li>When you stand on it holding [[fruit]] or a [[treasure]], everything you carry is placed there at once: see [[placing]].</li>
+  <li>Placing fruit brings a [[heartwood-question]].</li>
+  <li>It has no [[weather]], and [[dead-leaves]] never land on it.</li>
+  <li>To [[wake|wake the forest]], every player must stand on it together.</li>
 </ul>` },
 
-{ id: 'turn', cat: 'basics', icon: '🥾', title: 'Turn',
-  short: 'Move, discover, share, receive trust. About two minutes.',
+{ id: 'ring', cat: 'forest', icon: '⭕', title: 'Ring',
+  short: 'Four rings around the World Tree. Deeper rings bring deeper questions.',
   body: `
-<p>When it's your turn, look up: say what you'd like, and the [[keeper]] taps it on the big screen. A turn takes about two minutes.</p>
-<ol>
-  <li><b>🥾 Move (optional).</b> Say where to; the Keeper moves your pawn one neighbouring space at a time. Up to 3 spaces, free; see [[moving]]. Take fewer, or none.</li>
-  <li><b>✦ Discover.</b> Say "stop here"; the Keeper taps <b>Stop here and discover</b>. If your space's [[discovery]] is still face down, it's yours. You can't move again this turn (unless you found a [[hidden-path]]).</li>
-  <li><b>💬 Share.</b> Your [[prompt-card|question]] appears on the big screen. The Keeper starts the [[answer-timer|timer]] when you begin and stops it when you finish. See [[share]].</li>
-  <li><b>🌰 Trust.</b> Others may give you a [[trust-acorn]] on their phones; someone may raise a hand to play a [[squirrel]]. When the room is ready, the Keeper moves on to the next player.</li>
-</ol>
-<p>You keep the card for [[growth]] points, and a 🌳 grows on your space on the big board.</p>
-<p>Don't want to answer? [[passing|Passing]] is always free.</p>` },
+<div class="tablewrap"><table>
+<tr><th>Ring</th><th>Hexes</th><th>The first time you step in</th></tr>
+<tr><td>Ring 4 (the edge)</td><td>24</td><td>You start here: [[entering]]</td></tr>
+<tr><td>Ring 3</td><td>18</td><td>A [[ring-card]]: a light question</td></tr>
+<tr><td>Ring 2</td><td>12</td><td>A ring card: a story from your life</td></tr>
+<tr><td>Ring 1</td><td>6</td><td>A ring card: a deep question</td></tr>
+<tr><td>[[world-tree]]</td><td>1</td><td>Nothing to draw: [[placing]]</td></tr>
+</table></div>
+<p>The [[treasure|treasures]] hide only in Rings 1 and 2. [[spring|Springs]] can be in any ring.</p>
+<p>At the [[forest-breath]], dead leaves drift one ring closer to the centre.</p>` },
 
-{ id: 'share', cat: 'basics', icon: '💬', title: 'Share',
-  short: 'Answering your question out loud while the room listens.',
+{ id: 'sector', cat: 'forest', icon: '🍰', title: 'Sector',
+  short: 'One of six wedges of the forest, one for each value.',
   body: `
-<p>A share is the heart of every [[turn]]: you answer your [[prompt-card|question]] out loud, and everyone else listens.</p>
-<h3>When you share</h3>
+<p>Six lines from the centre cut the [[forest]] into six sectors, one for each of the [[values]]. Reading clockwise from the top they spell <b>ZERAOS</b>. Each sector has 10 hexes: 4 on Ring 4, 3 on Ring 3, 2 on Ring 2 and 1 on Ring 1.</p>
 <ul>
-  <li>Be honest rather than impressive. [[trust-points|Trust]] comes from many people being moved, not from one great speech.</li>
-  <li>The [[answer-timer]] is a guide. When it turns red, finish your thought kindly.</li>
-  <li>You can always [[passing|pass]].</li>
-</ul>
-<h3>When someone else shares</h3>
-<ul>
-  <li>Phones down. Listen to understand: no advice, no fixing, no debating.</li>
-  <li>If it moved you, tap <b>Give trust 🌰</b>. See [[trust-acorn]].</li>
-  <li>If you hold a [[squirrel]], you can ask a follow-up question.</li>
-  <li>Keep watching the colleague you're the [[secret-owl]] for.</li>
+  <li>Each sector has its own [[weather]].</li>
+  <li>The team needs a [[big-tree]] in every sector.</li>
+  <li>A [[harvest-story]] is about the value of the sector the tree grows in.</li>
+  <li>You [[entering|enter]] on Ring 4 of your own value's sector.</li>
 </ul>` },
 
-{ id: 'prompt-card', cat: 'basics', icon: '🃏', title: 'Question card',
-  short: 'Your question: the value picks the topic, the ring picks the depth.',
+{ id: 'values', cat: 'forest', icon: '🌳', title: 'Value (ZERAOS)',
+  short: "ZERA's six core values. Each one owns a sector of the forest.",
   body: `
-<p>Where you stand decides your question. The [[values|value]] of your space picks the deck, and your ring picks how deep the question goes.</p>
-<p>Each value card holds three questions at once, one per tier:</p>
+<p>The forest is cut into six [[sector|sectors]], one for each of ZERA's core values, <b>ZERAOS</b>, reading clockwise from the top.</p>
 <div class="tablewrap"><table>
-<tr><th>Tier</th><th>Ring</th><th>Kind of question</th><th>Timer</th><th>Points</th></tr>
-<tr><td>🌱 Seed</td><td>[[seedlands]]</td><td>Light and fun</td><td>45 s</td><td>1</td></tr>
-<tr><td>🌿 Sapling</td><td>[[sapling-path]]</td><td>A story from your life</td><td>60 s</td><td>2</td></tr>
-<tr><td>🌳 Oak</td><td>[[oak-circle]]</td><td>What's underneath: values, fears, hopes</td><td>90 s</td><td>3</td></tr>
-<tr><td>💛 Heartwood</td><td>[[heartwood]]</td><td>Your legacy (its own deck, no value)</td><td>90 s</td><td>4</td></tr>
+<tr><th>Value</th><th>ZERA's line</th></tr>
+<tr><td>☀️ [[zealous]]</td><td><i>Be zealous, not jealous.</i></td></tr>
+<tr><td>⭐ [[excellence]]</td><td><i>Beyond expectation.</i></td></tr>
+<tr><td>🎋 [[resilience]]</td><td><i>Anti-fragile.</i></td></tr>
+<tr><td>🪞 [[authenticity]]</td><td><i>Inclusive education.</i></td></tr>
+<tr><td>💡 [[open-mindedness]]</td><td><i>Growth mindset.</i></td></tr>
+<tr><td>🌍 [[sustainability]]</td><td><i>Start with the end in mind.</i></td></tr>
 </table></div>
-<div class="box">
-<p class="muted">One Resilience card, three depths:</p>
-<p>🌱 <i>What's the best thing that happened to you because a plan went wrong?</i><br>🌿 <i>Tell us about a time something went wrong and you found a better way.</i><br>🌳 <i>When your plans go wrong, how do you usually react?</i></p>
-</div>
-<p>Before you start, you may draw again once or choose the [[lighter-tier]]. Powers that change your card: [[true-north]] and [[deep-water]].</p>` },
+<h3>Stand for one</h3>
+<p>When you [[entering|enter the forest]], you choose the value you <b>stand for</b> and tell the room why. During the game you will hear stories about every value: each [[harvest-story]] is about the value of the tree's sector.</p>` },
 
-{ id: 'passing', cat: 'basics', icon: '🍃', title: 'Passing',
-  short: 'You never have to answer. Three ways out, all free.',
+...VALUE_INFO.map(([id, icon, name, letter, line, desc], i) => ({
+  id, cat: 'forest', icon, title: name,
+  short: `${letter} in ZERAOS. ${line}`,
   body: `
-<p><b>Passing is always free.</b> It's part of the [[forest-pact]]. Nobody asks why.</p>
-<p>Before you start sharing, just say:</p>
-<div class="tablewrap"><table>
-<tr><th>Option</th><th>What it does</th><th>Limit</th></tr>
-<tr><td><b>Draw again</b></td><td>A new card from the same deck.</td><td>Once per turn</td></tr>
-<tr><td><b>[[lighter-tier|Lighter tier]]</b></td><td>Answer the lighter question on the same card.</td><td>Not in the Heartwood</td></tr>
-<tr><td><b>Pass this turn</b></td><td>Say "pass". You keep everything you have; you just don't keep a card this turn.</td><td>Any time</td></tr>
-</table></div>
-<p>If you've already used a power this turn, you still keep its bonus when you pass.</p>` },
+<p class="muted">${letter} in ZERAOS · sector ${i + 1} of 6, clockwise from the top</p>
+<div class="box"><p><b>${line}</b></p><p>${desc}</p></div>
+<p>One of the six [[values]]. Its [[sector]] has 10 hexes. The team needs a [[big-tree]] there, and whoever harvests from a tree in this sector tells a [[harvest-story]] about ${name}.</p>` })),
 
-{ id: 'lighter-tier', cat: 'basics', icon: '🪶', title: 'Lighter tier',
-  short: 'Answer the gentler question on the same card.',
+{ id: 'hex', cat: 'forest', icon: '⬢', title: 'Hex',
+  short: 'One space of the forest. Face down until someone explores it.',
   body: `
-<p>Every [[prompt-card|question card]] has three depths. <b>Lighter tier</b> swaps your question for the next gentler one on the same card: Oak → Sapling → Seed.</p>
+<p>The forest has 61 hexes. The [[world-tree]] is face up. The other 60 start <b>face down</b> (✦).</p>
+<p>When someone [[explore|explores]] a hex, it turns over and shows one of three things:</p>
 <ul>
-  <li>The card then scores at the lighter tier (for example, 2 instead of 3).</li>
-  <li>You can step down more than once.</li>
-  <li>Not available in the [[heartwood]], which has its own deck.</li>
+  <li><b>An empty clearing</b> (53 of them): a place to [[sow]].</li>
+  <li><b>A [[spring]]</b> 💧 (4): a place to [[drink]].</li>
+  <li><b>A [[treasure]]</b> 💎 (3, only in Rings 1 and 2).</li>
 </ul>
-<p>It's one of three free ways of [[passing]].</p>` },
+<p>A hex can also hold a plant (see [[plant]]) and up to 2 layers of [[dead-leaves]]. Two layers make it [[sealed]].</p>
+<p>Any number of players can stand on one hex. "Next to you" means one of the six hexes touching yours.</p>` },
 
-{ id: 'answer-timer', cat: 'basics', icon: '⏱️', title: 'Answer timer',
-  short: '45, 60 or 90 seconds, depending on the ring. A guide, not a buzzer.',
+// ───────────── Actions
+{ id: 'move', cat: 'actions', icon: '🥾', title: 'Move',
+  short: 'Step to a hex next to you. Not into a sealed hex, not at 0 water.',
   body: `
-<p>When you start sharing, the Keeper starts a timer on the big screen.</p>
+<p>1 [[action]]: step to a [[hex]] next to you.</p>
+<ul>
+  <li>Not into a [[sealed]] hex (a [[challenger]] may).</li>
+  <li>Not when you have 0 [[water]]. Moving does not use water.</li>
+  <li>The first time you step into Ring 3, Ring 2 or Ring 1, moving inward, you draw that [[ring-card|ring's card]].</li>
+  <li>If you arrive on the [[world-tree]] with fruit or a treasure, it is placed: see [[placing]].</li>
+</ul>
+<p>The [[enthusiast]] may move 2 hexes once a turn. The [[challenger]] may bring a teammate.</p>` },
+
+{ id: 'explore', cat: 'actions', icon: '✦', title: 'Explore',
+  short: 'Turn over the face-down hex you stand on. 2 actions in fog.',
+  body: `
+<p>1 [[action]] (2 in [[fog]]): turn over the face-down [[hex]] you stand on. You find an empty clearing, a [[spring]] or a [[treasure]].</p>
+<p>If you find a treasure, the room has its [[group-moment]].</p>
+<p>The [[individualist]] also peeks at one face-down hex next to them.</p>` },
+
+{ id: 'sow', cat: 'actions', icon: '🫘', title: 'Sow',
+  short: 'Plant a seed on an explored, empty hex. It becomes Seeded.',
+  body: `
+<p>1 [[action]]: plant a seed on the hex you stand on. It becomes <b>Seeded</b> (see [[plant]]).</p>
+<p>The hex must be explored, with no plant, not a [[spring]], not [[sealed]], and no [[treasure]] lying there. (Once a treasure is taken, its hex can be sown.)</p>
+<p>The [[achiever]]'s seed grows straight to Grass.</p>` },
+
+{ id: 'water-action', cat: 'actions', icon: '💧', title: 'Water (the action)',
+  short: 'Seeded → Grass, or Grass → Shrub. Uses 1 of your water.',
+  body: `
+<p>1 [[action]], and 1 of your [[water]]: help a plant grow one step.</p>
+<ul>
+  <li>Seeded → Grass, or Grass → Shrub. A Shrub needs [[tend]], not water.</li>
+  <li>On the hex you stand on. The [[helper]] can water a hex next to them.</li>
+  <li>Not on a [[sealed]] hex.</li>
+</ul>
+<p>[[rain|Rain]] at the [[forest-tide]] also grows Seeded and Grass, for free.</p>` },
+
+{ id: 'tend', cat: 'actions', icon: '🤲', title: 'Tend',
+  short: 'Shrub → Big Tree.',
+  body: `
+<p>1 [[action]]: a Shrub on your hex becomes a [[big-tree]]. It uses no water.</p>
+<p>The [[helper]] can tend a hex next to them. Not on a [[sealed]] hex.</p>` },
+
+{ id: 'clear', cat: 'actions', icon: '🧹', title: 'Clear',
+  short: 'Remove 1 layer of dead leaves from your hex or one next to you.',
+  body: `
+<p>1 [[action]] (2 if that hex is in [[rain]]): remove 1 layer of [[dead-leaves]] from your hex or a hex next to you.</p>
+<p>Because you can clear the hex next to you, you can open a [[sealed]] hex from outside.</p>
+<p>The [[reformer]] removes 2 layers at once, and it costs them 1 action even in rain.</p>` },
+
+{ id: 'harvest', cat: 'actions', icon: '🍎', title: 'Harvest',
+  short: 'Take a fruit from the Big Tree you stand on, and tell a story.',
+  body: `
+<p>1 [[action]]: take 1 [[fruit]] from the [[big-tree]] you stand on. Then tell a [[harvest-story]].</p>
+<ul>
+  <li>Not in [[rain]]. Fog and sun are fine.</li>
+  <li>Not on a [[sealed]] hex.</li>
+  <li>Each tree gives 1 fruit between [[forest-tide|Forest Tides]].</li>
+  <li>You carry 2 fruit at most.</li>
+</ul>` },
+
+{ id: 'take', cat: 'actions', icon: '✋', title: 'Take',
+  short: 'Pick up a treasure lying on your hex.',
+  body: `
+<p>1 [[action]]: pick up an explored [[treasure]] lying on the hex you stand on. You carry 1 treasure at most.</p>
+<p>Then bring it to the [[world-tree]], or [[pass]] it to a teammate.</p>` },
+
+{ id: 'drink', cat: 'actions', icon: '🚰', title: 'Drink',
+  short: 'At a spring: back to 5 water.',
+  body: `
+<p>1 [[action]]: stand on an explored [[spring]] and fill your [[water]] back to 5.</p>
+<p>Springs never run dry. Drinking is the only way to get water back, apart from a teammate's [[pass]].</p>` },
+
+{ id: 'pass', cat: 'actions', icon: '🤝', title: 'Pass',
+  short: 'Hand water, fruit or a treasure to a teammate. Free, at any time.',
+  body: `
+<p>Passing costs no [[action]]. At any time during play, when nobody is in a [[share]], you can pass <b>water</b>, <b>fruit</b> or a <b>treasure</b> to a teammate, on anyone's [[turn]]. Say it, and the [[keeper]] taps it.</p>
+<h3>Who can pass to whom</h3>
+<ul>
+  <li><b>Same hex:</b> always.</li>
+  <li><b>Neighbouring hexes:</b> if a [[peacemaker]] stands on either hex.</li>
+  <li><b>Two steps apart:</b> if someone stands on the hex between them, and a Peacemaker stands on any of the three hexes.</li>
+</ul>
+<h3>Limits</h3>
+<p>The teammate can hold 5 [[water]], 2 [[fruit]] and 1 [[treasure]] at most.</p>
+<p>If they stand on the [[world-tree]], what you pass is [[placing|placed]] at once.</p>` },
+
+// ───────────── Plants, water and fruit
+{ id: 'plant', cat: 'growing', icon: '🌱', title: 'Plant (Seeded, Grass, Shrub)',
+  short: 'The steps from a seed to a Big Tree.',
+  body: `
+<div class="tablewrap"><table>
+<tr><th>Step</th><th>How it gets there</th></tr>
+<tr><td>🫘 Seeded</td><td>[[sow]] an empty clearing</td></tr>
+<tr><td>🌱 Grass</td><td>[[water-action|Water]] a Seeded hex, or [[rain]] at the Tide</td></tr>
+<tr><td>🌿 Shrub</td><td>Water a Grass hex, or rain at the Tide</td></tr>
+<tr><td>🌳 [[big-tree]]</td><td>[[tend]] a Shrub</td></tr>
+</table></div>
+<p>When [[dead-leaves]] land on a growing plant, it drops back one step. A Seeded hex loses its seed. A [[loyalist]] on the hex or next to it keeps the plant safe.</p>
+<p>Nobody can water, tend or harvest on a [[sealed]] hex.</p>` },
+
+{ id: 'big-tree', cat: 'growing', icon: '🌳', title: 'Big Tree',
+  short: 'The last step of a plant. Gives fruit and shade.',
+  body: `
+<p>A Shrub becomes a Big Tree when someone [[tend|tends]] it. The team needs one Big Tree in every [[sector]] (see [[goal]]).</p>
+<ul>
+  <li><b>Fruit:</b> [[harvest]] it for 1 [[fruit]], once between [[forest-tide|Forest Tides]], and tell a [[harvest-story]].</li>
+  <li><b>Shade:</b> if you stand on a Big Tree, the [[sun]] does not dry you.</li>
+  <li><b>Strong:</b> [[dead-leaves]] don't make it smaller. But two layers still seal it, and nobody can harvest a [[sealed]] tree until it is cleared.</li>
+</ul>
+<p>A sealed Big Tree still counts for the goal.</p>` },
+
+{ id: 'fruit', cat: 'growing', icon: '🍎', title: 'Fruit',
+  short: 'From a Big Tree, for the World Tree. Carry 2 at most.',
+  body: `
+<p>You get fruit by [[harvest|harvesting]] a [[big-tree]]. You carry 2 at most. You can [[pass]] fruit to teammates.</p>
+<p>Bring it to the [[world-tree]]: it is placed by itself (see [[placing]]), and you answer one [[heartwood-question]].</p>
+<p>Every player must place at least one fruit. A fruit counts for the person who places it, so you can pass a fruit to a teammate who has not placed one yet.</p>` },
+
+{ id: 'water', cat: 'growing', icon: '💧', title: 'Water (your supply)',
+  short: 'Start with 4, hold 5. Without water you cannot move.',
+  body: `
 <div class="facts">
-  <div class="fact"><span>🌱 Seed</span>45 seconds</div>
-  <div class="fact"><span>🌿 Sapling</span>60 seconds</div>
-  <div class="fact"><span>🌳 Oak / 💛 Heartwood</span>90 seconds</div>
-  <div class="fact"><span>🐿️ Squirrel answer</span>30 seconds</div>
+  <div class="fact"><span>Start</span>4</div>
+  <div class="fact"><span>Most</span>5</div>
 </div>
-<p>The timer is a guide. When it runs out it turns red: finish your thought kindly. Nothing is lost if you go over.</p>` },
+<h3>You lose water</h3>
+<ul>
+  <li>1 each time you [[water-action|Water]] a plant.</li>
+  <li>1 at the [[forest-tide]] if your sector has [[sun]] and you are not on a [[big-tree]].</li>
+</ul>
+<h3>You get water back</h3>
+<ul>
+  <li>[[drink]] at a [[spring]]: back to 5.</li>
+  <li>A teammate [[pass|passes]] you some.</li>
+</ul>
+<p>[[rain|Rain]] does not fill you up.</p>
+<h3>At 0 water</h3>
+<p>You stay in the game, but you cannot [[move]] until a teammate passes you 1 water. You can still do other actions on your hex. If every player is at 0 at the same moment, [[sleep|the forest sleeps on]].</p>` },
 
-{ id: 'plant-your-seed', cat: 'basics', icon: '🌱', title: 'Plant your seed',
-  short: 'Where you start: choose the ZERAOS value you stand for.',
+{ id: 'spring', cat: 'growing', icon: '⛲', title: 'Spring',
+  short: 'Four hidden springs. Drink to fill up to 5. They never run dry.',
   body: `
-<p>Before [[season]] 1, everyone plants their seed, one at a time.</p>
+<p>Four springs 💧 hide under face-down [[hex|hexes]], anywhere in Rings 1 to 4. Once someone [[explore|explores]] one, everyone can see it.</p>
+<p>Stand on it and [[drink]]: your [[water]] goes back to 5. A spring never runs dry. Anyone can drink there, as often as they like.</p>
+<p>You cannot [[sow]] on a spring.</p>
+<div class="tip"><h3>Tip</h3><p>Springs are the only way to get water back. Find them early, and tell the team where they are.</p></div>` },
+
+// ───────────── Weather and the Forest Tide
+{ id: 'weather', cat: 'weather', icon: '🌦️', title: 'Weather',
+  short: 'Each sector has Sun, Rain or Fog. It changes at every Forest Tide.',
+  body: `
+<p>Each [[sector]] has its own weather: [[sun]], [[rain]] or [[fog]]. Each is equally likely. It is drawn at the start of the game and again at every [[forest-tide]]. The big screen colours each sector by its weather. The [[world-tree]] has no weather.</p>
+<p>The next weather is decided early. Only the [[investigator]] can look at it.</p>
+<div class="tablewrap"><table>
+<tr><th>Weather</th><th>During the round</th><th>At the Forest Tide</th></tr>
+<tr><td>☀️ Sun</td><td>All normal</td><td>Players here lose 1 water, unless on a Big Tree</td></tr>
+<tr><td>🌧️ Rain</td><td>No harvest; Clear costs 2</td><td>Seeded and Grass grow one step</td></tr>
+<tr><td>🌫️ Fog</td><td>Explore costs 2; no Enthusiast double step</td><td>Nothing</td></tr>
+</table></div>
+<div class="tip"><h3>Watch out</h3><p>At the Tide, the new weather comes first, and then it acts. A sector that turns sunny at the Tide dries you at once.</p></div>` },
+
+{ id: 'sun', cat: 'weather', icon: '☀️', title: 'Sun',
+  short: 'Dries you at the Forest Tide, unless you stand on a Big Tree.',
+  body: `
+<p>During the [[round]], everything works as usual in a sunny [[sector]].</p>
+<p>At the [[forest-tide]], every player in a sunny sector loses 1 [[water]] (never below 0), unless they stand on a [[big-tree]]. Its shade keeps them cool.</p>` },
+
+{ id: 'rain', cat: 'weather', icon: '🌧️', title: 'Rain',
+  short: 'Grows young plants at the Tide. No harvest, and Clear costs 2.',
+  body: `
+<ul>
+  <li>At the [[forest-tide]], every Seeded and Grass hex in a rainy [[sector]] grows one step (see [[plant]]), unless it is [[sealed]].</li>
+  <li>No [[harvest]] in rain.</li>
+  <li>[[clear]] costs 2 actions in rain (the [[reformer]] still pays 1).</li>
+  <li>Nobody dries out in rain. But rain does not fill your [[water]] either.</li>
+</ul>` },
+
+{ id: 'fog', cat: 'weather', icon: '🌫️', title: 'Fog',
+  short: 'Explore costs 2 actions. No Enthusiast double step.',
+  body: `
+<ul>
+  <li>[[explore]] costs 2 actions in fog.</li>
+  <li>The [[enthusiast]] cannot take a double step if their hex, the middle hex or the last hex is in fog.</li>
+  <li>[[harvest]] works in fog.</li>
+</ul>` },
+
+{ id: 'forest-tide', cat: 'weather', icon: '🌬️', title: 'Forest Tide',
+  short: 'After every round: new weather, rain grows, sun dries, leaves drift in.',
+  body: `
+<p>After the last player's [[turn]] in a [[round]], the Forest Tide runs by itself. The big screen shows each step.</p>
 <ol>
-  <li>When it's your turn, say which of the [[values|six ZERAOS values]] you <b>stand for</b>, and why, in one sentence.</li>
-  <li>The [[keeper]] places your seed on an outer [[seedlands]] space of that value.</li>
+  <li><b>New weather.</b> Each [[sector]] turns to its new [[weather]]. Every [[big-tree]] can be harvested again.</li>
+  <li><b>Rain grows, sun dries.</b> In [[rain]], Seeded and Grass grow one step. In [[sun]], players who are not on a Big Tree lose 1 [[water]].</li>
+  <li><b>[[forest-breath]].</b> [[dead-leaves]] drift in toward the centre.</li>
 </ol>
-<p>That value is yours for the whole game: you [[advocacy|advocate]] it, and you can only form an [[alliance]] with people who stand for a <b>different</b> one.</p>
-<div class="tip"><h3>Tip</h3><p>Choose the value you'd speak up for, not the one you think is rarest. Uneven choices are fine, and worth talking about.</p></div>` },
+<p>Then a new round begins with the first player.</p>` },
 
-// ───────────── The map
-{ id: 'the-map', cat: 'map', icon: '🗺️', title: 'The map',
-  short: '37 hexagon spaces: three rings around the Heartwood, cut into six values.',
+{ id: 'forest-breath', cat: 'weather', icon: '🍃', title: 'Forest Breath',
+  short: 'At each Tide, dead leaves drift one ring closer to the centre.',
   body: `
-<p>The forest has <b>37 spaces</b>: the [[heartwood]] at the centre and three rings around it. It's cut into six coloured wedges, one per [[values|value]].</p>
+<p>The last step of every [[forest-tide]]. The wind picks a few random hexes. From each one, one layer of [[dead-leaves]] blows onto a hex next to it, <b>one [[ring]] closer to the centre</b>. A Ring 1 hex keeps its own leaves. The [[world-tree]] never gets leaves.</p>
 <div class="tablewrap"><table>
-<tr><th>Ring</th><th>Spaces</th><th>Opens</th><th>To step in</th></tr>
-<tr><td>🌱 [[seedlands]] (outer)</td><td>18</td><td>Season 1</td><td>open from the start</td></tr>
-<tr><td>🌿 [[sapling-path]] (middle)</td><td>12</td><td>Season 2</td><td>open from Season 2</td></tr>
-<tr><td>🌳 [[oak-circle]] (inner)</td><td>6</td><td>Season 3</td><td>open from Season 3</td></tr>
-<tr><td>💛 [[heartwood]] (centre)</td><td>1</td><td>Season 3</td><td>needs an [[alliance]]</td></tr>
+<tr><th>Tide</th><th>1–2</th><th>3–4</th><th>5–6</th><th>7–8</th><th>9 and later</th></tr>
+<tr><td>Drifts</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td></tr>
 </table></div>
-<p>Each value wedge has 3 Seedlands spaces, 2 Sapling Path spaces and 1 Oak Circle space. Every space except the Heartwood starts with a face-down [[discovery]].</p>
-<p>Rings that aren't open yet look faded. Any number of players can share a space.</p>
-<p>See [[moving]] for how you walk: up to 3 spaces a turn.</p>` },
+<ul>
+  <li>A growing [[plant]] where leaves land drops one step (a Seeded hex loses its seed), unless a [[loyalist]] stands on it or next to it.</li>
+  <li>A [[big-tree]] keeps its stage.</li>
+  <li>A [[sealed]] hex gets no more leaves.</li>
+</ul>
+<p>The next Breath is decided early: the [[investigator]] always sees it on their phone.</p>` },
 
-{ id: 'values', cat: 'map', icon: '🌳', title: 'The six values (ZERAOS)',
-  short: "ZERA's core values. Each owns a wedge of the map and a deck of questions.",
+{ id: 'dead-leaves', cat: 'weather', icon: '🍂', title: 'Dead leaves',
+  short: 'Blown in by the Forest Breath. Two layers seal a hex.',
   body: `
-<p>The board is cut into six wedges, one for each of ZERA's core values, <b>ZERAOS</b>. Reading clockwise from the top, they spell the word. The value of the space you stand on picks the deck your [[prompt-card|question]] comes from.</p>
+<p>[[forest-breath]] blows dead leaves onto hexes, one layer at a time.</p>
+<ul>
+  <li><b>🍂 1 layer:</b> a warning. The hex still works.</li>
+  <li><b>🍂🍂 2 layers:</b> the hex is [[sealed]].</li>
+</ul>
+<p>When leaves land on a growing [[plant]], it drops back one step. [[clear]] removes a layer.</p>` },
+
+{ id: 'sealed', cat: 'weather', icon: '🚫', title: 'Sealed',
+  short: 'A hex with 2 layers of dead leaves. Nobody walks in.',
+  body: `
+<p>A hex with 2 layers of [[dead-leaves]] is sealed (the big screen shows a dashed edge).</p>
+<ul>
+  <li>Nobody can [[move]] in, except a [[challenger]].</li>
+  <li>Nobody can [[sow]], [[water-action|water]], [[tend]] or [[harvest]] there.</li>
+  <li>If you are standing on it when it seals, you can still walk out.</li>
+  <li>It gets no more leaves.</li>
+  <li>A sealed [[big-tree]] still counts for the [[goal]].</li>
+</ul>
+<p>To open it, [[clear]] it, from the hex itself or from a hex next to it.</p>` },
+
+// ───────────── The treasures
+{ id: 'treasure', cat: 'treasures', icon: '💎', title: 'Treasure',
+  short: 'Three treasures hide in Rings 1 and 2. Bring them all to the World Tree.',
+  body: `
+<p>Three treasures hide under face-down hexes, only in Rings 1 and 2: [[compass|the Compass]] 🧭, [[lantern|the Lantern]] 🏮 and [[rope|the Rope]] 🪢. Each has a meaning for a team.</p>
+<ol>
+  <li><b>Find it.</b> Someone [[explore|explores]] its hex. The room has a [[group-moment]].</li>
+  <li><b>[[take]] it.</b> It lies on its hex until someone takes it. You carry 1 at most.</li>
+  <li><b>Bring it home.</b> Walk it to the [[world-tree]], or [[pass]] it along. It is [[placing|placed]] by itself.</li>
+</ol>
+<p>All three on the World Tree is part of the [[goal]]. Then the forest says: <b>"Purpose, light and each other: the heart of the forest is complete."</b></p>` },
+
+{ id: 'compass', cat: 'treasures', icon: '🧭', title: 'The Compass',
+  short: 'Purpose: where we are going.',
+  body: `
+<div class="box"><p><b>🧭 The Compass</b> · <i>Purpose: where we're going.</i></p></div>
+<p>One of the three [[treasure|treasures]]. When it is found, the room has this [[group-moment]]:</p>
+<div class="box"><p><b>"Everyone, one sentence: where do you want this team to be a year from now?"</b></p></div>` },
+
+{ id: 'lantern', cat: 'treasures', icon: '🏮', title: 'The Lantern',
+  short: 'Lighting the way for others.',
+  body: `
+<div class="box"><p><b>🏮 The Lantern</b> · <i>Lighting the way for others.</i></p></div>
+<p>One of the three [[treasure|treasures]]. When it is found, the room has this [[group-moment]]:</p>
+<div class="box"><p><b>"Everyone, one sentence: who lit the way for you when you were new?"</b></p></div>` },
+
+{ id: 'rope', cat: 'treasures', icon: '🪢', title: 'The Rope',
+  short: 'Holding together.',
+  body: `
+<div class="box"><p><b>🪢 The Rope</b> · <i>Holding together.</i></p></div>
+<p>One of the three [[treasure|treasures]]. When it is found, the room has this [[group-moment]]:</p>
+<div class="box"><p><b>"Everyone, one sentence: what holds this team together when things get hard?"</b></p></div>` },
+
+{ id: 'group-moment', cat: 'treasures', icon: '✨', title: 'Group moment',
+  short: 'When a treasure is found, everyone answers its question in one sentence.',
+  body: `
+<p>When someone finds a [[treasure]], its question appears on the big screen. <b>Everyone</b> answers in one sentence, around the table. Then the [[keeper]] taps <b>Done sharing</b>.</p>
+<p>There are no [[trust-acorn|trust acorns]] after a group moment: everyone gives something, together.</p>
+<p>The three questions: [[compass]], [[lantern]], [[rope]].</p>` },
+
+// ───────────── Stories and trust
+{ id: 'share', cat: 'talking', icon: '💬', title: 'Share',
+  short: 'One person tells a story or answers a question. The forest waits.',
+  body: `
+<p>A share is a moment when one person talks and the room listens. They come from:</p>
 <div class="tablewrap"><table>
-<tr><th>Value</th><th>ZERA's line</th><th>Where</th></tr>
-<tr><td>☀️ [[zealous]]</td><td><i>Be zealous, not jealous.</i></td><td>top</td></tr>
-<tr><td>⭐ [[excellence]]</td><td><i>Beyond expectation.</i></td><td>upper right</td></tr>
-<tr><td>🎋 [[resilience]]</td><td><i>Anti-fragile.</i></td><td>lower right</td></tr>
-<tr><td>🪞 [[authenticity]]</td><td><i>Inclusive education.</i></td><td>bottom</td></tr>
-<tr><td>💡 [[open-mindedness]]</td><td><i>Growth mindset.</i></td><td>lower left</td></tr>
-<tr><td>🌍 [[sustainability]]</td><td><i>Start with the end in mind.</i></td><td>upper left</td></tr>
+<tr><th>When</th><th>What</th></tr>
+<tr><td>[[entering]]</td><td>Why you stand for your value</td></tr>
+<tr><td>First time in Ring 3, 2, 1</td><td>A [[ring-card]]</td></tr>
+<tr><td>[[harvest]]</td><td>A [[harvest-story]]</td></tr>
+<tr><td>[[placing]] fruit</td><td>A [[heartwood-question]]</td></tr>
+<tr><td>A treasure is found</td><td>A [[group-moment]] (everyone)</td></tr>
 </table></div>
-<h3>Stand for one, advocate it, tell its story</h3>
-<p>At the start you [[plant-your-seed|choose the value you stand for]]. All game you [[advocacy|advocate]] it. At [[dusk]] you join colleagues who stand for <b>different</b> values in an [[alliance]], with one [[statement]] that holds them all. At the [[finale]], each alliance tells its story.</p>
-<div class="tip"><h3>Why it matters for points</h3><p>[[growth|Growth]] gives +1 for each <b>different</b> value you share in, and [[advocacy|Advocacy]] scores every value your alliance stands for that got a deep story.</p></div>` },
-
-{ id: 'zealous', cat: 'map', icon: '☀️', title: 'Zealous',
-  short: 'Z in ZERAOS. Be zealous, not jealous.',
-  body: `
-<p class="muted">Z in ZERAOS · top of the board</p>
-<div class="box"><p><b>Be zealous, not jealous.</b></p><p>Passionate, driven energy channelled into learning and purpose rather than comparison: advocacy for students, initiative, and enthusiastic participation.</p></div>
-<p>One of the six [[values]]. Stand on one of its spaces and your [[prompt-card|question]] comes from its deck: a [[seedlands|Seed]], [[sapling-path|Sapling]] or [[oak-circle|Oak]] question, depending on your ring.</p>
-<p>It's [[advocacy|advocated]] when someone tells an Oak story in it, or someone who stands for it tells a [[heartwood]] story.</p>
-<p>See all its questions: [[cards-zealous]].</p>` },
-
-{ id: 'excellence', cat: 'map', icon: '⭐', title: 'Excellence',
-  short: 'E in ZERAOS. Beyond expectation.',
-  body: `
-<p class="muted">E in ZERAOS · upper right of the board</p>
-<div class="box"><p><b>Beyond expectation.</b></p><p>Consistently surpassing standards, never merely meeting them: in academics, governance, and personal growth. Heart (zealous) always comes first.</p></div>
-<p>One of the six [[values]]. Stand on one of its spaces and your [[prompt-card|question]] comes from its deck: a [[seedlands|Seed]], [[sapling-path|Sapling]] or [[oak-circle|Oak]] question, depending on your ring.</p>
-<p>It's [[advocacy|advocated]] when someone tells an Oak story in it, or someone who stands for it tells a [[heartwood]] story.</p>
-<p>See all its questions: [[cards-excellence]].</p>` },
-
-{ id: 'resilience', cat: 'map', icon: '🎋', title: 'Resilience',
-  short: 'R in ZERAOS. Anti-fragile.',
-  body: `
-<p class="muted">R in ZERAOS · lower right of the board</p>
-<div class="box"><p><b>Anti-fragile.</b></p><p>More than bouncing back: growing stronger through challenge. Purpose-driven leadership that persists toward long-term goals and learns from setbacks.</p></div>
-<p>One of the six [[values]]. Stand on one of its spaces and your [[prompt-card|question]] comes from its deck: a [[seedlands|Seed]], [[sapling-path|Sapling]] or [[oak-circle|Oak]] question, depending on your ring.</p>
-<p>It's [[advocacy|advocated]] when someone tells an Oak story in it, or someone who stands for it tells a [[heartwood]] story.</p>
-<p>See all its questions: [[cards-resilience]].</p>` },
-
-{ id: 'authenticity', cat: 'map', icon: '🪞', title: 'Authenticity',
-  short: 'A in ZERAOS. Inclusive education.',
-  body: `
-<p class="muted">A in ZERAOS · bottom of the board</p>
-<div class="box"><p><b>Inclusive education.</b></p><p>Genuine representation and honesty. Everyone, including students in zera Plus, belongs and is valued, without pretense.</p></div>
-<p>One of the six [[values]]. Stand on one of its spaces and your [[prompt-card|question]] comes from its deck: a [[seedlands|Seed]], [[sapling-path|Sapling]] or [[oak-circle|Oak]] question, depending on your ring.</p>
-<p>It's [[advocacy|advocated]] when someone tells an Oak story in it, or someone who stands for it tells a [[heartwood]] story.</p>
-<p>See all its questions: [[cards-authenticity]].</p>` },
-
-{ id: 'open-mindedness', cat: 'map', icon: '💡', title: 'Open-mindedness',
-  short: 'O in ZERAOS. Growth mindset.',
-  body: `
-<p class="muted">O in ZERAOS · lower left of the board</p>
-<div class="box"><p><b>Growth mindset.</b></p><p>Welcoming diverse perspectives and inclusive decision-making: challenging assumptions and treating failure as a place to grow, not an endpoint.</p></div>
-<p>One of the six [[values]]. Stand on one of its spaces and your [[prompt-card|question]] comes from its deck: a [[seedlands|Seed]], [[sapling-path|Sapling]] or [[oak-circle|Oak]] question, depending on your ring.</p>
-<p>It's [[advocacy|advocated]] when someone tells an Oak story in it, or someone who stands for it tells a [[heartwood]] story.</p>
-<p>See all its questions: [[cards-open-mindedness]].</p>` },
-
-{ id: 'sustainability', cat: 'map', icon: '🌍', title: 'Sustainability',
-  short: 'S in ZERAOS. Start with the end in mind.',
-  body: `
-<p class="muted">S in ZERAOS · upper left of the board</p>
-<div class="box"><p><b>Start with the end in mind.</b></p><p>Long-term thinking built into everything: creating lasting impact and building systems that outlast any single leader or cohort.</p></div>
-<p>One of the six [[values]]. Stand on one of its spaces and your [[prompt-card|question]] comes from its deck: a [[seedlands|Seed]], [[sapling-path|Sapling]] or [[oak-circle|Oak]] question, depending on your ring.</p>
-<p>It's [[advocacy|advocated]] when someone tells an Oak story in it, or someone who stands for it tells a [[heartwood]] story.</p>
-<p>See all its questions: [[cards-sustainability]].</p>` },
-
-{ id: 'seedlands', cat: 'map', icon: '🌱', title: 'Seedlands',
-  short: 'The outer ring. Open from Season 1. Light, fun questions.',
-  body: `
-<div class="facts">
-  <div class="fact"><span>Spaces</span>18 (outer ring)</div>
-  <div class="fact"><span>Opens</span>Season 1</div>
-  <div class="fact"><span>Question</span>🌱 Seed: light and fun</div>
-  <div class="fact"><span>Card points</span>1</div>
-</div>
-<p>The sunny edge of the forest, where everyone [[plant-your-seed|plants their seed]]. In [[season]] 1 it's the only open ring, so the first round of questions is gentle: a warm-up.</p>
-<p>Next ring in: [[sapling-path]].</p>` },
-
-{ id: 'sapling-path', cat: 'map', icon: '🌿', title: 'Sapling Path',
-  short: 'The middle ring. Opens in Season 2. Stories from your life.',
-  body: `
-<div class="facts">
-  <div class="fact"><span>Spaces</span>12 (middle ring)</div>
-  <div class="fact"><span>Opens</span>Season 2</div>
-  <div class="fact"><span>Question</span>🌿 Sapling: a story</div>
-  <div class="fact"><span>Card points</span>2</div>
-</div>
-<div class="tip"><h3>Tip</h3><p>Reach the Sapling Path in Season 2. From there, the [[oak-circle]] or [[heartwood]] is one or two steps away in Season 3.</p></div>` },
-
-{ id: 'oak-circle', cat: 'map', icon: '🌳', title: 'Oak Circle',
-  short: 'The inner ring. Opens in Season 3. What lies underneath.',
-  body: `
-<div class="facts">
-  <div class="fact"><span>Spaces</span>6 (one per value)</div>
-  <div class="fact"><span>Opens</span>Season 3</div>
-  <div class="fact"><span>Question</span>🌳 Oak: values, fears, hopes</div>
-  <div class="fact"><span>Card points</span>3</div>
-</div>
-<p>An answer at the Oak tier on a value's space is an <b>Oak story</b>: it [[advocacy|advocates]] that value.</p>
-<p>Next ring in: [[heartwood]].</p>` },
-
-{ id: 'heartwood', cat: 'map', icon: '💛', title: 'Heartwood (the centre)',
-  short: 'The single centre space. Needs an alliance. Worth the most.',
-  body: `
-<div class="facts">
-  <div class="fact"><span>Spaces</span>1 (centre)</div>
-  <div class="fact"><span>Opens</span>Season 3</div>
-  <div class="fact"><span>Step in</span>Needs an alliance</div>
-  <div class="fact"><span>Question</span>💛 Your legacy</div>
-  <div class="fact"><span>Card points</span>4</div>
-</div>
-<p>The heartwood is the dense core of a tree, its strongest part. To step in you need to be in an [[alliance]]: nobody reaches the centre alone. A Heartwood story [[advocacy|advocates]] the value of whoever tells it.</p>
 <ul>
-  <li>It has its own deck of legacy questions, with no [[values|value]], so it doesn't add a value to your [[growth]].</li>
-  <li>No [[lighter-tier]] here, and no [[discovery]].</li>
-  <li>Any number of players can stand in it.</li>
-</ul>
-<p>From the [[seedlands]] it's 3 steps: in Season 3, in an alliance, you can walk all the way in on one turn.</p>` },
+  <li>While a share is open, nobody can act. Shares come one at a time, in the order they happened.</li>
+  <li>The [[keeper]] taps <b>Done sharing</b> to close it. The Keeper may start a [[timer]].</li>
+  <li>Listeners may give a [[trust-acorn]] (not after a group moment).</li>
+  <li>Every question is an invitation: see the [[forest-pact]].</li>
+</ul>` },
 
-{ id: 'moving', cat: 'map', icon: '👣', title: 'Moving',
-  short: 'Up to 3 spaces a turn, free, through open rings.',
+{ id: 'ring-card', cat: 'talking', icon: '🃏', title: 'Ring card',
+  short: 'A question for the first time you reach Ring 3, 2 and 1.',
   body: `
-<p>On your [[turn]], before you discover, say where you want to go. The [[keeper]] taps each neighbouring space you step to: <b>up to 3 spaces a turn</b>, and moving costs nothing.</p>
+<p>Each [[ring]] has its own deck. The deeper the ring, the deeper the question:</p>
 <ul>
-  <li>You can't enter a ring that isn't open yet (see [[season]]).</li>
-  <li>You can't step into the [[heartwood]] without an [[alliance]].</li>
-  <li>Take fewer steps, or none at all, if you like where you are.</li>
-  <li>Once you stop and discover, you can't move again this turn, unless you find a [[hidden-path]].</li>
-  <li>Powers that help you move: [[momentum]] (3 more steps) and [[rope-team]] (jump to an ally).</li>
+  <li><b>Ring 3:</b> a light question. <i>"Where do you feel most relaxed?"</i></li>
+  <li><b>Ring 2:</b> a story from your life. <i>"Tell us about a mistake that taught you a lot."</i></li>
+  <li><b>Ring 1:</b> a deep question. <i>"When do you feel most like yourself?"</i></li>
 </ul>
-<div class="tip"><h3>Tip</h3><p>Where you stop decides your question: its value, and how deep. Head for a value your alliance wants advocated.</p></div>` },
+<p>You draw one <b>only the first time</b> you step into each ring, moving inward. So each player draws at most 3 ring cards in a game. If a [[challenger]] brings you into a new ring, you draw too.</p>
+<p>See every card: [[cards-ring-3]], [[cards-ring-2]], [[cards-ring-1]], or [[all-cards]].</p>` },
 
-// ───────────── Resources
-{ id: 'trust-acorn', cat: 'resources', icon: '🌰', title: 'Trust acorn',
-  short: 'Your gift to others after they share. 10 for the whole game.',
+{ id: 'harvest-story', cat: 'talking', icon: '📖', title: 'Harvest story',
+  short: 'When you harvest, tell a story from your life about that sector\'s value.',
   body: `
-<div class="facts">
-  <div class="fact"><span>Start</span>10 to give away</div>
-  <div class="fact"><span>Give</span>1 per share, after someone else shares</div>
-  <div class="fact"><span>Scores</span>Only the ones you <b>receive</b></div>
-</div>
-<p>After someone else's [[share]], tap <b>Give trust 🌰</b> if it moved you. It's a gift, not a grade.</p>
+<p>When you [[harvest]] a [[fruit]], you tell a story:</p>
+<div class="box"><p><b>"Tell us a story from your own life about <i>Resilience</i>."</b></p></div>
+<p>The value is the value of the [[sector]] the tree grows in, not your own. The big screen shows that value's line too. Listeners may give a [[trust-acorn]].</p>
+<p>See the prompt for every value: [[cards-harvest]].</p>` },
+
+{ id: 'heartwood-question', cat: 'talking', icon: '💛', title: 'Heartwood question',
+  short: 'One question each time you place fruit on the World Tree.',
+  body: `
+<p>When you place fruit on the [[world-tree]] (see [[placing]]), you answer one Heartwood question. One question, however many fruit you placed at once.</p>
+<p>They are about this team and what you hope for. For example: <i>"What has this team given you that you didn't expect?"</i></p>
+<p>See them all: [[cards-heartwood]].</p>` },
+
+{ id: 'placing', cat: 'talking', icon: '🌲', title: 'Placing',
+  short: 'On the World Tree, everything you carry is placed at once.',
+  body: `
+<p>Whenever you stand on the [[world-tree]] holding [[fruit]] or a [[treasure]], <b>everything you carry is placed at once</b>. It is automatic and costs no [[action]]. It happens after you [[move]] there, when someone [[pass|passes]] you something there, or when a [[challenger]] brings you there.</p>
+<p>If you placed at least one fruit, you answer one [[heartwood-question]].</p>
+<p>A fruit counts for the person who places it. Every player must place at least one (see [[goal]]).</p>` },
+
+{ id: 'trust-acorn', cat: 'talking', icon: '🌰', title: 'Trust acorn',
+  short: 'Your gift to others after their story. 10 for the whole game.',
+  body: `
+<p>In this game an acorn 🌰 always means one thing: <b>trust</b>. (<i>Zera</i> is Hebrew for seed, and ZERA's mascot is an acorn.)</p>
 <ul>
-  <li>One acorn per share. The [[champion]] power gives 2 at once.</li>
-  <li>You can't give trust on your own share.</li>
-  <li>Acorns you receive score [[trust-points]]. Acorns you never give score nothing.</li>
+  <li>You have <b>10</b> for the whole game.</li>
+  <li>After someone else's [[share]], tap <b>Give trust 🌰</b> on your phone if it moved you. One acorn per share.</li>
+  <li>Not to yourself, and not after a [[group-moment]].</li>
 </ul>
-<div class="tip"><h3>Give them all away</h3><p>With 10 players you'll hear about 27 shares and hold only 10 acorns. Give where you're moved, and spread them out.</p></div>` },
+<p>Trust is a gift, not a grade. It does not decide a winner. At the end, [[recognition]] shows how many acorns each person received, and from how many people.</p>` },
 
-{ id: 'bonus-point', cat: 'resources', icon: '✨', title: 'Bonus point',
-  short: 'Points you pick up on the way. 1 point each.',
+{ id: 'timer', cat: 'talking', icon: '⏱️', title: 'Timer',
+  short: 'A gentle guide the Keeper can start.',
   body: `
-<div class="facts">
-  <div class="fact"><span>Start</span>0</div>
-  <div class="fact"><span>Scores</span>1 point each, in [[growth]]</div>
-</div>
-<h3>Where they come from</h3>
+<p>The [[keeper]] can start a timer on the big screen, for example while someone shares, or for each tribute in the [[tribute-chain]]. It is a guide, not a rule. When it runs out, finish your thought kindly.</p>` },
+
+// ───────────── Enneagram roles
+{ id: 'roles', cat: 'roles', icon: '🧩', title: 'Enneagram roles',
+  short: 'Nine types, each with a gift. You get 1 to 3. Always on.',
+  body: `
+<p>The Enneagram describes nine personality types, each with its own gift. In the lobby, the [[keeper]] gives each player <b>1 to 3 types</b>. These are your roles. You can't hold the same type twice, but several players may share a type.</p>
+<p>Roles are <b>always on</b>: use them as often as you like. Your phone lists yours. Say it aloud when you use one, so the Keeper can tap it.</p>
 <div class="tablewrap"><table>
-<tr><th>Source</th><th>✨</th></tr>
-<tr><td>🍄 [[mushroom-patch]] discovery</td><td>+2</td></tr>
-<tr><td>🐿️ Playing a [[squirrel]]</td><td>+1</td></tr>
-<tr><td>[[true-north]], [[adventure]], [[champion]]</td><td>+1</td></tr>
-<tr><td>[[open-hands]], [[rope-team]] (both players)</td><td>+1 each</td></tr>
+<tr><th>Type</th><th>What it does</th></tr>
+<tr><td>1 [[reformer]]</td><td>Clear removes 2 layers (1 action even in rain).</td></tr>
+<tr><td>2 [[helper]]</td><td>Water or Tend a hex next to you.</td></tr>
+<tr><td>3 [[achiever]]</td><td>Your seed grows straight to Grass.</td></tr>
+<tr><td>4 [[individualist]]</td><td>Explore also peeks at a hex next to you.</td></tr>
+<tr><td>5 [[investigator]]</td><td>See the next Forest Breath; once a round, one sector's next weather.</td></tr>
+<tr><td>6 [[loyalist]]</td><td>Plants on and next to your hex are safe from dead leaves.</td></tr>
+<tr><td>7 [[enthusiast]]</td><td>Once a turn, move 2 hexes for 1 action.</td></tr>
+<tr><td>8 [[challenger]]</td><td>Enter sealed hexes; bring a teammate when you move.</td></tr>
+<tr><td>9 [[peacemaker]]</td><td>Teammates can pass things through you.</td></tr>
 </table></div>` },
 
-{ id: 'squirrel', cat: 'resources', icon: '🐿️', title: 'Squirrel',
-  short: 'A follow-up question you store and play after someone else shares.',
+{ id: 'reformer', cat: 'roles', icon: '1️⃣', title: 'Reformer',
+  short: 'Type 1 · integrity. Clear removes 2 layers.',
   body: `
-<p>A squirrel stores things to dig up later. A Squirrel is a [[discovery]] you store until you want it: a follow-up question. There are 10 on the board.</p>
-<h3>How to play it</h3>
+<div class="box"><p><b>When you [[clear]], remove 2 layers of [[dead-leaves]].</b> It costs you 1 action, even in [[rain]].</p></div>
+<p>One clear can open a [[sealed]] hex completely.</p>` },
+
+{ id: 'helper', cat: 'roles', icon: '2️⃣', title: 'Helper',
+  short: 'Type 2 · care. Water or Tend a hex next to you.',
+  body: `
+<div class="box"><p><b>[[water-action|Water]] or [[tend]] a hex next to you, without standing on it.</b></p></div>
+<p>Like everyone, you can also [[clear]] a hex next to you.</p>` },
+
+{ id: 'achiever', cat: 'roles', icon: '3️⃣', title: 'Achiever',
+  short: 'Type 3 · drive. Your seed grows straight to Grass.',
+  body: `
+<div class="box"><p><b>After you [[sow]], the hex grows straight to Grass.</b></p></div>
+<p>This saves one Water action and 1 [[water]].</p>` },
+
+{ id: 'individualist', cat: 'roles', icon: '4️⃣', title: 'Individualist',
+  short: 'Type 4 · depth. Explore also peeks at a hex next to you.',
+  body: `
+<div class="box"><p><b>When you [[explore]], you also peek at one face-down hex next to you.</b></p></div>
+<p>Only your phone shows what is there. Tell the team, or keep it for later.</p>` },
+
+{ id: 'investigator', cat: 'roles', icon: '5️⃣', title: 'Investigator',
+  short: 'Type 5 · insight. See the next Forest Breath and the next weather.',
+  body: `
+<div class="box"><p><b>See which hexes the next [[forest-breath]] will hit. Once a round, see one sector's next [[weather]].</b></p></div>
+<ul>
+  <li>The next Breath is always on your phone: where each drift of leaves comes from and where it lands.</li>
+  <li>The weather look: once a [[round]], during your own [[turn]], choose a sector on your phone. It costs no action.</li>
+</ul>
+<p>Warn the team about sun, and about leaves heading for young plants.</p>` },
+
+{ id: 'loyalist', cat: 'roles', icon: '6️⃣', title: 'Loyalist',
+  short: 'Type 6 · loyalty. Plants on and next to your hex are safe from leaves.',
+  body: `
+<div class="box"><p><b>Plants on your hex and next to you are safe from [[dead-leaves]].</b></p></div>
+<p>Leaves still land there, and two layers still make the hex [[sealed]]. But the [[plant|plants]] do not drop a step.</p>` },
+
+{ id: 'enthusiast', cat: 'roles', icon: '7️⃣', title: 'Enthusiast',
+  short: 'Type 7 · joy. Once a turn, move 2 hexes for 1 action.',
+  body: `
+<div class="box"><p><b>Once a turn, one [[move]] may go 2 hexes, for 1 action.</b></p></div>
+<p>Not if your hex, the middle hex or the last hex is in [[fog]]. Not through [[sealed]] hexes.</p>` },
+
+{ id: 'challenger', cat: 'roles', icon: '8️⃣', title: 'Challenger',
+  short: 'Type 8 · strength. Enter sealed hexes; bring a teammate.',
+  body: `
+<div class="box"><p><b>You may enter [[sealed]] hexes, and bring one teammate from your hex when you [[move]].</b></p></div>
+<p>The teammate moves with you. If they enter a new [[ring]] for the first time, they draw its [[ring-card]] too. If you both arrive on the [[world-tree]], what they carry is [[placing|placed]].</p>` },
+
+{ id: 'peacemaker', cat: 'roles', icon: '9️⃣', title: 'Peacemaker',
+  short: 'Type 9 · harmony. Teammates can pass things through you.',
+  body: `
+<div class="box"><p><b>Teammates in a chain up to 2 hexes long through you can [[pass]] things to each other.</b></p></div>
+<ul>
+  <li>Two players on neighbouring hexes can pass, if you stand on either hex.</li>
+  <li>Two players two steps apart can pass, if someone stands on the hex between them and you stand on any of the three hexes.</li>
+</ul>` },
+
+// ───────────── The end
+{ id: 'wake', cat: 'end', icon: '🌳', title: 'The forest wakes',
+  short: 'The team wins the moment all three goals are true.',
+  body: `
+<p>The moment all three parts of the [[goal]] are true, even in the middle of a [[turn]], the forest wakes. The big screen celebrates: <b>"The forest wakes!"</b></p>
+<p>Then the [[finale]] begins.</p>` },
+
+{ id: 'sleep', cat: 'end', icon: '😴', title: 'The forest sleeps on',
+  short: 'If every player is at 0 water, the game ends.',
+  body: `
+<p>If every player is at 0 [[water]] at the same moment, the game ends. The forest sleeps on, for another day.</p>
+<p>The [[finale]] is the same as when the forest wakes. It is about the people, not the forest.</p>` },
+
+{ id: 'finale', cat: 'end', icon: '🎑', title: 'Finale',
+  short: 'Guess your Secret Owl, the tribute chain, then recognition.',
+  body: `
+<p>When [[wake|the forest wakes]] or [[sleep|sleeps on]], the finale begins:</p>
 <ol>
-  <li>Right after someone else's [[share]], raise your hand; the [[keeper]] taps it.</li>
-  <li>The app gives you a question to ask them, such as <i>"What's the story behind that?"</i> or <i>"How did that change you?"</i></li>
-  <li>They get 30 seconds to answer.</li>
-  <li>You take 1 [[bonus-point]].</li>
+  <li><b>[[guess]]:</b> everyone guesses their own [[secret-owl]] on their phone.</li>
+  <li><b>[[tribute-chain]]:</b> one at a time, around the loop, each Owl honours the colleague they watched.</li>
+  <li><b>[[recognition]]:</b> the big screen shows what each person received.</li>
 </ol>
-<div class="tip"><h3>Tip</h3><p>A Squirrel is the best tool when you're someone's [[secret-owl]]: it lets you ask them something deeper without looking obvious. Research says asking follow-up questions makes people like you more.</p></div>` },
+<p>There are no points and no winner among the players.</p>` },
 
-// ───────────── Discoveries
-{ id: 'discovery', cat: 'discoveries', icon: '✦', title: 'Discovery',
-  short: 'A face-down find (✦) on 26 of the spaces. First to stop there takes it.',
+{ id: 'secret-owl', cat: 'end', icon: '🦉', title: 'Secret Owl',
+  short: 'You quietly watch one colleague all game, then honour them at the end.',
   body: `
-<p>26 discoveries lie face down (✦) on the spaces around the [[heartwood]]. The other 10 spaces are quiet clearings with nothing to find: they show no ✦. When you stop and discover on a space whose discovery is still hidden, it flips and it's yours. Found ones stay face up.</p>
-<div class="tablewrap"><table>
-<tr><th>Discovery</th><th>How many</th><th>What happens</th></tr>
-<tr><td>🍄 [[mushroom-patch]]</td><td>9</td><td>+2 ✨</td></tr>
-<tr><td>🐿️ [[squirrel]]</td><td>10</td><td>Store it to ask a follow-up later</td></tr>
-<tr><td>🔥 [[campfire]]</td><td>5</td><td>Everyone answers in one sentence</td></tr>
-<tr><td>🍃 [[hidden-path]]</td><td>2</td><td>Free move within your ring</td></tr>
-</table></div>
-<p>The [[field-notes]] power lets you see the hidden discoveries next to you and claim one.</p>
-<div class="tip"><h3>Tip</h3><p>Unexplored spaces are worth more. Stopping on a space someone already found gives you nothing extra.</p></div>` },
-
-{ id: 'mushroom-patch', cat: 'discoveries', icon: '🍄', title: 'Mushroom patch',
-  short: 'Discovery: +2 bonus points.',
-  body: `<p>A [[discovery]] (9 on the board). You take <b>+2 [[bonus-point|bonus points]]</b>, which are 2 points in [[growth]].</p>` },
-
-{ id: 'campfire', cat: 'discoveries', icon: '🔥', title: 'Campfire',
-  short: 'Discovery: everyone answers one quick question, around the table.',
-  body: `
-<p>A [[discovery]] (5 on the board). The app shows a Campfire question, and everyone answers it in one sentence, around the table.</p>
-<div class="box"><p class="muted">Examples</p><p><i>One word for how you feel right now.</i><br><i>A song that always lifts you.</i><br><i>Mountain, beach or city?</i></p></div>
-<p>It's just for warmth: no points. It also gives you a quick, low-key clue when you're someone's [[secret-owl]].</p>` },
-
-{ id: 'hidden-path', cat: 'discoveries', icon: '🍃', title: 'Hidden path',
-  short: 'Discovery: move free to any open space in your ring.',
-  body: `
-<p>A rare [[discovery]] (2 on the board). You may move <b>free</b> to any open space in your current ring, or stay where you are.</p>
-<ul>
-  <li>It doesn't use your steps.</li>
-  <li>You don't discover the space you land on.</li>
-  <li>Your [[prompt-card|question]] comes from wherever you end up, so you can pick a new [[values|value]].</li>
-</ul>
-<div class="tip"><h3>Tip</h3><p>Jump to a value you haven't shared in yet, or one your alliance wants advocated.</p></div>` },
-
-// ───────────── Dusk
-{ id: 'dusk', cat: 'dusk', icon: '🌙', title: 'Dusk',
-  short: 'End of each season: everyone pairs up and talks for 4 minutes.',
-  body: `
-<p>At the end of every [[season]], everyone pairs up for a 4-minute conversation, all at the same time.</p>
-<ol>
-  <li>On your phone, choose a partner you haven't paired with before, or choose <b>Anyone (the Keeper pairs me)</b>.</li>
-  <li>To try for an [[alliance]], tick <b>Make it an alliance</b>.</li>
-  <li>Tap <b>Send my choice</b>.</li>
-  <li>The [[keeper]] taps <b>Set the pairs</b>. You pair only if you both chose each other; the app pairs everyone else, avoiding repeat partners where it can.</li>
-  <li>Your phone shows your partner and a card: the [[bond-card]] for a [[fireside-chat]], or the [[statement]] card for an alliance. Talk for 4 minutes.</li>
-</ol>
-<p>When an alliance of two welcomes a third, the existing member joins that conversation, so it becomes a [[trio]]. With an odd number of players, one Fireside group is a trio too.</p>` },
-
-{ id: 'alliance', cat: 'dusk', icon: '🤝', title: 'Alliance',
-  short: '2 or 3 people who stand for different values, held by one statement.',
-  body: `
-<p>An alliance is 2 or 3 people who stand for <b>different</b> [[values]], held together by one [[statement]] that holds all their values. Real alliances don't form because of points: they form around something shared. This one asks you to find it.</p>
-<h3>Forming one at Dusk</h3>
-<ol>
-  <li>You both chose each other at [[dusk]], and both ticked <b>Make it an alliance</b>.</li>
-  <li>You stand for different values.</li>
-  <li>Neither of you is in an alliance yet.</li>
-</ol>
-<p>If a check fails you still talk: it becomes a [[fireside-chat]], and your phone tells you why.</p>
-<h3>Growing to three</h3>
-<p>An alliance of two can welcome one more at a later Dusk: one member and a newcomer who stands for a <b>third</b> value choose each other and tick alliance. That night all three talk together (the other member joins in, setting aside their own choice), and write a <b>new</b> statement for all three values.</p>
-<div class="facts">
-  <div class="fact"><span>Size</span>2 or 3 people</div>
-  <div class="fact"><span>Values</span>All different</div>
-  <div class="fact"><span>Merging</span>Never: one alliance each</div>
-</div>
-<h3>What it gives you</h3>
-<ul>
-  <li><b>More to [[advocacy|advocate]]:</b> every value your alliance stands for can score 3 if it gets a deep story.</li>
-  <li><b>The key to the [[heartwood]]:</b> you can't step in without an alliance.</li>
-  <li>Someone to jump to with [[rope-team]].</li>
-  <li>A story to tell at the [[finale]].</li>
-</ul>
-<div class="tip"><h3>Tip</h3><p>Plan together: "I'll take a deep question in your value if you take one in mine."</p></div>` },
-
-{ id: 'statement', cat: 'dusk', icon: '✍️', title: 'Statement',
-  short: 'One line that holds all your alliance values. About 12 words.',
-  body: `
-<p>Every new or grown [[alliance]] finds <b>one line that holds all its values</b>: a statement, a slogan or a cheer, your choice. About 12 words.</p>
-<div class="box"><p class="muted">Try</p><p><i>"We ___ so that ___."</i></p></div>
-<ol>
-  <li>Talk it through in your [[dusk]] conversation.</li>
-  <li>One of you types it on your phone. It appears on the big screen, and you can change it until the next [[season]] starts.</li>
-  <li>At the start of the next season, say it aloud to the room. At the [[finale]], tell the story of how you found it.</li>
-</ol>
-<p>Stuck? The [[keeper]] has a hint for every combination of values: what they share, and a few example lines.</p>
-<div class="tip"><h3>Tip</h3><p>Don't just list the values. Look for the place where they need each other, or where they pull against each other and you still choose both.</p></div>` },
-
-{ id: 'fireside-chat', cat: 'dusk', icon: '🔥', title: 'Fireside chat',
-  short: "Any Dusk pair that isn't an alliance. Same talk, no alliance.",
-  body: `
-<p>Every [[dusk]] pair that doesn't form or grow an [[alliance]] has a Fireside chat. You talk for 4 minutes with the [[bond-card]].</p>
-<p>A Fireside chat is never a loss. It's a good conversation, and often the best clue when you're someone's [[secret-owl]].</p>` },
-
-{ id: 'bond-card', cat: 'dusk', icon: '💌', title: 'Bond card',
-  short: 'The conversation prompt your Dusk pair gets. Deeper each season.',
-  body: `
-<p>At [[dusk]], each [[fireside-chat]] gets a Bond card to start the 4-minute talk (an alliance gets the [[statement]] card instead). Like the questions on the board, they go deeper each [[season]].</p>
-<div class="tablewrap"><table>
-<tr><th>Season</th><th>Example</th></tr>
-<tr><td>1</td><td><i>Find three things you have in common that have nothing to do with work.</i></td></tr>
-<tr><td>2</td><td><i>Each tell the story of a turning point in your life.</i></td></tr>
-<tr><td>3</td><td><i>What does each of you need from the other in the year ahead?</i></td></tr>
-</table></div>
-<p>No points: just a good conversation, and often the best clues when you're someone's [[secret-owl]].</p>` },
-
-{ id: 'trio', cat: 'dusk', icon: '👥', title: 'Trio',
-  short: 'A Dusk group of three: an alliance growing, or the odd one out.',
-  body: `
-<p>A [[dusk]] group can be a trio in two ways:</p>
-<ul>
-  <li><b>An alliance growing to three.</b> When one member and a newcomer choose each other, the alliance's other member joins them, so all three can write their new [[statement]].</li>
-  <li><b>An odd number of players.</b> The odd one out joins a [[fireside-chat]].</li>
-</ul>
-<p>All three count as having paired, so none of them repeats with the others later.</p>` },
-
-// ───────────── Powers
-{ id: 'enneagram-powers', cat: 'powers', icon: '⚡', title: 'Enneagram powers',
-  short: 'The Keeper gives you 1 to 3 Enneagram types. Each type gives a power that works once.',
-  body: `
-<p>The Enneagram describes nine personality types, each with its own gift. Before the start, the [[keeper]] gives each player <b>1 to 3 types</b>, and you get those types' powers. <b>Each one works once in the whole game</b>.</p>
-<h3>Using a power</h3>
-<ul>
-  <li>Your phone lists your powers as a reminder. At the right moment, say it aloud ("I use Momentum"); the [[keeper]] activates it on the big screen, and it shows as used.</li>
-  <li>The trail log on the big screen shows who used what.</li>
-  <li>"While moving" means on your turn, before you stop and discover.</li>
-</ul>
-<div class="tablewrap"><table>
-<tr><th>Type</th><th>Power</th><th>When</th><th>What it does</th></tr>
-<tr><td>1 Reformer</td><td>🧭 [[true-north]]</td><td>Before sharing</td><td>Choose from 3 cards. +1 ✨</td></tr>
-<tr><td>2 Helper</td><td>🤲 [[open-hands]]</td><td>Before sharing</td><td>Invite someone to answer your question too. You both keep the card, +1 ✨ each.</td></tr>
-<tr><td>3 Achiever</td><td>🚀 [[momentum]]</td><td>While moving</td><td>Move up to 3 more spaces</td></tr>
-<tr><td>4 Individualist</td><td>🌊 [[deep-water]]</td><td>Before sharing</td><td>Answer one tier deeper</td></tr>
-<tr><td>5 Investigator</td><td>🔎 [[field-notes]]</td><td>While moving</td><td>Peek at nearby discoveries and claim one</td></tr>
-<tr><td>6 Loyalist</td><td>🪢 [[rope-team]]</td><td>While moving</td><td>Jump to an ally. You both get +1 ✨.</td></tr>
-<tr><td>7 Enthusiast</td><td>🎒 [[adventure]]</td><td>Your turn</td><td>Call a Campfire round. +1 ✨</td></tr>
-<tr><td>8 Challenger</td><td>🛡️ [[champion]]</td><td>After someone's share</td><td>Give 2 trust at once. +1 ✨</td></tr>
-<tr><td>9 Peacemaker</td><td>🕊️ [[common-ground]]</td><td>At Dusk</td><td>Alliance at any distance</td></tr>
-</table></div>
-<div class="tip"><h3>Tip</h3><p>Pick the types that are really you; the game is about being known. Then plan when to spend each one: most powers are strongest in Season 3.</p></div>` },
-
-{ id: 'true-north', cat: 'powers', icon: '🧭', title: 'True North',
-  short: 'Type 1 Reformer. See 3 cards, choose the one to answer. +1 ✨.',
-  body: `
-<div class="facts">
-  <div class="fact"><span>Type</span>1 Reformer · integrity</div>
-  <div class="fact"><span>When</span>Your turn, before you start sharing</div>
-</div>
-<p>Look at 3 [[prompt-card|cards]] from your space's [[values|value]] and choose the one to answer. You also take <b>+1 [[bonus-point]]</b>, which arrives at the end of your turn.</p>
-<ul><li>Not in the [[heartwood]].</li></ul>
-<div class="tip"><h3>Best used</h3><p>On an [[oak-circle|Oak]] turn, when you want the question that lets you say what you really mean.</p></div>
-<p class="muted">See all [[enneagram-powers]].</p>` },
-
-{ id: 'open-hands', cat: 'powers', icon: '🤲', title: 'Open Hands',
-  short: 'Type 2 Helper. Invite someone to answer your question too. Both keep the card, both +1 ✨.',
-  body: `
-<div class="facts">
-  <div class="fact"><span>Type</span>2 Helper · care</div>
-  <div class="fact"><span>When</span>Your turn, before you start sharing</div>
-</div>
-<p>Invite another player to answer your [[prompt-card|question]] too, right after you. <b>You both keep the card</b> (it scores in [[growth]] for both of you, and grows a tree on your space), and <b>you both take 1 [[bonus-point]]</b>.</p>
-<ul><li>Say who you invite; the [[keeper]] taps it. If you then [[passing|pass]], neither of you keeps the card, but the bonus points stay.</li></ul>
-<div class="tip"><h3>Best used</h3><p>On a deep question, with someone who has been quiet, or someone you'd like to hear more from.</p></div>
-<p class="muted">See all [[enneagram-powers]].</p>` },
-
-{ id: 'momentum', cat: 'powers', icon: '🚀', title: 'Momentum',
-  short: 'Type 3 Achiever. Move up to 3 more spaces this turn.',
-  body: `
-<div class="facts">
-  <div class="fact"><span>Type</span>3 Achiever · drive</div>
-  <div class="fact"><span>When</span>Your turn, while moving</div>
-</div>
-<p>Move <b>up to 3 more spaces</b> this turn: up to 6 in all. Use it before you stop and discover.</p>
-<ul><li>Closed rings and the [[heartwood]]'s alliance rule still apply.</li></ul>
-<div class="tip"><h3>Best used</h3><p>To reach a [[values|value]] you haven't shared in yet, or one your alliance wants advocated.</p></div>
-<p class="muted">See all [[enneagram-powers]].</p>` },
-
-{ id: 'deep-water', cat: 'powers', icon: '🌊', title: 'Deep Water',
-  short: 'Type 4 Individualist. Answer the question one tier deeper.',
-  body: `
-<div class="facts">
-  <div class="fact"><span>Type</span>4 Individualist · depth</div>
-  <div class="fact"><span>When</span>Your turn, before you start sharing</div>
-</div>
-<p>Answer the question one tier deeper than your ring: Seed → Sapling, or Sapling → Oak. The card still scores at your ring's tier.</p>
-<ul>
-  <li>Not on an Oak or Heartwood question.</li>
-  <li>The deeper question is the reward: it's a chance to be known sooner, and to earn more [[trust-points|trust]].</li>
-  <li>On the [[sapling-path]] it gives you an Oak story, which [[advocacy|advocates]] that value.</li>
-</ul>
-<p class="muted">See all [[enneagram-powers]].</p>` },
-
-{ id: 'field-notes', cat: 'powers', icon: '🔎', title: 'Field Notes',
-  short: 'Type 5 Investigator. See hidden discoveries next to you; claim one.',
-  body: `
-<div class="facts">
-  <div class="fact"><span>Type</span>5 Investigator · insight</div>
-  <div class="fact"><span>When</span>Your turn, while moving</div>
-</div>
-<p>See every face-down [[discovery]] on the spaces next to you (in open rings), then claim one without moving there.</p>
-<ul>
-  <li>Only works if there's a hidden discovery next to you.</li>
-  <li>Claim before you step away: if you move first, the chance is gone.</li>
-  <li>After claiming, you can still move and discover your own space.</li>
-</ul>
-<div class="tip"><h3>Best used</h3><p>Early, when the board is full of hidden discoveries, and you're looking for a [[squirrel]] or [[mushroom-patch]].</p></div>
-<p class="muted">See all [[enneagram-powers]].</p>` },
-
-{ id: 'rope-team', cat: 'powers', icon: '🪢', title: 'Rope Team',
-  short: "Type 6 Loyalist. Jump to an ally's space, without using your steps. Both +1 ✨.",
-  body: `
-<div class="facts">
-  <div class="fact"><span>Type</span>6 Loyalist · loyalty</div>
-  <div class="fact"><span>When</span>Your turn, while moving</div>
-</div>
-<p>Jump to an [[alliance|ally's]] space from anywhere on the board, without using your steps. <b>You both take 1 [[bonus-point]].</b> You can keep moving afterwards with the steps you have left.</p>
-<ul><li>You need an alliance, and your ally's ring must be open.</li></ul>
-<div class="tip"><h3>Best used</h3><p>When your ally is in the [[oak-circle]] or [[heartwood]] and you're far away, or to stand in a value you both want advocated.</p></div>
-<p class="muted">See all [[enneagram-powers]].</p>` },
-
-{ id: 'adventure', cat: 'powers', icon: '🎒', title: 'Adventure',
-  short: 'Type 7 Enthusiast. Call a Campfire: everyone answers in one sentence. +1 ✨.',
-  body: `
-<div class="facts">
-  <div class="fact"><span>Type</span>7 Enthusiast · joy</div>
-  <div class="fact"><span>When</span>Your turn</div>
-</div>
-<p>Call a [[campfire]]: a question shows on the big screen, and everyone answers it in one sentence, around the table. You also take <b>+1 [[bonus-point]]</b>.</p>
-<div class="tip"><h3>Best used</h3><p>When the room needs a lift, or early on, to hear a little from everyone.</p></div>
-<p class="muted">See all [[enneagram-powers]].</p>` },
-
-{ id: 'champion', cat: 'powers', icon: '🛡️', title: 'Champion',
-  short: 'Type 8 Challenger. Give someone 2 trust acorns at once. +1 ✨.',
-  body: `
-<div class="facts">
-  <div class="fact"><span>Type</span>8 Challenger · strength</div>
-  <div class="fact"><span>When</span>After someone else's share</div>
-</div>
-<p>Give that player <b>2 [[trust-acorn|trust acorns]] at once</b>, and take 1 [[bonus-point]]. Use it instead of <b>Give trust</b> for that share. Both acorns come from your own 10.</p>
-<div class="tip"><h3>Best used</h3><p>For a share that really took courage. Note that [[trust-points|Trust]] counts at most 2 acorns from any one giver, so Champion maxes out what you give that person.</p></div>
-<p class="muted">See all [[enneagram-powers]].</p>` },
-
-{ id: 'common-ground', cat: 'powers', icon: '🕊️', title: 'Common Ground',
-  short: 'Type 9 Peacemaker. Tonight your alliance works at any distance.',
-  body: `
-<div class="facts">
-  <div class="fact"><span>Type</span>9 Peacemaker · harmony</div>
-  <div class="fact"><span>When</span>At Dusk, before pairs are set</div>
-</div>
-<p>Tonight your [[alliance]] works at any distance.</p>
-<ul>
-  <li>You still both need to choose each other and tick <b>Make it an alliance</b>.</li>
-  <li>If no alliance forms, the power is still spent.</li>
-</ul>
-<div class="tip"><h3>Best used</h3><p>When the person you want to ally with ended their turn far away. Agree with them first.</p></div>
-<p class="muted">See all [[enneagram-powers]].</p>` },
-
-// ───────────── Scoring
-{ id: 'scoring', cat: 'scoring', icon: '🏆', title: 'Scoring',
-  short: 'Four kinds of points. Most points wins. Totals hidden until the end.',
-  body: `
-<p>When the forest is grown, the app adds up four kinds of points. Nobody sees the totals until the end.</p>
-<div class="tablewrap"><table>
-<tr><th>Points</th><th>How</th></tr>
-<tr><td>🌰 [[trust-points|Trust]]</td><td>Per person who gave you acorns: their acorns (up to 2) + 1</td></tr>
-<tr><td>🌳 [[growth|Growth]]</td><td>Cards kept (1–4 each) + 1 per different value + 1 per ✨</td></tr>
-<tr><td>📣 [[advocacy|Advocacy]]</td><td>3 per value your alliance stands for that was advocated</td></tr>
-<tr><td>🦉 [[secret-owl|Secret Owl]]</td><td>Up to 3 for discoveries, +2 if not guessed, +2 if you guess your own Owl</td></tr>
-</table></div>
-<h3>Ties</h3>
-<p>The player with more Trust points wins. If that's tied too, they share the win.</p>
-<h3>Example: Mei's 37</h3>
-<div class="box">
-<p>🌰 Trust <b>16</b>: 7 people gave her acorns. Five gave 1 (5 × 2 = 10), two gave 2 (2 × 3 = 6).</p>
-<p>🌳 Growth <b>11</b>: Seed 1 + Sapling 2 + Oak 3 = 6, two different values +2, three bonus points +3.</p>
-<p>📣 Advocacy <b>6</b>: her alliance stands for Resilience, Excellence and Open-mindedness; the first two got an Oak story.</p>
-<p>🦉 Secret Owl <b>4</b>: 2 discoveries confirmed, and he didn't guess she was his Owl.</p>
-</div>
-` },
-
-{ id: 'advocacy', cat: 'scoring', icon: '📣', title: 'Advocacy',
-  short: '3 points for each value your alliance stands for that got a voice.',
-  body: `
-<p>You [[plant-your-seed|stand for]] one of the [[values]]. A value is <b>advocated</b> by the end of the game if:</p>
-<ul>
-  <li>anyone told an 🌳 Oak story in it (a card answered at the Oak tier on one of its spaces), or</li>
-  <li>someone who stands for it told a 💛 [[heartwood]] story.</li>
-</ul>
-<p>You score <b>3 points for each value your [[alliance]] stands for</b> that was advocated. Without an alliance, it's just your own value.</p>
-<div class="facts">
-  <div class="fact"><span>Alone</span>Up to 3</div>
-  <div class="fact"><span>Alliance of 2</span>Up to 6</div>
-  <div class="fact"><span>Alliance of 3</span>Up to 9</div>
-</div>
-<p>[[deep-water]] on the [[sapling-path]] gives an Oak story too.</p>
-<div class="tip"><h3>Tip</h3><p>You score for a value getting a voice, not for joining. Plan with your allies who will take the deep question where.</p></div>` },
-
-{ id: 'trust-points', cat: 'scoring', icon: '🌰', title: 'Trust points',
-  short: 'Points from acorns you received. Many givers beat many acorns.',
-  body: `
-<p>For each person who gave you any [[trust-acorn|trust acorns]] during the game:</p>
-<div class="box"><p><b>their acorns (counting at most 2) + 1 for that person</b></p></div>
-<div class="tablewrap"><table>
-<tr><th>Giver</th><th>Acorns</th><th>Points</th></tr>
-<tr><td>Amir</td><td>🌰</td><td>1 + 1 = 2</td></tr>
-<tr><td>Bea</td><td>🌰🌰</td><td>2 + 1 = 3</td></tr>
-<tr><td>Chen</td><td>🌰🌰🌰</td><td>2 + 1 = 3</td></tr>
-</table></div>
-<p><b>Trust from many people beats lots of trust from a few.</b> Nine people giving you one acorn each is 18 points; three people giving you three each is 9.</p>
-<p>Trust also breaks ties in [[scoring]].</p>` },
-
-{ id: 'growth', cat: 'scoring', icon: '🌳', title: 'Growth',
-  short: 'Points from cards you answered, the values you covered, and bonus points.',
-  body: `
-<div class="tablewrap"><table>
-<tr><th>Part</th><th>Points</th></tr>
-<tr><td>Each card you kept</td><td>🌱 Seed 1 · 🌿 Sapling 2 · 🌳 Oak 3 · 💛 Heartwood 4</td></tr>
-<tr><td>Each different [[values|value]] you shared in</td><td>+1 (Heartwood cards have no value)</td></tr>
-<tr><td>Each [[bonus-point]]</td><td>+1</td></tr>
-</table></div>
-<p>A card scores at the tier you answered, so [[lighter-tier]] lowers it and [[deep-water]] doesn't raise it. If you [[passing|pass]] a turn, you keep no card that turn.</p>
-<div class="tip"><h3>Tip</h3><p>Three turns in three different values gives +3. Spread out as you walk inward.</p></div>` },
-
-{ id: 'secret-owl', cat: 'scoring', icon: '🦉', title: 'Secret Owl',
-  short: 'You quietly observe one colleague all game, then honour them at the finale.',
-  body: `
-<p>A quiet side quest that runs all game, and a lesson in observation: you get to know one particular person, without them finding out it's you. An owl watches quietly and misses nothing.</p>
-<h3>How it starts</h3>
-<p>At the start, your phone gives you one colleague's name: you are their <b>Secret Owl</b>. Tap to reveal it, and keep it to yourself. Someone else is <i>your</i> Secret Owl, quietly watching you.</p>
-<p>All the names form <b>one loop</b> around the room: A watches B, B watches C, and so on until J watches A. Everyone gives and receives once.</p>
-<h3>During the game: notice three things</h3>
-<p>Something they love, something that shaped them, something they hope for. Learn them from:</p>
-<ul>
-  <li>Their [[share|shares]].</li>
-  <li>A [[squirrel]] follow-up.</li>
-  <li>A [[dusk]] conversation with them.</li>
-  <li>[[campfire]] answers.</li>
-</ul>
-<p>Watch without being obvious, or they'll guess you're their Owl.</p>
-<h3>At the finale</h3>
-<ol>
-  <li><b>Guess</b> who your own Secret Owl was. After the last [[dusk]], pick and tap <b>Lock in my guess</b>; you can change it until the tributes start.</li>
-  <li><b>Give your [[tribute]]:</b> "Three things I discovered about you today, and one thing I appreciate."</li>
-  <li><b>They confirm</b> how many of your three discoveries are true: 0, 1, 2 or 3.</li>
-</ol>
-<h3>Points (up to 7)</h3>
-<div class="tablewrap"><table>
-<tr><th>What happens</th><th>Points</th></tr>
-<tr><td>Each discovery the colleague you watched confirms as true</td><td>+1 each (max 3)</td></tr>
-<tr><td>They fail to guess you were their Secret Owl</td><td>+2</td></tr>
-<tr><td>You correctly guess your own Secret Owl</td><td>+2</td></tr>
-</table></div>
+<p>At the start, your phone gives you one colleague's name: you are their <b>Secret Owl</b>. Tap to see it, and keep it to yourself. Someone else is <i>your</i> Secret Owl, quietly watching you.</p>
+<p>All the names form <b>one loop</b> around the room: A watches B, B watches C, and so on, until the last person watches A.</p>
+<h3>During the game</h3>
+<p>Notice three things about them: something they love, something that shaped them, something they hope for. Listen to their [[share|shares]], plan with them, and see how they help the team. Watch without being obvious, or they will guess.</p>
+<h3>At the end</h3>
+<p>You [[guess]] who your own Owl was, then give your tribute in the [[tribute-chain]]. [[recognition]] shows whether you guessed right, and whether you stayed hidden.</p>
 <div class="tip"><h3>Tips</h3>
 <ul>
   <li>Be curious about everyone, so your interest in one person blends in.</li>
-  <li>Go past surface facts. "Likes coffee" is weak; "became a teacher because of their grandmother" lands.</li>
-  <li>Make the "one thing I appreciate" specific. It doesn't score, but it's what people remember.</li>
-  <li>To guess your own Owl: who asked you follow-ups? Who chose you at Dusk? Who listened especially closely when you shared?</li>
+  <li>Go past surface facts. "Likes coffee" is weak; "became a teacher because of their grandmother" means much more.</li>
+  <li>To guess your own Owl: who listened especially closely when you shared? Who stayed near you?</li>
 </ul></div>` },
 
-{ id: 'tribute', cat: 'scoring', icon: '🎁', title: 'Tribute',
-  short: 'One minute to honour the colleague you watched, at the finale.',
+{ id: 'guess', cat: 'end', icon: '❓', title: 'Guess',
+  short: 'At the end, guess who was your Secret Owl.',
   body: `
-<p>At the [[finale]], one at a time around the loop, each [[secret-owl]] gives the colleague they watched one minute:</p>
+<p>When the [[finale]] begins, everyone picks on their phone who they think was <i>their</i> [[secret-owl]]. You can change your guess until the [[keeper]] starts the [[tribute-chain]].</p>` },
+
+{ id: 'tribute-chain', cat: 'end', icon: '🎁', title: 'Tribute chain',
+  short: 'Around the loop, each Owl honours the colleague they watched.',
+  body: `
+<p>One at a time, around the [[secret-owl]] loop, each Owl gives the colleague they watched about one minute:</p>
 <div class="box"><p><b>"Three things I discovered about you today, and one thing I appreciate."</b></p></div>
-<p>Then hand them an acorn: your trust. 🌰 They say how many of your three discoveries are true (0–3), the Keeper taps it, and they honour the colleague they watched, and so on until the loop closes.</p>
+<p>Then that colleague honours the person they watched, and so on until the loop closes. The [[keeper]] taps <b>Next</b> each time, and may run a [[timer]].</p>
 <p>By the end, everyone in the room has heard three true things someone noticed about them, and one appreciation.</p>` },
 
-{ id: 'finale', cat: 'scoring', icon: '🌲', title: 'Finale',
-  short: 'The Vision of a Forest: alliance stories, guesses, tributes, scores.',
+{ id: 'recognition', cat: 'end', icon: '🏅', title: 'Recognition',
+  short: 'What each person received. No points, no winner.',
   body: `
-<p>After the third [[dusk]], the game moves to <b>The Vision of a Forest</b>.</p>
-<ol>
-  <li><b>Alliance stories.</b> The [[keeper]] calls each [[alliance]] in turn. In about 2 minutes, tell your story: your [[statement]], and how you found it.</li>
-  <li><b>Guess.</b> Everyone guesses who their own [[secret-owl]] was and taps <b>Lock in my guess</b>.</li>
-  <li><b>Tributes.</b> One at a time, around the loop, everyone gives their [[tribute]].</li>
-  <li><b>Confirm.</b> Each person says how many of the three discoveries were true.</li>
-  <li><b>Scores.</b> The big screen shows everyone's points and the winner. 🏆 See [[scoring]].</li>
-</ol>` },
+<p>The last screen shows, for each player:</p>
+<ul>
+  <li>🌰 how many [[trust-acorn|trust acorns]] they received, and from how many people;</li>
+  <li>🦉 who their [[secret-owl]] was;</li>
+  <li>❓ whether they [[guess|guessed]] their Owl right;</li>
+  <li>🙈 whether they stayed hidden as an Owl (the colleague they watched did not guess them).</li>
+</ul>
+<p>It also shows whether [[wake|the forest woke]]. There are no points and no winner among the players.</p>` },
 
 // ───────────── All the cards (filled from /api/cards, so they always match the game)
-
 { id: 'all-cards', cat: 'cards', icon: '🗂️', title: 'All the cards',
-  short: 'Every question, follow-up and tip in the game, deck by deck.',
+  short: 'Every question in the game, deck by deck.',
   body: `
 <p>Every card in the game, exactly as the game deals it. Search the wiki to find any question.</p>
-<h3>Value decks</h3>
-<p>Five cards per value. Each card has a 🌱 Seed, 🌿 Sapling and 🌳 Oak question on one thread; your ring picks which one you answer.</p>
 <ul>
-  <li>☀️ [[cards-zealous]]</li>
-  <li>⭐ [[cards-excellence]]</li>
-  <li>🎋 [[cards-resilience]]</li>
-  <li>🪞 [[cards-authenticity]]</li>
-  <li>💡 [[cards-open-mindedness]]</li>
-  <li>🌍 [[cards-sustainability]]</li>
-</ul>
-<h3>Other decks</h3>
-<ul>
-  <li>💛 [[cards-heartwood]]: the centre's own deck.</li>
-  <li>🌙 [[cards-bond]]: Dusk conversations, and the statement card for alliances.</li>
-  <li>🤝 [[cards-statement-pairs]] and [[cards-statement-trios]]: the Keeper's tips for alliance statements.</li>
-  <li>🐿️ [[cards-squirrel]] and 🔥 [[cards-campfire]].</li>
+  <li>🃏 [[cards-ring-3]]: light questions, for the first time you reach Ring 3.</li>
+  <li>🃏 [[cards-ring-2]]: a story from your life, for Ring 2.</li>
+  <li>🃏 [[cards-ring-1]]: deep questions, for Ring 1.</li>
+  <li>💛 [[cards-heartwood]]: when you place fruit on the World Tree.</li>
+  <li>📖 [[cards-harvest]]: the harvest story for each value.</li>
+  <li>💎 [[cards-treasures]]: the three treasures and their group moments.</li>
+  <li>🧩 [[cards-roles]]: the nine Enneagram roles.</li>
 </ul>` },
 
-{ id: 'cards-zealous', cat: 'cards', icon: '☀️', title: 'Zealous cards',
-  short: 'The 5 Zealous cards, each with a Seed, Sapling and Oak question.',
-  body: `<p>The [[zealous]] deck. Your ring picks the question: 🌱 [[seedlands|Seed]], 🌿 [[sapling-path|Sapling]] or 🌳 [[oak-circle|Oak]]. Asking for a [[lighter-tier]] moves you up the same card.</p>
-<div data-deck="value:0"></div>` },
+{ id: 'cards-ring-3', cat: 'cards', icon: '🃏', title: 'Ring 3 cards (light)',
+  short: 'Light questions for the first time you step into Ring 3.',
+  body: `<p>Drawn the first time you step into [[ring|Ring 3]]. Light and easy: a good way to start. See [[ring-card]].</p>
+<div data-deck="ring:3"></div>` },
 
-{ id: 'cards-excellence', cat: 'cards', icon: '⭐', title: 'Excellence cards',
-  short: 'The 5 Excellence cards, each with a Seed, Sapling and Oak question.',
-  body: `<p>The [[excellence]] deck. Your ring picks the question: 🌱 [[seedlands|Seed]], 🌿 [[sapling-path|Sapling]] or 🌳 [[oak-circle|Oak]]. Asking for a [[lighter-tier]] moves you up the same card.</p>
-<div data-deck="value:1"></div>` },
+{ id: 'cards-ring-2', cat: 'cards', icon: '🃏', title: 'Ring 2 cards (a story)',
+  short: 'A story from your life, for the first time you step into Ring 2.',
+  body: `<p>Drawn the first time you step into [[ring|Ring 2]]. Each asks for a short story from your own life. See [[ring-card]].</p>
+<div data-deck="ring:2"></div>` },
 
-{ id: 'cards-resilience', cat: 'cards', icon: '🎋', title: 'Resilience cards',
-  short: 'The 5 Resilience cards, each with a Seed, Sapling and Oak question.',
-  body: `<p>The [[resilience]] deck. Your ring picks the question: 🌱 [[seedlands|Seed]], 🌿 [[sapling-path|Sapling]] or 🌳 [[oak-circle|Oak]]. Asking for a [[lighter-tier]] moves you up the same card.</p>
-<div data-deck="value:2"></div>` },
+{ id: 'cards-ring-1', cat: 'cards', icon: '🃏', title: 'Ring 1 cards (deep)',
+  short: 'Deep questions for the first time you step into Ring 1.',
+  body: `<p>Drawn the first time you step into [[ring|Ring 1]], next to the World Tree. Take your time. See [[ring-card]].</p>
+<div data-deck="ring:1"></div>` },
 
-{ id: 'cards-authenticity', cat: 'cards', icon: '🪞', title: 'Authenticity cards',
-  short: 'The 5 Authenticity cards, each with a Seed, Sapling and Oak question.',
-  body: `<p>The [[authenticity]] deck. Your ring picks the question: 🌱 [[seedlands|Seed]], 🌿 [[sapling-path|Sapling]] or 🌳 [[oak-circle|Oak]]. Asking for a [[lighter-tier]] moves you up the same card.</p>
-<div data-deck="value:3"></div>` },
-
-{ id: 'cards-open-mindedness', cat: 'cards', icon: '💡', title: 'Open-mindedness cards',
-  short: 'The 5 Open-mindedness cards, each with a Seed, Sapling and Oak question.',
-  body: `<p>The [[open-mindedness]] deck. Your ring picks the question: 🌱 [[seedlands|Seed]], 🌿 [[sapling-path|Sapling]] or 🌳 [[oak-circle|Oak]]. Asking for a [[lighter-tier]] moves you up the same card.</p>
-<div data-deck="value:4"></div>` },
-
-{ id: 'cards-sustainability', cat: 'cards', icon: '🌍', title: 'Sustainability cards',
-  short: 'The 5 Sustainability cards, each with a Seed, Sapling and Oak question.',
-  body: `<p>The [[sustainability]] deck. Your ring picks the question: 🌱 [[seedlands|Seed]], 🌿 [[sapling-path|Sapling]] or 🌳 [[oak-circle|Oak]]. Asking for a [[lighter-tier]] moves you up the same card.</p>
-<div data-deck="value:5"></div>` },
-
-{ id: 'cards-heartwood', cat: 'cards', icon: '💛', title: 'Heartwood cards',
-  short: 'The deck for the centre: legacy questions, no value.',
-  body: `<p>Asked in the [[heartwood]], worth 4 points. These belong to no value.</p>
+{ id: 'cards-heartwood', cat: 'cards', icon: '💛', title: 'Heartwood questions',
+  short: 'The questions for placing fruit on the World Tree.',
+  body: `<p>One of these each time you place fruit on the [[world-tree]]. See [[heartwood-question]].</p>
 <div data-deck="heartwood"></div>` },
 
-{ id: 'cards-bond', cat: 'cards', icon: '🌙', title: 'Bond and statement cards',
-  short: 'What pairs talk about at Dusk, season by season.',
-  body: `<p>At [[dusk]], each [[fireside-chat]] pair gets a [[bond-card]] for that season. A pair or trio forming an [[alliance]] gets the statement card instead.</p>
-<div data-deck="bond"></div>` },
+{ id: 'cards-harvest', cat: 'cards', icon: '📖', title: 'Harvest stories',
+  short: 'The harvest prompt for each of the six values.',
+  body: `<p>When you [[harvest]], the value is the value of the tree's [[sector]]. See [[harvest-story]].</p>
+<div data-deck="harvest"></div>` },
 
-{ id: 'cards-statement-pairs', cat: 'cards', icon: '🤝', title: 'Statement tips: pairs',
-  short: 'For the Keeper: where two values meet, and example lines.',
-  body: `<p>When an alliance of two is stuck on its [[statement]], the [[keeper]] sees the tip for its exact values: where they meet (or pull against each other), and three example lines to spark ideas, not to copy.</p>
-<div data-deck="tips:2"></div>` },
+{ id: 'cards-treasures', cat: 'cards', icon: '💎', title: 'Treasure cards',
+  short: 'The three treasures, their meanings and group moments.',
+  body: `<p>When a [[treasure]] is found, everyone answers its question in one sentence. See [[group-moment]].</p>
+<div data-deck="treasures"></div>` },
 
-{ id: 'cards-statement-trios', cat: 'cards', icon: '🤝', title: 'Statement tips: trios',
-  short: 'For the Keeper: where three values meet, and example lines.',
-  body: `<p>When an alliance grows to three, it writes a new [[statement]] that holds all three values. These are the [[keeper]]'s tips.</p>
-<div data-deck="tips:3"></div>` },
-
-{ id: 'cards-squirrel', cat: 'cards', icon: '🐿️', title: 'Squirrel follow-ups',
-  short: 'The follow-up questions a Squirrel asks.',
-  body: `<p>When someone plays a [[squirrel]] after a share, the big screen gives them one of these to ask.</p>
-<div data-deck="squirrel"></div>` },
-
-{ id: 'cards-campfire', cat: 'cards', icon: '🔥', title: 'Campfire questions',
-  short: 'One-sentence questions everyone answers around the table.',
-  body: `<p>When a [[campfire]] is found, everyone answers one of these in a single sentence.</p>
-<div data-deck="campfire"></div>` },
+{ id: 'cards-roles', cat: 'cards', icon: '🧩', title: 'Role cards',
+  short: 'The nine Enneagram roles, as the game shows them.',
+  body: `<p>The Keeper gives each player 1 to 3 of these. See [[roles]].</p>
+<div data-deck="roles"></div>` },
 
 // ───────────── Your phone
 { id: 'your-phone', cat: 'phone', icon: '📱', title: 'Your phone',
-  short: 'Mostly face down. Four private jobs; everything else, say it aloud.',
+  short: 'Face down. It only shows what is private to you.',
   body: `
-<p>Heartwood is about the people in the room, so your phone stays face down. Everything public happens on the big screen: you say what you want and the [[keeper]] taps it.</p>
-<h3>What your phone does</h3>
+<p>Your phone stays face down (see [[phones-down]]). Everything public happens on the big screen: you say it, and the [[keeper]] taps it.</p>
+<h3>What your phone shows</h3>
 <ul>
-  <li>🦉 Shows the colleague you're the [[secret-owl]] for. Tap to reveal.</li>
-  <li>🌰 After someone else shares, lets you [[trust-acorn|give trust]]. It's private: a gift, not a grade.</li>
-  <li>🌙 At [[dusk]], lets you choose your partner, and shows your [[bond-card]].</li>
-  <li>❓ At the [[finale]], takes your guess of your own Secret Owl.</li>
+  <li>🦉 The colleague you watch as their [[secret-owl]].</li>
+  <li>💧🍎💎 What you carry, and which [[ring|rings]] you have reached.</li>
+  <li>🧩 Your [[roles]], as a reminder.</li>
+  <li>👀 Your private looks: the [[individualist]]'s peek, the [[investigator]]'s Forest Breath and weather.</li>
+  <li>🌰 <b>Give trust</b> after someone else's [[share]]: see [[trust-acorn]].</li>
+  <li>❓ Your [[guess]] at the end.</li>
 </ul>
-<p>It also reminds you of your [[enneagram-powers]] and how many trust acorns and [[squirrel|Squirrels]] you have.</p>
 <h3>Say it, and the Keeper taps it</h3>
 <div class="tablewrap"><table>
 <tr><th>You say</th><th>The Keeper taps</th></tr>
-<tr><td>"I stand for Resilience, because…" (planting)</td><td>An outer space of that value</td></tr>
-<tr><td>"One step into Authenticity." / "Stop here."</td><td>The space, then <b>Stop here and discover</b></td></tr>
-<tr><td>(you start talking)</td><td><b>Start sharing</b>, then <b>They're done sharing</b></td></tr>
-<tr><td>"Another card." / "Lighter, please." / "Pass."</td><td>Draw again / Lighter tier / Pass this turn</td></tr>
-<tr><td>"I use Momentum."</td><td>The power</td></tr>
-<tr><td>(a hand up after a share)</td><td>🐿️ the Squirrel follow-up</td></tr>
-<tr><td>"Two of the three were true."</td><td>2, at the tribute</td></tr>
-</table></div>` },
+<tr><td>"I stand for Resilience, because…"</td><td>Your value and a Ring 4 hex</td></tr>
+<tr><td>"I move into Authenticity." / "I explore here."</td><td>The hex, then the action</td></tr>
+<tr><td>"I pass Mei one water."</td><td>The [[pass]]</td></tr>
+<tr><td>(the story ends)</td><td><b>Done sharing</b></td></tr>
+<tr><td>"That's my turn."</td><td><b>End turn</b></td></tr>
+</table></div>
+<p>If your phone loses its connection, see [[live-badge]] and [[rejoin-code]].</p>` },
 
 { id: 'live-badge', cat: 'phone', icon: '🟢', title: 'Live badge',
   short: 'Shows whether your phone is connected. It catches up by itself.',
@@ -983,8 +920,8 @@ const W = [
 <p>The small badge in the corner of your phone shows your connection:</p>
 <div class="tablewrap"><table>
 <tr><th>Badge</th><th>Meaning</th></tr>
-<tr><td>● Live</td><td>Connected. Everything updates instantly.</td></tr>
-<tr><td>● Reconnecting…</td><td>The Wi-Fi dropped. It's trying again.</td></tr>
+<tr><td>● Live</td><td>Connected. Everything updates at once.</td></tr>
+<tr><td>● Reconnecting…</td><td>The Wi-Fi dropped. It is trying again.</td></tr>
 <tr><td>● Offline</td><td>No connection. It catches up by itself once the Wi-Fi is back.</td></tr>
 </table></div>
 <p>Nothing you did is lost. If the browser closed, see [[rejoin-code]].</p>` },
@@ -996,14 +933,14 @@ const W = [
   <li><b>Same phone and browser:</b> open the game again and tap <b>Continue as</b> your name.</li>
   <li><b>Different phone or browser:</b> ask the [[keeper]] for a 4-digit rejoin code, and enter it under <b>Rejoin with a code</b>.</li>
 </ul>
-<p>You come back with everything: your resources, powers, cards and who you're the [[secret-owl]] for.</p>` },
+<p>You come back with everything: your water, fruit, treasure, roles, trust acorns and who you are the [[secret-owl]] for.</p>` },
 ];
 
 // ───────────── rendering
 const byId = Object.fromEntries(W.map(e => [e.id, e]));
 const main = document.getElementById('main');
 const q = document.getElementById('q');
-const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 function links(html) {
   return html.replace(/\[\[([a-z0-9-]+)(?:\|([^\]]+))?\]\]/g, (m, id, text) => {
@@ -1017,52 +954,59 @@ function tile(e) {
   return `<a class="tile" href="#${e.id}"><span class="ic">${e.icon}</span><span><b>${esc(e.title)}</b><small>${esc(e.short)}</small></span></a>`;
 }
 
-// Card decks come from the game itself, so these pages always match what's dealt.
+// Card decks come from the game itself (GET /api/cards), so these pages always match what's dealt:
+// {values, ringDecks:{1:[],2:[],3:[]}, heartwood:[], harvest:"…", treasures:[{id,icon,name,meaning,question}], roles:[{type,name,text}]}
 let CARDS = null;
-const TIERS = [['🌱', 'Seed', '45 s'], ['🌿', 'Sapling', '60 s'], ['🌳', 'Oak', '90 s']];
+const RING_DEPTH = { 1: 'deep', 2: 'a story', 3: 'light' };
+function harvestLine(tpl, name) {
+  const t = String(tpl || 'Tell us a story from your own life about {Value}.');
+  return /\{value\}|%s/i.test(t) ? t.replace(/\{value\}|%s/gi, name) : `${t} (${name})`;
+}
 function deckHTML(deck) {
-  const C = CARDS, li = xs => `<ol>${xs.map(x => `<li>${esc(x)}</li>`).join('')}</ol>`;
+  const C = CARDS || {}, li = xs => `<ol>${(xs || []).map(x => `<li>${esc(x)}</li>`).join('')}</ol>`;
   const [kind, arg] = deck.split(':');
-  if (kind === 'value') {
-    const v = C.values[+arg];
-    return `<p class="muted">${v.icon} ${esc(v.name)} · <i>${esc(v.tagline)}</i></p>` + C.regionCards[+arg].map((card, k) =>
-      `<div class="box"><h3 style="margin-top:0">Card ${k + 1}${C.threads[+arg]?.[k] ? ` · ${esc(C.threads[+arg][k])}` : ''}</h3>` +
-      card.map((q, t) => `<p>${TIERS[t][0]} <b>${TIERS[t][1]}</b> <span class="muted">(${TIERS[t][2]})</span><br>${esc(q)}</p>`).join('') + `</div>`).join('');
+  if (kind === 'ring') {
+    const xs = (C.ringDecks || {})[arg] || [];
+    return `<p class="muted">Ring ${arg} · ${RING_DEPTH[arg] || ''} · ${xs.length} cards</p>` + li(xs);
   }
-  if (kind === 'heartwood') return li(C.heartwood);
-  if (kind === 'squirrel') return li(C.squirrel);
-  if (kind === 'campfire') return li(C.campfire);
-  if (kind === 'bond') return C.bond.map((xs, i) => `<h3>Season ${i + 1}</h3>${li(xs)}`).join('') +
-    `<h3>Statement card (alliances)</h3><div class="box"><p>${esc(C.statementCard)}</p></div>`;
-  if (kind === 'tips') {
-    const byLetter = Object.fromEntries(C.values.map(v => [v.letter, v]));
-    return C.statementTips.filter(t => t.key.length === +arg).map(t => `<div class="box">
-      <h3 style="margin-top:0">${[...t.key].map(l => `${byLetter[l].icon} ${esc(byLetter[l].name)}`).join(' + ')}</h3>
-      <p><i>${esc(t.common)}</i></p>${li(t.examples)}</div>`).join('');
-  }
+  if (kind === 'heartwood') return `<p class="muted">${(C.heartwood || []).length} questions</p>` + li(C.heartwood);
+  if (kind === 'harvest') return (C.values || []).map(v => `<div class="box"><h3 style="margin-top:0">${esc(v.icon)} ${esc(v.name)}</h3>
+      <p><b>${esc(harvestLine(C.harvest, v.name))}</b></p><p class="muted"><i>${esc(v.tagline)}</i></p></div>`).join('');
+  if (kind === 'treasures') return (C.treasures || []).map(t => `<div class="box"><h3 style="margin-top:0">${esc(t.icon)} ${esc(t.name)}</h3>
+      <p><i>${esc(t.meaning)}</i></p><p><b>${esc(t.question)}</b></p></div>`).join('');
+  if (kind === 'roles') return `<div class="tablewrap"><table><tr><th>Type</th><th>Role</th><th>What it does</th></tr>` +
+    (C.roles || []).map(r => `<tr><td>${esc(r.type)}</td><td><b>${esc(r.name)}</b></td><td>${esc(r.text)}</td></tr>`).join('') + `</table></div>`;
   return '';
+}
+function safeDeck(deck) {
+  try { return deckHTML(deck); } catch (err) { return `<p class="empty">Couldn't show these cards.</p>`; }
 }
 function fillDecks() {
   main.querySelectorAll('[data-deck]').forEach(el => {
-    el.innerHTML = CARDS ? deckHTML(el.dataset.deck)
-      : CARDS === false ? `<p class="empty">Couldn't load the cards. Open the wiki from the game's own address.</p>`
+    el.innerHTML = CARDS ? safeDeck(el.dataset.deck)
+      : CARDS === false ? `<p class="empty">Couldn't load the cards. Open the wiki from the game's own address (for example https://heartwood.zera.edu.my/wiki.html).</p>`
       : `<p class="muted">Loading the cards…</p>`;
   });
 }
-fetch('/api/cards').then(r => r.ok ? r.json() : Promise.reject()).then(d => {
-  CARDS = d;
-  // Let the index search find any question.
-  for (const e of W) {
-    const m = e.body.match(/data-deck="([^"]+)"/);
-    if (m) e.extra = deckHTML(m[1]).replace(/<[^>]+>/g, ' ');
-  }
-}).catch(() => { CARDS = false; }).finally(route);
+function loadCards() {
+  let p;
+  try { p = fetch('/api/cards'); } catch (err) { p = Promise.reject(err); }
+  p.then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status))).then(d => {
+    CARDS = d && typeof d === 'object' ? d : false;
+    if (!CARDS) return;
+    // Let the index search find any question.
+    for (const e of W) {
+      const m = e.body.match(/data-deck="([^"]+)"/);
+      if (m) e.extra = safeDeck(m[1]).replace(/<[^>]+>/g, ' ');
+    }
+  }).catch(() => { CARDS = false; }).finally(route);
+}
 
 function renderIndex(filter) {
   const f = (filter || '').trim().toLowerCase();
   const match = e => !f || (e.title + ' ' + e.short + ' ' + e.body.replace(/<[^>]+>/g, ' ') + ' ' + (e.extra || '')).toLowerCase().includes(f);
-  let html = f ? '' : `<div class="hero"><div class="seed">📖</div><h1>Heartwood Wiki</h1>
-    <p>Every term in the game, one page each. Tap a term to read it; links inside each page lead to the next.</p></div>`;
+  let html = f ? '' : `<div class="hero"><div class="seed">📖</div><h1>World Tree Wiki</h1>
+    <p>Every term in the game, one page each. Tap a term to read it; links inside each page lead to the next. For the whole game in one page, see <a href="howto.html">How to play</a>.</p></div>`;
   let any = false;
   for (const [cat, name] of CATS) {
     const items = W.filter(e => e.cat === cat && match(e));
@@ -1082,7 +1026,7 @@ function renderEntry(e) {
   // "Mentioned here" chips: every page this one links to, in order, without repeats.
   const refs = [...new Set([...e.body.matchAll(/\[\[([a-z0-9-]+)/g)].map(m => m[1]))].filter(id => id !== e.id && byId[id]);
   // "Linked from": pages that link to this one.
-  const back = W.filter(x => x !== e && x.body.includes('[[' + e.id)).map(x => x.id).filter(id => !refs.includes(id));
+  const back = W.filter(x => x !== e && new RegExp('\\[\\[' + e.id + '[\\]|]').test(x.body)).map(x => x.id).filter(id => !refs.includes(id));
   const chips = ids => ids.map(id => `<a href="#${id}">${byId[id].icon} ${esc(byId[id].title)}</a>`).join('');
   main.innerHTML = `
     <p class="crumbs"><a href="#">Wiki</a> › ${cat}</p>
@@ -1105,11 +1049,11 @@ function route() {
   const e = byId[id];
   if (e) {
     q.value = '';
-    document.title = e.title + ' · Heartwood Wiki';
+    document.title = e.title + ' · World Tree Wiki';
     renderEntry(e);
     window.scrollTo(0, 0);
   } else {
-    document.title = 'Heartwood Wiki';
+    document.title = 'World Tree Wiki';
     renderIndex(q.value);
   }
 }
@@ -1120,6 +1064,7 @@ q.addEventListener('input', () => {
 });
 window.addEventListener('hashchange', route);
 route();
+loadCards();
 </script>
 </body>
 </html>

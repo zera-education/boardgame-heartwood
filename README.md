@@ -1,7 +1,14 @@
 # Heartwood (digital)
 
-The digital version of the board game in `../design-v0.md`. It runs as a Go server backed by SQLite, with a plain
-HTML/JS/CSS frontend embedded in the binary. How to play, for players: `/howto.html`; one page per term: `/wiki.html`.
+The digital Heartwood board game. Its current design is **World Tree**: a cooperative forest game for 6 to 12 school
+leaders, played in one room around an animated Keeper screen. The team explores a face-down forest of 61 hexes, grows a
+Big Tree in each of the six ZERAOS value sectors, harvests fruit while telling stories, finds three treasures and
+gathers on the World Tree in the centre. Its purpose: leaders get to know each other while working as one team. There
+are no points and no winner among the players; trust acorns and the Secret Owl stay as recognition.
+
+It runs as a Go server backed by SQLite, with a plain HTML/JS/CSS frontend embedded in the binary. How to play, for
+players: `/howto.html`; one page per term: `/wiki.html`. The binding rules are in
+`docs/plan/world-tree/build-contract.md` (the approved proposal: `docs/plan/world-tree/ui-proposal.html`).
 
 ## Live
 
@@ -15,8 +22,8 @@ DNS is Cloudflare, proxied.
 ```sh
 cd ~/lab/heartwood
 make run        # build and serve on http://localhost:8490 (data in heartwood.db)
-make test       # full 4-player game + playtest rule fixes
-make sim        # balance playtest: 4 × 2,000 bot games (~2 min)
+make test       # rules tests
+make sim        # balance playtest with team bots
 make deploy     # test, push to GitHub, then on the EC2: git pull, build, run deploy/install.sh
 make logs       # the service log on the EC2
 ```
@@ -29,19 +36,23 @@ Locally, the server prints the address phones on the same Wi-Fi should use, and 
 
 ## Screens
 
-- **`/` → Create a new game**: opens the **board** (`board.html?g=CODE`) for the projector. Whoever creates the game is
-  the Keeper; the Keeper controls (Enneagram powers, start, next player, Dusk pairs, next season, tributes, timers) appear only on that
-  browser. Under **Help a player rejoin · Keeper on another device** the Keeper can issue a 4-digit rejoin code
-  (one use, 10 minutes) or get a link that moves the Keeper controls to another device.
-- **Players say it, the Keeper taps it.** Every public action (plant, step, discover, share timer, draw again, lighter,
-  pass, powers, Squirrel follow-ups, tribute confirm) is tapped by the Keeper on the board, acting for that player
-  (`as` on the action; the server refuses `trust`, `duskChoice` and `guess` from the Keeper). The phone keeps only the
-  private jobs: the Secret Owl name, Give trust, the Dusk choice and Bond card (or typing the alliance statement), the
-  Secret Owl guess, and a reminder of your powers.
-- **Players** scan the QR code or open `play.html?g=CODE`. They pick a name and a colour. In the lobby the Keeper gives
-  each player **1 to 3 Enneagram types** (the game can't start until everyone has one); each type gives one power
-  they can activate once per game. Their seat is kept in the URL (`&p=…`) and on the
-  device, so a reload or a reopened browser goes straight back to it.
+- **`/` → Create a new game**: opens the **Keeper screen** (`board.html?g=CODE`) for the projector. Whoever creates
+  the game is the Keeper; the Keeper controls (Enneagram types, start, acting for players, Done sharing, End turn,
+  timers, the tribute chain) appear only on that browser. Under **Help a player rejoin · Keeper on another device** the
+  Keeper can issue a 4-digit rejoin code (one use, 10 minutes) or get a link that moves the Keeper controls to another
+  device.
+- **The Keeper screen is animated.** It shows the forest (61 hexes, weather tint per sector, plants, dead leaves,
+  pawns), the three goals, each player's water, fruit and treasure, the open share card and the trail log. Everything
+  that happens is played as animation from the view's `events`.
+- **Players say it, the Keeper taps it. Phones down.** Every public action (enter, move, explore, sow, water, tend,
+  clear, harvest, take, drink, pass, end turn) is tapped by the Keeper, acting for that player (`host` + `as`). The
+  server refuses `trust`, `investigate` and `guess` from the Keeper. The phone keeps only private things: the Secret
+  Owl name, what you carry, rings reached, your roles, private looks (Individualist peek, Investigator forecast and
+  weather look), Give trust, and the Secret Owl guess.
+- **Players (6 to 12)** scan the QR code or open `play.html?g=CODE`, pick a name and one of 12 colours. Join refuses a
+  13th player; Start needs at least 6 and every player needs at least one Enneagram type (the Keeper gives 1 to 3 in
+  the lobby). Their seat is kept in the URL (`&p=…`) and on the device, so a reload or a reopened browser goes straight
+  back to it.
 - Every screen shows a connection badge: **● Live**, **● Reconnecting…** or **● Offline**.
 
 ## Realtime
@@ -52,53 +63,54 @@ actor's new view, so taps feel instant. Clients keep the newest view by version 
 45 s without a heartbeat as a dead connection, open a fresh socket after a phone wakes up, and poll slowly while the
 socket is down. Screens redraw only the parts that changed.
 
+Each view also carries `events` (the last 80, with increasing ids: `move`, `flip`, `grow`, `harvest`, `clear`,
+`take`, `drink`, `pass`, `place`, `treasure`, `tide`, `wake`, `dry`). The Keeper screen plays the events it hasn't seen
+yet as animation: pawns slide, tiles flip, plants grow, leaves drift in at the Forest Tide. Private results (the
+Individualist's peek, the Investigator's look) go only into that player's `me`, never into events.
+
 It used server-sent events before. Browsers allow only six open HTTP/1.1 connections per host, so a board plus five
 player tabs on one computer froze every other request. WebSockets don't share that limit (tested with 12).
 
 ## Flow
 
-Lobby → plant seeds (each player says which ZERAOS value they stand for) → 3 seasons (each a round of turns, then
-Dusk) → alliance stories → Secret Owl guesses → tribute chain → scores.
+Lobby → **enter** (in turn order, each player chooses the value they stand for and a Ring 4 hex of its sector, and
+says why) → **turns** (clockwise, up to 2 actions each; after the last player the **Forest Tide** runs by itself: new
+weather per sector, rain grows Seeded/Grass, sun dries players not on a Big Tree, Forest Breath drifts dead leaves one
+ring inward) → the game ends the moment the forest **wakes** (a Big Tree in every sector, every player has placed a
+fruit, all 3 treasures placed, everyone on the World Tree) or every player is at 0 water → **guess** (Secret Owl, on
+the phones) → **chain** (tribute chain around the Secret Owl loop) → **end** (result and recognition: trust received
+and from how many people, the Secret Owl, guessed right, stayed hidden).
 
-The six map values are ZERA's core values, ZERAOS (Zealous, Excellence, Resilience, Authenticity, Open-mindedness,
-Sustainability), clockwise from the top; `Values` in `content.go` holds each one's tagline, description, icon and colour.
-An **alliance** is 2 or 3 players who stand for different values. It forms at Dusk when two players choose each other
-and both tick alliance; an alliance of two grows to three when a member and a newcomer (a third value) choose each
-other, and the other member joins that Dusk conversation. Alliances never merge. Each new or grown alliance types one
-**statement** that holds all its values (any member, on the phone, until the next season starts); the Keeper sees a
-hint and example lines for that value combination (`StatementTips`, keyed by value letters, e.g. `"ERS"`). Scoring:
-Trust + Growth + **Advocacy** (3 per value the player's alliance stands for that got an Oak story, or a Heartwood
-story from someone who stands for it) + Secret Owl.
-There are no resources to manage: a player moves up to 3 spaces a turn, free, through the rings open that season, and
-alliances cost nothing. 26 discoveries sit on the 36 spaces around the Heartwood; the other 10 are empty clearings.
-On a turn the player speaks and the Keeper taps: neighbouring spaces to step → *Stop here and discover* → the prompt
-shows on the board → *Start sharing* (timer) → *They're done sharing* → listeners tap *Give trust* on their phones →
-*Next player*. A player may draw again once, take a lighter question, or pass the turn (no card, no points). At Dusk, a pair that asked for an alliance but didn't get
-one is told why.
+Shares queue up and pause play until the Keeper taps Done sharing: *why* (entering), *ring* cards (the first time a
+player reaches Ring 3, 2 and 1: light, a story, deep), *harvest* stories (about the value of the tree's sector),
+*Heartwood* questions (one per placing that includes fruit) and *treasure* group moments (everyone answers; no trust).
+Listeners may give one trust acorn per share from their 10. Springs are the only way to refill water and never run
+dry; placing on the World Tree is automatic.
 
-## Powers (one per Enneagram type, used once)
+## Roles (Enneagram types, always on)
 
-Balanced with the simulation: in 10-player games every power wins 8.4–12.5% of the time (fair share 10%).
-Common Ground (9) has no effect since alliances stopped depending on distance; it's due for a redesign with the other powers.
+The Keeper gives each player 1 to 3 types in the lobby; several players may hold the same type.
 
-| Type | Power | When | Effect |
-|---|---|---|---|
-| 1 Reformer | True North | your turn, before sharing | look at 3 cards, choose 1; +1 bonus point |
-| 2 Helper | Open Hands | before sharing | invite someone to answer your question too; you both keep the card, +1 bonus point each |
-| 3 Achiever | Momentum | while moving | move up to 3 more spaces this turn |
-| 4 Individualist | Deep Water | before sharing | answer the question one tier deeper (up to Oak); it scores at your ring's tier |
-| 5 Investigator | Field Notes | while moving | see hidden discoveries next to you (open rings); claim one without moving |
-| 6 Loyalist | Rope Team | while moving | jump to an ally's space without using steps; you both +1 bonus point |
-| 7 Enthusiast | Adventure | your turn | call a Campfire: everyone answers in one sentence; +1 bonus point |
-| 8 Challenger | Champion | after someone else's share | give them 2 trust acorns at once; +1 bonus point |
-| 9 Peacemaker | Common Ground | Dusk, before pairs | tonight's alliance works at any distance |
+| Type | Role | Effect |
+|---|---|---|
+| 1 | Reformer | Clear removes 2 layers of dead leaves (still 1 action in rain) |
+| 2 | Helper | Water or Tend a hex next to you without standing on it |
+| 3 | Achiever | After you Sow, the hex grows straight to Grass |
+| 4 | Individualist | When you Explore, also peek at one face-down hex next to you (phone only) |
+| 5 | Investigator | Always sees the next Forest Breath; once a round, on their turn, sees one sector's next weather |
+| 6 | Loyalist | Plants on your hex and next to you don't lose a stage to dead leaves |
+| 7 | Enthusiast | Once a turn, one Move may go 2 hexes (no fog, no sealed hexes) |
+| 8 | Challenger | May enter sealed hexes, and bring one teammate from the same hex when moving |
+| 9 | Peacemaker | Teammates in a chain up to 2 hexes long through you can pass things to each other |
 
 ## Files
 
-- `game.go`: rules engine (map, turns, discoveries, trust, Dusk, powers, finale, scoring)
-- `content.go`: card text and powers (edit prompts here)
-- `main.go`: HTTP API, WebSocket live updates, rejoin codes, QR codes, SQLite (`games` holds each game's state as
-  JSON; `events` logs every action)
+- `game.go`: rules engine (board, tiles, turns and actions, weather, Forest Tide, shares, trust, Secret Owl, finale)
+- `content.go`: values, ring decks, Heartwood questions, the harvest prompt, treasures, roles, colours (edit prompts here)
+- `main.go`: HTTP API, WebSocket live updates, rejoin codes, QR codes, `/api/cards`, SQLite (`games` holds each game's
+  state as JSON; `events` logs every action)
 - `game_test.go`, `sim_test.go`: rules tests and the bot balance simulation
-- `web/`: `board.html` (projector), `play.html` (phone), `howto.html` (rules for players), `wiki.html` (one page per term, all content in its script; link with `[[id]]`), `common.js` (connection,
-  board drawing, timers), `style.css`
+- `web/`: `board.html` (Keeper screen), `play.html` (phone), `index.html` (create a game), `howto.html` (rules for
+  players), `wiki.html` (one page per term, all content in its script; link with `[[id]]`; card pages filled from
+  `/api/cards`), `common.js` (connection, timers, helpers), `style.css`
+- `docs/plan/world-tree/`: build contract, approved UI proposal, and the JS rules engine and sim it was designed with
