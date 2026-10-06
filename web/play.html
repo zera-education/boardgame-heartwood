@@ -733,7 +733,7 @@ function turnPanel(v, me) {
   const left = Math.max(0, Math.min(per, t.actions ?? per));
   if (t.player === me.id) return { cls: 'hot', html: `${sign('Your turn', '#f2a62a')}
     <div class="turnrow"><p class="lead" style="margin:0">Say your moves aloud.</p>${leaves(left, per)}</div>
-    <p class="small">${left} of ${per} action${per === 1 ? '' : 's'} left. The Keeper taps them on the big screen. Passing water, fruit or a treasure is free.</p>
+    <p class="small">${left} of ${per} action${per === 1 ? '' : 's'} left. The Keeper taps them on the big screen. Passing water, fruit or a treasure is free on your turn.</p>
     ${me.water === 0 ? zeroWater() : ''}` };
   const cur = player(t.player);
   const nextUp = (() => { const o = v.order, i = o.indexOf(t.player); return i >= 0 && o.length ? o[(i + 1) % o.length] : ''; })();
@@ -742,7 +742,7 @@ function turnPanel(v, me) {
     <p class="small">${nextUp === me.id ? "<b>You're next:</b> think about your 2 actions." : 'Phones down: help them plan out loud.'}</p>
     ${me.water === 0 ? zeroWater() : ''}` };
 }
-const zeroWater = () => `<div class="alert"><span style="filter:grayscale(1);opacity:.6;line-height:0">${A.drop(30)}</span><span>0 water. You can't move until someone passes you 1 water.</span></div>`;
+const zeroWater = () => `<div class="alert"><span style="filter:grayscale(1);opacity:.6;line-height:0">${A.drop(30)}</span><span>0 water. You can't move until a teammate on your hex passes you 1 water on their turn.</span></div>`;
 
 function sharePanel(v, me) {
   const s = v.share, isMe = s.player === me.id, sp = player(s.player);

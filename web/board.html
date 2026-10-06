@@ -15,6 +15,7 @@
 <div id="k-map" aria-label="The forest board"></div>
 <div id="k-dim" hidden></div>
 <header id="k-tl" class="k-sign k-still"></header>
+<aside id="k-q" class="k-sign k-still" hidden aria-label="Turn order"></aside>
 <aside id="k-tr" class="k-sign k-still" hidden></aside>
 <div id="k-pop"></div>
 <div id="k-tray"></div>
@@ -78,7 +79,7 @@ async function act(type, extra = {}, okMsg) {
 const actAs = (pid, type, extra, okMsg) => act(type, { as: pid, ...extra }, okMsg);
 
 // Keeper choices on this screen that aren't sent yet.
-const ui = { value: null, mode: null, bring: '', passFrom: '', pass: false, scope: '', confirmEnd: false, hidePanel: false,
+const ui = { value: null, mode: null, bring: '', pass: false, scope: '', confirmEnd: false, hidePanel: false,
   drawer: store.get('hw-drawer', false), tip: '' };
 
 // ---------- small drawings for the HUD (ART markup, memoised) ----------
@@ -133,7 +134,8 @@ function moveTargets(v, p) {
       for (const j of B.adj[m]) if (j !== p.pos && !sealed(v, j) && wxOf(v, j) !== 'fog' && !one.includes(j) && !two.includes(j)) two.push(j);
   return { one, two };
 }
-// Passing: on the same hex, or between a Peacemaker and a teammate on a neighbouring hex (either way).
+// Passing: on the giver's own turn, on the same hex, or between a Peacemaker and a teammate on a neighbouring
+// hex (either way).
 function canPass(v, a, b) {
   if (!a || !b || a.id === b.id || a.pos < 0 || b.pos < 0) return false;
   if (a.pos === b.pos) return true;
@@ -243,7 +245,7 @@ function buildBoard(v) {
   L.hit.addEventListener('click', e => { const g = e.target.closest('.k-h'); if (g) onHex(+g.dataset.i); });
   // tapping a medallion means the hex it stands on; pointing at one lights that hex
   L.med.addEventListener('click', e => { const m = e.target.closest('.k-med'); if (m && m.dataset.hex) onHex(+m.dataset.hex); });
-  const hov = i => { L.hit.querySelector('.k-h.hov')?.classList.remove('hov'); if (i != null) L.hit.querySelector(`.k-h[data-i="${i}"]`)?.classList.add('hov'); };
+  const hov = i => { L.hit.querySelector('.k-h.hov')?.classList.remove('hov'); if (i != null && i >= 0) L.hit.querySelector(`.k-h[data-i="${i}"]`)?.classList.add('hov'); };
   L.med.addEventListener('mouseover', e => { const m = e.target.closest('.k-med'); hov(m ? m.dataset.hex : null); });
   L.med.addEventListener('mouseout', e => { if (!e.relatedTarget?.closest?.('.k-med')) hov(null); });
   L.med.innerHTML = order.map(i => `<g data-m="${i}"></g>`).join('');
@@ -255,14 +257,17 @@ function buildBoard(v) {
   hx.forEach((h, i) => { const [x, y] = xy[i]; x0 = Math.min(x0, x - 36); x1 = Math.max(x1, x + 36); y0 = Math.min(y0, y - 62); y1 = Math.max(y1, y + 24 + ART.depth(h.ring) + 7); });
   y0 = Math.min(y0, xy[0][1] - 4.75 * S);
   SIGN.forEach(([x, y]) => { x0 = Math.min(x0, x - 50); x1 = Math.max(x1, x + 50); y0 = Math.min(y0, y - 44); y1 = Math.max(y1, y + 22); });
-  B = { code: v.code, n: hx.length, hx, xy, adj, order, L, sc, tw, ow, hg, dusk, mg, fx: L.fx.firstChild,
+  B = { code: v.code, n: hx.length, hx, xy, adj, order, L, sc, tw, ow, hg, dusk, mg, fx: L.fx.firstChild, hov,
     tk: [], ok: [], meds: {}, medPos: {}, wk: [], awake: null, won: null, deep: null, bbox: [x0, y0, x1 - x0, y1 - y0], k: 1, vx: 0, vy: 0 };
+  const yUp = Math.min(y0, SIGN_UP[1] - 30);
+  B.bboxUp = [x0, yUp, x1 - x0, y1 - yUp];
   fit();
 }
 
 // Sector signs: weather badge + value badge + name, just outside each sector's outer edge (ZERAOS clockwise
 // from the top). Z and A slide sideways so the World Tree's crown and the action tray stay clear.
-const SIGN = [[206, -176], [282, -64], [246, 112], [-206, 178], [-282, 64], [-246, -112]];
+const SIGN = [[200, -176], [282, -64], [246, 112], [-206, 178], [-282, 64], [-246, -112]];
+const SIGN_UP = [118, -206];
 function signMarkup(v, s) {
   const x = v.values[s] || {}, w = v.weather[s] || 'sun', name = esc(x.name || ''), wd = Math.max(70, (x.name || '').length * 7.2 + 34);
   return `<g class="k-plaque"><rect x="${-wd / 2}" y="-1" width="${wd}" height="21" rx="10" fill="#6b3f1d" stroke="#2e1709" stroke-width="2.4"/>
@@ -275,7 +280,7 @@ function signMarkup(v, s) {
 // Fits the board's extent into the screen minus the HUD (the tray at the bottom, the drawer when open).
 // The tray's height is measured; within a phase the reserve only grows, so the board doesn't jump on every share.
 let trayMax = { phase: '', h: 0 };
-function trayReserve(v) { return v && ['enter', 'turn'].includes(v.phase) ? Math.max(trayMax.phase === v.phase ? trayMax.h : 0, Math.min(150, innerHeight * .15)) : 18; }
+function trayReserve(v) { return v && ['enter', 'turn'].includes(v.phase) ? Math.max(trayMax.phase === v.phase ? trayMax.h : 0, Math.min(110, innerHeight * .11)) : 18; }
 // HUD scale: 1 at 1920×1080, smaller on a laptop or an old projector, a little bigger on a 4K screen
 function hudScale() {
   const k = Math.max(.62, Math.min(1.3, innerWidth / 1920, innerHeight / 1080));
@@ -293,16 +298,28 @@ function fit() {
   const lobL = v?.phase === 'lobby' && document.querySelector('#k-modal .k-lob-l'), lobR = lobL && document.querySelector('#k-modal .k-lob-r');
   // (the value signs stick out past the hexes: keep them clear of the panels too)
   if (lobL && lobR && W >= 900) { left = lobL.getBoundingClientRect().right + 40; right = Math.max(right, W - lobR.getBoundingClientRect().left + 40); }
+  // the turn queue down the left side
+  const q = $('k-q');
+  if (!q.hidden && W >= 900) left = q.getBoundingClientRect().right + 12;
   const top = 6, bottom = trayReserve(v);
-  const aw = W - left - right, ah = H - top - bottom, [bx, by, bw, bh] = B.bbox;
-  const k = Math.min(aw / bw, ah / bh);
-  const vx = bx + bw / 2 - (left + aw / 2) / k, vy = by + bh / 2 - (top + ah / 2) / k;
+  const aw = W - left - right, ah = H - top - bottom;
+  const place = ([bx, by, bw, bh]) => { const k = Math.min(aw / bw, ah / bh); return { k, vx: bx + bw / 2 - (left + aw / 2) / k, vy: by + bh / 2 - (top + ah / 2) / k }; };
+  let f = place(B.bbox), z = SIGN[0];
+  // The Zealous sign stands right of the top row. Where the goal tracker covers that corner (a narrower screen),
+  // it moves up above the row, between the World Tree's crown and the tracker, and the board shrinks a little.
+  const tr = $('k-tr');
+  if (!tr.hidden) {
+    const r = tr.getBoundingClientRect();
+    if ((z[1] - 32 - f.vy) * f.k < r.bottom && (z[0] + 31 - f.vx) * f.k > r.left - 8) { z = SIGN_UP; f = place(B.bboxUp); }
+  }
+  if (z !== B.signZ) { B.signZ = z; B.L.air.querySelector('.k-sign-g[data-s="0"]').setAttribute('transform', `${TR(...z)} scale(.72)`); }
+  const { k, vx, vy } = f;
   const vb = `${vx.toFixed(2)} ${vy.toFixed(2)} ${(W / k).toFixed(2)} ${(H / k).toFixed(2)}`;
   if (vb === B.vb) return;
   B.vb = vb; B.k = k; B.vx = vx; B.vy = vy; B.fitKey = `${W}|${H}|${drawer}|${bottom}|${left}|${right}`;
   for (const n of LAYERS) B.L[n].setAttribute('viewBox', vb);
 }
-addEventListener('resize', () => { clearTimeout(fit.t); fit.t = setTimeout(() => { hudScale(); trayMax.h = 0; if (HW.view) renderTray(HW.view); fit(); }, 80); });
+addEventListener('resize', () => { clearTimeout(fit.t); fit.t = setTimeout(() => { hudScale(); trayMax.h = 0; if (HW.view) { renderTray(HW.view); renderQueue(HW.view); } fit(); }, 80); });
 
 // ---------- patching the board from a view ----------
 const isSealed = t => t && t.leaves >= 2;
@@ -453,7 +470,8 @@ function setSign(s, w, animated, delay = 0) {
   a.onfinish = () => {
     wb.innerHTML = ART.weatherBadge(w, { size: 38 });
     wb.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1.18)', offset: .7 }, { transform: 'scaleX(1)' }], { duration: 340, easing: 'ease-out', fill: 'forwards' });
-    if (!RM.matches) burst(SIGN[s][0], SIGN[s][1] - 21, '#fff3b0', 22, 420);
+    const at = (s === 0 && B.signZ) || SIGN[s];
+    if (!RM.matches) burst(at[0], at[1] - 21, '#fff3b0', 22, 420);
   };
 }
 
@@ -906,7 +924,7 @@ function render(v) {
   if (!B || B.code !== v.code || B.n !== v.hexes.length) buildBoard(v);
   // A new turn or phase drops half-made choices (a picked value, a Water target…).
   const scope = `${v.phase}|${v.current || ''}|${v.round}`;
-  if (scope !== ui.scope) { ui.scope = scope; ui.value = null; ui.mode = null; ui.bring = ''; ui.passFrom = ''; ui.pass = false; if (v.phase !== 'end') ui.hidePanel = false; }
+  if (scope !== ui.scope) { ui.scope = scope; ui.value = null; ui.mode = null; ui.bring = ''; ui.pass = false; if (v.phase !== 'end') ui.hidePanel = false; }
   if (v.share) { ui.mode = null; ui.pass = false; }
   const fresh = takeEvents(v);
   const evs = plan(v, prevView, fresh);
@@ -922,10 +940,11 @@ function render(v) {
   patchHighlights(v);
   run(v, evs);
   // the HUD
-  if (B.fitKey && !B.fitKey.endsWith('|' + trayReserve(v))) fit();
   renderTopLeft(v);
   renderGoals(v);
   renderTray(v);
+  renderQueue(v);
+  fit();
   renderPop(v);
   renderDrawer(v);
   renderModal(v);
@@ -937,15 +956,13 @@ function render(v) {
 
 // ---------- HUD: title, round, Forest Breath ----------
 function renderTopLeft(v) {
-  const order = v.order || [], lastP = order.length ? HW.player(order[order.length - 1]) : null;
   const playing = ['turn', 'guess', 'chain', 'end'].includes(v.phase) && v.round;
   const breath = v.breathCount || 0;
   let h = `<span class="k-sprig tr">${I.sprig(54, true)}</span><div class="k-logo">${I.world(v.result === 'won', 58)}<div><div class="k-title">World Tree</div>
     <div class="k-code">Game <b>${esc(v.code)}</b>${v.isHost ? '' : ' · <span class="k-vo">view only</span>'}</div></div></div>
     <div class="k-phase">${esc(HW.phaseTitle(v))}${playing && v.phase === 'turn' ? `<small> · Tide ${v.tide || 0}</small>` : ''}</div>`;
   if (v.phase === 'turn') h += `<div class="k-breath" title="Dead leaves the next Forest Tide blows onto the forest"><span class="k-lab">Forest Breath</span>
-    <span class="k-gusts">${[0, 1, 2, 3, 4, 5].map(k => I.dead(20, k + 1, k >= breath)).join('')}</span><b>${breath}</b></div>
-    ${lastP ? `<div class="k-next">Next Tide after <b>${esc(lastP.name)}</b>'s turn</div>` : ''}`;
+    <span class="k-gusts">${[0, 1, 2, 3, 4, 5].map(k => I.dead(20, k + 1, k >= breath)).join('')}</span><b>${breath}</b></div>`;
   h += `<div class="timer k-timer" data-timer></div>`;
   HW.patch($('k-tl'), h);
   $('k-tl').hidden = v.phase === 'lobby';
@@ -959,19 +976,53 @@ function renderGoals(v) {
   const ok = b => (b ? ' ok' : '');
   const bar = (a, b) => `<span class="k-bar"><i style="width:${b ? Math.round(100 * (a || 0) / b) : 0}%"></i></span>`;
   HW.patch(el, `<span class="k-sprig tl">${I.sprig(54)}</span><div class="k-gt-h">Wake the forest</div>
-    <div class="k-gt${ok(nTrees >= 6)}"><span class="k-gt-mid"><span class="k-gt-ic k-trees">${[0, 1, 2, 3, 4, 5].map(s => `<span title="${esc(v.values[s]?.name)}">${I.bigTree(s, 38, !!g.trees[s])}</span>`).join('')}</span><small>a Big Tree in every value</small></span><b>${nTrees}/6</b></div>
-    <div class="k-gt${ok(n && g.placedPlayers >= n)}"><span class="k-gt-ic">${I.fruit(30)}</span><span class="k-gt-mid"><small>everyone places a fruit</small>${bar(g.placedPlayers, n)}</span><b>${g.placedPlayers || 0}/${n}</b></div>
-    <div class="k-gt${ok(tr.length >= 3)}"><span class="k-gt-ic">${(v.treasures || []).map(x => `<span title="${esc(x.name)}">${tr.includes(x.id) ? I.treasure(x.id, 32) : I.ghost(32)}</span>`).join('')}</span><span class="k-gt-mid"><small>treasures</small></span><b>${tr.length}/3</b></div>
-    <div class="k-gt k-gt-world${ok(n && g.onTree >= n)}"><span class="k-gt-ic">${I.world(v.result === 'won', 32)}</span><span class="k-gt-mid"><small>everyone on the tree</small>${bar(g.onTree, n)}</span><b>${g.onTree || 0}/${n}</b></div>`);
+    <div class="k-gt${ok(nTrees >= 6)}"><span class="k-gt-mid"><span class="k-gt-ic k-trees">${[0, 1, 2, 3, 4, 5].map(s => `<span title="${esc(v.values[s]?.name)}">${I.bigTree(s, 33, !!g.trees[s])}</span>`).join('')}</span><small title="a Big Tree in every value">a Big Tree per value</small></span><b>${nTrees}/6</b></div>
+    <div class="k-gt${ok(n && g.placedPlayers >= n)}"><span class="k-gt-ic">${I.fruit(30)}</span><span class="k-gt-mid"><small title="everyone places a fruit on the World Tree">everyone's fruit</small>${bar(g.placedPlayers, n)}</span><b>${g.placedPlayers || 0}/${n}</b></div>
+    <div class="k-gt${ok(tr.length >= 3)}"><span class="k-gt-ic">${(v.treasures || []).map(x => `<span title="${esc(x.name)}">${tr.includes(x.id) ? I.treasure(x.id, 27) : I.ghost(27)}</span>`).join('')}</span><span class="k-gt-mid"><small>treasures</small></span><b>${tr.length}/3</b></div>
+    <div class="k-gt k-gt-world${ok(n && g.onTree >= n)}"><span class="k-gt-ic">${I.world(v.result === 'won', 32)}</span><span class="k-gt-mid"><small title="everyone stands on the World Tree">all on the tree</small>${bar(g.onTree, n)}</span><b>${g.onTree || 0}/${n}</b></div>`);
   // the drawer opens under the tracker
   document.body.style.setProperty('--trh', (el.getBoundingClientRect().height || 250) + 'px');
 }
 
+// ---------- HUD: the turn queue down the left (now, next, and where the Forest Tide falls) ----------
+function renderQueue(v) {
+  const el = $('k-q'), order = (v.order || []).map(id => HW.player(id)).filter(Boolean);
+  el.hidden = !['enter', 'turn'].includes(v.phase) || !order.length;
+  if (el.hidden) return;
+  const i = Math.max(0, order.findIndex(p => p.id === v.current));
+  // entering: everyone in order; playing: from now to the end of the round, the Tide, then the next round
+  const rows = v.phase === 'turn' ? [...order.slice(i), 'tide', ...order.slice(0, i)] : order;
+  const next = rows.slice(rows.indexOf(order[i]) + 1).find(p => p !== 'tide');
+  let after = false;
+  const row = p => {
+    const now = p.id === v.current, dry = v.phase === 'turn' && p.water <= 0, done = v.phase === 'enter' && p.pos >= 0 && !now;
+    const sub = now ? 'now' : p === next ? 'next' : '';
+    return `<li class="k-q-p${now ? ' now' : ''}${after ? ' after' : ''}${done ? ' done' : ''}" data-q="${p.pos}" title="${esc(p.name)}${now ? ': their turn now' : p === next ? ': next' : dry ? ': no water' : ''}">
+      ${sub ? `<small>${sub}</small>` : ''}${medPic(p, 44, { state: now ? 'turn' : dry ? 'dry' : '' })}<b style="border-color:${esc(p.color)}">${esc(p.name)}</b></li>`;
+  };
+  HW.patch(el, `<div class="k-q-h">Turns</div><ol class="k-q-l">${rows.map(p => {
+    if (p !== 'tide') return row(p);
+    after = true;
+    return `<li class="k-q-tide" title="Forest Tide: after the last turn of the round, the weather changes and dead leaves blow">${I.dead(16, 2)}<span>Tide</span>${I.dead(16, 5)}</li>`;
+  }).join('')}</ol>`);
+  // fill the room between the top-left sign and the tray: the medallions shrink for a big team
+  const z = parseFloat(document.body.style.getPropertyValue('--hud')) || 1;
+  const top = $('k-tl').getBoundingClientRect().bottom + 12, tray = $('k-tray').getBoundingClientRect();
+  const bottom = tray.height && tray.left < 14 + el.offsetWidth * z + 12 ? tray.top - 12 : innerHeight - 12;
+  el.style.top = (top / z) + 'px';
+  // a row is the medallion + its name tag + a gap (20px more than the medallion); the current one is a quarter
+  // bigger and says "now", the next says "next"; then the Tide line, the heading and the frame (~110px)
+  const room = (bottom - top) / z, n = order.length;
+  el.style.setProperty('--qs', Math.max(28, Math.min(62, (room - 20 * n - 110) / (n + .25))).toFixed(1) + 'px');
+}
+$('k-q').addEventListener('mouseover', e => { const r = e.target.closest('[data-q]'); B?.hov(r ? +r.dataset.q : null); });
+$('k-q').addEventListener('mouseleave', () => B?.hov(null));
+
 // ---------- HUD: whose turn + the action tray of seed packets ----------
 const PK = { move: 'Move', explore: 'Explore', sow: 'Sow', water: 'Water', tend: 'Tend', clear: 'Clear', harvest: 'Harvest', take: 'Take', drink: 'Drink', pass: 'Pass', end: 'End turn' };
 function packet(k, o) {
-  const cost = o.free ? '<span class="k-free">free</span>'
-    : `<span class="k-cost">${I.leaf(true, 17)}${o.cost > 1 ? I.leaf(true, 17) : ''}${o.cost > 1 && o.wx ? `<em>${I.wx(o.wx, 18)}</em>` : ''}</span>`;
+  // the cost in the corner: a leaf per action, and the weather that makes it 2 in the other corner
+  const cost = o.free ? '<span class="k-free">free</span>' : `<span class="k-cost" title="${o.cost > 1 ? '2 actions' : '1 action'}">${I.leaf(true, 17)}${o.cost > 1 ? I.leaf(true, 17) : ''}</span>${o.cost > 1 && o.wx ? `<span class="k-wxc">${I.wx(o.wx, 18)}</span>` : ''}`;
   return `<button class="k-pk k-pk-${k}${o.ok ? '' : ' no'}${o.sel ? ' sel' : ''}${o.cost > 1 ? ' two' : ''}${ui.tip === k ? ' tip' : ''}" data-do="${k}"${o.ok ? '' : ` aria-disabled="true" data-why="${esc(o.why)}"`}>
     <span class="k-pk-art">${I.icon(k, 46)}</span><span class="k-pk-name">${PK[k]}</span>${cost}${o.ok ? '' : `<span class="k-tipb">${esc(o.why)}</span>`}</button>`;
 }
@@ -990,9 +1041,10 @@ function carrying(p) {
 }
 function whoBlock(v, p, extra = '') {
   const t = v.turn, max = v.actionsPerTurn || 2, left = t ? t.actions : 0;
-  return `<div class="k-who k-wood">${medPic(p, 88, { state: 'turn' })}<div class="k-who-t">
-    <div class="k-who-n">${esc(p.name)}${v.phase === 'turn' ? `<span class="k-acts" title="${left} of ${max} actions left">${[...Array(max)].map((_, k) => I.leaf(k < left, 30)).join('')}</span>` : ''}</div>
-    ${v.phase === 'turn' ? `<div class="k-where">${whereLine(v, p)}</div><div class="k-car">${carrying(p)}<span class="k-roles">${p.types.map(x => `<span title="${esc(HW.roleName(x))}: ${esc(HW.roleText(x))}">${I.role(x, 24)}</span>`).join('')}</span></div>` : ''}
+  return `<div class="k-who k-wood">${medPic(p, 70, { state: 'turn' })}<div class="k-who-t">
+    <div class="k-who-n">${esc(p.name)}${v.phase === 'turn' ? `<span class="k-acts" title="${left} of ${max} actions left">${[...Array(max)].map((_, k) => I.leaf(k < left, 26)).join('')}</span>
+      <span class="k-roles">${p.types.map(x => `<span title="${esc(HW.roleName(x))}: ${esc(HW.roleText(x))}">${I.role(x, 24)}</span>`).join('')}</span>` : ''}</div>
+    ${v.phase === 'turn' ? `<div class="k-where">${whereLine(v, p)}</div>` : ''}
     ${extra}</div></div>`;
 }
 function renderTray(v) {
@@ -1010,10 +1062,10 @@ function renderTray(v) {
     if (p) {
       if (v.share) h = whoBlock(v, p) + `<div class="k-wait k-wood"><span>${pname(v.share.player)} is sharing.</span><small>Play goes on when they're done.</small></div>`;
       else if (!v.isHost) h = whoBlock(v, p) + `<div class="k-wait k-wood"><span>They say what they do;</span><small>the Keeper taps it.</small></div>`;
-      else { const t = turnHint(v, p); h = whoBlock(v, p, t.bring) + `<div class="k-shelf"><div class="k-cap">${t.hint}</div><div class="k-packets">${packets(v, p)}</div></div>`; }
+      else { const t = turnHint(v, p); h = whoBlock(v, p, `<div class="k-cap" title="${esc(t.hint.replace(/<[^>]+>/g, ''))}">${t.hint}</div>${t.bring}`) + `<div class="k-shelf"><div class="k-packets">${packets(v, p)}</div></div>`; }
     }
   }
-  el.className = h ? 'on k-' + v.phase : '';
+  el.className = h ? 'on ph-' + v.phase : '';
   HW.patch(el, h);
   const th = h ? el.getBoundingClientRect().height + 16 : 0;
   document.body.style.setProperty('--trayh', th + 'px');
@@ -1022,12 +1074,11 @@ function renderTray(v) {
 }
 function packets(v, p) {
   const t = v.turn, o = turnOptions(v, p), m = moveTargets(v, p), canMove = m.one.length + m.two.length > 0;
-  const mv = { ok: canMove, sel: !ui.mode && !ui.pass && canMove, why: p.water <= 0 ? 'no water: someone must pass 1' : !t.actions ? 'no actions left' : 'nowhere to go', cost: 1 };
-  const holds = q => q.water > 0 || q.fruit > 0 || !!q.treasure;
-  const canGive = v.players.some(q => holds(q) && v.players.some(r => canPass(v, q, r)));
+  const mv = { ok: canMove, sel: !ui.mode && !ui.pass && canMove, why: p.water <= 0 ? 'no water: a teammate on this hex passes 1 on their turn' : !t.actions ? 'no actions left' : 'nowhere to go', cost: 1 };
+  const holds = p.water > 0 || p.fruit > 0 || !!p.treasure, mates = v.players.some(r => canPass(v, p, r));
   let h = packet('move', mv);
   for (const k of ['explore', 'sow', 'water', 'tend', 'clear', 'harvest', 'take', 'drink']) h += packet(k, Object.assign({}, o[k], { sel: ui.mode === k, cost: o[k].cost || 1 }));
-  h += packet('pass', { ok: canGive, sel: ui.pass, free: true, why: 'nobody can pass right now' });
+  h += packet('pass', { ok: holds && mates, sel: ui.pass, free: true, why: !holds ? 'nothing to pass' : has(p, 9) ? 'nobody on this hex or next to it' : 'nobody on this hex' });
   h += packet('end', { ok: true, free: true, sel: false });
   return h;
 }
@@ -1035,9 +1086,9 @@ function packets(v, p) {
 // what to tap now, and the Challenger's bring choice, under the name in the who block
 function turnHint(v, p) {
   const mates = has(p, 8) && v.turn.actions && p.water > 0 ? v.players.filter(q => q.id !== p.id && q.pos === p.pos) : [];
-  const hint = ui.pass ? 'Pick who passes what to whom'
+  const hint = ui.pass ? `Pick what ${esc(p.name)} passes to whom`
     : ui.mode ? `Tap a glowing hex to <b>${ui.mode}</b> · tap ${PK[ui.mode]} again to cancel`
-      : p.water <= 0 ? `No water: someone must pass 1 before ${esc(p.name)} can move`
+      : p.water <= 0 ? 'No water: a teammate here must pass 1 on their turn'
         : !v.turn.actions ? 'No actions left: pass things, or end the turn'
           : moveTargets(v, p).two.length ? 'Tap a glowing hex to move (dashed: the double step)' : 'Tap a glowing hex to move, or pick a packet';
   // many mates (a crowd on the World Tree): just their medallions, the name shows on hover
@@ -1052,16 +1103,13 @@ function renderPop(v) {
   el.className = h ? 'on' : '';
   HW.patch(el, h);
 }
-// Passing is free: water, fruit or a treasure, between any two players the rules allow.
-function passHTML(v, cur) {
-  const holds = q => q.water > 0 || q.fruit > 0 || !!q.treasure;
-  const givers = v.players.filter(q => holds(q) && v.players.some(r => canPass(v, q, r)));
-  if (!givers.length) { ui.pass = false; return ''; }
-  if (!givers.some(q => q.id === ui.passFrom)) ui.passFrom = givers.some(q => q.id === cur.id) ? cur.id : givers[0].id;
-  const a = HW.player(ui.passFrom), mates = v.players.filter(r => canPass(v, a, r));
+// Passing is free, on the current player's own turn: water, fruit or a treasure to a teammate they can reach.
+function passHTML(v, a) {
+  const mates = v.players.filter(r => canPass(v, a, r));
+  if (!a || !(a.water > 0 || a.fruit > 0 || a.treasure) || !mates.length) { ui.pass = false; return ''; }
   const item = (r, k, art, ok, why) => `<button class="k-item${ok ? '' : ' no'}" data-pass="${esc(r.id)}" data-item="${k}" ${ok ? '' : 'disabled'} title="${esc(ok ? `pass ${k} to ${r.name}` : why)}">${art}</button>`;
-  return `<div class="k-passp k-panel"><div class="k-pop-h"><b>Pass</b> <small>free, any time in a turn</small><button class="k-x" data-k="closePass" aria-label="Close">✕</button></div>
-    <div class="k-pass-row"><span class="k-lab">From</span>${givers.map(q => `<button class="k-mate${q.id === a.id ? ' sel' : ''}" data-from="${esc(q.id)}">${chip(q, 34)}</button>`).join('')}</div>
+  return `<div class="k-passp k-panel"><div class="k-pop-h"><b>Pass</b> <small>free, on their own turn</small><button class="k-x" data-k="closePass" aria-label="Close">✕</button></div>
+    <div class="k-pass-row"><span class="k-lab">From</span><span class="k-mate sel to">${chip(a, 34)}</span></div>
     <div class="k-pass-row"><span class="k-lab">To</span>${mates.map(r => `<span class="k-mate to">${chip(r, 34)}
       ${a.water > 0 ? item(r, 'water', I.drop(26), r.water < HW.MAX_WATER, `${r.name} is full`) : ''}
       ${a.fruit > 0 ? item(r, 'fruit', I.fruit(28), r.fruit < HW.MAX_FRUIT, `${r.name} carries 2 fruit`) : ''}
@@ -1284,7 +1332,7 @@ async function onHex(i) {
     return render(HW.view);
   }
   if (!hl.has(i) && !hl2.has(i)) {
-    return HW.toast(p.water <= 0 ? `${p.name} has no water: someone must pass them 1 first.` : !v.turn.actions ? 'No actions left: end the turn.' : 'Tap a glowing hex next to them to move.', 'bad');
+    return HW.toast(p.water <= 0 ? `${p.name} has no water: a teammate on this hex passes 1 on their turn.` : !v.turn.actions ? 'No actions left: end the turn.' : 'Tap a glowing hex next to them to move.', 'bad');
   }
   const bring = ui.bring && HW.player(ui.bring)?.pos === p.pos ? ui.bring : '';
   if (await actAs(p.id, 'move', { hex: i, target: bring }, bring ? `✓ ${p.name} moves with ${HW.name(bring)}` : '')) ui.bring = '';
@@ -1316,7 +1364,6 @@ document.addEventListener('click', async e => {
   }
   if (d.val != null && d.val !== '') { ui.value = +d.val; HW.toast(`Now tap a glowing hex on the outer ring of ${v.values[ui.value].name}`); return render(v); }
   if (d.bring) { ui.bring = ui.bring === d.bring ? '' : d.bring; return render(v); }
-  if (d.from) { ui.passFrom = d.from; return render(v); }
   const cur = v.turn ? HW.player(v.turn.player) : null;
   if (d.do && cur) {
     if (b.getAttribute('aria-disabled') === 'true') {
@@ -1346,7 +1393,8 @@ document.addEventListener('click', async e => {
     return actAs(cur.id, d.do, {}, `✓ ${cur.name} ${VERB[d.do]}`);
   }
   if (d.pass) {
-    const from = HW.player(ui.passFrom), to = HW.player(d.pass);
+    const from = cur, to = HW.player(d.pass);
+    if (!from || !to) return;
     return actAs(from.id, 'pass', { target: to.id, text: d.item }, `✓ ${from.name} passes ${d.item === 'treasure' ? 'the treasure' : d.item} to ${to.name}`);
   }
   switch (d.k) {

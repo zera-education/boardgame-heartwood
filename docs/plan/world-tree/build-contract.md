@@ -60,8 +60,8 @@ Keep the house style: plain HTML/JS/CSS, no build step, no frameworks, dark fore
     tagline, where Value = the sector of the tree.
   - **Take** a revealed treasure lying on your hex (carry at most 1).
   - **Drink** at a revealed spring → water 5.
-  - **Free, any time during `turn` when no share is open:** **pass** water / fruit / treasure to a player on
-    the same hex; or between a Peacemaker and a teammate on a neighbouring hex, either way (El, 2026-10-06:
+  - **Free, on the giver's own turn when no share is open** (El, 2026-10-06: only the current player gives):
+    **pass** water / fruit / treasure to a player on the same hex; or between a Peacemaker and a teammate on a neighbouring hex, either way (El, 2026-10-06:
     the 2-hex chain is gone).
     Limits: water ≤ 5, fruit ≤ 2, treasure ≤ 1.
   - **Automatic placing:** whenever a player stands on the World Tree holding fruit or a treasure (after any

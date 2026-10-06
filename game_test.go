@@ -871,10 +871,11 @@ func TestPassing(t *testing.T) {
 	pass := func(item string) error {
 		return x.as(giver, "pass", Action{Target: recv.ID, Text: item})
 	}
-	x.turnOf(ps[4]) // passing is free and any time, not only on your turn
-
 	park := ringHexes(4, 0)[0]
 	place(line[0], line[0], park, park)
+	x.turnOf(ps[4])
+	x.fails(pass("water"), "passing on someone else's turn")
+	x.turnOf(giver) // passing is free, on your own turn
 	x.must(pass("water"))
 	if giver.Water != 3 || recv.Water != 5 {
 		t.Fatal("pass water")
@@ -895,13 +896,18 @@ func TestPassing(t *testing.T) {
 	// the Peacemaker gives to, and takes from, a teammate next to them
 	place(line[1], line[1], line[0], park)
 	peace.Water, giver.Water = 3, 3
+	x.turnOf(peace)
 	x.must(x.as(peace, "pass", Action{Target: giver.ID, Text: "water"}))
+	x.fails(x.as(giver, "pass", Action{Target: peace.ID, Text: "water"}), "giving back on the Peacemaker's turn")
+	x.turnOf(giver)
 	x.must(x.as(giver, "pass", Action{Target: peace.ID, Text: "water"}))
 	if peace.Water != 3 || giver.Water != 3 {
 		t.Fatal("Peacemaker passing with a neighbour")
 	}
 	place(line[2], line[2], line[0], park)
+	x.turnOf(peace)
 	x.fails(x.as(peace, "pass", Action{Target: giver.ID, Text: "water"}), "a Peacemaker passing 2 hexes away")
+	x.turnOf(giver)
 	recv.Water = 2
 
 	// Limits: water ≤ 5, fruit ≤ 2, treasure ≤ 1, and you need what you pass.
@@ -933,6 +939,7 @@ func TestPassing(t *testing.T) {
 	peace.Fruit, peace.Treasure = 1, ""
 	recv.Fruit, recv.Treasure, recv.Placed = 0, "", 0
 	place(ring1, 0, ring1, park)
+	x.turnOf(peace)
 	x.must(x.as(peace, "pass", Action{Target: recv.ID, Text: "fruit"}))
 	if recv.Placed != 1 || recv.Fruit != 0 || g.openShare() == nil || g.openShare().Kind != "heartwood" || g.openShare().Player != recv.ID {
 		t.Fatalf("fruit passed onto the World Tree: placed %d share %+v", recv.Placed, g.openShare())

@@ -983,10 +983,13 @@ func (g *Game) canPass(a, b *Player) bool {
 	return (a.has(Peacemaker) || b.has(Peacemaker)) && neighbours(a.Pos, b.Pos)
 }
 
-// pass is free: water, fruit or a treasure, to a teammate you can reach.
+// pass is free: on your own turn, water, fruit or a treasure to a teammate you can reach.
 func (g *Game) pass(a, b *Player, item string) error {
-	if g.Phase != PhaseTurn {
+	if g.Phase != PhaseTurn || g.Turn == nil {
 		return errors.New("pass things during the game")
+	}
+	if g.Turn.Player != a.ID {
+		return fmt.Errorf("only %s can pass now, on their turn", g.current().Name)
 	}
 	if b == nil || b == a {
 		return errors.New("choose a teammate to pass to")

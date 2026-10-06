@@ -230,7 +230,7 @@ const W = [
 <p>When you are done, the Keeper taps <b>End turn</b>. After the last player of the [[round]], the [[forest-tide]] runs.</p>
 <h3>Free things</h3>
 <ul>
-  <li>[[pass|Passing]] water, fruit or a treasure costs no action, on anyone's turn.</li>
+  <li>[[pass|Passing]] water, fruit or a treasure costs no action, on your own turn.</li>
   <li>[[placing|Placing]] on the [[world-tree]] happens by itself.</li>
   <li>The [[investigator]]'s weather look costs no action.</li>
 </ul>
@@ -427,9 +427,9 @@ const W = [
 <p>Springs never run dry. Drinking is the only way to get water back, apart from a teammate's [[pass]].</p>` },
 
 { id: 'pass', cat: 'actions', icon: 'icon:pass', title: 'Pass',
-  short: 'Hand water, fruit or a treasure to a teammate. Free, at any time.',
+  short: 'Hand water, fruit or a treasure to a teammate. Free, on your own turn.',
   body: `
-<p>Passing costs no [[action]]. At any time during play, when nobody is in a [[share]], you can pass <b>water</b>, <b>fruit</b> or a <b>treasure</b> to a teammate, on anyone's [[turn]]. Say it, and the [[keeper]] taps it.</p>
+<p>Passing costs no [[action]]. On your own [[turn]], when nobody is in a [[share]], you can pass <b>water</b>, <b>fruit</b> or a <b>treasure</b> to a teammate. Only the player whose turn it is gives. Say it, and the [[keeper]] taps it.</p>
 <h3>Who can pass to whom</h3>
 <ul>
   <li><b>Same hex:</b> always.</li>
@@ -490,7 +490,7 @@ const W = [
 </ul>
 <p>[[rain|Rain]] does not fill you up.</p>
 <h3>At 0 water</h3>
-<p>You stay in the game, but you cannot [[move]] until a teammate passes you 1 water. You can still do other actions on your hex. If every player is at 0 at the same moment, [[sleep|the forest sleeps on]].</p>` },
+<p>You stay in the game, but you cannot [[move]] until a teammate comes to your hex and passes you 1 water on their turn. You can still do other actions on your hex. If every player is at 0 at the same moment, [[sleep|the forest sleeps on]].</p>` },
 
 { id: 'spring', cat: 'growing', icon: 'spring', title: 'Spring',
   short: 'Four hidden springs. Drink to fill up to 5. They never run dry.',
