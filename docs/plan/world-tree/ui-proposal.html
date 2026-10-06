@@ -1,0 +1,1011 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>World Tree</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Product tokens, copied from web/style.css:1-5 (Heartwood is dark-only on the projector and phones). */
+:root { --bg:#13241b; --panel:#1c3326; --panel2:#24402f; --ink:#f3efe2; --muted:#b9c4b3; --accent:#e0a32e; --good:#7bc47f; --bad:#e57373; --line:#345a42;
+  --water:#6fb7ff; --pbar:#0b0f0d; }
+* { box-sizing:border-box }
+body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.45 "Nunito",system-ui,-apple-system,sans-serif }
+h1,h2,h3 { margin:0 0 .5em; font-weight:800 } h1 { font-size:1.6rem } h2 { font-size:1.3rem; margin-top:1.6em } h3 { font-size:1.05rem }
+a { color:var(--accent) }
+button { font:inherit; font-weight:700; border:0; border-radius:10px; padding:.55em .9em; cursor:pointer; background:var(--accent); color:#1a1a1a; margin:.2em .2em .2em 0 }
+button.ghost { background:var(--panel2); color:var(--ink); border:1px solid var(--line) }
+button:disabled { opacity:.38; cursor:default }
+button.sel { outline:3px solid #fff }
+.panel { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:12px }
+.muted { color:var(--muted) } .good { color:var(--good) } .bad { color:var(--bad) }
+.row { display:flex; gap:8px; flex-wrap:wrap; align-items:center }
+.tier { display:inline-block; padding:.2em .7em; border-radius:99px; background:var(--panel2); font-weight:700; font-size:.9rem }
+.log { font-size:.85rem; color:var(--muted); max-height:190px; overflow:auto } .log div { padding:2px 0; border-bottom:1px solid rgba(255,255,255,.05) }
+.chip { display:inline-flex; align-items:center; gap:.35em; white-space:nowrap } .chip i { width:.8em; height:.8em; border-radius:50%; display:inline-block }
+/* Proposal chrome: visibly not product UI */
+.pbar { position:sticky; top:0; z-index:20; background:var(--pbar); color:#e8e8e8; border-bottom:2px solid var(--accent); padding:8px 16px; display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; font-size:.9rem }
+.pbar b { color:#fff } .pbar .tag { background:#2a2a2a; border-radius:6px; padding:1px 7px; font-size:.78rem; color:#bbb }
+.pbar nav { display:flex; flex-wrap:wrap; gap:4px; margin-left:auto }
+.pbar nav button { background:#222; color:#ddd; border:1px solid #444; padding:.3em .7em; font-size:.85rem; border-radius:8px; margin:0 }
+.pbar nav button.on { background:var(--accent); color:#1a1a1a; border-color:var(--accent) }
+section.state { display:none; max-width:84rem; margin:0 auto; padding:18px 16px 60px } section.state.on { display:block }
+.lead { font-size:1.08rem; color:var(--muted); max-width:56rem }
+table { width:100%; border-collapse:collapse; font-size:.92rem } th,td { text-align:left; padding:7px 8px; border-bottom:1px solid var(--line); vertical-align:top }
+th { color:var(--muted); font-weight:700; font-size:.8rem; text-transform:uppercase; letter-spacing:.04em }
+.tw { overflow-x:auto; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:4px 8px; margin:.8em 0 }
+.st { font-size:.75rem; font-weight:800; padding:.1em .55em; border-radius:99px; white-space:nowrap }
+.st.settled { background:#244a2c; color:#9fdca2 } .st.open { background:#4a3d12; color:#f6d36b } .st.deferred { background:#333; color:#bbb }
+.rec { color:var(--good); font-weight:700 }
+.note { display:inline-grid; place-items:center; width:1.35em; height:1.35em; border-radius:50%; background:var(--accent); color:#1a1a1a; font-size:.72rem; font-weight:800; vertical-align:middle; margin-left:.3em; cursor:help }
+ol.notes { padding-left:1.4em } ol.notes li { margin:.35em 0 } code { font-size:.86em; background:#0f1d16; padding:.05em .35em; border-radius:5px; color:#d8e6d6 }
+.grid2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,24rem),1fr)); gap:14px }
+.grid3 { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr)); gap:12px }
+.flow { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:.6em 0 } .flow span { background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:.35em .7em; font-weight:700; font-size:.9rem } .flow em { color:var(--muted); font-style:normal }
+.big3 { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr)); gap:10px; margin:1em 0 }
+.big3 div { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:12px 14px } .big3 b { font-size:1.6rem; display:block }
+/* Keeper screen */
+.shell { border:1px solid var(--line); border-radius:16px; padding:14px; background:#0f1d16 }
+.crumbs { font-size:.8rem; color:var(--muted); margin-bottom:8px }
+.keeper { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(320px,1fr); gap:16px }
+@media (max-width:860px) { .keeper { grid-template-columns:1fr } }
+.boardwrap { position:relative }
+svg.board { width:100%; height:auto; display:block; overflow:visible }
+.hex .base { stroke:#0c1711; stroke-width:2 }
+.hex .tint { transition:fill .9s, fill-opacity .9s; pointer-events:none }
+.hex .cover { transform-box:fill-box; transform-origin:center; pointer-events:none }
+.hex.hl .base { stroke:#fff; stroke-width:3.5; cursor:pointer }
+.hex.hl:hover .base { fill-opacity:1 }
+.hex.sealed .base { stroke:#8a5a2b; stroke-width:3; stroke-dasharray:4 3 }
+.ico { text-anchor:middle; dominant-baseline:middle; pointer-events:none }
+.rim { font-size:12px; font-weight:800; dominant-baseline:middle; pointer-events:none }
+.pawn { transition:transform .45s cubic-bezier(.3,.7,.3,1) }
+.pawn circle { stroke:#fff; stroke-width:1.6 } .pawn.cur circle { stroke-width:3; filter:drop-shadow(0 0 4px #fff) }
+.pawn text { font-size:7.5px; font-weight:800; fill:#fff; text-anchor:middle; dominant-baseline:central; paint-order:stroke; stroke:rgba(0,0,0,.6); stroke-width:1.6px; pointer-events:none }
+.fx { pointer-events:none; text-anchor:middle; dominant-baseline:middle }
+.overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(8,16,11,.55); border-radius:12px; padding:12px }
+.overlay[hidden] { display:none }
+.card { background:#f6efdc; color:#1d2a22; border-radius:16px; padding:18px 20px; max-width:30rem; box-shadow:0 12px 40px rgba(0,0,0,.5); animation:pop .35s ease-out }
+.card .kind { font-size:.78rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#7a4b2a }
+.card .q { font-size:1.4rem; font-weight:800; line-height:1.25; margin:.35em 0 .5em }
+.card .who { color:#4b5a50; font-weight:700 }
+.card button { background:#0A4F29; color:#fff }
+@keyframes pop { from { transform:scale(.85); opacity:0 } to { transform:none; opacity:1 } }
+.goals { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; text-align:center } .goals div { background:var(--panel2); border-radius:10px; padding:6px 4px; font-size:.82rem } .goals b { display:block; font-size:1.1rem } .goals .ok { outline:2px solid var(--good) }
+.wx { display:grid; grid-template-columns:repeat(6,1fr); gap:4px; text-align:center; font-size:.75rem } .wx div { background:var(--panel2); border-radius:8px; padding:4px 2px } .wx b { display:block; font-size:1.15rem }
+.acts { display:grid; grid-template-columns:repeat(auto-fill,minmax(7.4rem,1fr)); gap:4px } .acts button { margin:0; padding:.5em .4em; font-size:.88rem }
+.dots { letter-spacing:.15em; color:var(--accent); font-size:1.1rem }
+.plist div { display:flex; justify-content:space-between; gap:8px; padding:3px 6px; border-radius:8px; font-size:.9rem } .plist div.cur { background:var(--panel2) }
+.peek { background:#1d2a3a; border-left:4px solid var(--water); border-radius:8px; padding:.5em .7em; margin:.4em 0; font-size:.9rem }
+.legend { display:flex; flex-wrap:wrap; gap:4px 14px; justify-content:center; font-size:.8rem; color:var(--muted); margin-top:6px }
+/* Phone */
+.phone { width:min(100%,390px); margin:0 auto; border:10px solid #000; border-radius:34px; background:var(--bg); padding:16px; min-height:540px }
+.phone .big { font-size:1.15rem; font-weight:800 }
+.phone .stat { display:flex; gap:10px; font-size:1.1rem; font-weight:800; margin:.4em 0 }
+.phone .opt { padding:.55em .7em; border:1px solid var(--line); border-radius:10px; margin:.35em 0; background:var(--panel) }
+</style></head>
+<body>
+<div class="pbar">
+  <b>World Tree</b><span>Heartwood board game · 2026-10-06</span><span class="tag">UI proposal · traced from code on main @ cba4fd5 · El's concept</span>
+  <nav>
+    <button data-tab="overview" class="on">Overview</button>
+    <button data-tab="rules">How to play</button>
+    <button data-tab="play">▶ Keeper screen</button>
+    <button data-tab="phone">Phone</button>
+    <button data-tab="balance">Balance</button>
+    <button data-tab="build">Build notes</button>
+  </nav>
+</div>
+
+<!-- ============ OVERVIEW ============ -->
+<section class="state on" id="overview">
+  <h1>World Tree: wake the forest together</h1>
+  <p class="lead">A cooperative game for 9 leaders. The forest is asleep and face down. Together the team explores it, grows a Big Tree in every value's sector, harvests fruit while telling stories, finds three treasures, and gathers on the World Tree. Sun dries you out, dead leaves drift toward the centre, and if everyone runs out of water, the forest sleeps on.</p>
+  <div class="big3">
+    <div><span class="muted">Goal 1</span><b>🌳 × 6</b>A Big Tree in each of the six value sectors</div>
+    <div><span class="muted">Goal 2</span><b>🍎 × 9 · 💎 × 3</b>Every player has placed a fruit on the World Tree, and all three treasures are there</div>
+    <div><span class="muted">Goal 3</span><b>🧍 × 9</b>Everyone stands on the World Tree</div>
+  </div>
+  <h2>Where the talking happens</h2>
+  <div class="tw"><table>
+    <tr><th>When</th><th>Who talks</th><th>Card</th></tr>
+    <tr><td>Entering the forest</td><td>Each player</td><td>Why do you stand for this value?</td></tr>
+    <tr><td>First time you step into a deeper ring (Ring 3, 2, 1)</td><td>That player</td><td>A prompt from that ring's deck: Ring 3 light, Ring 2 a story, Ring 1 deep</td></tr>
+    <tr><td>Harvest a fruit</td><td>The harvester</td><td>A story from your own life about the value of that sector</td></tr>
+    <tr><td>Place a fruit on the World Tree</td><td>The player</td><td>A Heartwood question</td></tr>
+    <tr><td>After every share</td><td>The listeners</td><td>Give trust on their phones (unchanged)</td></tr>
+    <tr><td>All game</td><td>Everyone</td><td>The Secret Owl watches their target; guesses at the end (unchanged)</td></tr>
+  </table></div>
+  <h2>A round</h2>
+  <div class="flow"><span>Player 1: 2 actions</span><em>→</em><span>Player 2: 2 actions</span><em>→ … →</em><span>Player 9: 2 actions</span><em>→</em><span>🌬️ Forest Tide: new weather · rain grows plants · sun dries players · dead leaves drift in</span><em>→ next round</em></div>
+  <div class="flow"><b>A hex:</b><span>✦ face down</span><em>Explore →</em><span>empty · 💧 spring · 💎 treasure</span><em>Sow →</em><span>🌰 Seeded</span><em>Water →</em><span>🌱 Grass</span><em>Water →</em><span>🌿 Shrub</span><em>Tend →</em><span>🌳 Big Tree</span><em>Harvest → 🍎</em></div>
+  <div class="flow"><b>Dead leaves:</b><span>🍂 1 layer</span><em>→</em><span>🍂🍂 sealed: no entering, sowing or harvesting</span><em>· Clear removes a layer</em></div>
+
+  <h2>Decisions</h2>
+  <div class="tw"><table>
+    <tr><th>#</th><th>Question</th><th>Decision</th><th>Status</th></tr>
+    <tr><td>1</td><td>Board</td><td>61 hexes; the World Tree in the centre face up; the other 60 face down. Players may share a hex.</td><td><span class="st settled">El</span></td></tr>
+    <tr><td>2</td><td>Win and lose</td><td>Win: the three goals above. Lose: only when every player is out of water.</td><td><span class="st settled">El</span></td></tr>
+    <tr><td>3</td><td>Turn</td><td>Up to 2 actions, clockwise; a Forest Tide after everyone has played.</td><td><span class="st settled">El</span></td></tr>
+    <tr><td>4</td><td>Weather</td><td>Each sector draws Sun, Rain or Fog (equally likely) at setup and every Forest Tide.</td><td><span class="st settled">El</span></td></tr>
+    <tr><td>5</td><td>Roles</td><td>Enneagram types, always on. Peacemaker: teammates in a chain up to 2 steps long through them can pass to each other.</td><td><span class="st settled">El</span></td></tr>
+    <tr><td>6</td><td>Talking</td><td>Why you stand for your value; ring cards by depth when you go deeper; a value story when you harvest; a Heartwood question when you place a fruit. Trust and Secret Owl stay.</td><td><span class="st settled">El</span></td></tr>
+    <tr><td>7</td><td>Format</td><td>Digital, animated on the Keeper screen; phones for private things.</td><td><span class="st settled">El</span></td></tr>
+    <tr><td>8</td><td>Does watering use water?</td><td class="rec">Yes, 1 water per Water action.</td><td><span class="st open">open</span></td></tr>
+    <tr><td>9</td><td>How do you get water back?</td><td class="rec">4 hidden springs (Drink: back to 5, 1 action). <b>Not</b> from rain: with rain refill the bots won 98% of games and never ran dry (Balance tab).</td><td><span class="st open">open</span></td></tr>
+    <tr><td>10</td><td>Forest Breath: how many, and where?</td><td class="rec">2 hexes at the first Tide, +1 every 2 Tides (up to 6). A drawn hex's leaves land on the hex one step closer to the centre; a Ring 1 hex keeps them. The World Tree never gets leaves.</td><td><span class="st open">open</span></td></tr>
+    <tr><td>11</td><td>What do leaves do to plants?</td><td class="rec">A growing plant drops one stage (Seeded is lost). A Big Tree keeps its stage but can still be sealed.</td><td><span class="st open">open</span></td></tr>
+    <tr><td>12</td><td>Standing on a hex when it seals</td><td class="rec">You can walk out; nobody can walk in (except the Challenger).</td><td><span class="st open">open</span></td></tr>
+    <tr><td>13</td><td>What's under the 60 tiles?</td><td class="rec">3 treasures, 4 springs, 53 empty.</td><td><span class="st open">open</span></td></tr>
+    <tr><td>14</td><td>Placing on the World Tree</td><td class="rec">Free while you stand on it. Gear is removed (never defined).</td><td><span class="st open">open</span></td></tr>
+    <tr><td>15</td><td>Ring cards: every crossing, or the first time?</td><td class="rec">The first time each player reaches Ring 3, 2 and 1 (at most 27 cards in a game). Every crossing would add many more shares to an already long game.</td><td><span class="st open">open</span></td></tr>
+    <tr><td>16</td><td>The harvest story is about which value?</td><td class="rec">The value of the sector the tree grows in (it's that value's fruit).</td><td><span class="st open">open</span></td></tr>
+    <tr><td>17</td><td>Harvest in fog?</td><td class="rec">Allowed (only rain stops it).</td><td><span class="st open">open</span></td></tr>
+    <tr><td>18</td><td>Alliances, Dusk, Bond cards, statements, individual scores</td><td class="rec">Removed: the whole team wins or loses. At the end: Secret Owl guesses, the tribute chain, and each player's trust acorns as recognition.</td><td><span class="st open">open</span></td></tr>
+    <tr><td>19</td><td><b>Game length</b></td><td class="rec">As written, about 25–30 rounds and 60 shares with 9 players: 3½–4 hours. Suggested: 3 actions a turn and treasures hidden only in Rings 1–2, which brings it to about 16 rounds. The shares still need about 90 minutes on their own.</td><td><span class="st open">open</span></td></tr>
+  </table></div>
+</section>
+
+<!-- ============ RULES ============ -->
+<section class="state" id="rules">
+  <h1>How to play World Tree</h1>
+  <p class="lead">El's concept, written out as one set of rules. <span class="st open">default</span> marks a rule the concept didn't say; each one is a decision on the Overview you can change.</p>
+  <div class="grid2">
+    <div class="panel">
+      <h3>Setup</h3>
+      <ul>
+        <li>61 hexes in 4 rings around the World Tree. Six lines from the centre split the forest into six sectors, one per ZERAOS value (10 hexes each).</li>
+        <li>The World Tree is face up. The other 60 are shuffled face down: 3 treasures, 4 springs, 53 empty <span class="st open">default</span>.</li>
+        <li>Each sector draws its weather.</li>
+        <li>In turn, each player chooses the value they stand for, places their pawn on Ring 4 of that sector, and <b>says why</b>.</li>
+        <li>Everyone starts with 4 water (5 at most). The Keeper gives each player Enneagram types; the Secret Owl loop is dealt.</li>
+      </ul>
+      <h3>Your turn: up to 2 actions</h3>
+      <table>
+        <tr><td><b>Move</b></td><td>To a hex next to you that isn't sealed. Not at 0 water. Stepping into a deeper ring for the first time draws that ring's card.</td></tr>
+        <tr><td><b>Explore</b></td><td>Flip the face-down hex you stand on. 2 actions in fog.</td></tr>
+        <tr><td><b>Sow</b></td><td>Seed the empty explored hex you stand on.</td></tr>
+        <tr><td><b>Water</b></td><td>Seeded → Grass, Grass → Shrub. Uses 1 water <span class="st open">default</span>.</td></tr>
+        <tr><td><b>Tend</b></td><td>Shrub → Big Tree.</td></tr>
+        <tr><td><b>Clear</b></td><td>Remove 1 layer of dead leaves from your hex or one next to you. 2 actions in rain.</td></tr>
+        <tr><td><b>Harvest</b></td><td>Take 1 fruit from the Big Tree you stand on (carry 2 at most); <b>tell a story about that sector's value</b>. Not in rain. Once per tree between Tides.</td></tr>
+        <tr><td><b>Take treasure</b></td><td>From a revealed treasure hex (carry 1 at most).</td></tr>
+        <tr><td><b>Drink</b></td><td>At a revealed spring: back to 5 water <span class="st open">default</span>.</td></tr>
+      </table>
+      <p><b>Free, any time:</b> pass water, fruit or treasure to someone on your hex. On the World Tree, place fruit (<b>answer a Heartwood question</b>) and treasures.</p>
+    </div>
+    <div class="panel">
+      <h3>Weather (per sector)</h3>
+      <table>
+        <tr><td>☀️ <b>Sun</b></td><td>Everything works. At the Tide, players here who aren't on a Big Tree lose 1 water.</td></tr>
+        <tr><td>🌧️ <b>Rain</b></td><td>At the Tide, Seeded and Grass grow one stage by themselves. No harvest. Clearing costs 2 actions. Nobody loses water.</td></tr>
+        <tr><td>🌫️ <b>Fog</b></td><td>Explore costs 2 actions. The Enthusiast can't take their double step.</td></tr>
+      </table>
+      <h3>🌬️ Forest Tide (after every round)</h3>
+      <ol>
+        <li>Each sector draws new weather.</li>
+        <li>Rain grows plants; sun dries players who aren't on a Big Tree.</li>
+        <li><b>Forest Breath:</b> 2 hexes at first, +1 every 2 Tides (6 at most) <span class="st open">default</span>. Each drawn hex blows a layer of dead leaves one step toward the centre. A plant that gets leaves drops a stage (a Big Tree doesn't) <span class="st open">default</span>. Two layers seal a hex.</li>
+      </ol>
+      <h3>Roles (Enneagram, always on)</h3>
+      <table id="roleTable"></table>
+      <h3>The end</h3>
+      <p>🌳 The forest <b>wakes</b> the moment all three goals are met. Then the Secret Owl guesses, the tribute chain, and trust. 💧 If every player is at 0 water, the forest sleeps on.</p>
+    </div>
+  </div>
+  <h2>Prompt decks by depth</h2>
+  <p class="muted">Today's 90 value prompts, regrouped by depth instead of by value (<code>content.go</code> RegionCards: Seed / Sapling / Oak). Three samples of each:</p>
+  <div class="tw"><table id="deckTable"><tr><th>Deck</th><th>Samples</th></tr></table></div>
+</section>
+
+<!-- ============ KEEPER SCREEN ============ -->
+<section class="state" id="play">
+  <div class="shell">
+    <div class="crumbs">heartwood.zera.edu.my › board.html?g=WORLD · Keeper screen on the projector · prototype: the Keeper taps for each player</div>
+    <div class="keeper">
+      <div>
+        <div class="boardwrap">
+          <svg class="board" id="svg"></svg>
+          <div class="overlay" id="overlay" hidden></div>
+        </div>
+        <div class="legend"><span>✦ face down</span><span>🌰🌱🌿🌳 growing</span><span>💧 spring</span><span>💎 treasure</span><span>🍂 dead leaves · dashed: sealed</span><span>white outline: tap to move / act</span></div>
+      </div>
+      <div>
+        <div class="panel">
+          <div class="row" style="justify-content:space-between"><h1 id="title" style="margin:0">World Tree</h1><span class="muted" id="roundInfo"></span></div>
+          <div class="goals" id="goals" style="margin-top:.6em"></div>
+        </div>
+        <div class="panel"><div class="row" style="justify-content:space-between;margin-bottom:.3em"><b>Weather</b><span class="muted" id="breathInfo"></span></div><div class="wx" id="wx"></div></div>
+        <div class="panel" id="main"></div>
+        <div class="panel"><h3>Players</h3><div class="plist" id="plist"></div></div>
+        <div class="panel"><h3>Prototype controls</h3>
+          <div class="row"><button class="ghost" data-bot="turn">🤖 Bot plays this turn</button><button class="ghost" data-bot="round">🤖 Bots play the round</button><button class="ghost" data-bot="end">🤖 Bots play to the end</button></div>
+          <div class="row" style="margin-top:.4em"><label class="chip"><input type="checkbox" id="optRain"> rain refills water</label><label class="chip"><input type="checkbox" id="opt3"> 3 actions a turn</label><label class="chip"><input type="checkbox" id="optRing"> treasures in Rings 1–2</label><button class="ghost" data-act="new">New game</button></div>
+          <p class="muted" style="font-size:.84rem;margin:.4em 0 0">Prototype only: trust and the Secret Owl run on phones and aren't shown. Each player has one type (player 1 = Reformer … player 9 = Peacemaker); the Keeper can give 1–3 in the real lobby.</p>
+        </div>
+        <div class="panel"><h3>Trail log</h3><div class="log" id="log"></div></div>
+      </div>
+    </div>
+  </div>
+  <ol class="notes">
+    <li>Same layout as today's board screen: board left, panels right (<code>web/board.html:10-37</code>); the Keeper acts for the player who speaks (<code>game.go:937</code>, <code>keeperActs</code> at <code>game.go:959</code>).</li>
+    <li>Animation: pawns slide hex to hex, tiles flip when explored, plants pop as they grow, weather tints each sector, and at each Forest Tide the dead leaves drift in from where they blew.</li>
+    <li>Cards pop up over the board for everyone to read; the Keeper taps “Done sharing” when the player finishes, and the phones open Give trust as they do today.</li>
+    <li>Private role information (Individualist's peek, Investigator's forecast) goes to that player's phone; the prototype shows it in a blue “phone” box.</li>
+  </ol>
+</section>
+
+<!-- ============ PHONE ============ -->
+<section class="state" id="phone">
+  <h1>Phone: your pack, your roles, your private looks</h1>
+  <p class="lead">Phones stay down for the public play. They show what only you hold or see, and the two things you do privately: Give trust and the Secret Owl guess.</p>
+  <div class="grid3">
+    <div class="phone">
+      <div class="muted" style="font-size:.8rem">play.html · lobby</div>
+      <p class="big">Which value do you stand for?</p>
+      <div class="opt">⭐ <b>Excellence</b> · Beyond expectation.</div>
+      <p>Tell the table <b>why</b> while the Keeper places your pawn on Ring 4 of Excellence.</p>
+      <p class="muted" style="font-size:.88rem">Your types (from the Keeper): <b>2 Helper</b> · <b>9 Peacemaker</b></p>
+      <hr style="border-color:var(--line)">
+      <p class="muted" style="font-size:.88rem">🦉 You are the Secret Owl of <b>Daniel</b>. Watch him quietly all game.</p>
+    </div>
+    <div class="phone">
+      <div class="muted" style="font-size:.8rem">play.html · Wei Ling · in play</div>
+      <div class="stat"><span style="color:var(--water)">💧 3/5</span><span>🍎 1/2</span><span>💎 0/1</span></div>
+      <p class="muted" style="margin:0">Fruit placed: not yet · Rings reached: 3, 2</p>
+      <div class="peek">📱 <b>Investigator</b>: the next Forest Breath hits 3 hexes in Resilience and Open-mindedness. Next weather in Sustainability: 🌧️ Rain.</div>
+      <h3 style="margin-top:.8em">Your roles</h3>
+      <div class="opt"><b>2 Helper</b>: Water, Tend or Clear a hex next to you without standing on it.</div>
+      <div class="opt"><b>9 Peacemaker</b>: teammates in a chain up to 2 hexes long through you can pass things.</div>
+    </div>
+    <div class="phone">
+      <div class="muted" style="font-size:.8rem">play.html · while Aisyah shares</div>
+      <p class="big">Aisyah is telling a harvest story</p>
+      <p class="muted">“Tell us a story from your own life about Resilience.”</p>
+      <p>Give trust acorns 🌰 for what you heard:</p>
+      <div class="row"><button>🌰 1</button><button class="ghost">🌰🌰 2</button></div>
+      <p class="muted" style="font-size:.88rem">8 acorns left. Unchanged from today (<code>game.go:1072</code>).</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ BALANCE ============ -->
+<section class="state" id="balance">
+  <h1>Balance check: 9 players, 400 bot games per row</h1>
+  <p class="lead">Team bots play the rules on this page: each grows a tree in their own sector, harvests, hunts treasure, helps dry teammates, then walks to the World Tree. Real players will plan better but talk longer. A game stopped at 40 rounds counts as “stalled”.</p>
+  <div class="tw"><table><tr><th>Settings</th><th>Won</th><th>Lost (dry)</th><th>Stalled</th><th>Rounds</th><th>All trees · fruit · treasure by round</th><th>Shares</th><th>≈ minutes</th></tr><tr><td>As first proposed: 2 actions, rain +1 water, 4 springs, Breath 2 (+1 every 2 Tides)</td><td><b>98%</b></td><td>0%</td><td>2%</td><td>27.9</td><td>6 · 13 · 25</td><td>59</td><td>234</td></tr><tr><td>2 actions, springs only <span class="st open">recommended refill</span></td><td><b>42%</b></td><td>23%</td><td>35%</td><td>32.5</td><td>7 · 17 · 29</td><td>61</td><td>258</td></tr><tr><td>No refill at all</td><td><b>1%</b></td><td>96%</td><td>4%</td><td>17.5</td><td>4 · 8 · 15</td><td>56</td><td>172</td></tr><tr><td>Harsher Breath: 3, +1 every tide</td><td><b>98%</b></td><td>0%</td><td>2%</td><td>28.8</td><td>6 · 14 · 26</td><td>60</td><td>241</td></tr><tr><td>Gentler Breath: 1, +1 every 3 tides</td><td><b>97%</b></td><td>0%</td><td>3%</td><td>26.8</td><td>6 · 13 · 24</td><td>59</td><td>229</td></tr><tr><td>Treasures only in Rings 1-2 (players know)</td><td><b>99%</b></td><td>0%</td><td>1%</td><td>23.5</td><td>5 · 13 · 20</td><td>60</td><td>212</td></tr><tr><td>3 actions a turn</td><td><b>100%</b></td><td>0%</td><td>0%</td><td>17.1</td><td>4 · 10 · 15</td><td>61</td><td>214</td></tr><tr><td>3 actions, springs only</td><td><b>93%</b></td><td>6%</td><td>2%</td><td>21</td><td>5 · 12 · 19</td><td>62</td><td>237</td></tr><tr style="background:#24402f"><td>3 actions, springs only, treasures in Rings 1-2 <span class="st settled">suggested</span></td><td><b>90%</b></td><td>6%</td><td>4%</td><td>16.2</td><td>4 · 10 · 14</td><td>62</td><td>205</td></tr><tr><td>3 actions, springs only, Breath 3 +1 every tide</td><td><b>90%</b></td><td>8%</td><td>3%</td><td>22</td><td>5 · 12 · 19</td><td>61</td><td>245</td></tr></table></div>
+  <p class="muted">Minutes = shares × 1.5 + actions × 15 s + 1.5 per Forest Tide. Shares = why / ring cards / harvest stories / Heartwood questions.</p>
+  <h2>What the numbers say</h2>
+  <ol class="notes">
+    <li><b>Rain refill makes the game nearly unlosable</b> (98% won, nobody ever ran dry). With springs only, it becomes a real challenge (42% won, 23% lost). Recommended: springs only.</li>
+    <li><b>The treasure hunt is the long part.</b> Trees are done around round 6 and fruit around round 13, but the third treasure takes until round 25: on average about 45 of the 60 tiles must be flipped to find all three, and moving is 1 hex per action.</li>
+    <li><b>Most actions are moves</b> (about 330 of 415). Three actions a turn cuts the game from about 28 to 17 rounds; hiding the treasures only in Rings 1–2 cuts it to about 14.</li>
+    <li><b>The talking is about 90 minutes on its own:</b> 9 whys, 27 ring cards, ~14 harvest stories and ~10 Heartwood questions. Ring cards are the biggest share; limiting them (e.g. Rings 2 and 1 only) saves about 15 minutes.</li>
+    <li><b>Forest Breath barely changes the result</b> at these settings. It slows the team (20–26 hexes sealed by the end) but doesn't cause losses, because Clear always opens a way.</li>
+  </ol>
+</section>
+
+<!-- ============ BUILD NOTES ============ -->
+<section class="state" id="build">
+  <h1>Build notes</h1>
+  <h2>What stays from today's app</h2>
+  <div class="tw"><table>
+    <tr><th>Part</th><th>Where</th><th>Use</th></tr>
+    <tr><td>Lobby, join, colours, QR, rejoin codes, Keeper link</td><td><code>main.go</code>, <code>web/index.html</code>, <code>web/play.html</code></td><td>As is</td></tr>
+    <tr><td>Live updates (WebSocket per screen, versioned views, heartbeat)</td><td><code>main.go:362</code>, <code>web/common.js</code></td><td>As is; add an event list to each view so the Keeper screen can animate what changed</td></tr>
+    <tr><td>Keeper acts for a player</td><td><code>game.go:937</code>, <code>keeperActs</code> <code>game.go:959</code></td><td>New action names (move, explore, sow, water, tend, clear, harvest, take, drink, offer, pass)</td></tr>
+    <tr><td>Enneagram types per player (1–3)</td><td><code>game.go:315</code> <code>assignPowers</code></td><td>As is; the nine effects are new</td></tr>
+    <tr><td>Trust acorns</td><td><code>game.go:351</code>, <code>game.go:1072</code></td><td>After every share, as today</td></tr>
+    <tr><td>Secret Owl loop and guess</td><td><code>game.go:357</code>, <code>game.go:826</code></td><td>As is</td></tr>
+    <tr><td>Prompts</td><td><code>content.go</code> RegionCards, HeartwoodCards</td><td>Regrouped into Ring 3 / 2 / 1 decks; 6 harvest lines; more Heartwood questions (9+ fruit means 6 isn't enough)</td></tr>
+  </table></div>
+  <h2>What's new or replaced</h2>
+  <div class="tw"><table>
+    <tr><th>Part</th><th>Today</th><th>World Tree</th></tr>
+    <tr><td>Map</td><td><code>game.go:170</code> 3 rings, 37 hexes</td><td>4 rings, 61 hexes; tiles with kind, face up/down, stage, leaves</td></tr>
+    <tr><td>Turn</td><td>move → discover → share (<code>game.go:1140</code>)</td><td>2 actions from the list; shares queue up and pause play</td></tr>
+    <tr><td>Round end</td><td>Dusk (<code>game.go:500</code>)</td><td>Forest Tide: weather, growth, drying, Forest Breath</td></tr>
+    <tr><td>End</td><td>Alliance stories, scores (<code>game.go:879</code>)</td><td>Wake check after every action; lose check; Secret Owl, tribute, trust</td></tr>
+    <tr><td>Removed</td><td colspan="2">Seasons, ring locks, discoveries, Squirrel, alliances, Dusk, Bond cards, statements, points</td></tr>
+    <tr><td>Board drawing</td><td><code>web/common.js:177</code> redraws the SVG</td><td>Persistent SVG with animated pawns, tile flips, weather tints, leaf drift (this prototype's code)</td></tr>
+    <tr><td>Tests and sim</td><td><code>game_test.go</code>, <code>sim_test.go</code></td><td>Port this page's engine and team bot to Go (<code>make sim</code>)</td></tr>
+    <tr><td>Rules pages</td><td><code>web/howto.html</code>, <code>web/wiki.html</code></td><td>Rewrite</td></tr>
+  </table></div>
+  <h2>Phases</h2>
+  <ol><li>Rules engine in Go with tests and the 9-player sim.</li><li>Keeper screen with animation; phone views.</li><li>Prompt decks by depth, harvest lines, more Heartwood questions.</li><li>How to play and wiki.</li></ol>
+  <p class="muted">Deploying it replaces the current game; games in progress would be lost.</p>
+  <h2>Still unverified</h2>
+  <ul><li>Real playing time with 9 people; the estimate assumes 1.5 minutes a story and 15 seconds an action.</li><li>How well real teams plan compared with the bots (likely better, so more wins and fewer rounds).</li><li>Whether 61 hexes and 9 pawns stay readable on the projector.</li></ul>
+</section>
+
+<script>
+function show(id) { document.querySelectorAll('section.state').forEach(s => s.classList.toggle('on', s.id === id));
+  document.querySelectorAll('.pbar nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === id)); history.replaceState(null, '', '#' + id); window.scrollTo(0, 0); }
+document.querySelectorAll('.pbar nav button').forEach(b => b.onclick = () => show(b.dataset.tab));
+if (location.hash && document.getElementById(location.hash.slice(1))) show(location.hash.slice(1));
+</script>
+<script>
+/* The prototype: the rules engine (the same one the balance sim runs) and the Keeper screen. */
+// World Tree: rules engine for the proposal's Keeper-screen prototype and the balance sim.
+// Cooperative: the team wakes the forest, or everyone runs out of water.
+const Forest = (() => {
+  const VALUES = [
+    { l: 'Z', name: 'Zealous', icon: '☀️', color: '#e0703a', tagline: 'Be zealous, not jealous.' },
+    { l: 'E', name: 'Excellence', icon: '⭐', color: '#e0a32e', tagline: 'Beyond expectation.' },
+    { l: 'R', name: 'Resilience', icon: '🎋', color: '#c8463f', tagline: 'Anti-fragile.' },
+    { l: 'A', name: 'Authenticity', icon: '🪞', color: '#cf6f97', tagline: 'Inclusive education.' },
+    { l: 'O', name: 'Open-mindedness', icon: '💡', color: '#4f74b0', tagline: 'Growth mindset.' },
+    { l: 'S', name: 'Sustainability', icon: '🌍', color: '#3f9e9a', tagline: 'Start with the end in mind.' },
+  ];
+  const STAGES = ['', 'Seeded', 'Grass', 'Shrub', 'Big Tree'];
+  const STAGE_ICON = ['', '🌰', '🌱', '🌿', '🌳'];
+  const WEATHER = { sun: ['☀️', 'Sun'], rain: ['🌧️', 'Rain'], fog: ['🌫️', 'Fog'] };
+  const TYPES = ['', 'Reformer', 'Helper', 'Achiever', 'Individualist', 'Investigator', 'Loyalist', 'Enthusiast', 'Challenger', 'Peacemaker'];
+  const ROLE_TEXT = ['',
+    'When you Clear, remove 2 layers (still 1 action in rain).',
+    'Water, Tend or Clear a hex next to you without standing on it.',
+    'After you Sow, the hex grows straight to Grass.',
+    'When you Explore, also peek at one unexplored hex next to you.',
+    'See which hexes the next Forest Breath will hit; once a round, see one sector\'s next weather.',
+    'Plants on your hex and next to you are safe from dead leaves.',
+    'One Move a turn may be 2 hexes (not in fog, not through sealed hexes).',
+    'You may enter sealed hexes, and bring one teammate from your hex when you Move.',
+    'Teammates in a chain up to 2 hexes long through you can pass things to each other.'];
+  const MAX_WATER = 5, START_WATER = 4, MAX_FRUIT = 2;
+  const DIRS = [[1, 0], [1, -1], [0, -1], [-1, 0], [-1, 1], [0, 1]];
+
+  function buildHexes(R) {
+    const hs = [{ q: 0, r: 0, ring: 0, sector: -1 }];
+    for (let k = 1; k <= R; k++) {
+      let q = DIRS[4][0] * k, r = DIRS[4][1] * k;
+      for (let side = 0; side < 6; side++)
+        for (let s = 0; s < k; s++) {
+          hs.push({ q, r, ring: k, sector: (3 - side + 6) % 6 });
+          q += DIRS[side][0]; r += DIRS[side][1];
+        }
+    }
+    return hs;
+  }
+  function rng(seed) { let s = seed >>> 0 || 1; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
+
+  // o: {rand, springs, rainRefill, breathStart, breathEvery, types:[[...] per player]}
+  function newGame(names, o = {}) {
+    const rand = o.rand || Math.random;
+    const hexes = buildHexes(4), at = {};
+    hexes.forEach((h, i) => (at[h.q + ',' + h.r] = i));
+    const adj = hexes.map(h => DIRS.map(([dq, dr]) => at[(h.q + dq) + ',' + (h.r + dr)]).filter(i => i !== undefined));
+    const springs = o.springs ?? 4;
+    const kinds = Array(60).fill('empty');
+    for (let k = 0; k < springs; k++) kinds[k] = 'spring';
+    shuffle(kinds, rand);
+    // Treasures hide anywhere, or only in the rings listed in o.treasureRings.
+    const spots = shuffle(hexes.map((h, i) => i).filter(i => i > 0 && (!o.treasureRings || o.treasureRings.includes(hexes[i].ring))), rand);
+    for (const i of spots.slice(0, 3)) kinds[i - 1] = 'treasure';
+    const tiles = hexes.map((h, i) => i === 0 ? null : { kind: kinds[i - 1], up: false, stage: 0, leaves: 0, treasure: kinds[i - 1] === 'treasure', harvested: false });
+    const g = {
+      hexes, adj, tiles, rand, log: [], events: [],
+      actionsPerTurn: o.actionsPerTurn ?? 2, exploreWide: !!o.exploreWide, treasureRings: o.treasureRings || null,
+      rainRefill: o.rainRefill ?? true, breathStart: o.breathStart ?? 2, breathEvery: o.breathEvery ?? 2, breathMax: o.breathMax ?? 6,
+      players: names.map((nm, i) => ({ id: i, name: nm, color: o.colors?.[i] || '#888', value: -1, pos: -1, water: START_WATER,
+        fruit: 0, treasure: 0, placed: 0, types: (o.types?.[i]) || [(i % 9) + 1], reached: {} })),
+      weather: [], nextWeather: [], breath: [], tide: 0, round: 1,
+      phase: 'enter', turnIdx: 0, turn: null, offered: { fruit: 0, treasure: 0 }, shares: [], result: null,
+      stats: { actions: 0, shares: { why: 0, ring: 0, harvest: 0, heartwood: 0 } },
+    };
+    for (let s = 0; s < 6; s++) g.weather[s] = drawWeather(g);
+    for (let s = 0; s < 6; s++) g.nextWeather[s] = drawWeather(g);
+    g.breath = rollBreath(g);
+    return g;
+  }
+  function shuffle(a, rand) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  const drawWeather = g => ['sun', 'rain', 'fog'][Math.floor(g.rand() * 3)];
+  const breathLevel = g => Math.min(g.breathMax, g.breathStart + Math.floor(g.tide / g.breathEvery));
+  // The next Forest Breath is decided ahead, so the Investigator can see it: each pick is a hex, and its
+  // dead leaves land one step toward the centre (a Ring 1 hex keeps them; the World Tree never gets any).
+  function rollBreath(g) {
+    const out = [];
+    for (let k = 0; k < breathLevel(g); k++) {
+      const from = 1 + Math.floor(g.rand() * 60), h = g.hexes[from];
+      const inward = g.adj[from].filter(j => g.hexes[j].ring === h.ring - 1 && j !== 0);
+      out.push({ from, to: inward.length ? inward[Math.floor(g.rand() * inward.length)] : from });
+    }
+    return out;
+  }
+
+  const cur = g => g.players[g.turnIdx];
+  const has = (p, t) => p.types.includes(t);
+  const wx = (g, i) => (i === 0 ? null : g.weather[g.hexes[i].sector]);
+  const sealed = (g, i) => i !== 0 && g.tiles[i].leaves >= 2;
+  const here = (g, i) => g.players.filter(p => p.pos === i);
+
+  // ---- entering: choose a value, stand on Ring 4 of its sector, say why ----
+  function enterSpots(g, value) { return g.hexes.map((h, i) => i).filter(i => g.hexes[i].ring === 4 && g.hexes[i].sector === value); }
+  function enter(g, value, hex) {
+    const p = cur(g);
+    if (g.phase !== 'enter') throw new Error('the game has started');
+    if (!enterSpots(g, value).includes(hex)) throw new Error('stand on the outer ring of your value\'s sector');
+    p.value = value; p.pos = hex;
+    share(g, 'why', p, `Why do you stand for ${VALUES[value].name}?`, VALUES[value].tagline);
+    g.log.push(`${p.name} stands for ${VALUES[value].name}.`);
+    if (++g.turnIdx >= g.players.length) { g.phase = 'turn'; g.turnIdx = 0; newTurn(g); g.log.push('Round 1.'); }
+  }
+
+  function share(g, kind, p, prompt, sub) { g.shares.push({ kind, pid: p.id, prompt, sub }); g.stats.shares[kind]++; }
+
+  function newTurn(g) { g.turn = { pid: cur(g).id, actions: g.actionsPerTurn, enthusiast: false, investigated: false }; }
+
+  function spend(g, n) {
+    if (g.phase !== 'turn') throw new Error('not now');
+    if (g.turn.actions < n) throw new Error(n > 1 ? `that costs ${n} actions here` : 'no actions left');
+    g.turn.actions -= n; g.stats.actions += n;
+  }
+
+  // ---- actions ----
+  function canEnterHex(g, p, j) { return !sealed(g, j) || has(p, 8); }
+  function moveTargets(g, p) {
+    if (p.water <= 0 || g.turn.actions < 1) return { one: [], two: [] };
+    const one = g.adj[p.pos].filter(j => canEnterHex(g, p, j));
+    let two = [];
+    if (has(p, 7) && !g.turn.enthusiast && wx(g, p.pos) !== 'fog')
+      for (const m of g.adj[p.pos].filter(j => !sealed(g, j) && wx(g, j) !== 'fog'))
+        for (const j of g.adj[m]) if (j !== p.pos && !sealed(g, j) && wx(g, j) !== 'fog' && !one.includes(j) && !two.includes(j)) two.push(j);
+    return { one, two };
+  }
+  function move(g, j, bring) {
+    const p = cur(g), from = p.pos;
+    if (p.water <= 0) throw new Error(`${p.name} has no water and can't move until someone gives 1`);
+    const { one, two } = moveTargets(g, p);
+    const double = !one.includes(j);
+    if (!one.includes(j) && !two.includes(j)) throw new Error('move to a hex next to you (no sealed hexes)');
+    let mate = null;
+    if (bring != null) {
+      mate = g.players[bring];
+      if (!has(p, 8) || mate.pos !== from || mate === p) throw new Error('only a Challenger brings a teammate from their hex');
+    }
+    spend(g, 1);
+    if (double) g.turn.enthusiast = true;
+    p.pos = j;
+    if (mate) mate.pos = j;
+    g.log.push(`${p.name} moves${mate ? ` with ${mate.name}` : ''}.`);
+    for (const x of mate ? [p, mate] : [p]) deeper(g, x, from, j);
+    check(g);
+  }
+  // Crossing into a deeper ring draws that ring's prompt card, the first time each player reaches it.
+  function deeper(g, p, from, to) {
+    const r = g.hexes[to].ring;
+    if (r >= 1 && r < g.hexes[from].ring && !p.reached[r]) { p.reached[r] = true; share(g, 'ring', p, null, r); }
+  }
+  function explore(g) {
+    const p = cur(g), t = g.tiles[p.pos];
+    if (!t || t.up) throw new Error('nothing to explore here');
+    spend(g, wx(g, p.pos) === 'fog' ? 2 : 1);
+    t.up = true;
+    if (g.exploreWide) for (const j of g.adj[p.pos]) if (j && !g.tiles[j].up) { g.tiles[j].up = true; g.events.push({ type: 'flip', hex: j }); }
+    const what = t.kind === 'treasure' ? 'a treasure! 💎' : t.kind === 'spring' ? 'a spring 💧' : 'an empty clearing';
+    g.log.push(`${p.name} explores and finds ${what}.`);
+    g.events.push({ type: 'flip', hex: p.pos });
+    if (has(p, 4)) {
+      const peek = g.adj[p.pos].find(j => j && !g.tiles[j].up);
+      if (peek !== undefined) g.events.push({ type: 'peek', pid: p.id, hex: peek, kind: g.tiles[peek].kind });
+    }
+  }
+  function sowable(t) { return t && t.up && t.kind !== 'spring' && !t.treasure && t.stage === 0 && t.leaves < 2; }
+  function sow(g) {
+    const p = cur(g), t = g.tiles[p.pos];
+    if (!sowable(t)) throw new Error('sow on an explored, empty hex');
+    spend(g, 1);
+    t.stage = has(p, 3) ? 2 : 1;
+    g.log.push(`${p.name} sows a seed${t.stage === 2 ? ' and it springs up as Grass' : ''}.`);
+    g.events.push({ type: 'grow', hex: p.pos });
+  }
+  function reach(g, p, j) { // own hex, or next to you for a Helper
+    if (j === p.pos) return true;
+    if (has(p, 2) && g.adj[p.pos].includes(j)) return true;
+    throw new Error('stand on it (a Helper can reach a hex next to them)');
+  }
+  function water(g, j = cur(g).pos) {
+    const p = cur(g), t = g.tiles[j];
+    reach(g, p, j);
+    if (!t || (t.stage !== 1 && t.stage !== 2) || t.leaves >= 2) throw new Error('water a Seeded or Grass hex');
+    if (p.water < 1) throw new Error(`${p.name} has no water`);
+    spend(g, 1); p.water--; t.stage++;
+    g.log.push(`${p.name} waters it: ${STAGES[t.stage]}.`);
+    g.events.push({ type: 'grow', hex: j });
+  }
+  function tend(g, j = cur(g).pos) {
+    const p = cur(g), t = g.tiles[j];
+    reach(g, p, j);
+    if (!t || t.stage !== 3 || t.leaves >= 2) throw new Error('tend a Shrub');
+    spend(g, 1); t.stage = 4;
+    g.log.push(`${p.name} tends the Shrub: a Big Tree in ${VALUES[g.hexes[j].sector].name}!`);
+    g.events.push({ type: 'grow', hex: j });
+    check(g);
+  }
+  function clear(g, j) {
+    const p = cur(g), t = g.tiles[j];
+    if (j !== p.pos && !g.adj[p.pos].includes(j)) throw new Error('clear your hex or one next to you');
+    if (!t || !t.leaves) throw new Error('no dead leaves there');
+    spend(g, wx(g, j) === 'rain' && !has(p, 1) ? 2 : 1);
+    t.leaves = Math.max(0, t.leaves - (has(p, 1) ? 2 : 1));
+    g.log.push(`${p.name} clears dead leaves.`);
+    g.events.push({ type: 'clear', hex: j });
+  }
+  function harvest(g) {
+    const p = cur(g), t = g.tiles[p.pos];
+    if (!t || t.stage !== 4 || t.leaves >= 2) throw new Error('harvest from a Big Tree');
+    if (wx(g, p.pos) === 'rain') throw new Error('no harvest in the rain');
+    if (t.harvested) throw new Error('this tree was harvested since the last Forest Tide');
+    if (p.fruit >= MAX_FRUIT) throw new Error('you can carry 2 fruit');
+    spend(g, 1); t.harvested = true; p.fruit++;
+    const v = VALUES[g.hexes[p.pos].sector];
+    share(g, 'harvest', p, `Tell us a story from your own life about ${v.name}.`, v.tagline);
+    g.log.push(`${p.name} harvests a fruit 🍎.`);
+    g.events.push({ type: 'harvest', hex: p.pos, pid: p.id });
+  }
+  function take(g) {
+    const p = cur(g), t = g.tiles[p.pos];
+    if (!t || !t.up || !t.treasure) throw new Error('no treasure here');
+    if (p.treasure) throw new Error('you can carry 1 treasure');
+    spend(g, 1); t.treasure = false; p.treasure = 1;
+    g.log.push(`${p.name} takes the treasure 💎.`);
+  }
+  function drink(g) {
+    const p = cur(g), t = g.tiles[p.pos];
+    if (!t || !t.up || t.kind !== 'spring') throw new Error('drink at a spring');
+    if (p.water >= MAX_WATER) throw new Error('already full');
+    spend(g, 1); p.water = MAX_WATER;
+    g.log.push(`${p.name} fills up at the spring 💧.`);
+  }
+  // Offering on the World Tree is free. A fruit comes with a Heartwood question.
+  function offer(g, pid, item) {
+    const p = g.players[pid];
+    if (p.pos !== 0) throw new Error('offer on the World Tree');
+    if (item === 'fruit') {
+      if (!p.fruit) throw new Error('no fruit');
+      p.fruit--; p.placed++; g.offered.fruit++;
+      share(g, 'heartwood', p, null, 'heartwood');
+      g.log.push(`${p.name} places a fruit on the World Tree.`);
+    } else {
+      if (!p.treasure) throw new Error('no treasure');
+      p.treasure = 0; g.offered.treasure++;
+      g.log.push(`${p.name} places a treasure on the World Tree (${g.offered.treasure}/3).`);
+    }
+    g.events.push({ type: 'offer', pid, item });
+    check(g);
+  }
+  // Passing is free: on the same hex, or along a chain of up to 2 steps of neighbouring
+  // occupied hexes that runs through a Peacemaker.
+  function canPass(g, a, b) {
+    if (a === b) return false;
+    if (a.pos === b.pos) return true;
+    const peace = g.players.filter(p => has(p, 9)).map(p => p.pos);
+    if (!peace.length) return false;
+    const occ = new Set(g.players.map(p => p.pos));
+    const nb = i => g.adj[i].filter(j => occ.has(j));
+    if (nb(a.pos).includes(b.pos)) return peace.includes(a.pos) || peace.includes(b.pos);
+    for (const m of nb(a.pos)) if (nb(m).includes(b.pos) && [a.pos, m, b.pos].some(i => peace.includes(i))) return true;
+    return false;
+  }
+  function pass(g, from, to, item) {
+    const a = g.players[from], b = g.players[to];
+    if (!canPass(g, a, b)) throw new Error('pass on the same hex, or along a chain through a Peacemaker');
+    if (item === 'water') { if (a.water < 1 || b.water >= MAX_WATER) throw new Error('no water to pass, or they are full'); a.water--; b.water++; }
+    else if (item === 'fruit') { if (!a.fruit || b.fruit >= MAX_FRUIT) throw new Error('no fruit to pass, or they carry 2'); a.fruit--; b.fruit++; }
+    else { if (!a.treasure || b.treasure) throw new Error('no treasure to pass, or they carry one'); a.treasure--; b.treasure++; }
+    g.log.push(`${a.name} passes ${item} to ${b.name}.`);
+    g.events.push({ type: 'pass', from, to, item });
+    check(g);
+  }
+  function investigate(g, sector) {
+    const p = cur(g);
+    if (!has(p, 5) || g.turn.investigated) throw new Error('the Investigator looks once a round');
+    g.turn.investigated = true;
+    g.events.push({ type: 'peekWeather', pid: p.id, sector, weather: g.nextWeather[sector] });
+  }
+
+  function endTurn(g) {
+    if (g.phase !== 'turn') return;
+    if (++g.turnIdx >= g.players.length) { forestTide(g); if (g.phase !== 'turn') return; g.turnIdx = 0; g.round++; }
+    newTurn(g);
+  }
+
+  function forestTide(g) {
+    g.tide++;
+    const ev = { type: 'tide', weather: [], growth: [], dry: [], wet: [], leaves: [] };
+    g.weather = g.nextWeather.slice();
+    for (let s = 0; s < 6; s++) g.nextWeather[s] = drawWeather(g);
+    ev.weather = g.weather.slice();
+    g.tiles.forEach((t, i) => {
+      if (!t) return;
+      t.harvested = false;
+      if (g.weather[g.hexes[i].sector] === 'rain' && (t.stage === 1 || t.stage === 2) && t.leaves < 2) { t.stage++; ev.growth.push(i); }
+    });
+    for (const p of g.players) {
+      const w = wx(g, p.pos);
+      if (w === 'sun' && g.tiles[p.pos].stage !== 4 && p.water > 0) { p.water--; ev.dry.push(p.id); }
+      if (w === 'rain' && g.rainRefill && p.water < MAX_WATER) { p.water++; ev.wet.push(p.id); }
+    }
+    const safe = new Set();
+    for (const p of g.players.filter(p => has(p, 6))) { safe.add(p.pos); g.adj[p.pos].forEach(j => safe.add(j)); }
+    for (const b of g.breath) {
+      const t = g.tiles[b.to];
+      if (t.leaves >= 2) continue;
+      t.leaves++;
+      if (t.stage >= 1 && t.stage <= 3 && !safe.has(b.to)) t.stage--;
+      ev.leaves.push(b);
+    }
+    g.breath = rollBreath(g);
+    g.events.push(ev);
+    g.log.push(`🌬️ Forest Tide ${g.tide}: ${g.weather.map(w => WEATHER[w][0]).join(' ')} · ${ev.leaves.length} drifts of dead leaves.`);
+    check(g);
+  }
+
+  function goals(g) {
+    const trees = [0, 1, 2, 3, 4, 5].map(s => g.tiles.some((t, i) => t && t.stage === 4 && g.hexes[i].sector === s));
+    return {
+      trees, allTrees: trees.every(Boolean),
+      onTree: g.players.filter(p => p.pos === 0).length, allOnTree: g.players.every(p => p.pos === 0),
+      fruit: g.players.filter(p => p.placed > 0).length, allFruit: g.players.every(p => p.placed > 0),
+      treasure: g.offered.treasure, allTreasure: g.offered.treasure >= 3,
+    };
+  }
+  function check(g) {
+    if (g.phase !== 'turn') return;
+    const o = goals(g);
+    if (o.allTrees && o.allOnTree && o.allFruit && o.allTreasure) { g.phase = 'end'; g.result = 'won'; g.log.push('🌳 The forest wakes!'); g.events.push({ type: 'wake' }); }
+    else if (g.players.every(p => p.water <= 0)) { g.phase = 'end'; g.result = 'lost'; g.log.push('Everyone is out of water. The forest sleeps.'); }
+  }
+
+  // ---- a team bot, for the sim and the prototype's "bot plays" ----
+  function path(g, p, from, goal) { // BFS through enterable hexes; returns the hex list after `from`
+    const prev = new Map([[from, -1]]), q = [from];
+    while (q.length) {
+      const i = q.shift();
+      if (goal(i)) { const out = []; for (let k = i; k !== from; k = prev.get(k)) out.unshift(k); return out; }
+      for (const j of g.adj[i]) if (!prev.has(j) && canEnterHex(g, p, j)) { prev.set(j, i); q.push(j); }
+    }
+    return null;
+  }
+  function pathAny(g, from, goal) { // ignoring dead leaves, to find what to clear
+    const prev = new Map([[from, -1]]), q = [from];
+    while (q.length) {
+      const i = q.shift();
+      if (goal(i)) { const out = []; for (let k = i; k !== from; k = prev.get(k)) out.unshift(k); return out; }
+      for (const j of g.adj[i]) if (!prev.has(j)) { prev.set(j, i); q.push(j); }
+    }
+    return null;
+  }
+  function goToward(g, p, goal) {
+    const route = path(g, p, p.pos, goal);
+    if (route && route.length) { move(g, route[0]); return true; }
+    if (route) return false;
+    const r = pathAny(g, p.pos, goal); // blocked: clear the first sealed hex on the way
+    if (!r) return false;
+    const block = r.find(j => sealed(g, j) && !canEnterHex(g, p, j));
+    if (block === r[0]) { clear(g, block); return true; }
+    if (canEnterHex(g, p, r[0])) { move(g, r[0]); return true; }
+    return false;
+  }
+  function tryDo(fn) { try { fn(); return true; } catch (e) { return false; } }
+
+  function botAct(g) { // one action (or a free step); false when the bot has nothing useful to do
+    const p = cur(g), t = g.tiles[p.pos], o = goals(g);
+    // free: share water with a dry teammate on the same hex, offer on the World Tree
+    for (const q of g.players) if (q !== p && q.water === 0 && p.water >= 2 && canPass(g, p, q)) { pass(g, p.id, q.id, 'water'); return true; }
+    if (p.pos === 0) {
+      if (p.fruit && (!p.placed || !o.allFruit)) { offer(g, p.id, 'fruit'); return true; }
+      if (p.treasure) { offer(g, p.id, 'treasure'); return true; }
+      for (const q of here(g, 0)) if (q !== p && !q.placed && !q.fruit && p.fruit) { pass(g, p.id, q.id, 'fruit'); return true; }
+    }
+    if (g.turn.actions < 1) return false;
+    const mySector = p.value;
+    const sectorDone = s => o.trees[s];
+    const needFruit = !p.placed && !p.fruit;
+    // 0. a teammate is out of water: the nearest one who can spare it walks over
+    const dryMate = g.players.find(q => q !== p && q.water === 0);
+    if (dryMate && p.water >= 3 && p.water > 0) {
+      const d = x => (path(g, x, x.pos, i => i === dryMate.pos) || { length: 99 }).length;
+      const helpers = g.players.filter(q => q !== dryMate && q.water >= 3).sort((a, b) => d(a) - d(b));
+      if (helpers[0] === p && goToward(g, p, i => i === dryMate.pos)) return true;
+    }
+    // 1. water low: find a spring
+    if (p.water <= 1) {
+      if (t && t.up && t.kind === 'spring') return tryDo(() => drink(g));
+      const sp = g.tiles.findIndex(x => x && x.up && x.kind === 'spring');
+      if (sp > 0 && p.water > 0 && goToward(g, p, i => i === sp)) return true;
+    }
+    // 2. carrying treasure or my fruit: go to the World Tree
+    if (p.treasure || (p.fruit && !p.placed)) return goToward(g, p, i => i === 0);
+    // 3. treasure revealed and nobody carrying it: take it
+    if (t && t.up && t.treasure && !p.treasure) return tryDo(() => take(g));
+    // 4. grow a Big Tree in my sector (or the neediest sector)
+    const target = !sectorDone(mySector) ? mySector : [0, 1, 2, 3, 4, 5].find(s => !sectorDone(s) && g.players.filter(q => q.value === s).length === 0);
+    if (target !== undefined && target !== null) {
+      const inT = i => i > 0 && g.hexes[i].sector === target;
+      if (inT(p.pos) && t.leaves < 2) {
+        if (t.stage === 3) return tryDo(() => tend(g));
+        if ((t.stage === 1 || t.stage === 2) && p.water >= 2 && wx(g, p.pos) !== 'rain') return tryDo(() => water(g));
+        if (sowable(t) && !g.tiles.some((x, i) => x && inT(i) && x.stage > 0 && x.leaves < 2)) return tryDo(() => sow(g));
+        if (!t.up && !g.tiles.some((x, i) => x && inT(i) && (x.stage > 0 || sowable(x)) && x.leaves < 2)) return tryDo(() => explore(g));
+      }
+      const growing = i => inT(i) && g.tiles[i].stage > 0 && g.tiles[i].stage < 4 && g.tiles[i].leaves < 2;
+      const waiting = growing(p.pos) && (wx(g, p.pos) === 'rain' || p.water < 2); // the rain grows it, or I need water first
+      if (!waiting) {
+        const goal = g.tiles.some((x, i) => growing(i)) ? growing
+          : g.tiles.some((x, i) => inT(i) && sowable(x)) ? (i => inT(i) && sowable(g.tiles[i]))
+          : (i => inT(i) && !g.tiles[i].up && g.tiles[i].leaves < 2);
+        if (!goal(p.pos) && goToward(g, p, goal)) return true;
+      }
+    }
+    // 5. fruit: harvest at a Big Tree in sun or fog
+    if (needFruit || (p.placed && !o.allFruit && p.fruit < 1)) {
+      const ripe = i => i > 0 && g.tiles[i].stage === 4 && g.tiles[i].leaves < 2 && !g.tiles[i].harvested && wx(g, i) !== 'rain';
+      if (ripe(p.pos)) return tryDo(() => harvest(g));
+      const anyTree = i => i > 0 && g.tiles[i].stage === 4 && g.tiles[i].leaves < 2;
+      if (goToward(g, p, g.tiles.some((x, i) => ripe(i)) ? ripe : anyTree)) return true;
+    }
+    // 6. treasures still hidden: explore
+    const hidden = g.tiles.filter(x => x && x.kind === 'treasure' && !x.up).length;
+    const loose = g.tiles.findIndex(x => x && x.up && x.treasure);
+    const carried = g.players.filter(q => q.treasure).length;
+    if (loose > 0 && !p.treasure) return goToward(g, p, i => i === loose);
+    if (hidden && g.offered.treasure + carried < 3) {
+      if (t && !t.up) return tryDo(() => explore(g));
+      const claimed = new Set(g.players.filter(q => q !== p).map(q => q.pos));
+      const open = i => i > 0 && !g.tiles[i].up && !claimed.has(i);
+      const likely = i => open(i) && (!g.treasureRings || g.treasureRings.includes(g.hexes[i].ring));
+      return goToward(g, p, g.tiles.some((x, i) => likely(i)) ? likely : open);
+    }
+    // 7. everything done for me: gather on the World Tree
+    if (p.pos !== 0) return goToward(g, p, i => i === 0);
+    return false;
+  }
+  function botTurn(g) {
+    let guard = 0;
+    while (g.phase === 'turn' && g.turn.pid === cur(g).id && guard++ < 12) {
+      const before = g.turn.actions;
+      let ok = false;
+      try { ok = botAct(g); } catch (e) { ok = false; }
+      if (!ok) break;
+      if (g.turn.actions === before && guard > 8) break;
+    }
+    if (g.phase === 'turn') endTurn(g);
+  }
+  function botEnter(g, value) {
+    const v = value ?? (g.turnIdx % 6), s = enterSpots(g, v);
+    enter(g, v, s[Math.floor(g.rand() * s.length)]);
+  }
+
+  return { VALUES, STAGES, STAGE_ICON, WEATHER, TYPES, ROLE_TEXT, MAX_WATER, buildHexes, rng, newGame, cur, has, wx, sealed, here,
+    enterSpots, enter, moveTargets, move, explore, sowable, sow, water, tend, clear, harvest, take, drink, offer, canPass, pass,
+    investigate, endTurn, goals, breathLevel, botAct, botTurn, botEnter };
+})();
+
+const DECKS = {"1":["What makes you care so much about your work?","If you stopped comparing yourself with others, what would you do differently?","What have you been wanting to start, but haven't yet?","Which students do you think are easiest to miss? (No names needed.)","What makes you hesitate to join in?","What would you like to do much better this year?","What rule do you keep for yourself that nobody asked you to keep?","How do you push for high standards and still stay kind?","What do you wish your team could do really well together?","How do you know when something is good enough?","What did a hard time teach you that you're now glad to know?","When your plans go wrong, how do you usually react?","What kind of feedback is still hard for you to hear?","What helps you stay strong for others when you're struggling inside?","Is it easy or hard for you to ask for help? Why?","What makes you feel you truly belong somewhere?","When do you feel most like yourself?","When do you feel you have to pretend you know all the answers?","Which part of where you come from do you most want to bring into your work here?","What have you learned from someone who sees or learns things very differently from you?","What's something you find very hard to change your mind about?","What has failure taught you that success never could?","When are you most likely to judge too quickly?","How do you react when someone disagrees with you?","How do you feel when someone sees life very differently from you?","What habit are you trying to build right now?","What part of your work would be hardest to hand over to someone else?","What would you gladly start, even if someone else got the credit for finishing it?","When are you tempted to take a shortcut?","Ten years from now, what do you hope you'll thank yourself for doing this year?"],"2":["Tell us about a time you got other people excited about something you love.","Tell us about a time someone else's success made you want to try harder.","Tell us about a time you helped before anyone asked you to.","Tell us about a time you did something extra for a young person who needed it.","Tell us about the last time you tried something new. How did it go?","Tell us about someone who did far more than you expected of them.","Tell us about a time you did something properly even though no one would check. Why did you?","Tell us about a time you chose to be kind instead of getting it perfect.","Tell us about a time your team did better than anyone expected.","Tell us how you got good at something that once felt impossible.","Tell us about a hard time, big or small, that made you stronger.","Tell us about a time something went wrong and you found a better way.","Tell us about some hard feedback that ended up helping you.","Tell us about a time you stayed calm because others needed you to.","Tell us about someone who helped you keep going when you wanted to give up.","Tell us about a time you felt left out, and what helped you feel welcome.","Tell us about a time you were honest about who you are, and it went better than you expected.","Tell us about a time saying “I don't know” helped.","Tell us about a time sharing where you come from brought you closer to someone.","Tell us about someone who explained something hard in a way you finally understood.","Tell us about a time someone changed your mind about something that mattered.","Tell us about a mistake that taught you a lot.","Tell us about a time your first impression of someone was completely wrong. (No names needed.)","Tell us about a time a disagreement led to a better decision.","Tell us about someone very different from you who taught you something you still use.","Tell us about a habit that changed your life.","Tell us about something you set up that still worked well when you weren't there.","Tell us about something someone started long ago that you're grateful for today.","Tell us about something you worked on for years before you saw the results.","Tell us about a big goal you planned step by step. How did it go?"],"3":["What could you do for hours without noticing the time?","Whose good news made you really happy this year?","When someone asks for a volunteer, are you the first to raise your hand, or the last?","What's the best thing a child or student has ever said to you?","What will you always say yes to, even when you're tired?","What's the best service you've ever had in a shop, café or restaurant?","What do you do that nobody notices when it's done well?","Who was the strictest but kindest teacher or boss you've had?","What's the best team you've ever been part of?","Name something you're much better at now than five years ago.","What's the funniest story behind a scar, or something of yours that's broken?","What's the best thing that happened to you because a plan went wrong?","What advice did you ignore at first, but later realised was right?","What's your secret trick for keeping calm when everything happens at once?","What always cheers you up on a bad day?","Where do you feel most relaxed?","What did you once pretend to like, just to fit in?","What does everyone assume you can do, but you can't?","What's a word or food from home that you always have to explain?","How do you learn a new gadget: read the manual, watch a video, or just try?","What did you believe as a child that turned out to be completely untrue?","What's something you're bad at, and don't mind?","Name a food you were sure you'd hate, until you tried it.","What silly debate could you argue about forever? (Pineapple on pizza?)","What's one thing from another culture that's now part of your everyday life?","What small habit have you kept for years?","What simple trick makes your daily life easier?","If you could plant one tree anywhere in the world, where would it go?","What's the longest you've ever waited for something, and was it worth it?","What would you put in a time capsule to open in 2050?"]};
+const HEARTWOOD = ["What do you want the people at this table to know about you that they might not?", "Who at this table has helped you grow, and how?", "What legacy do you want to leave in ZERA's forest?", "What would you want a student to say about you in 2035?", "What did today show you about this team?", "What promise would you make to this team for the year ahead?"];
+const NAMES = ['Aisyah', 'Wei Ling', 'Daniel', 'Priya', 'Farid', 'Mei', 'Hafiz', 'Kavitha', 'Jun Hao'];
+const COLORS = ['#e53935', '#fb8c00', '#fdd835', '#43a047', '#00897b', '#1e88e5', '#5e35b1', '#d81b60', '#6d4c41'];
+const F = Forest, V = F.VALUES, $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const S = 30, s3 = Math.sqrt(3), NS = 'http://www.w3.org/2000/svg';
+const px = h => [S * s3 * (h.q + h.r / 2), S * 1.5 * h.r];
+const pts = (k = S - 1.2) => [...Array(6)].map((_, i) => { const a = Math.PI / 180 * (60 * i - 30); return `${(k * Math.cos(a)).toFixed(1)},${(k * Math.sin(a)).toFixed(1)}`; }).join(' ');
+const TINT = { sun: ['#ffd76b', .13], rain: ['#4f8fe0', .22], fog: ['#d9e2dc', .30] };
+
+let g, ui, svg, quiet = false;
+function opts() { return { rainRefill: $('optRain').checked, actionsPerTurn: $('opt3').checked ? 3 : 2, treasureRings: $('optRing').checked ? [1, 2] : null,
+  colors: COLORS, types: NAMES.map((_, i) => [i + 1]) }; }
+function newGame() { g = F.newGame(NAMES, opts()); ui = { mode: null, value: null, seen: 0, peeks: [] }; buildBoard(); render(); }
+
+// ---- persistent board: built once, then updated so things can animate ----
+function el(tag, attrs, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent && parent.appendChild(e); return e; }
+function buildBoard() {
+  svg = $('svg'); svg.innerHTML = '';
+  const xs = g.hexes.map(h => px(h)[0]), ys = g.hexes.map(h => px(h)[1]);
+  const W = Math.max(...xs) - Math.min(...xs) + 2 * S, H = Math.max(...ys) - Math.min(...ys) + 2 * S;
+  svg.setAttribute('viewBox', `${-W / 2 - 92} ${-H / 2 - 30} ${W + 184} ${H + 60}`);
+  const tiles = el('g', {}, svg), rim = el('g', {}, svg);
+  g.hexes.forEach((h, i) => {
+    const [x, y] = px(h), t = el('g', { class: 'hex', 'data-i': i, transform: `translate(${x},${y})` }, tiles);
+    el('polygon', { class: 'base', points: pts(), fill: i ? V[h.sector].color : '#7a4b2a' }, t);
+    el('polygon', { class: 'tint', points: pts(S - 2) , fill: 'transparent' }, t);
+    if (i) { const c = el('g', { class: 'cover' }, t); el('polygon', { points: pts(S - 3), fill: '#1a2a20', 'fill-opacity': .82 }, c); el('text', { class: 'ico', 'font-size': 12, fill: 'rgba(255,255,255,.45)' }, c).textContent = '✦'; }
+    el('text', { class: 'ico content', 'font-size': i ? 17 : 26, y: i ? -3 : -4 }, t);
+    el('text', { class: 'ico leaves', 'font-size': 10, y: 13 }, t);
+    if (!i) { const l = el('text', { class: 'ico', 'font-size': 6.5, 'font-weight': 800, fill: '#f3efe2', y: 14, 'letter-spacing': '.06em' }, t); l.textContent = 'WORLD TREE'; }
+  });
+  for (let s = 0; s < 6; s++) {
+    const o = g.hexes.filter(h => h.ring === 4 && h.sector === s).map(px);
+    const x = o.reduce((a, p) => a + p[0], 0) / o.length, y = o.reduce((a, p) => a + p[1], 0) / o.length;
+    const len = Math.hypot(x, y), ux = x / len, uy = y / len, D = len + S * 1.25;
+    const t = el('text', { class: 'rim', 'data-s': s, x: ux * D, y: uy * D, fill: V[s].color, 'text-anchor': ux > .3 ? 'start' : ux < -.3 ? 'end' : 'middle' }, rim);
+    t.textContent = '';
+  }
+  el('g', { id: 'pawns' }, svg); el('g', { id: 'fxl' }, svg);
+  g.players.forEach(p => { const pg = el('g', { class: 'pawn', 'data-p': p.id }, $('pawns')); el('circle', { r: 7.5, fill: p.color }, pg); el('text', {}, pg).textContent = p.name.slice(0, 2); });
+  svg.onclick = e => { const h = e.target.closest('.hex'); if (h) onHex(+h.dataset.i); };
+}
+function pawnSpot(i, k, n) {
+  const [x, y] = px(g.hexes[i]);
+  if (n === 1) return [x, y + 6];
+  const r = i === 0 ? 17 : n <= 3 ? 9 : 12, a = -Math.PI / 2 + k / n * 2 * Math.PI;
+  return [x + r * Math.cos(a), y + (i === 0 ? 2 : 5) + r * Math.sin(a) * .8];
+}
+
+function drawState(hl) {
+  const tiles = svg.querySelectorAll('.hex');
+  g.hexes.forEach((h, i) => {
+    const node = tiles[i], t = g.tiles[i];
+    node.classList.toggle('hl', hl.has(i));
+    if (!i) { node.querySelector('.content').textContent = g.result === 'won' ? '🌳' : '🌲'; return; }
+    const w = g.weather[h.sector], tint = node.querySelector('.tint');
+    tint.setAttribute('fill', TINT[w][0]); tint.setAttribute('fill-opacity', TINT[w][1]);
+    node.querySelector('.cover').style.display = t.up ? 'none' : '';
+    node.querySelector('.base').setAttribute('fill-opacity', t.up ? .8 : .45);
+    node.classList.toggle('sealed', t.leaves >= 2);
+    node.querySelector('.content').textContent = !t.up ? '' : t.stage ? F.STAGE_ICON[t.stage] : t.treasure ? '💎' : t.kind === 'spring' ? '💧' : '';
+    node.querySelector('.leaves').textContent = '🍂'.repeat(t.leaves);
+  });
+  svg.querySelectorAll('.rim').forEach(r => { const s = +r.dataset.s; r.textContent = `${F.WEATHER[g.weather[s]][0]} ${V[s].icon} ${V[s].name}`; });
+  const by = {};
+  g.players.forEach(p => { if (p.pos >= 0) (by[p.pos] ||= []).push(p); });
+  svg.querySelectorAll('.pawn').forEach(pg => {
+    const p = g.players[+pg.dataset.p];
+    if (p.pos < 0) { pg.style.display = 'none'; return; }
+    pg.style.display = '';
+    const list = by[p.pos], [x, y] = pawnSpot(p.pos, list.indexOf(p), list.length);
+    pg.style.transform = `translate(${x}px,${y}px)`;
+    pg.classList.toggle('cur', g.phase !== 'end' && F.cur(g) === p);
+    pg.querySelector('circle').setAttribute('r', list.length > 4 ? 6.5 : 7.5);
+  });
+}
+
+// ---- effects for the events the engine reports ----
+function fxText(txt, [x, y], to, ms = 900, size = 14) {
+  const t = el('text', { class: 'fx', 'font-size': size, x: 0, y: 0 }, $('fxl')); t.textContent = txt;
+  const [tx, ty] = to || [x, y - 22];
+  const a = t.animate([{ transform: `translate(${x}px,${y}px)`, opacity: 1 }, { transform: `translate(${tx}px,${ty}px)`, opacity: to ? 1 : 0 }], { duration: ms, easing: 'ease-in-out', fill: 'forwards' });
+  a.onfinish = () => t.remove();
+}
+function playEvents() {
+  const evs = g.events.splice(0);
+  if (quiet) return;
+  const tiles = svg.querySelectorAll('.hex');
+  for (const e of evs) {
+    if (e.type === 'flip') { const c = tiles[e.hex].querySelector('.content'); c.animate([{ transform: 'scale(0,1)' }, { transform: 'scale(1,1)' }], { duration: 380, easing: 'ease-out' }); tiles[e.hex].querySelector('.base').animate([{ fillOpacity: .45 }, { fillOpacity: .8 }], { duration: 380 }); }
+    if (e.type === 'grow' || e.type === 'harvest') { const c = tiles[e.hex].querySelector('.content'); c.animate([{ transform: 'scale(.4)' }, { transform: 'scale(1.35)' }, { transform: 'scale(1)' }], { duration: 520 }); }
+    if (e.type === 'harvest') fxText('🍎', px(g.hexes[e.hex]));
+    if (e.type === 'clear') fxText('🍂', px(g.hexes[e.hex]), null, 800);
+    if (e.type === 'offer') { const p = g.players[e.pid]; fxText(e.item === 'fruit' ? '🍎' : '💎', pawnSpot(0, 0, 1), [0, -12], 700, 16); }
+    if (e.type === 'pass') fxText(e.item === 'water' ? '💧' : e.item === 'fruit' ? '🍎' : '💎', px(g.hexes[g.players[e.from].pos]), px(g.hexes[g.players[e.to].pos]), 700);
+    if (e.type === 'peek' || e.type === 'peekWeather') ui.peeks.unshift(e);
+    if (e.type === 'tide') {
+      e.leaves.forEach((b, k) => setTimeout(() => fxText('🍂', px(g.hexes[b.from]), px(g.hexes[b.to]), 1100, 13), 150 * k));
+      e.growth.forEach(i => tiles[i].querySelector('.content').animate([{ transform: 'scale(.5)' }, { transform: 'scale(1.3)' }, { transform: 'scale(1)' }], { duration: 700, delay: 400 }));
+      e.dry.forEach(id => fxText('−1💧', px(g.hexes[g.players[id].pos]), null, 1300, 10));
+      e.wet.forEach(id => fxText('+1💧', px(g.hexes[g.players[id].pos]), null, 1300, 10));
+      svg.animate([{ filter: 'brightness(1)' }, { filter: 'brightness(.7)' }, { filter: 'brightness(1)' }], { duration: 900 });
+    }
+    if (e.type === 'wake') for (let k = 0; k < 24; k++) setTimeout(() => { const a = Math.random() * 6.28, r = 40 + Math.random() * 180; fxText(['🌳', '✨', '🍃'][k % 3], [0, 0], [r * Math.cos(a), r * Math.sin(a)], 1400, 16); }, k * 60);
+  }
+}
+
+// ---- the side panel ----
+function render() {
+  const p = g.phase === 'end' ? null : F.cur(g), t = g.turn;
+  let hl = new Set();
+  if (g.phase === 'enter' && ui.value != null) hl = new Set(F.enterSpots(g, ui.value));
+  if (g.phase === 'turn' && !pendingShare()) {
+    if (!ui.mode) { const m = F.moveTargets(g, p); hl = new Set([...m.one, ...m.two]); }
+    else if (ui.mode === 'clear') hl = new Set([p.pos, ...g.adj[p.pos]].filter(i => i && g.tiles[i].leaves));
+    else hl = new Set([p.pos, ...(F.has(p, 2) ? g.adj[p.pos] : [])].filter(i => i && (ui.mode === 'water' ? [1, 2].includes(g.tiles[i].stage) : g.tiles[i].stage === 3) && g.tiles[i].leaves < 2));
+  }
+  drawState(hl);
+  playEvents();
+  const o = F.goals(g);
+  $('title').textContent = g.phase === 'enter' ? 'Entering the forest' : g.result === 'won' ? 'The forest is awake!' : g.result === 'lost' ? 'The forest sleeps on' : `${p.name}'s turn`;
+  $('roundInfo').textContent = g.phase === 'enter' ? '' : `Round ${g.round} · Tide ${g.tide}`;
+  $('goals').innerHTML = `<div class="${o.allTrees ? 'ok' : ''}"><b>${o.trees.map((x, s) => x ? '🌳' : '·').join('')}</b>Big Trees ${o.trees.filter(Boolean).length}/6</div>
+    <div class="${o.allFruit ? 'ok' : ''}"><b>🍎 ${o.fruit}/9</b>players placed</div><div class="${o.allTreasure ? 'ok' : ''}"><b>💎 ${o.treasure}/3</b>treasures</div><div class="${o.allOnTree ? 'ok' : ''}"><b>🧍 ${o.onTree}/9</b>on the Tree</div>`;
+  $('wx').innerHTML = V.map((v, s) => `<div><b>${F.WEATHER[g.weather[s]][0]}</b>${v.icon} ${v.name.slice(0, 5)}</div>`).join('');
+  $('breathInfo').textContent = `🌬️ next Breath: ${g.breath.length} hex${g.breath.length > 1 ? 'es' : ''}`;
+  $('main').innerHTML = mainHTML(p, t);
+  $('plist').innerHTML = g.players.map(q => `<div class="${p === q ? 'cur' : ''}"><span class="chip"><i style="background:${q.color}"></i>${esc(q.name)} ${q.value >= 0 ? V[q.value].icon : ''} <span class="muted">${F.TYPES[q.types[0]]}</span></span>
+    <span><span style="color:var(--water)">💧${q.water}</span> 🍎${q.fruit}${q.treasure ? ' 💎' : ''}${q.placed ? ' ✅' : ''}</span></div>`).join('');
+  $('log').innerHTML = g.log.slice(-14).reverse().map(l => `<div>${esc(l)}</div>`).join('');
+  renderShare();
+}
+const pendingShare = () => g.shares.length > ui.seen ? g.shares[ui.seen] : null;
+function renderShare() {
+  const s = pendingShare(), ov = $('overlay');
+  if (!s) { ov.hidden = true; return; }
+  if (!s.text) s.text = s.kind === 'ring' ? DECKS[s.sub][Math.floor(Math.random() * DECKS[s.sub].length)] : s.kind === 'heartwood' ? HEARTWOOD[Math.floor(Math.random() * HEARTWOOD.length)] : s.prompt;
+  const p = g.players[s.pid];
+  const kind = { why: 'Entering the forest', ring: `Ring ${s.sub} card · ${['', 'deep', 'a story', 'light'][s.sub]}`, harvest: 'Harvest story 🍎', heartwood: 'Heartwood question · placing a fruit' }[s.kind];
+  ov.hidden = false;
+  ov.innerHTML = `<div class="card"><div class="kind">${kind}</div><div class="q">${esc(s.text)}</div>${s.kind === 'why' || s.kind === 'harvest' ? `<div class="muted" style="color:#5f6b62">${esc(s.sub)}</div>` : ''}
+    <p class="who"><span class="chip"><i style="background:${p.color}"></i>${esc(p.name)}</span> shares · listeners give trust on their phones</p><button data-act="shared">Done sharing ✓</button></div>`;
+}
+
+function mainHTML(p, t) {
+  if (g.phase === 'enter') return `<h3>${esc(p.name)}: which value do you stand for?</h3><div class="row">${V.map((v, i) => `<button class="ghost ${ui.value === i ? 'sel' : ''}" data-val="${i}">${v.icon} ${v.name}</button>`).join('')}</div>
+    <p class="muted">${ui.value == null ? 'They say it aloud; the Keeper taps it.' : `Tap a glowing hex on the outer ring of ${V[ui.value].name}. Then they say why.`}</p>`;
+  if (g.phase === 'end') return g.result === 'won' ? `<h3>🌳 The forest woke in round ${g.round}.</h3><p>Next, as today: Secret Owl guesses, the tribute chain, and everyone's trust acorns.</p><button data-act="new">Play again</button>`
+    : `<h3>💧 Everyone ran out of water in round ${g.round}.</h3><p>The forest sleeps on. Secret Owl guesses and trust still close the game.</p><button data-act="new">Play again</button>`;
+  if (pendingShare()) return `<p><b>${esc(g.players[pendingShare().pid].name)}</b> is sharing. Play continues when they're done.</p>`;
+  const tile = g.tiles[p.pos], w = F.wx(g, p.pos), hex = g.hexes[p.pos];
+  const where = p.pos === 0 ? 'on the World Tree (no weather)' : `${V[hex.sector].icon} ${V[hex.sector].name}, Ring ${hex.ring} · ${F.WEATHER[w][0]} ${F.WEATHER[w][1]} · ${!tile.up ? 'face down' : tile.stage ? F.STAGES[tile.stage] : tile.kind === 'spring' ? 'spring' : tile.treasure ? 'treasure!' : 'empty'}${tile.leaves ? ` · 🍂×${tile.leaves}` : ''}`;
+  const can = {
+    explore: tile && !tile.up && t.actions >= (w === 'fog' ? 2 : 1),
+    sow: F.sowable(tile), water: p.water > 0 && [p.pos, ...(F.has(p, 2) ? g.adj[p.pos] : [])].some(i => i && [1, 2].includes(g.tiles[i].stage) && g.tiles[i].leaves < 2),
+    tend: [p.pos, ...(F.has(p, 2) ? g.adj[p.pos] : [])].some(i => i && g.tiles[i].stage === 3 && g.tiles[i].leaves < 2),
+    clear: [p.pos, ...g.adj[p.pos]].some(i => i && g.tiles[i].leaves),
+    harvest: tile && tile.stage === 4 && tile.leaves < 2 && w !== 'rain' && !tile.harvested && p.fruit < 2,
+    take: tile && tile.up && tile.treasure && !p.treasure, drink: tile && tile.up && tile.kind === 'spring' && p.water < 5,
+  };
+  const btn = (k, label, cost = '') => `<button class="${ui.mode === k ? 'sel' : ''}" data-do="${k}" ${can[k] && t.actions > 0 ? '' : 'disabled'}>${label}${cost}</button>`;
+  let h = `<div class="row" style="justify-content:space-between"><span><b>${esc(p.name)}</b> · ${F.TYPES[p.types[0]]}</span><span class="dots">${'●'.repeat(t.actions)}${'○'.repeat(Math.max(0, g.actionsPerTurn - t.actions))}</span></div>
+    <p class="muted" style="margin:.2em 0 .5em">${where}</p>
+    <p style="margin:.2em 0 .6em">${p.water > 0 ? (t.actions ? 'Tap a glowing hex to <b>move</b>, or:' : 'No actions left.') : `<span class="bad">${esc(p.name)} has no water and can't move until someone passes 1.</span>`}</p>
+    <div class="acts">${btn('explore', '✦ Explore', w === 'fog' ? ' (2)' : '')}${btn('sow', '🌰 Sow')}${btn('water', '💧 Water')}${btn('tend', '🌳 Tend')}${btn('clear', '🍂 Clear', w === 'rain' && !F.has(p, 1) ? ' (2)' : '')}${btn('harvest', '🍎 Harvest')}${btn('take', '💎 Take')}${btn('drink', '🚰 Drink')}</div>`;
+  if (ui.mode) h += `<p class="muted">Tap the hex to ${ui.mode}.</p>`;
+  if (p.pos === 0 && (p.fruit || p.treasure)) h += `<div class="row" style="margin-top:.4em">${p.fruit ? '<button data-offer="fruit">🍎 Place a fruit (Heartwood question)</button>' : ''}${p.treasure ? '<button data-offer="treasure">💎 Place the treasure</button>' : ''}</div>`;
+  const mates = g.players.filter(q => F.canPass(g, p, q));
+  if (mates.length) h += `<div style="margin-top:.5em"><b>Pass (free)</b> to ${mates.map(q => `<span class="chip" style="margin:2px 4px"><i style="background:${q.color}"></i>${esc(q.name)}
+      ${p.water ? `<button class="ghost" data-pass="${q.id}" data-item="water">💧</button>` : ''}${p.fruit ? `<button class="ghost" data-pass="${q.id}" data-item="fruit">🍎</button>` : ''}${p.treasure ? `<button class="ghost" data-pass="${q.id}" data-item="treasure">💎</button>` : ''}</span>`).join('')}</div>`;
+  if (F.has(p, 8) && t.actions) { const mates8 = F.here(g, p.pos).filter(q => q !== p); if (mates8.length) h += `<p class="muted" style="margin:.4em 0 0">Challenger: bring <select id="bring"><option value="">nobody</option>${mates8.map(q => `<option value="${q.id}">${esc(q.name)}</option>`).join('')}</select> on the next move.</p>`; }
+  if (F.has(p, 5) && !t.investigated) h += `<p class="muted" style="margin:.4em 0 0">Investigator: look at the next weather of ${V.map((v, s) => `<button class="ghost" data-look="${s}" style="padding:.2em .45em">${v.icon}</button>`).join('')}</p>`;
+  const mine = ui.peeks.filter(e => e.pid === p.id).slice(0, 2);
+  if (F.has(p, 5)) mine.unshift({ type: 'breath' });
+  h += mine.map(e => `<div class="peek">📱 ${esc(p.name)}'s phone: ${e.type === 'peek' ? `the hex next to you hides ${e.kind === 'treasure' ? 'a treasure 💎' : e.kind === 'spring' ? 'a spring 💧' : 'nothing'}.` :
+    e.type === 'peekWeather' ? `next weather in ${V[e.sector].name}: ${F.WEATHER[e.weather][0]} ${F.WEATHER[e.weather][1]}.` :
+    `the next Forest Breath hits ${g.breath.map(b => `${V[g.hexes[b.to].sector].icon} Ring ${g.hexes[b.to].ring}`).join(', ')}.`}</div>`).join('');
+  h += `<div class="row" style="margin-top:.6em"><button class="ghost" data-act="end">End turn →</button></div>`;
+  return h;
+}
+
+function act(fn) { try { fn(); } catch (e) { g.log.push('⚠️ ' + e.message); } ui.mode = null; render(); }
+function onHex(i) {
+  if (pendingShare()) return;
+  if (g.phase === 'enter') { if (ui.value != null && F.enterSpots(g, ui.value).includes(i)) act(() => { F.enter(g, ui.value, i); ui.value = null; }); return; }
+  if (g.phase !== 'turn') return;
+  if (ui.mode === 'clear') return act(() => F.clear(g, i));
+  if (ui.mode === 'water') return act(() => F.water(g, i));
+  if (ui.mode === 'tend') return act(() => F.tend(g, i));
+  const bring = $('bring')?.value;
+  act(() => F.move(g, i, bring === '' || bring == null ? undefined : +bring));
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || !b.closest('#play')) return;
+  const d = b.dataset, p = g.phase === 'turn' ? F.cur(g) : null;
+  if (d.val) { ui.value = +d.val; return render(); }
+  if (d.do) {
+    if (['water', 'tend'].includes(d.do) && F.has(p, 2)) { ui.mode = ui.mode === d.do ? null : d.do; return render(); }
+    if (d.do === 'clear') { ui.mode = ui.mode === 'clear' ? null : 'clear'; return render(); }
+    return act(() => ({ explore: () => F.explore(g), sow: () => F.sow(g), water: () => F.water(g), tend: () => F.tend(g), harvest: () => F.harvest(g), take: () => F.take(g), drink: () => F.drink(g) })[d.do]());
+  }
+  if (d.offer) return act(() => F.offer(g, p.id, d.offer));
+  if (d.pass) return act(() => F.pass(g, p.id, +d.pass, d.item));
+  if (d.look) return act(() => F.investigate(g, +d.look));
+  if (d.bot) return bots(d.bot);
+  switch (d.act) {
+    case 'shared': ui.seen++; return render();
+    case 'end': return act(() => F.endTurn(g));
+    case 'new': return newGame();
+  }
+});
+function bots(scope) {
+  const startRound = g.round;
+  quiet = scope !== 'turn';
+  let n = 0;
+  const step = () => { ui.seen = g.shares.length; if (g.phase === 'enter') F.botEnter(g); else F.botTurn(g); };
+  if (scope === 'turn') { if (g.phase !== 'end') step(); }
+  else while (g.phase !== 'end' && n++ < 3000 && (scope === 'end' || g.round === startRound || g.phase === 'enter')) step();
+  ui.seen = g.shares.length; ui.mode = null;
+  render(); quiet = false;
+}
+
+// ---- static tables ----
+$('roleTable').innerHTML = F.TYPES.slice(1).map((t, i) => `<tr><td><b>${i + 1} ${t}</b></td><td>${F.ROLE_TEXT[i + 1]}</td></tr>`).join('');
+$('deckTable').innerHTML += [[3, 'Ring 3 · light (today\'s Seed)'], [2, 'Ring 2 · a story (today\'s Sapling)'], [1, 'Ring 1 · deep (today\'s Oak)']].map(([r, label]) =>
+  `<tr><td><b>${label}</b><br><span class="muted">${DECKS[r].length} cards</span></td><td>${[0, 11, 22].map(k => `“${esc(DECKS[r][k])}”`).join('<br>')}</td></tr>`).join('');
+newGame();
+</script>
+</body></html>
