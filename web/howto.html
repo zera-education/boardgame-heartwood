@@ -7,7 +7,8 @@
 <meta name="description" content="How to play World Tree, Heartwood's cooperative forest game for 6 to 12 school leaders: the goal, the forest, a turn, water and springs, weather and the Forest Tide, the three treasures, the nine Enneagram roles, the Secret Owl and the finale.">
 <title>World Tree · How to play</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='16' cy='29.6' rx='9' ry='1.8' fill='%230b2a18' opacity='.35'/%3E%3Cpath d='M12.8 29.6 Q14.4 25 14.5 19 L17.5 19 Q17.6 25 19.2 29.6 Q16 30.5 12.8 29.6Z' fill='%23431c14' stroke='%23431c14' stroke-width='2.4' stroke-linejoin='round'/%3E%3Cpath d='M12.8 29.6 Q14.4 25 14.5 19 L17.5 19 Q17.6 25 19.2 29.6 Q16 30.5 12.8 29.6Z' fill='%2374412a'/%3E%3Cpath d='M14.7 28.6 Q15.3 24 15.3 19.8' stroke='%23a66840' stroke-width='1.2' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='8.4' cy='15.4' r='6.9' fill='%23165430'/%3E%3Ccircle cx='23.6' cy='15.4' r='6.9' fill='%23165430'/%3E%3Ccircle cx='11.4' cy='10' r='7.1' fill='%23165430'/%3E%3Ccircle cx='20.6' cy='10' r='7.1' fill='%23165430'/%3E%3Ccircle cx='16' cy='7.6' r='7.3' fill='%23165430'/%3E%3Ccircle cx='16' cy='14.4' r='8.1' fill='%23165430'/%3E%3Ccircle cx='8.4' cy='15.4' r='5.6' fill='%23339950'/%3E%3Ccircle cx='23.6' cy='15.4' r='5.6' fill='%23339950'/%3E%3Ccircle cx='11.4' cy='10' r='5.8' fill='%23339950'/%3E%3Ccircle cx='20.6' cy='10' r='5.8' fill='%23339950'/%3E%3Ccircle cx='16' cy='7.6' r='6' fill='%23339950'/%3E%3Ccircle cx='16' cy='14.4' r='6.8' fill='%23339950'/%3E%3Ccircle cx='7.5' cy='14.3' r='4.4' fill='%2356c36d'/%3E%3Ccircle cx='22.7' cy='14.3' r='4.4' fill='%2356c36d'/%3E%3Ccircle cx='10.5' cy='8.9' r='4.5' fill='%2356c36d'/%3E%3Ccircle cx='19.7' cy='8.9' r='4.5' fill='%2356c36d'/%3E%3Ccircle cx='15' cy='6.5' r='4.7' fill='%2356c36d'/%3E%3Ccircle cx='14.9' cy='13.1' r='5.3' fill='%2356c36d'/%3E%3Cellipse cx='12.6' cy='6.6' rx='2.2' ry='1.1' transform='rotate(-35 12.6 6.6)' fill='%23fff' opacity='.75'/%3E%3C/svg%3E">
 <style>
 :root {
   --bg: #13241b; --panel: #1c3326; --panel2: #24402f; --deep: #0f1d16; --ink: #f3efe2; --muted: #b9c4b3;
@@ -49,6 +50,7 @@ b, strong { font-weight: 800; }
 .back:hover { color: var(--ink); }
 .hero { text-align: center; padding: 20px 0 8px; }
 .hero .seed { font-size: 3.2rem; line-height: 1; }
+.hero .seed .art-i { --art-h: 1.5em; }
 .hero h1 { font-size: 2.4rem; letter-spacing: .12em; margin: .35rem 0 0; }
 .hero .sub { font-size: 1.25rem; font-weight: 800; color: var(--accent); margin: .2rem 0 .6rem; }
 .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 0; margin: .6rem 0 0; list-style: none; }
@@ -95,6 +97,7 @@ tbody th { font-weight: 800; }
 .tablecard { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 6px 8px; overflow-wrap: break-word; margin: 1rem 0; }
 .nw { white-space: nowrap; }
 .em { font-size: 1.25rem; margin-right: .3em; }
+th .em .art-i { --art-h: 1.05em; }
 @media (max-width: 700px) {
   table.stack thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   table.stack, table.stack tbody, table.stack tr, table.stack th, table.stack td { display: block; width: 100%; }
@@ -194,15 +197,15 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
 <body>
 <div class="wrap">
 
-<div class="topbar"><a class="back" href="/">← Back to the game</a> · <a class="back" href="wiki.html">📖 Wiki of every term</a></div>
+<div class="topbar"><a class="back" href="/">← Back to the game</a> · <a class="back" href="wiki.html"><i class="art-i" data-art="icon:book"></i> Wiki of every term</a></div>
 
 <header class="hero">
-  <div class="seed" aria-hidden="true">🌲</div>
+  <div class="seed" aria-hidden="true"><i class="art-i" data-art="worldTree:awake"></i></div>
   <h1>WORLD TREE</h1>
   <p class="sub">How to play</p>
   <p class="muted">A Heartwood game for ZERA's school leaders: wake the forest together.</p>
   <ul class="chips" aria-label="At a glance">
-    <li>👥 6 to 12 players</li><li>🤝 One team: you win or lose together</li><li>⏱️ A long afternoon (3 to 4 hours)</li><li>📵 Phones down</li>
+    <li><i class="art-i" data-art="medallion"></i> 6 to 12 players</li><li><i class="art-i" data-art="icon:team"></i> One team: you win or lose together</li><li><i class="art-i" data-art="icon:timer"></i> A long afternoon (3 to 4 hours)</li><li><i class="art-i" data-art="icon:phoneOff"></i> Phones down</li>
   </ul>
 </header>
 
@@ -239,14 +242,14 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
   <p class="lead">World Tree is a game for getting to know each other while you work as one team. The forest is asleep. Together you explore it, grow a Big Tree for every value, tell stories when you harvest fruit, find three treasures, and gather on the World Tree in the centre. Then the forest wakes.</p>
   <p>Nobody plays against anybody. There are no points and no winner among the players. The whole team wakes the forest, or the whole team runs out of water. So talk, plan out loud, and help each other.</p>
   <div class="callout green">
-    <h3>🗣️ Say it, and the Keeper taps it</h3>
+    <h3><i class="art-i" data-art="icon:talk"></i> Say it, and the Keeper taps it</h3>
     <p>Everything public happens on the big screen, the <b>Keeper screen</b>. When it is your turn, you say what you want to do ("I move into Resilience", "I explore here") and the Keeper taps it. The screen shows it: your medallions hop, hexes turn over, plants grow, and leaves blow in at the Forest Tide.</p>
     <p>Your phone stays face down. It only shows private things: who you watch as a <a href="#owl">Secret Owl</a>, your roles, what you carry, and what only you can see. You pick it up to give trust after a story, and to make your guess at the end.</p>
   </div>
-  <p>ZERA's story is a tree's story: a seed planted in 2021 that grows into a forest by 2035. (<i>Zera</i> is Hebrew for seed, and our mascot is an acorn. In this game an acorn 🌰 always means one thing: the <b>trust</b> you give each other.)</p>
+  <p>ZERA's story is a tree's story: a seed planted in 2021 that grows into a forest by 2035. (<i>Zera</i> is Hebrew for seed, and our mascot is an acorn. In this game an acorn <i class="art-i" data-art="acorn"></i> always means one thing: the <b>trust</b> you give each other.)</p>
   <div class="grid two">
     <div class="card">
-      <h3>🧭 You, the players</h3>
+      <h3><i class="art-i" data-art="medallion"></i> You, the players</h3>
       <p>6 to 12 school leaders. Each of you has your own phone.</p>
       <ol class="small" style="margin:0">
         <li>Open the game on your phone with the 4-letter code on the big screen, or scan its QR code.</li>
@@ -256,7 +259,7 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
       </ol>
     </div>
     <div class="card">
-      <h3>🎙️ The Keeper</h3>
+      <h3><i class="art-i" data-art="icon:keeper"></i> The Keeper</h3>
       <p>The facilitator. The Keeper is not a player. The Keeper runs the big screen, gives each player 1 to 3 Enneagram roles, starts the game, taps what players say, closes each story with <b>Done sharing</b>, can start a timer, and leads the finale.</p>
       <p class="small" style="margin:0">The Keeper may pause a story at any time, and can give a player a rejoin code if their phone changes.</p>
     </div>
@@ -268,12 +271,12 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
   <h2 id="goal-h"><span class="num" aria-hidden="true">2</span>The goal</h2>
   <p class="lead">The forest wakes <b>the moment all three goals are true at the same time</b>. The big screen shows how far the team has come.</p>
   <ol class="goals">
-    <li><span class="k">Goal 1</span><span class="big" aria-hidden="true">🌳 × 6</span><b>A Big Tree in every sector</b>One Big Tree in each of the six value sectors. It does not matter who grew it.</li>
-    <li><span class="k">Goal 2</span><span class="big" aria-hidden="true">🍎 + 🧭🏮🪢</span><b>Fruit from everyone, and all three treasures</b>Every player has placed at least one fruit on the World Tree, and the three treasures are there too.</li>
-    <li><span class="k">Goal 3</span><span class="big" aria-hidden="true">🧍 on 🌲</span><b>Everyone on the World Tree</b>Every player stands on the World Tree, together.</li>
+    <li><span class="k">Goal 1</span><span class="big" aria-hidden="true"><i class="art-i" data-art="stage:4"></i> × 6</span><b>A Big Tree in every sector</b>One Big Tree in each of the six value sectors. It does not matter who grew it.</li>
+    <li><span class="k">Goal 2</span><span class="big" aria-hidden="true"><i class="art-i" data-art="fruit"></i> + <i class="art-i" data-art="treasure:compass"></i><i class="art-i" data-art="treasure:lantern"></i><i class="art-i" data-art="treasure:rope"></i></span><b>Fruit from everyone, and all three treasures</b>Every player has placed at least one fruit on the World Tree, and the three treasures are there too.</li>
+    <li><span class="k">Goal 3</span><span class="big" aria-hidden="true"><i class="art-i" data-art="icon:team"></i> on <i class="art-i" data-art="worldTree:awake"></i></span><b>Everyone on the World Tree</b>Every player stands on the World Tree, together.</li>
   </ol>
   <div class="callout">
-    <h3>💧 How the team can lose</h3>
+    <h3><i class="art-i" data-art="drop:empty"></i> How the team can lose</h3>
     <p>If <b>every player is at 0 water at the same moment</b>, the forest sleeps on and the game ends. Nobody is ever out of the game alone: a player with no water waits for a teammate to pass them some (see <a href="#water">Water and springs</a>).</p>
   </div>
   <p>Win or lose, the game goes on to the same <a href="#end">finale</a>: the Secret Owl guesses, the tribute chain, and recognition for everyone.</p>
@@ -285,16 +288,16 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
   <p class="lead">The forest has 61 hexes: the World Tree in the centre and four rings around it. Six lines from the centre cut it into six sectors, one for each of ZERA's core values, <b>ZERAOS</b>, reading clockwise from the top.</p>
   <div class="mapfig">
     <figure style="margin:0">
-      <svg class="board" viewBox="-278 -250 556 500" role="img" aria-labelledby="board-t board-d"><title id="board-t">The World Tree forest</title><desc id="board-d">61 hexagons. The World Tree is in the centre. Around it are four rings: Ring 1 (6 hexes), Ring 2 (12), Ring 3 (18) and Ring 4 (24), the outer edge. Six coloured sectors, one for each ZERAOS value, read clockwise from the top: Zealous, Excellence, Resilience, Authenticity, Open-mindedness and Sustainability. Each sector has 10 hexes. The numbers 1 to 4 in the Zealous sector mark the rings.</desc><style>.wt-i{font-size:30px;text-anchor:middle;dominant-baseline:central}.wt-l{font-size:7.5px;font-weight:800;letter-spacing:.06em;fill:#f3efe2;text-anchor:middle;dominant-baseline:central}.wt-n{font-size:15px;font-weight:800;fill:#f3efe2;text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:rgba(0,0,0,.6);stroke-width:3px}.wt-v{font-size:24px;text-anchor:middle;dominant-baseline:central}</style><polygon points="24.7,-14.2 24.7,14.2 0.0,28.5 -24.7,14.2 -24.7,-14.3 -0.0,-28.5" fill="#7a4b2a" fill-opacity="1" stroke="#0c1711" stroke-width="2.5"/><polygon points="-1.3,30.8 -1.3,59.3 -26.0,73.5 -50.7,59.3 -50.7,30.7 -26.0,16.5" fill="#cf6f97" fill-opacity="1" stroke="#0c1711" stroke-width="2.5"/><polygon points="50.7,30.8 50.7,59.3 26.0,73.5 1.3,59.3 1.3,30.7 26.0,16.5" fill="#c8463f" fill-opacity="1" stroke="#0c1711" stroke-width="2.5"/><polygon points="76.6,-14.2 76.6,14.2 52.0,28.5 27.3,14.2 27.3,-14.3 52.0,-28.5" fill="#e0a32e" fill-opacity="1" stroke="#0c1711" stroke-width="2.5"/><polygon points="50.7,-59.3 50.7,-30.8 26.0,-16.5 1.3,-30.8 1.3,-59.3 26.0,-73.5" fill="#e0703a" fill-opacity="1" stroke="#0c1711" stroke-width="2.5"/><polygon points="-1.3,-59.3 -1.3,-30.8 -26.0,-16.5 -50.7,-30.8 -50.7,-59.3 -26.0,-73.5" fill="#3f9e9a" fill-opacity="1" stroke="#0c1711" stroke-width="2.5"/><polygon points="-27.3,-14.2 -27.3,14.2 -52.0,28.5 -76.6,14.2 -76.6,-14.3 -52.0,-28.5" fill="#4f74b0" fill-opacity="1" stroke="#0c1711" stroke-width="2.5"/><polygon points="-27.3,75.8 -27.3,104.3 -52.0,118.5 -76.6,104.3 -76.6,75.8 -52.0,61.5" fill="#cf6f97" fill-opacity="0.85" stroke="#0c1711" stroke-width="2.5"/><polygon points="24.7,75.8 24.7,104.3 0.0,118.5 -24.7,104.3 -24.7,75.8 -0.0,61.5" fill="#cf6f97" fill-opacity="0.85" stroke="#0c1711" stroke-width="2.5"/><polygon points="76.6,75.8 76.6,104.3 52.0,118.5 27.3,104.3 27.3,75.8 52.0,61.5" fill="#c8463f" fill-opacity="0.85" stroke="#0c1711" stroke-width="2.5"/><polygon points="102.6,30.8 102.6,59.3 77.9,73.5 53.3,59.3 53.3,30.7 77.9,16.5" fill="#c8463f" fill-opacity="0.85" stroke="#0c1711" stroke-width="2.5"/><polygon points="128.6,-14.2 128.6,14.2 103.9,28.5 79.2,14.2 79.2,-14.3 103.9,-28.5" fill="#e0a32e" fill-opacity="0.85" stroke="#0c1711" stroke-width="2.5"/><polygon points="102.6,-59.3 102.6,-30.8 77.9,-16.5 53.3,-30.8 53.3,-59.3 77.9,-73.5" fill="#e0a32e" fill-opacity="0.85" stroke="#0c1711" stroke-width="2.5"/><polygon points="76.6,-104.3 76.6,-75.8 52.0,-61.5 27.3,-75.8 27.3,-104.3 52.0,-118.5" fill="#e0703a" fill-opacity="0.85" stroke="#0c1711" stroke-width="2.5"/><polygon points="24.7,-104.3 24.7,-75.8 0.0,-61.5 -24.7,-75.8 -24.7,-104.3 -0.0,-118.5" fill="#e0703a" fill-opacity="0.85" stroke="#0c1711" stroke-width="2.5"/><polygon points="-27.3,-104.3 -27.3,-75.8 -52.0,-61.5 -76.6,-75.8 -76.6,-104.3 -52.0,-118.5" fill="#3f9e9a" fill-opacity="0.85" stroke="#0c1711" stroke-width="2.5"/><polygon points="-53.3,-59.3 -53.3,-30.8 -77.9,-16.5 -102.6,-30.8 -102.6,-59.3 -77.9,-73.5" fill="#3f9e9a" fill-opacity="0.85" stroke="#0c1711" stroke-width="2.5"/><polygon points="-79.2,-14.2 -79.2,14.2 -103.9,28.5 -128.6,14.2 -128.6,-14.3 -103.9,-28.5" fill="#4f74b0" fill-opacity="0.85" stroke="#0c1711" stroke-width="2.5"/><polygon points="-53.3,30.8 -53.3,59.3 -77.9,73.5 -102.6,59.3 -102.6,30.7 -77.9,16.5" fill="#4f74b0" fill-opacity="0.85" stroke="#0c1711" stroke-width="2.5"/><polygon points="-53.3,120.8 -53.3,149.3 -77.9,163.5 -102.6,149.3 -102.6,120.8 -77.9,106.5" fill="#cf6f97" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="-1.3,120.8 -1.3,149.3 -26.0,163.5 -50.7,149.3 -50.7,120.8 -26.0,106.5" fill="#cf6f97" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="50.7,120.8 50.7,149.3 26.0,163.5 1.3,149.3 1.3,120.8 26.0,106.5" fill="#cf6f97" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="102.6,120.8 102.6,149.3 77.9,163.5 53.3,149.3 53.3,120.8 77.9,106.5" fill="#c8463f" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="128.6,75.8 128.6,104.3 103.9,118.5 79.2,104.3 79.2,75.8 103.9,61.5" fill="#c8463f" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="154.6,30.8 154.6,59.3 129.9,73.5 105.2,59.3 105.2,30.7 129.9,16.5" fill="#c8463f" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="180.6,-14.2 180.6,14.2 155.9,28.5 131.2,14.2 131.2,-14.3 155.9,-28.5" fill="#e0a32e" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="154.6,-59.3 154.6,-30.8 129.9,-16.5 105.2,-30.8 105.2,-59.3 129.9,-73.5" fill="#e0a32e" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="128.6,-104.3 128.6,-75.8 103.9,-61.5 79.2,-75.8 79.2,-104.3 103.9,-118.5" fill="#e0a32e" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="102.6,-149.3 102.6,-120.8 77.9,-106.5 53.3,-120.8 53.3,-149.3 77.9,-163.5" fill="#e0703a" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="50.7,-149.3 50.7,-120.8 26.0,-106.5 1.3,-120.8 1.3,-149.3 26.0,-163.5" fill="#e0703a" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="-1.3,-149.3 -1.3,-120.8 -26.0,-106.5 -50.7,-120.8 -50.7,-149.3 -26.0,-163.5" fill="#e0703a" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="-53.3,-149.3 -53.3,-120.8 -77.9,-106.5 -102.6,-120.8 -102.6,-149.3 -77.9,-163.5" fill="#3f9e9a" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="-79.2,-104.3 -79.2,-75.8 -103.9,-61.5 -128.6,-75.8 -128.6,-104.3 -103.9,-118.5" fill="#3f9e9a" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="-105.2,-59.3 -105.2,-30.8 -129.9,-16.5 -154.6,-30.8 -154.6,-59.3 -129.9,-73.5" fill="#3f9e9a" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="-131.2,-14.2 -131.2,14.2 -155.9,28.5 -180.6,14.2 -180.6,-14.3 -155.9,-28.5" fill="#4f74b0" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="-105.2,30.8 -105.2,59.3 -129.9,73.5 -154.6,59.3 -154.6,30.7 -129.9,16.5" fill="#4f74b0" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="-79.2,75.8 -79.2,104.3 -103.9,118.5 -128.6,104.3 -128.6,75.8 -103.9,61.5" fill="#4f74b0" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="-79.2,165.8 -79.2,194.3 -103.9,208.5 -128.6,194.3 -128.6,165.8 -103.9,151.5" fill="#cf6f97" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="-27.3,165.8 -27.3,194.3 -52.0,208.5 -76.6,194.3 -76.6,165.8 -52.0,151.5" fill="#cf6f97" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="24.7,165.8 24.7,194.3 0.0,208.5 -24.7,194.3 -24.7,165.8 -0.0,151.5" fill="#cf6f97" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="76.6,165.8 76.6,194.3 52.0,208.5 27.3,194.3 27.3,165.8 52.0,151.5" fill="#cf6f97" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="128.6,165.8 128.6,194.3 103.9,208.5 79.2,194.3 79.2,165.8 103.9,151.5" fill="#c8463f" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="154.6,120.8 154.6,149.3 129.9,163.5 105.2,149.3 105.2,120.8 129.9,106.5" fill="#c8463f" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="180.6,75.8 180.6,104.3 155.9,118.5 131.2,104.3 131.2,75.8 155.9,61.5" fill="#c8463f" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="206.5,30.8 206.5,59.3 181.9,73.5 157.2,59.3 157.2,30.7 181.9,16.5" fill="#c8463f" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="232.5,-14.2 232.5,14.2 207.8,28.5 183.2,14.2 183.2,-14.3 207.8,-28.5" fill="#e0a32e" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="206.5,-59.3 206.5,-30.8 181.9,-16.5 157.2,-30.8 157.2,-59.3 181.9,-73.5" fill="#e0a32e" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="180.6,-104.3 180.6,-75.8 155.9,-61.5 131.2,-75.8 131.2,-104.3 155.9,-118.5" fill="#e0a32e" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="154.6,-149.3 154.6,-120.8 129.9,-106.5 105.2,-120.8 105.2,-149.3 129.9,-163.5" fill="#e0a32e" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="128.6,-194.3 128.6,-165.8 103.9,-151.5 79.2,-165.8 79.2,-194.3 103.9,-208.5" fill="#e0703a" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="76.6,-194.3 76.6,-165.8 52.0,-151.5 27.3,-165.8 27.3,-194.3 52.0,-208.5" fill="#e0703a" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="24.7,-194.3 24.7,-165.8 0.0,-151.5 -24.7,-165.8 -24.7,-194.3 -0.0,-208.5" fill="#e0703a" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="-27.3,-194.3 -27.3,-165.8 -52.0,-151.5 -76.6,-165.8 -76.6,-194.3 -52.0,-208.5" fill="#e0703a" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="-79.2,-194.3 -79.2,-165.8 -103.9,-151.5 -128.6,-165.8 -128.6,-194.3 -103.9,-208.5" fill="#3f9e9a" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="-105.2,-149.3 -105.2,-120.8 -129.9,-106.5 -154.6,-120.8 -154.6,-149.3 -129.9,-163.5" fill="#3f9e9a" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="-131.2,-104.3 -131.2,-75.8 -155.9,-61.5 -180.6,-75.8 -180.6,-104.3 -155.9,-118.5" fill="#3f9e9a" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="-157.2,-59.3 -157.2,-30.8 -181.9,-16.5 -206.5,-30.8 -206.5,-59.3 -181.9,-73.5" fill="#3f9e9a" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="-183.2,-14.2 -183.2,14.2 -207.8,28.5 -232.5,14.2 -232.5,-14.3 -207.8,-28.5" fill="#4f74b0" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="-157.2,30.8 -157.2,59.3 -181.9,73.5 -206.5,59.3 -206.5,30.7 -181.9,16.5" fill="#4f74b0" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="-131.2,75.8 -131.2,104.3 -155.9,118.5 -180.6,104.3 -180.6,75.8 -155.9,61.5" fill="#4f74b0" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="-105.2,120.8 -105.2,149.3 -129.9,163.5 -154.6,149.3 -154.6,120.8 -129.9,106.5" fill="#4f74b0" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><text x="0" y="-3" class="wt-i">🌲</text><text x="0" y="15" class="wt-l">WORLD TREE</text><text x="26.0" y="-45.0" class="wt-n">1</text><text x="0.0" y="-90.0" class="wt-n">2</text><text x="26.0" y="-135.0" class="wt-n">3</text><text x="0.0" y="-180.0" class="wt-n">4</text><circle cx="32.6" cy="-226.0" r="22" fill="#0c1711" stroke="#e0703a" stroke-width="3.5"/><text x="32.6" y="-225.0" class="wt-v"><title>Zealous</title>☀️</text><circle cx="212.1" cy="-84.8" r="22" fill="#0c1711" stroke="#e0a32e" stroke-width="3.5"/><text x="212.1" y="-83.8" class="wt-v"><title>Excellence</title>⭐</text><circle cx="179.4" cy="141.3" r="22" fill="#0c1711" stroke="#c8463f" stroke-width="3.5"/><text x="179.4" y="142.3" class="wt-v"><title>Resilience</title>🎋</text><circle cx="-32.6" cy="226.0" r="22" fill="#0c1711" stroke="#cf6f97" stroke-width="3.5"/><text x="-32.6" y="227.0" class="wt-v"><title>Authenticity</title>🪞</text><circle cx="-212.1" cy="84.8" r="22" fill="#0c1711" stroke="#4f74b0" stroke-width="3.5"/><text x="-212.1" y="85.8" class="wt-v"><title>Open-mindedness</title>💡</text><circle cx="-179.4" cy="-141.3" r="22" fill="#0c1711" stroke="#3f9e9a" stroke-width="3.5"/><text x="-179.4" y="-140.3" class="wt-v"><title>Sustainability</title>🌍</text></svg>
+      <svg class="board" viewBox="-278 -250 556 500" role="img" aria-labelledby="board-t board-d"><title id="board-t">The World Tree forest</title><desc id="board-d">61 hexagons. The World Tree is in the centre. Around it are four rings: Ring 1 (6 hexes), Ring 2 (12), Ring 3 (18) and Ring 4 (24), the outer edge. Six coloured sectors, one for each ZERAOS value, read clockwise from the top: Zealous, Excellence, Resilience, Authenticity, Open-mindedness and Sustainability. Each sector has 10 hexes. The numbers 1 to 4 in the Zealous sector mark the rings.</desc><style>.wt-l{font-size:7.5px;font-weight:800;letter-spacing:.06em;fill:#f3efe2;text-anchor:middle;dominant-baseline:central}.wt-n{font-size:15px;font-weight:800;fill:#f3efe2;text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:rgba(0,0,0,.6);stroke-width:3px}</style><polygon points="24.7,-14.2 24.7,14.2 0.0,28.5 -24.7,14.2 -24.7,-14.3 -0.0,-28.5" fill="#7a4b2a" fill-opacity="1" stroke="#0c1711" stroke-width="2.5"/><polygon points="-1.3,30.8 -1.3,59.3 -26.0,73.5 -50.7,59.3 -50.7,30.7 -26.0,16.5" fill="#cf6f97" fill-opacity="1" stroke="#0c1711" stroke-width="2.5"/><polygon points="50.7,30.8 50.7,59.3 26.0,73.5 1.3,59.3 1.3,30.7 26.0,16.5" fill="#c8463f" fill-opacity="1" stroke="#0c1711" stroke-width="2.5"/><polygon points="76.6,-14.2 76.6,14.2 52.0,28.5 27.3,14.2 27.3,-14.3 52.0,-28.5" fill="#e0a32e" fill-opacity="1" stroke="#0c1711" stroke-width="2.5"/><polygon points="50.7,-59.3 50.7,-30.8 26.0,-16.5 1.3,-30.8 1.3,-59.3 26.0,-73.5" fill="#e0703a" fill-opacity="1" stroke="#0c1711" stroke-width="2.5"/><polygon points="-1.3,-59.3 -1.3,-30.8 -26.0,-16.5 -50.7,-30.8 -50.7,-59.3 -26.0,-73.5" fill="#3f9e9a" fill-opacity="1" stroke="#0c1711" stroke-width="2.5"/><polygon points="-27.3,-14.2 -27.3,14.2 -52.0,28.5 -76.6,14.2 -76.6,-14.3 -52.0,-28.5" fill="#4f74b0" fill-opacity="1" stroke="#0c1711" stroke-width="2.5"/><polygon points="-27.3,75.8 -27.3,104.3 -52.0,118.5 -76.6,104.3 -76.6,75.8 -52.0,61.5" fill="#cf6f97" fill-opacity="0.85" stroke="#0c1711" stroke-width="2.5"/><polygon points="24.7,75.8 24.7,104.3 0.0,118.5 -24.7,104.3 -24.7,75.8 -0.0,61.5" fill="#cf6f97" fill-opacity="0.85" stroke="#0c1711" stroke-width="2.5"/><polygon points="76.6,75.8 76.6,104.3 52.0,118.5 27.3,104.3 27.3,75.8 52.0,61.5" fill="#c8463f" fill-opacity="0.85" stroke="#0c1711" stroke-width="2.5"/><polygon points="102.6,30.8 102.6,59.3 77.9,73.5 53.3,59.3 53.3,30.7 77.9,16.5" fill="#c8463f" fill-opacity="0.85" stroke="#0c1711" stroke-width="2.5"/><polygon points="128.6,-14.2 128.6,14.2 103.9,28.5 79.2,14.2 79.2,-14.3 103.9,-28.5" fill="#e0a32e" fill-opacity="0.85" stroke="#0c1711" stroke-width="2.5"/><polygon points="102.6,-59.3 102.6,-30.8 77.9,-16.5 53.3,-30.8 53.3,-59.3 77.9,-73.5" fill="#e0a32e" fill-opacity="0.85" stroke="#0c1711" stroke-width="2.5"/><polygon points="76.6,-104.3 76.6,-75.8 52.0,-61.5 27.3,-75.8 27.3,-104.3 52.0,-118.5" fill="#e0703a" fill-opacity="0.85" stroke="#0c1711" stroke-width="2.5"/><polygon points="24.7,-104.3 24.7,-75.8 0.0,-61.5 -24.7,-75.8 -24.7,-104.3 -0.0,-118.5" fill="#e0703a" fill-opacity="0.85" stroke="#0c1711" stroke-width="2.5"/><polygon points="-27.3,-104.3 -27.3,-75.8 -52.0,-61.5 -76.6,-75.8 -76.6,-104.3 -52.0,-118.5" fill="#3f9e9a" fill-opacity="0.85" stroke="#0c1711" stroke-width="2.5"/><polygon points="-53.3,-59.3 -53.3,-30.8 -77.9,-16.5 -102.6,-30.8 -102.6,-59.3 -77.9,-73.5" fill="#3f9e9a" fill-opacity="0.85" stroke="#0c1711" stroke-width="2.5"/><polygon points="-79.2,-14.2 -79.2,14.2 -103.9,28.5 -128.6,14.2 -128.6,-14.3 -103.9,-28.5" fill="#4f74b0" fill-opacity="0.85" stroke="#0c1711" stroke-width="2.5"/><polygon points="-53.3,30.8 -53.3,59.3 -77.9,73.5 -102.6,59.3 -102.6,30.7 -77.9,16.5" fill="#4f74b0" fill-opacity="0.85" stroke="#0c1711" stroke-width="2.5"/><polygon points="-53.3,120.8 -53.3,149.3 -77.9,163.5 -102.6,149.3 -102.6,120.8 -77.9,106.5" fill="#cf6f97" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="-1.3,120.8 -1.3,149.3 -26.0,163.5 -50.7,149.3 -50.7,120.8 -26.0,106.5" fill="#cf6f97" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="50.7,120.8 50.7,149.3 26.0,163.5 1.3,149.3 1.3,120.8 26.0,106.5" fill="#cf6f97" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="102.6,120.8 102.6,149.3 77.9,163.5 53.3,149.3 53.3,120.8 77.9,106.5" fill="#c8463f" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="128.6,75.8 128.6,104.3 103.9,118.5 79.2,104.3 79.2,75.8 103.9,61.5" fill="#c8463f" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="154.6,30.8 154.6,59.3 129.9,73.5 105.2,59.3 105.2,30.7 129.9,16.5" fill="#c8463f" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="180.6,-14.2 180.6,14.2 155.9,28.5 131.2,14.2 131.2,-14.3 155.9,-28.5" fill="#e0a32e" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="154.6,-59.3 154.6,-30.8 129.9,-16.5 105.2,-30.8 105.2,-59.3 129.9,-73.5" fill="#e0a32e" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="128.6,-104.3 128.6,-75.8 103.9,-61.5 79.2,-75.8 79.2,-104.3 103.9,-118.5" fill="#e0a32e" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="102.6,-149.3 102.6,-120.8 77.9,-106.5 53.3,-120.8 53.3,-149.3 77.9,-163.5" fill="#e0703a" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="50.7,-149.3 50.7,-120.8 26.0,-106.5 1.3,-120.8 1.3,-149.3 26.0,-163.5" fill="#e0703a" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="-1.3,-149.3 -1.3,-120.8 -26.0,-106.5 -50.7,-120.8 -50.7,-149.3 -26.0,-163.5" fill="#e0703a" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="-53.3,-149.3 -53.3,-120.8 -77.9,-106.5 -102.6,-120.8 -102.6,-149.3 -77.9,-163.5" fill="#3f9e9a" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="-79.2,-104.3 -79.2,-75.8 -103.9,-61.5 -128.6,-75.8 -128.6,-104.3 -103.9,-118.5" fill="#3f9e9a" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="-105.2,-59.3 -105.2,-30.8 -129.9,-16.5 -154.6,-30.8 -154.6,-59.3 -129.9,-73.5" fill="#3f9e9a" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="-131.2,-14.2 -131.2,14.2 -155.9,28.5 -180.6,14.2 -180.6,-14.3 -155.9,-28.5" fill="#4f74b0" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="-105.2,30.8 -105.2,59.3 -129.9,73.5 -154.6,59.3 -154.6,30.7 -129.9,16.5" fill="#4f74b0" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="-79.2,75.8 -79.2,104.3 -103.9,118.5 -128.6,104.3 -128.6,75.8 -103.9,61.5" fill="#4f74b0" fill-opacity="0.7" stroke="#0c1711" stroke-width="2.5"/><polygon points="-79.2,165.8 -79.2,194.3 -103.9,208.5 -128.6,194.3 -128.6,165.8 -103.9,151.5" fill="#cf6f97" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="-27.3,165.8 -27.3,194.3 -52.0,208.5 -76.6,194.3 -76.6,165.8 -52.0,151.5" fill="#cf6f97" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="24.7,165.8 24.7,194.3 0.0,208.5 -24.7,194.3 -24.7,165.8 -0.0,151.5" fill="#cf6f97" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="76.6,165.8 76.6,194.3 52.0,208.5 27.3,194.3 27.3,165.8 52.0,151.5" fill="#cf6f97" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="128.6,165.8 128.6,194.3 103.9,208.5 79.2,194.3 79.2,165.8 103.9,151.5" fill="#c8463f" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="154.6,120.8 154.6,149.3 129.9,163.5 105.2,149.3 105.2,120.8 129.9,106.5" fill="#c8463f" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="180.6,75.8 180.6,104.3 155.9,118.5 131.2,104.3 131.2,75.8 155.9,61.5" fill="#c8463f" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="206.5,30.8 206.5,59.3 181.9,73.5 157.2,59.3 157.2,30.7 181.9,16.5" fill="#c8463f" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="232.5,-14.2 232.5,14.2 207.8,28.5 183.2,14.2 183.2,-14.3 207.8,-28.5" fill="#e0a32e" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="206.5,-59.3 206.5,-30.8 181.9,-16.5 157.2,-30.8 157.2,-59.3 181.9,-73.5" fill="#e0a32e" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="180.6,-104.3 180.6,-75.8 155.9,-61.5 131.2,-75.8 131.2,-104.3 155.9,-118.5" fill="#e0a32e" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="154.6,-149.3 154.6,-120.8 129.9,-106.5 105.2,-120.8 105.2,-149.3 129.9,-163.5" fill="#e0a32e" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="128.6,-194.3 128.6,-165.8 103.9,-151.5 79.2,-165.8 79.2,-194.3 103.9,-208.5" fill="#e0703a" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="76.6,-194.3 76.6,-165.8 52.0,-151.5 27.3,-165.8 27.3,-194.3 52.0,-208.5" fill="#e0703a" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="24.7,-194.3 24.7,-165.8 0.0,-151.5 -24.7,-165.8 -24.7,-194.3 -0.0,-208.5" fill="#e0703a" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="-27.3,-194.3 -27.3,-165.8 -52.0,-151.5 -76.6,-165.8 -76.6,-194.3 -52.0,-208.5" fill="#e0703a" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="-79.2,-194.3 -79.2,-165.8 -103.9,-151.5 -128.6,-165.8 -128.6,-194.3 -103.9,-208.5" fill="#3f9e9a" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="-105.2,-149.3 -105.2,-120.8 -129.9,-106.5 -154.6,-120.8 -154.6,-149.3 -129.9,-163.5" fill="#3f9e9a" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="-131.2,-104.3 -131.2,-75.8 -155.9,-61.5 -180.6,-75.8 -180.6,-104.3 -155.9,-118.5" fill="#3f9e9a" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="-157.2,-59.3 -157.2,-30.8 -181.9,-16.5 -206.5,-30.8 -206.5,-59.3 -181.9,-73.5" fill="#3f9e9a" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="-183.2,-14.2 -183.2,14.2 -207.8,28.5 -232.5,14.2 -232.5,-14.3 -207.8,-28.5" fill="#4f74b0" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="-157.2,30.8 -157.2,59.3 -181.9,73.5 -206.5,59.3 -206.5,30.7 -181.9,16.5" fill="#4f74b0" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="-131.2,75.8 -131.2,104.3 -155.9,118.5 -180.6,104.3 -180.6,75.8 -155.9,61.5" fill="#4f74b0" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><polygon points="-105.2,120.8 -105.2,149.3 -129.9,163.5 -154.6,149.3 -154.6,120.8 -129.9,106.5" fill="#4f74b0" fill-opacity="0.55" stroke="#0c1711" stroke-width="2.5"/><g transform="translate(0,-7)" data-art="worldTree:awake" data-size="40"></g><text x="0" y="15" class="wt-l">WORLD TREE</text><text x="26.0" y="-45.0" class="wt-n">1</text><text x="0.0" y="-90.0" class="wt-n">2</text><text x="26.0" y="-135.0" class="wt-n">3</text><text x="0.0" y="-180.0" class="wt-n">4</text><circle cx="32.6" cy="-226.0" r="22" fill="#0c1711" stroke="#e0703a" stroke-width="3.5"/><g transform="translate(32.6,-226.0)"><title>Zealous</title><g data-art="value:0" data-size="34"></g></g><circle cx="212.1" cy="-84.8" r="22" fill="#0c1711" stroke="#e0a32e" stroke-width="3.5"/><g transform="translate(212.1,-84.8)"><title>Excellence</title><g data-art="value:1" data-size="34"></g></g><circle cx="179.4" cy="141.3" r="22" fill="#0c1711" stroke="#c8463f" stroke-width="3.5"/><g transform="translate(179.4,141.3)"><title>Resilience</title><g data-art="value:2" data-size="34"></g></g><circle cx="-32.6" cy="226.0" r="22" fill="#0c1711" stroke="#cf6f97" stroke-width="3.5"/><g transform="translate(-32.6,226.0)"><title>Authenticity</title><g data-art="value:3" data-size="34"></g></g><circle cx="-212.1" cy="84.8" r="22" fill="#0c1711" stroke="#4f74b0" stroke-width="3.5"/><g transform="translate(-212.1,84.8)"><title>Open-mindedness</title><g data-art="value:4" data-size="34"></g></g><circle cx="-179.4" cy="-141.3" r="22" fill="#0c1711" stroke="#3f9e9a" stroke-width="3.5"/><g transform="translate(-179.4,-141.3)"><title>Sustainability</title><g data-art="value:5" data-size="34"></g></g></svg>
     </figure>
     <div>
       <ul class="values" aria-label="The six values and their sectors">
-        <li><i class="hx" style="--c:var(--zealous)"></i><span class="em" aria-hidden="true">☀️</span><span><b>Zealous</b><small>Be zealous, not jealous.</small></span></li>
-        <li><i class="hx" style="--c:var(--excellence)"></i><span class="em" aria-hidden="true">⭐</span><span><b>Excellence</b><small>Beyond expectation.</small></span></li>
-        <li><i class="hx" style="--c:var(--resilience)"></i><span class="em" aria-hidden="true">🎋</span><span><b>Resilience</b><small>Anti-fragile.</small></span></li>
-        <li><i class="hx" style="--c:var(--authenticity)"></i><span class="em" aria-hidden="true">🪞</span><span><b>Authenticity</b><small>Inclusive education.</small></span></li>
-        <li><i class="hx" style="--c:var(--openness)"></i><span class="em" aria-hidden="true">💡</span><span><b>Open-mindedness</b><small>Growth mindset.</small></span></li>
-        <li><i class="hx" style="--c:var(--sustainability)"></i><span class="em" aria-hidden="true">🌍</span><span><b>Sustainability</b><small>Start with the end in mind.</small></span></li>
+        <li><i class="hx" style="--c:var(--zealous)"></i><span class="em" aria-hidden="true"><i class="art-i" data-art="value:0"></i></span><span><b>Zealous</b><small>Be zealous, not jealous.</small></span></li>
+        <li><i class="hx" style="--c:var(--excellence)"></i><span class="em" aria-hidden="true"><i class="art-i" data-art="value:1"></i></span><span><b>Excellence</b><small>Beyond expectation.</small></span></li>
+        <li><i class="hx" style="--c:var(--resilience)"></i><span class="em" aria-hidden="true"><i class="art-i" data-art="value:2"></i></span><span><b>Resilience</b><small>Anti-fragile.</small></span></li>
+        <li><i class="hx" style="--c:var(--authenticity)"></i><span class="em" aria-hidden="true"><i class="art-i" data-art="value:3"></i></span><span><b>Authenticity</b><small>Inclusive education.</small></span></li>
+        <li><i class="hx" style="--c:var(--openness)"></i><span class="em" aria-hidden="true"><i class="art-i" data-art="value:4"></i></span><span><b>Open-mindedness</b><small>Growth mindset.</small></span></li>
+        <li><i class="hx" style="--c:var(--sustainability)"></i><span class="em" aria-hidden="true"><i class="art-i" data-art="value:5"></i></span><span><b>Sustainability</b><small>Start with the end in mind.</small></span></li>
       </ul>
       <p class="small muted" style="margin-top:.7rem">Each sector has 10 hexes: 4 on Ring 4, 3 on Ring 3, 2 on Ring 2 and 1 on Ring 1.</p>
     </div>
@@ -310,20 +313,20 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
         <tr><th scope="row">Ring 3</th><td class="nw" data-label="Hexes">18</td><td data-label="First time">A <b>Light</b> card: an easy question.</td><td data-label="Good to know">Springs can be anywhere.</td></tr>
         <tr><th scope="row">Ring 2</th><td class="nw" data-label="Hexes">12</td><td data-label="First time">A <b>Story</b> card: a story from your life.</td><td data-label="Good to know">Treasures hide here, or in Ring 1.</td></tr>
         <tr><th scope="row">Ring 1</th><td class="nw" data-label="Hexes">6</td><td data-label="First time">A <b>Deep</b> card: a deep question.</td><td data-label="Good to know">Treasures hide here, or in Ring 2.</td></tr>
-        <tr><th scope="row">🌲 World Tree <span class="muted small">(the centre)</span></th><td class="nw" data-label="Hexes">1</td><td data-label="First time">Nothing to draw. What you carry is placed here.</td><td data-label="Good to know">No weather, and dead leaves never land here.</td></tr>
+        <tr><th scope="row"><i class="art-i" data-art="worldTree:awake"></i> World Tree <span class="muted small">(the centre)</span></th><td class="nw" data-label="Hexes">1</td><td data-label="First time">Nothing to draw. What you carry is placed here.</td><td data-label="Good to know">No weather, and dead leaves never land here.</td></tr>
       </tbody>
     </table>
   </div>
 
   <h3>What lies under the hexes</h3>
-  <p>The World Tree is face up. The other 60 hexes start <b>face down</b> (✦). Nobody knows what is under each one until someone explores it:</p>
+  <p>The World Tree is face up. The other 60 hexes start <b>face down</b> (<i class="art-i" data-art="tile:down"></i>). Nobody knows what is under each one until someone explores it:</p>
   <div class="bag" role="img" aria-label="Under the 60 face-down hexes: 53 empty clearings, 4 springs and 3 treasures.">
-    <span>💧</span><span>💧</span><span>💧</span><span>💧</span><span>💎</span><span>💎</span><span>💎</span>
+    <span><i class="art-i" data-art="spring"></i></span><span><i class="art-i" data-art="spring"></i></span><span><i class="art-i" data-art="spring"></i></span><span><i class="art-i" data-art="spring"></i></span><span><i class="art-i" data-art="treasure:compass"></i></span><span><i class="art-i" data-art="treasure:lantern"></i></span><span><i class="art-i" data-art="treasure:rope"></i></span>
   </div>
   <ul>
     <li><b>53 empty clearings.</b> Good places to sow a seed.</li>
-    <li><b>4 springs</b> 💧, anywhere in Rings 1 to 4. The only place to get water back.</li>
-    <li><b>3 treasures</b> 💎, hidden only in Rings 1 and 2: the Compass, the Lantern and the Rope.</li>
+    <li><b>4 springs</b> <i class="art-i" data-art="spring"></i>, anywhere in Rings 1 to 4. The only place to get water back.</li>
+    <li><b>3 treasures</b> <i class="art-i" data-art="treasure"></i>, hidden only in Rings 1 and 2: the Compass, the Lantern and the Rope.</li>
   </ul>
   <p>Any number of players can stand on the same hex.</p>
 </section>
@@ -340,10 +343,10 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
     <li>Each sector gets its first weather: Sun, Rain or Fog.</li>
   </ol>
   <div class="grid" style="margin:1rem 0">
-    <div class="card"><h3>💧 Water</h3><p>You start with <b>4 water</b>. You can hold 5 at most.</p></div>
-    <div class="card"><h3>🍎 Fruit</h3><p>You start with none. You can carry 2 at most.</p></div>
-    <div class="card"><h3>💎 Treasure</h3><p>You start with none. You can carry 1 at most.</p></div>
-    <div class="card"><h3>🌰 Trust acorns</h3><p>You have <b>10</b> to give to others, for the whole game.</p></div>
+    <div class="card"><h3><i class="art-i" data-art="drop"></i> Water</h3><p>You start with <b>4 water</b>. You can hold 5 at most.</p></div>
+    <div class="card"><h3><i class="art-i" data-art="fruit"></i> Fruit</h3><p>You start with none. You can carry 2 at most.</p></div>
+    <div class="card"><h3><i class="art-i" data-art="treasure"></i> Treasure</h3><p>You start with none. You can carry 1 at most.</p></div>
+    <div class="card"><h3><i class="art-i" data-art="acorn"></i> Trust acorns</h3><p>You have <b>10</b> to give to others, for the whole game.</p></div>
   </div>
   <h3>Entering the forest</h3>
   <p>In turn order, each player:</p>
@@ -366,9 +369,9 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
     <li class="ar" aria-hidden="true">→</li>
     <li><span class="dot" aria-hidden="true">2</span><b>Next player: 2 actions</b></li>
     <li class="ar" aria-hidden="true">→ … →</li>
-    <li><span class="dot" aria-hidden="true">👤</span><b>Last player: 2 actions</b></li>
+    <li><span class="dot" aria-hidden="true"><i class="art-i" data-art="medallion"></i></span><b>Last player: 2 actions</b></li>
     <li class="ar" aria-hidden="true">→</li>
-    <li><span class="dot" aria-hidden="true">🌬️</span><b>Forest Tide</b></li>
+    <li><span class="dot" aria-hidden="true"><i class="art-i" data-art="icon:wind"></i></span><b>Forest Tide</b></li>
   </ol>
   <p>When you are done, the Keeper taps <b>End turn</b>. After the last player, the <a href="#tide">Forest Tide</a> runs by itself, and a new round begins.</p>
   <div class="tablecard">
@@ -376,26 +379,26 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
       <caption>The actions (each costs 1 action unless it says otherwise)</caption>
       <thead><tr><th scope="col">Action</th><th scope="col">What it does</th><th scope="col">Rules</th></tr></thead>
       <tbody>
-        <tr><th scope="row"><span class="em" aria-hidden="true">🥾</span>Move</th><td data-label="Does">Step to a hex next to you.</td><td data-label="Rules">Not into a sealed hex. Not when you have 0 water. Moving does not use water. The first time you step into Ring 3, 2 or 1, you draw that ring's card.</td></tr>
-        <tr><th scope="row"><span class="em" aria-hidden="true">✦</span>Explore</th><td data-label="Does">Turn over the face-down hex you stand on.</td><td data-label="Rules"><span class="cost">2 actions in fog</span> You find an empty clearing, a spring or a treasure.</td></tr>
-        <tr><th scope="row"><span class="em" aria-hidden="true">🫘</span>Sow</th><td data-label="Does">Plant a seed on your hex: it becomes <b>Seeded</b>.</td><td data-label="Rules">Only on an explored, empty hex with no plant. Not on a spring, not where a treasure still lies, not on a sealed hex.</td></tr>
-        <tr><th scope="row"><span class="em" aria-hidden="true">💧</span>Water</th><td data-label="Does">Seeded → Sprout, or Sprout → Sapling.</td><td data-label="Rules">Uses <b>1 of your water</b>. On the hex you stand on.</td></tr>
-        <tr><th scope="row"><span class="em" aria-hidden="true">🤲</span>Tend</th><td data-label="Does">Sapling → <b>Big Tree</b>.</td><td data-label="Rules">On the hex you stand on.</td></tr>
-        <tr><th scope="row"><span class="em" aria-hidden="true">🧹</span>Clear</th><td data-label="Does">Remove 1 layer of dead leaves.</td><td data-label="Rules"><span class="cost">2 actions in rain</span> From your hex or a hex next to you.</td></tr>
-        <tr><th scope="row"><span class="em" aria-hidden="true">🍎</span>Harvest</th><td data-label="Does">Take 1 fruit from the Big Tree you stand on, and <b>tell a story</b>.</td><td data-label="Rules">Not in rain. Not on a sealed hex. Each tree once between Forest Tides. You carry 2 fruit at most.</td></tr>
-        <tr><th scope="row"><span class="em" aria-hidden="true">✋</span>Take</th><td data-label="Does">Pick up a treasure lying on your hex.</td><td data-label="Rules">It must be explored first. You carry 1 treasure at most.</td></tr>
-        <tr><th scope="row"><span class="em" aria-hidden="true">🚰</span>Drink</th><td data-label="Does">Fill up at a spring: back to <b>5 water</b>.</td><td data-label="Rules">At an explored spring. Springs never run dry.</td></tr>
+        <tr><th scope="row"><span class="em" aria-hidden="true"><i class="art-i" data-art="icon:move"></i></span>Move</th><td data-label="Does">Step to a hex next to you.</td><td data-label="Rules">Not into a sealed hex. Not when you have 0 water. Moving does not use water. The first time you step into Ring 3, 2 or 1, you draw that ring's card.</td></tr>
+        <tr><th scope="row"><span class="em" aria-hidden="true"><i class="art-i" data-art="icon:explore"></i></span>Explore</th><td data-label="Does">Turn over the face-down hex you stand on.</td><td data-label="Rules"><span class="cost">2 actions in fog</span> You find an empty clearing, a spring or a treasure.</td></tr>
+        <tr><th scope="row"><span class="em" aria-hidden="true"><i class="art-i" data-art="icon:sow"></i></span>Sow</th><td data-label="Does">Plant a seed on your hex: it becomes <b>Seeded</b>.</td><td data-label="Rules">Only on an explored, empty hex with no plant. Not on a spring, not where a treasure still lies, not on a sealed hex.</td></tr>
+        <tr><th scope="row"><span class="em" aria-hidden="true"><i class="art-i" data-art="icon:water"></i></span>Water</th><td data-label="Does">Seeded → Sprout, or Sprout → Sapling.</td><td data-label="Rules">Uses <b>1 of your water</b>. On the hex you stand on.</td></tr>
+        <tr><th scope="row"><span class="em" aria-hidden="true"><i class="art-i" data-art="icon:tend"></i></span>Tend</th><td data-label="Does">Sapling → <b>Big Tree</b>.</td><td data-label="Rules">On the hex you stand on.</td></tr>
+        <tr><th scope="row"><span class="em" aria-hidden="true"><i class="art-i" data-art="icon:clear"></i></span>Clear</th><td data-label="Does">Remove 1 layer of dead leaves.</td><td data-label="Rules"><span class="cost">2 actions in rain</span> From your hex or a hex next to you.</td></tr>
+        <tr><th scope="row"><span class="em" aria-hidden="true"><i class="art-i" data-art="icon:harvest"></i></span>Harvest</th><td data-label="Does">Take 1 fruit from the Big Tree you stand on, and <b>tell a story</b>.</td><td data-label="Rules">Not in rain. Not on a sealed hex. Each tree once between Forest Tides. You carry 2 fruit at most.</td></tr>
+        <tr><th scope="row"><span class="em" aria-hidden="true"><i class="art-i" data-art="icon:take"></i></span>Take</th><td data-label="Does">Pick up a treasure lying on your hex.</td><td data-label="Rules">It must be explored first. You carry 1 treasure at most.</td></tr>
+        <tr><th scope="row"><span class="em" aria-hidden="true"><i class="art-i" data-art="icon:drink"></i></span>Drink</th><td data-label="Does">Fill up at a spring: back to <b>5 water</b>.</td><td data-label="Rules">At an explored spring. Springs never run dry.</td></tr>
       </tbody>
     </table>
   </div>
   <div class="grid two">
     <div class="card">
-      <h3>🤝 Free, at any time</h3>
+      <h3><i class="art-i" data-art="icon:pass"></i> Free, at any time</h3>
       <p><b>Pass</b> water, fruit or a treasure to a teammate on your hex. It costs no action, and it can happen on anyone's turn. See <a href="#pass">Passing</a>.</p>
       <p><b>Placing</b> on the World Tree is free and happens by itself. See <a href="#worldtree">Placing on the World Tree</a>.</p>
     </div>
     <div class="card">
-      <h3>💬 When someone shares, the forest waits</h3>
+      <h3><i class="art-i" data-art="icon:talk"></i> When someone shares, the forest waits</h3>
       <p>Stories come one at a time. While someone is sharing, nobody can act. When the story ends, the Keeper taps <b>Done sharing</b> and play goes on. If several stories are waiting, they come one after another.</p>
     </div>
   </div>
@@ -408,14 +411,14 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
   <p class="lead">Water keeps you walking. You start with 4 and can hold 5. The big screen and your phone show how much you have.</p>
   <div class="grid two">
     <div class="card">
-      <h3>💧 You lose water when…</h3>
+      <h3><i class="art-i" data-art="drop"></i> You lose water when…</h3>
       <ul style="margin:0">
         <li>You <b>Water</b> a plant: 1 water each time.</li>
         <li>The <b>sun</b> dries you at the Forest Tide: 1 water, if your sector is sunny and you are not standing on a Big Tree.</li>
       </ul>
     </div>
     <div class="card">
-      <h3>🚰 You get water back when…</h3>
+      <h3><i class="art-i" data-art="icon:drink"></i> You get water back when…</h3>
       <ul style="margin:0">
         <li>You <b>Drink</b> at a spring: back to 5, for 1 action.</li>
         <li>A teammate <b>passes</b> you water.</li>
@@ -437,19 +440,19 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
   <h2 id="grow-h"><span class="num" aria-hidden="true">7</span>Growing a Big Tree</h2>
   <p class="lead">A Big Tree grows in four steps. The team needs one Big Tree in every sector.</p>
   <div class="chain-row" role="list" aria-label="How a plant grows">
-    <div class="st" role="listitem"><span class="em" aria-hidden="true">✦</span><b>Face down</b></div>
+    <div class="st" role="listitem"><span class="em" aria-hidden="true"><i class="art-i" data-art="tile:down"></i></span><b>Face down</b></div>
     <div class="ar" aria-hidden="true"><i>→</i>Explore</div>
-    <div class="st" role="listitem"><span class="em" aria-hidden="true">🟫</span><b>Empty clearing</b></div>
+    <div class="st" role="listitem"><span class="em" aria-hidden="true"><i class="art-i" data-art="tile:up"></i></span><b>Empty clearing</b></div>
     <div class="ar" aria-hidden="true"><i>→</i>Sow</div>
-    <div class="st" role="listitem"><span class="em" aria-hidden="true">🫘</span><b>Seeded</b></div>
+    <div class="st" role="listitem"><span class="em" aria-hidden="true"><i class="art-i" data-art="stage:1"></i></span><b>Seeded</b></div>
     <div class="ar" aria-hidden="true"><i>→</i>Water</div>
-    <div class="st" role="listitem"><span class="em" aria-hidden="true">🌱</span><b>Sprout</b></div>
+    <div class="st" role="listitem"><span class="em" aria-hidden="true"><i class="art-i" data-art="stage:2"></i></span><b>Sprout</b></div>
     <div class="ar" aria-hidden="true"><i>→</i>Water</div>
-    <div class="st" role="listitem"><span class="em" aria-hidden="true">🪴</span><b>Sapling</b></div>
+    <div class="st" role="listitem"><span class="em" aria-hidden="true"><i class="art-i" data-art="stage:3"></i></span><b>Sapling</b></div>
     <div class="ar" aria-hidden="true"><i>→</i>Tend</div>
-    <div class="st" role="listitem"><span class="em" aria-hidden="true">🌳</span><b>Big Tree</b></div>
+    <div class="st" role="listitem"><span class="em" aria-hidden="true"><i class="art-i" data-art="stage:4"></i></span><b>Big Tree</b></div>
     <div class="ar" aria-hidden="true"><i>→</i>Harvest</div>
-    <div class="st" role="listitem"><span class="em" aria-hidden="true">🍎</span><b>Fruit</b></div>
+    <div class="st" role="listitem"><span class="em" aria-hidden="true"><i class="art-i" data-art="fruit"></i></span><b>Fruit</b></div>
   </div>
   <ul>
     <li><b>Rain helps.</b> At the Forest Tide, every Seeded and Sprout hex in a rainy sector grows one step by itself. (A Sapling still needs Tend.)</li>
@@ -457,7 +460,7 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
     <li><b>A Big Tree gives shade.</b> If you stand on a Big Tree, the sun does not dry you.</li>
     <li>A Big Tree counts for the sector it stands in, whoever grew it.</li>
   </ul>
-  <h3>🍎 Harvest and the harvest story</h3>
+  <h3><i class="art-i" data-art="icon:harvest"></i> Harvest and the harvest story</h3>
   <p>Stand on a Big Tree and Harvest to take 1 fruit. Then you <b>tell a story</b>:</p>
   <div class="tribute" style="border-color:var(--accent);background:rgba(224,163,46,.12)">"Tell us a story from your own life about <i>Resilience</i>."</div>
   <p>The value is the value of <b>the sector the tree grows in</b>, not your own value. The big screen shows that value's line too (for Resilience: <i>Anti-fragile.</i>). Listeners may give you a trust acorn.</p>
@@ -479,26 +482,26 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
   </ol>
   <div class="grid" style="margin-top:1rem">
     <div class="card tre">
-      <div class="ico" aria-hidden="true">🧭</div>
+      <div class="ico" aria-hidden="true"><i class="art-i" data-art="treasure:compass"></i></div>
       <h3>The Compass</h3>
       <p class="mean">Purpose: where we're going.</p>
       <p class="q">"Everyone, one sentence: where do you want this team to be a year from now?"</p>
     </div>
     <div class="card tre">
-      <div class="ico" aria-hidden="true">🏮</div>
+      <div class="ico" aria-hidden="true"><i class="art-i" data-art="treasure:lantern"></i></div>
       <h3>The Lantern</h3>
       <p class="mean">Lighting the way for others.</p>
       <p class="q">"Everyone, one sentence: who lit the way for you when you were new?"</p>
     </div>
     <div class="card tre">
-      <div class="ico" aria-hidden="true">🪢</div>
+      <div class="ico" aria-hidden="true"><i class="art-i" data-art="treasure:rope"></i></div>
       <h3>The Rope</h3>
       <p class="mean">Holding together.</p>
       <p class="q">"Everyone, one sentence: what holds this team together when things get hard?"</p>
     </div>
   </div>
   <div class="callout green">
-    <h3>✨ The group moment</h3>
+    <h3><i class="art-i" data-art="sparkle"></i> The group moment</h3>
     <p>When a treasure is found, <b>everyone</b> answers its question in one sentence, around the table. There are no trust acorns for a group moment: everyone gives something, together. Then the Keeper taps <b>Done sharing</b>.</p>
     <p>When all three treasures are on the World Tree, the forest says: <b>"Purpose, light and each other: the heart of the forest is complete."</b></p>
   </div>
@@ -507,10 +510,10 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
 <!-- ============ 9 ============ -->
 <section id="worldtree" aria-labelledby="worldtree-h">
   <h2 id="worldtree-h"><span class="num" aria-hidden="true">9</span>Placing on the World Tree</h2>
-  <p class="lead">The World Tree 🌲 is the centre of the forest. Bring your fruit and the treasures here.</p>
+  <p class="lead">The World Tree <i class="art-i" data-art="worldTree:awake"></i> is the centre of the forest. Bring your fruit and the treasures here.</p>
   <ul>
     <li><b>It happens by itself.</b> Whenever you stand on the World Tree holding fruit or a treasure, <b>everything you carry is placed at once</b>. It costs no action. It happens after you move there, when someone passes you something there, or when a Challenger brings you there.</li>
-    <li><b>One Heartwood question.</b> If you placed at least one fruit, you answer <b>one Heartwood question</b> 💛, however many fruit you placed. Listeners may give you a trust acorn.</li>
+    <li><b>One Heartwood question.</b> If you placed at least one fruit, you answer <b>one Heartwood question</b> <i class="art-i" data-art="icon:heart"></i>, however many fruit you placed. Listeners may give you a trust acorn.</li>
     <li><b>Every player must place a fruit.</b> A fruit counts for the person who places it. So if you have not placed one yet, a teammate can pass you a fruit, and you place it.</li>
     <li>The World Tree has no weather, and dead leaves never land on it. You may walk off it again.</li>
   </ul>
@@ -527,7 +530,7 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
     <li><b>Same hex:</b> you can always pass to someone on your hex.</li>
     <li><b>Limits:</b> the teammate can hold 5 water, 2 fruit and 1 treasure at most.</li>
   </ul>
-  <h3>☮️ Through a Peacemaker</h3>
+  <h3><i class="art-i" data-art="role:9"></i> Through a Peacemaker</h3>
   <p>A <a href="#roles">Peacemaker</a> links teammates, so they can pass to each other without standing on the same hex:</p>
   <div class="grid two">
     <div class="card">
@@ -535,7 +538,7 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
         <polygon points="78,16 78,44 54,58 30,44 30,16 54,2" fill="#24402f" stroke="#7bc47f" stroke-width="2"/>
         <polygon points="130,16 130,44 106,58 82,44 82,16 106,2" fill="#24402f" stroke="#7bc47f" stroke-width="2"/>
         <circle cx="54" cy="30" r="11" fill="#1e88e5" stroke="#fff" stroke-width="2"/><text x="54" y="31" fill="#fff" font-size="12" font-weight="800" text-anchor="middle" dominant-baseline="central">A</text>
-        <circle cx="106" cy="30" r="11" fill="#d81b60" stroke="#fff" stroke-width="2"/><text x="106" y="31" fill="#fff" font-size="12" font-weight="800" text-anchor="middle" dominant-baseline="central">☮</text>
+        <g transform="translate(106,30)" data-art="role:9" data-size="27"></g>
       </svg>
       <p class="small" style="margin:0"><b>Neighbours:</b> two players on hexes next to each other can pass if a Peacemaker stands on either hex.</p>
     </div>
@@ -545,7 +548,7 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
         <polygon points="104,16 104,44 80,58 56,44 56,16 80,2" fill="#24402f" stroke="#7bc47f" stroke-width="2"/>
         <polygon points="156,16 156,44 132,58 108,44 108,16 132,2" fill="#24402f" stroke="#7bc47f" stroke-width="2"/>
         <circle cx="28" cy="30" r="11" fill="#1e88e5" stroke="#fff" stroke-width="2"/><text x="28" y="31" fill="#fff" font-size="12" font-weight="800" text-anchor="middle" dominant-baseline="central">A</text>
-        <circle cx="80" cy="30" r="11" fill="#d81b60" stroke="#fff" stroke-width="2"/><text x="80" y="31" fill="#fff" font-size="12" font-weight="800" text-anchor="middle" dominant-baseline="central">☮</text>
+        <g transform="translate(80,30)" data-art="role:9" data-size="27"></g>
         <circle cx="132" cy="30" r="11" fill="#43a047" stroke="#fff" stroke-width="2"/><text x="132" y="31" fill="#fff" font-size="12" font-weight="800" text-anchor="middle" dominant-baseline="central">C</text>
       </svg>
       <p class="small" style="margin:0"><b>A chain of three hexes:</b> two players can pass if someone stands on the hex between them, and a Peacemaker stands on any of the three hexes.</p>
@@ -562,9 +565,9 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
       <caption>What the weather does</caption>
       <thead><tr><th scope="col">Weather</th><th scope="col">During the round</th><th scope="col">At the Forest Tide</th></tr></thead>
       <tbody>
-        <tr><th scope="row">☀️ Sun</th><td data-label="During the round">Everything works as usual.</td><td data-label="At the Tide">Every player in this sector loses 1 water, unless they stand on a Big Tree.</td></tr>
-        <tr><th scope="row">🌧️ Rain</th><td data-label="During the round">No harvest. Clear costs 2 actions.</td><td data-label="At the Tide">Every Seeded and Sprout hex here grows one step. Nobody here dries out. (Rain does not fill your water.)</td></tr>
-        <tr><th scope="row">🌫️ Fog</th><td data-label="During the round">Explore costs 2 actions. The Enthusiast cannot take a double step in fog.</td><td data-label="At the Tide">Nothing.</td></tr>
+        <tr><th scope="row"><i class="art-i" data-art="weather:sun"></i> Sun</th><td data-label="During the round">Everything works as usual.</td><td data-label="At the Tide">Every player in this sector loses 1 water, unless they stand on a Big Tree.</td></tr>
+        <tr><th scope="row"><i class="art-i" data-art="weather:rain"></i> Rain</th><td data-label="During the round">No harvest. Clear costs 2 actions.</td><td data-label="At the Tide">Every Seeded and Sprout hex here grows one step. Nobody here dries out. (Rain does not fill your water.)</td></tr>
+        <tr><th scope="row"><i class="art-i" data-art="weather:fog"></i> Fog</th><td data-label="During the round">Explore costs 2 actions. The Enthusiast cannot take a double step in fog.</td><td data-label="At the Tide">Nothing.</td></tr>
       </tbody>
     </table>
   </div>
@@ -578,11 +581,11 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
   <h2 id="tide-h"><span class="num" aria-hidden="true">12</span>The Forest Tide</h2>
   <p class="lead">After the last player's turn, the forest moves by itself. The big screen shows it step by step.</p>
   <ol class="timeline">
-    <li><span class="ic" aria-hidden="true">🌦️</span><div class="box"><b class="t">1 · New weather</b>Each sector turns to its new weather. Every tree can be harvested again.</div></li>
-    <li><span class="ic" aria-hidden="true">🌧️</span><div class="box"><b class="t">2 · Rain grows, sun dries</b>In rainy sectors, Seeded and Sprout grow one step. In sunny sectors, every player who is not on a Big Tree loses 1 water (never below 0).</div></li>
-    <li><span class="ic" aria-hidden="true">🍂</span><div class="box"><b class="t">3 · Forest Breath</b>Dead leaves drift in toward the centre.</div></li>
+    <li><span class="ic" aria-hidden="true"><i class="art-i" data-art="weather"></i></span><div class="box"><b class="t">1 · New weather</b>Each sector turns to its new weather. Every tree can be harvested again.</div></li>
+    <li><span class="ic" aria-hidden="true"><i class="art-i" data-art="weather:rain"></i></span><div class="box"><b class="t">2 · Rain grows, sun dries</b>In rainy sectors, Seeded and Sprout grow one step. In sunny sectors, every player who is not on a Big Tree loses 1 water (never below 0).</div></li>
+    <li><span class="ic" aria-hidden="true"><i class="art-i" data-art="icon:breath"></i></span><div class="box"><b class="t">3 · Forest Breath</b>Dead leaves drift in toward the centre.</div></li>
   </ol>
-  <h3>🍂 Forest Breath and dead leaves</h3>
+  <h3><i class="art-i" data-art="icon:breath"></i> Forest Breath and dead leaves</h3>
   <p>At every Tide, the wind picks a few random hexes. From each one, <b>one layer of dead leaves</b> blows onto a hex next to it, <b>one ring closer to the centre</b>. A Ring 1 hex keeps its own leaves. The World Tree never gets leaves.</p>
   <div class="tablecard">
     <table>
@@ -592,11 +595,11 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
     </table>
   </div>
   <div class="chain-row" role="list" aria-label="Dead leaves on a hex">
-    <div class="st" role="listitem"><span class="em" aria-hidden="true">🟩</span><b>Clear</b></div>
+    <div class="st" role="listitem"><span class="em" aria-hidden="true"><i class="art-i" data-art="tile:up"></i></span><b>Clear</b></div>
     <div class="ar" aria-hidden="true"><i>→</i>leaves land</div>
-    <div class="st" role="listitem"><span class="em" aria-hidden="true">🍂</span><b>1 layer</b></div>
+    <div class="st" role="listitem"><span class="em" aria-hidden="true"><i class="art-i" data-art="leaves:1:tile"></i></span><b>1 layer</b></div>
     <div class="ar" aria-hidden="true"><i>→</i>more leaves</div>
-    <div class="st" role="listitem" style="border-style:dashed"><span class="em" aria-hidden="true">🍂🍂</span><b>Sealed</b></div>
+    <div class="st" role="listitem" style="border-style:dashed"><span class="em" aria-hidden="true"><i class="art-i" data-art="leaves:2:tile"></i></span><b>Sealed</b></div>
   </div>
   <ul>
     <li><b>When leaves land on a growing plant,</b> it drops back one step: Sapling → Sprout, Sprout → Seeded, and a Seeded hex loses its seed. A Big Tree keeps its stage. A <b>Loyalist</b> on the hex or next to it keeps the plant safe.</li>
@@ -604,7 +607,7 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
     <li><b>2 layers seal the hex.</b> Nobody can walk in (except a Challenger). Nobody can sow, water, tend or harvest there. If you are standing on it when it seals, you can still walk out. A sealed hex gets no more leaves.</li>
     <li>A sealed Big Tree still counts for the goal, but nobody can harvest it until it is cleared.</li>
   </ul>
-  <h3>🧹 Clearing</h3>
+  <h3><i class="art-i" data-art="icon:clear"></i> Clearing</h3>
   <p><b>Clear</b> removes 1 layer of dead leaves from your hex or a hex next to you. So you can open a sealed hex from outside. In rain it costs 2 actions. A <b>Reformer</b> removes 2 layers at once, for 1 action, even in rain.</p>
 </section>
 
@@ -617,15 +620,15 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
       <caption>Where the talking happens</caption>
       <thead><tr><th scope="col">When</th><th scope="col">Who talks</th><th scope="col">What</th><th scope="col">Trust after?</th></tr></thead>
       <tbody>
-        <tr><th scope="row">📍 Entering the forest</th><td data-label="Who">Each player</td><td data-label="What">Why do you stand for this value?</td><td data-label="Trust">Yes</td></tr>
-        <tr><th scope="row">🃏 The first time you step into Ring 3, 2 and 1</th><td data-label="Who">That player</td><td data-label="What">A card from that ring's deck: Ring 3 Light, Ring 2 Story, Ring 1 Deep</td><td data-label="Trust">Yes</td></tr>
-        <tr><th scope="row">🍎 Harvest a fruit</th><td data-label="Who">The harvester</td><td data-label="What">A story from your own life about the value of that sector</td><td data-label="Trust">Yes</td></tr>
-        <tr><th scope="row">💛 Place fruit on the World Tree</th><td data-label="Who">The player</td><td data-label="What">One Heartwood question</td><td data-label="Trust">Yes</td></tr>
-        <tr><th scope="row">✨ A treasure is found</th><td data-label="Who">Everyone, one sentence each</td><td data-label="What">The treasure's question</td><td data-label="Trust">No</td></tr>
+        <tr><th scope="row"><i class="art-i" data-art="medallion:stump"></i> Entering the forest</th><td data-label="Who">Each player</td><td data-label="What">Why do you stand for this value?</td><td data-label="Trust">Yes</td></tr>
+        <tr><th scope="row"><i class="art-i" data-art="icon:cards"></i> The first time you step into Ring 3, 2 and 1</th><td data-label="Who">That player</td><td data-label="What">A card from that ring's deck: Ring 3 Light, Ring 2 Story, Ring 1 Deep</td><td data-label="Trust">Yes</td></tr>
+        <tr><th scope="row"><i class="art-i" data-art="icon:harvest"></i> Harvest a fruit</th><td data-label="Who">The harvester</td><td data-label="What">A story from your own life about the value of that sector</td><td data-label="Trust">Yes</td></tr>
+        <tr><th scope="row"><i class="art-i" data-art="icon:heart"></i> Place fruit on the World Tree</th><td data-label="Who">The player</td><td data-label="What">One Heartwood question</td><td data-label="Trust">Yes</td></tr>
+        <tr><th scope="row"><i class="art-i" data-art="sparkle"></i> A treasure is found</th><td data-label="Who">Everyone, one sentence each</td><td data-label="What">The treasure's question</td><td data-label="Trust">No</td></tr>
       </tbody>
     </table>
   </div>
-  <h3>🃏 Ring cards</h3>
+  <h3><i class="art-i" data-art="icon:cards"></i> Ring cards</h3>
   <p>Each ring has its own deck: <b>Light</b>, <b>Story</b> and <b>Deep</b>. The deeper the ring, the deeper the question:</p>
   <ul>
     <li><b>Ring 3: Light.</b> <i>"What could you do for hours without noticing the time?"</i></li>
@@ -633,11 +636,11 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
     <li><b>Ring 1: Deep.</b> <i>"What makes you feel you truly belong somewhere?"</i></li>
   </ul>
   <p>You draw a ring card <b>only the first time</b> you step into each ring, moving inward. So each player draws at most 3 ring cards in a game. If a Challenger brings you into a new ring, you draw too.</p>
-  <h3>🌰 Trust acorns</h3>
-  <p>You have <b>10 trust acorns</b> for the whole game. After someone else shares, pick up your phone and tap <span class="btn">Give trust 🌰</span> if their story moved you. One acorn per story. You cannot give trust to yourself, and there is no trust after a group moment.</p>
+  <h3><i class="art-i" data-art="acorn"></i> Trust acorns</h3>
+  <p>You have <b>10 trust acorns</b> for the whole game. After someone else shares, pick up your phone and tap <span class="btn">Give trust <i class="art-i" data-art="acorn"></i></span> if their story moved you. One acorn per story. You cannot give trust to yourself, and there is no trust after a group moment.</p>
   <p>Trust is a gift, not a grade. It does not decide a winner. At the end, everyone sees how many acorns they received, and from how many people.</p>
   <div class="card" style="margin-top:1rem">
-    <h3>👂 While someone else shares</h3>
+    <h3><i class="art-i" data-art="icon:ear"></i> While someone else shares</h3>
     <ul style="margin:0">
       <li>Listen to understand. No advice, no fixing, no debating.</li>
       <li>If it moved you, give trust.</li>
@@ -707,7 +710,7 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
   <p class="lead">At the start, your phone gives you one colleague's name: you are their <b>Secret Owl</b>. Tap to see it, and keep it to yourself. An owl watches quietly and misses nothing. All game, you watch them, while someone else quietly watches you.</p>
   <div class="finale">
     <figure style="margin:0">
-      <svg class="loop-fig" viewBox="-160 -160 320 320" role="img" aria-labelledby="loop-t"><title id="loop-t">Ten players in a circle, A to J. Each arrow points from a player to the person whose name they hold: A has B, B has C, and so on until J has A. The tributes run around the same loop.</title><style>.lp-l{font-size:17px;font-weight:800;fill:#fff;text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:rgba(0,0,0,.55);stroke-width:3px}.lp-c{font-size:40px;text-anchor:middle;dominant-baseline:central}.lp-t{font-size:17px;font-weight:800;fill:#f3efe2;text-anchor:middle;dominant-baseline:central}</style><defs><marker id="lp-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#e0a32e"/></marker></defs><path d="M20.9 -113.2Q38.5 -122.2 47.7 -104.5" fill="none" stroke="#e0a32e" stroke-width="3" marker-end="url(#lp-arr)"/><path d="M83.5 -79.3Q103.0 -76.2 100.0 -56.5" fill="none" stroke="#e0a32e" stroke-width="3" marker-end="url(#lp-arr)"/><path d="M114.1 -15.1Q128.1 -1.1 114.1 13.1" fill="none" stroke="#e0a32e" stroke-width="3" marker-end="url(#lp-arr)"/><path d="M101.2 54.9Q104.3 74.4 84.6 77.7" fill="none" stroke="#e0a32e" stroke-width="3" marker-end="url(#lp-arr)"/><path d="M49.6 103.9Q40.7 121.5 22.8 112.6" fill="none" stroke="#e0a32e" stroke-width="3" marker-end="url(#lp-arr)"/><path d="M-20.9 113.2Q-38.5 122.2 -47.7 104.5" fill="none" stroke="#e0a32e" stroke-width="3" marker-end="url(#lp-arr)"/><path d="M-83.5 79.3Q-103.0 76.2 -100.0 56.5" fill="none" stroke="#e0a32e" stroke-width="3" marker-end="url(#lp-arr)"/><path d="M-114.1 15.1Q-128.1 1.1 -114.1 -13.1" fill="none" stroke="#e0a32e" stroke-width="3" marker-end="url(#lp-arr)"/><path d="M-101.2 -54.9Q-104.3 -74.4 -84.6 -77.7" fill="none" stroke="#e0a32e" stroke-width="3" marker-end="url(#lp-arr)"/><path d="M-49.6 -103.9Q-40.7 -121.5 -22.8 -112.6" fill="none" stroke="#e0a32e" stroke-width="3" marker-end="url(#lp-arr)"/><circle cx="0.0" cy="-120.0" r="19" fill="#e53935" stroke="#fff" stroke-width="2.5"/><text x="0.0" y="-120.0" class="lp-l">A</text><circle cx="70.5" cy="-97.1" r="19" fill="#fb8c00" stroke="#fff" stroke-width="2.5"/><text x="70.5" y="-97.1" class="lp-l">B</text><circle cx="114.1" cy="-37.1" r="19" fill="#fdd835" stroke="#fff" stroke-width="2.5"/><text x="114.1" y="-37.1" class="lp-l">C</text><circle cx="114.1" cy="37.1" r="19" fill="#43a047" stroke="#fff" stroke-width="2.5"/><text x="114.1" y="37.1" class="lp-l">D</text><circle cx="70.5" cy="97.1" r="19" fill="#00897b" stroke="#fff" stroke-width="2.5"/><text x="70.5" y="97.1" class="lp-l">E</text><circle cx="0.0" cy="120.0" r="19" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text x="0.0" y="120.0" class="lp-l">F</text><circle cx="-70.5" cy="97.1" r="19" fill="#5e35b1" stroke="#fff" stroke-width="2.5"/><text x="-70.5" y="97.1" class="lp-l">G</text><circle cx="-114.1" cy="37.1" r="19" fill="#d81b60" stroke="#fff" stroke-width="2.5"/><text x="-114.1" y="37.1" class="lp-l">H</text><circle cx="-114.1" cy="-37.1" r="19" fill="#6d4c41" stroke="#fff" stroke-width="2.5"/><text x="-114.1" y="-37.1" class="lp-l">I</text><circle cx="-70.5" cy="-97.1" r="19" fill="#546e7a" stroke="#fff" stroke-width="2.5"/><text x="-70.5" y="-97.1" class="lp-l">J</text><text x="0" y="-12" class="lp-c">🦉</text><text x="0" y="22" class="lp-t">one loop</text></svg>
+      <svg class="loop-fig" viewBox="-160 -160 320 320" role="img" aria-labelledby="loop-t"><title id="loop-t">Ten players in a circle, A to J. Each arrow points from a player to the person whose name they hold: A has B, B has C, and so on until J has A. The tributes run around the same loop.</title><style>.lp-l{font-size:17px;font-weight:800;fill:#fff;text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:rgba(0,0,0,.55);stroke-width:3px}.lp-t{font-size:17px;font-weight:800;fill:#f3efe2;text-anchor:middle;dominant-baseline:central}</style><defs><marker id="lp-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#e0a32e"/></marker></defs><path d="M20.9 -113.2Q38.5 -122.2 47.7 -104.5" fill="none" stroke="#e0a32e" stroke-width="3" marker-end="url(#lp-arr)"/><path d="M83.5 -79.3Q103.0 -76.2 100.0 -56.5" fill="none" stroke="#e0a32e" stroke-width="3" marker-end="url(#lp-arr)"/><path d="M114.1 -15.1Q128.1 -1.1 114.1 13.1" fill="none" stroke="#e0a32e" stroke-width="3" marker-end="url(#lp-arr)"/><path d="M101.2 54.9Q104.3 74.4 84.6 77.7" fill="none" stroke="#e0a32e" stroke-width="3" marker-end="url(#lp-arr)"/><path d="M49.6 103.9Q40.7 121.5 22.8 112.6" fill="none" stroke="#e0a32e" stroke-width="3" marker-end="url(#lp-arr)"/><path d="M-20.9 113.2Q-38.5 122.2 -47.7 104.5" fill="none" stroke="#e0a32e" stroke-width="3" marker-end="url(#lp-arr)"/><path d="M-83.5 79.3Q-103.0 76.2 -100.0 56.5" fill="none" stroke="#e0a32e" stroke-width="3" marker-end="url(#lp-arr)"/><path d="M-114.1 15.1Q-128.1 1.1 -114.1 -13.1" fill="none" stroke="#e0a32e" stroke-width="3" marker-end="url(#lp-arr)"/><path d="M-101.2 -54.9Q-104.3 -74.4 -84.6 -77.7" fill="none" stroke="#e0a32e" stroke-width="3" marker-end="url(#lp-arr)"/><path d="M-49.6 -103.9Q-40.7 -121.5 -22.8 -112.6" fill="none" stroke="#e0a32e" stroke-width="3" marker-end="url(#lp-arr)"/><circle cx="0.0" cy="-120.0" r="19" fill="#e53935" stroke="#fff" stroke-width="2.5"/><text x="0.0" y="-120.0" class="lp-l">A</text><circle cx="70.5" cy="-97.1" r="19" fill="#fb8c00" stroke="#fff" stroke-width="2.5"/><text x="70.5" y="-97.1" class="lp-l">B</text><circle cx="114.1" cy="-37.1" r="19" fill="#fdd835" stroke="#fff" stroke-width="2.5"/><text x="114.1" y="-37.1" class="lp-l">C</text><circle cx="114.1" cy="37.1" r="19" fill="#43a047" stroke="#fff" stroke-width="2.5"/><text x="114.1" y="37.1" class="lp-l">D</text><circle cx="70.5" cy="97.1" r="19" fill="#00897b" stroke="#fff" stroke-width="2.5"/><text x="70.5" y="97.1" class="lp-l">E</text><circle cx="0.0" cy="120.0" r="19" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text x="0.0" y="120.0" class="lp-l">F</text><circle cx="-70.5" cy="97.1" r="19" fill="#5e35b1" stroke="#fff" stroke-width="2.5"/><text x="-70.5" y="97.1" class="lp-l">G</text><circle cx="-114.1" cy="37.1" r="19" fill="#d81b60" stroke="#fff" stroke-width="2.5"/><text x="-114.1" y="37.1" class="lp-l">H</text><circle cx="-114.1" cy="-37.1" r="19" fill="#6d4c41" stroke="#fff" stroke-width="2.5"/><text x="-114.1" y="-37.1" class="lp-l">I</text><circle cx="-70.5" cy="-97.1" r="19" fill="#546e7a" stroke="#fff" stroke-width="2.5"/><text x="-70.5" y="-97.1" class="lp-l">J</text><g transform="translate(0,-14)" data-art="icon:owl" data-size="48"></g><text x="0" y="22" class="lp-t">one loop</text></svg>
       <figcaption class="small muted" style="text-align:center">A has B's name, B has C's, … J has A's. The tributes follow the same loop.</figcaption>
     </figure>
     <div>
@@ -726,11 +729,11 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
   <h2 id="end-h"><span class="num" aria-hidden="true">16</span>How it ends</h2>
   <div class="grid two">
     <div class="card" style="border-top:6px solid var(--good)">
-      <h3>🌳 The forest wakes</h3>
+      <h3><i class="art-i" data-art="worldTree:awake"></i> The forest wakes</h3>
       <p>The moment all three goals are true, even in the middle of a turn, the forest wakes. The big screen celebrates: <b>"The forest wakes!"</b></p>
     </div>
     <div class="card" style="border-top:6px solid var(--water)">
-      <h3>💧 The forest sleeps on</h3>
+      <h3><i class="art-i" data-art="drop:empty"></i> The forest sleeps on</h3>
       <p>If every player is at 0 water at the same moment, the game ends. The forest sleeps on, for another day.</p>
     </div>
   </div>
@@ -752,19 +755,19 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
   <h2 id="phone-h"><span class="num" aria-hidden="true">17</span>Your phone</h2>
   <div class="grid two">
     <div class="card">
-      <h3>📱 What your phone shows</h3>
+      <h3><i class="art-i" data-art="icon:phone"></i> What your phone shows</h3>
       <ul style="margin:0">
-        <li>🦉 The colleague you watch as their Secret Owl.</li>
-        <li>💧🍎💎 What you carry, and which rings you have reached.</li>
+        <li><i class="art-i" data-art="icon:owl"></i> The colleague you watch as their Secret Owl.</li>
+        <li><i class="art-i" data-art="drop"></i><i class="art-i" data-art="fruit"></i><i class="art-i" data-art="treasure"></i> What you carry, and which rings you have reached.</li>
         <li>Your roles, as a reminder.</li>
         <li>Your private looks: the Individualist's peek, the Investigator's Forest Breath and weather.</li>
-        <li>📷 <b>Your photo</b>: retake it or remove it until the game ends.</li>
-        <li>🌰 <b>Give trust</b>, after someone else shares.</li>
-        <li>❓ Your Secret Owl guess, at the end.</li>
+        <li><i class="art-i" data-art="icon:camera"></i> <b>Your photo</b>: retake it or remove it until the game ends.</li>
+        <li><i class="art-i" data-art="acorn"></i> <b>Give trust</b>, after someone else shares.</li>
+        <li><i class="art-i" data-art="icon:guess"></i> Your Secret Owl guess, at the end.</li>
       </ul>
     </div>
     <div class="card">
-      <h3>📶 If your phone drops out</h3>
+      <h3><i class="art-i" data-art="icon:live"></i> If your phone drops out</h3>
       <p>The small badge in the corner says <b style="color:#7bc47f">● Live</b> while your phone is connected. If it says <b style="color:#e0a32e">● Reconnecting…</b> or <b style="color:#e57373">● Offline</b>, it catches up by itself once the Wi-Fi is back. Nothing you did is lost.</p>
       <p style="margin:0">Closed the browser? Open the game again on the same phone and tap <b>Continue as</b> your name. On a different phone, ask the Keeper for a 4-digit <b>rejoin code</b>.</p>
     </div>
@@ -776,12 +779,12 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
   <h2 id="pact-h"><span class="num" aria-hidden="true">18</span>The Forest Pact</h2>
   <p class="lead">The Keeper reads this at the start. It holds for the whole game, and after it.</p>
   <ol class="pact">
-    <li><span class="em" aria-hidden="true">🌲</span><span>What's shared in the forest stays in the forest.</span></li>
-    <li><span class="em" aria-hidden="true">🍃</span><span>Every question is an invitation. You may always say "not this one".</span></li>
-    <li><span class="em" aria-hidden="true">👂</span><span>Listen to understand: no advice, no fixing, no debating.</span></li>
-    <li><span class="em" aria-hidden="true">🌰</span><span>Trust is a gift, not a grade.</span></li>
-    <li><span class="em" aria-hidden="true">🤝</span><span>One team. Plan out loud, and look after each other.</span></li>
-    <li><span class="em" aria-hidden="true">📵</span><span>Phones down. Pick yours up only to give trust, to check your private looks, and to guess.</span></li>
+    <li><span class="em" aria-hidden="true"><i class="art-i" data-art="worldTree:awake"></i></span><span>What's shared in the forest stays in the forest.</span></li>
+    <li><span class="em" aria-hidden="true"><i class="art-i" data-art="leaf"></i></span><span>Every question is an invitation. You may always say "not this one".</span></li>
+    <li><span class="em" aria-hidden="true"><i class="art-i" data-art="icon:ear"></i></span><span>Listen to understand: no advice, no fixing, no debating.</span></li>
+    <li><span class="em" aria-hidden="true"><i class="art-i" data-art="acorn"></i></span><span>Trust is a gift, not a grade.</span></li>
+    <li><span class="em" aria-hidden="true"><i class="art-i" data-art="icon:team"></i></span><span>One team. Plan out loud, and look after each other.</span></li>
+    <li><span class="em" aria-hidden="true"><i class="art-i" data-art="icon:phoneOff"></i></span><span>Phones down. Pick yours up only to give trust, to check your private looks, and to guess.</span></li>
   </ol>
   <p class="small muted" style="margin-top:.8rem">The Keeper may pause any story.</p>
 </section>
@@ -794,36 +797,36 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
     <div class="grid">
       <div class="blk">
         <h3>Goal</h3>
-        <ul><li>🌳 A Big Tree in all 6 sectors</li><li>🍎 Every player placed a fruit, and 🧭🏮🪢 all 3 treasures placed</li><li>🧍 Everyone on the World Tree</li></ul>
+        <ul><li><i class="art-i" data-art="stage:4"></i> A Big Tree in all 6 sectors</li><li><i class="art-i" data-art="fruit"></i> Every player placed a fruit, and <i class="art-i" data-art="treasure:compass"></i><i class="art-i" data-art="treasure:lantern"></i><i class="art-i" data-art="treasure:rope"></i> all 3 treasures placed</li><li><i class="art-i" data-art="icon:team"></i> Everyone on the World Tree</li></ul>
         <p class="muted" style="margin-top:.3rem">Lose: everyone at 0 water.</p>
       </div>
       <div class="blk">
         <h3>Your turn: 2 actions</h3>
-        <p>🥾 Move · ✦ Explore (fog 2) · 🫘 Sow · 💧 Water (−1 water) · 🤲 Tend · 🧹 Clear (rain 2) · 🍎 Harvest (not in rain) · ✋ Take · 🚰 Drink</p>
+        <p><i class="art-i" data-art="icon:move"></i> Move · <i class="art-i" data-art="icon:explore"></i> Explore (fog 2) · <i class="art-i" data-art="icon:sow"></i> Sow · <i class="art-i" data-art="icon:water"></i> Water (−1 water) · <i class="art-i" data-art="icon:tend"></i> Tend · <i class="art-i" data-art="icon:clear"></i> Clear (rain 2) · <i class="art-i" data-art="icon:harvest"></i> Harvest (not in rain) · <i class="art-i" data-art="icon:take"></i> Take · <i class="art-i" data-art="icon:drink"></i> Drink</p>
       </div>
       <div class="blk">
         <h3>Free</h3>
-        <ul><li>🤝 Pass water, fruit or a treasure on your hex (or through a Peacemaker)</li><li>🌲 Placing on the World Tree happens by itself</li></ul>
+        <ul><li><i class="art-i" data-art="icon:pass"></i> Pass water, fruit or a treasure on your hex (or through a Peacemaker)</li><li><i class="art-i" data-art="worldTree:awake"></i> Placing on the World Tree happens by itself</li></ul>
       </div>
       <div class="blk">
         <h3>Carry</h3>
-        <ul><li>💧 Water: start 4, max 5</li><li>🍎 Fruit: max 2</li><li>💎 Treasure: max 1</li><li>🌰 Trust: 10 to give</li></ul>
+        <ul><li><i class="art-i" data-art="drop"></i> Water: start 4, max 5</li><li><i class="art-i" data-art="fruit"></i> Fruit: max 2</li><li><i class="art-i" data-art="treasure"></i> Treasure: max 1</li><li><i class="art-i" data-art="acorn"></i> Trust: 10 to give</li></ul>
       </div>
       <div class="blk">
         <h3>Plants</h3>
-        <p>🫘 Seeded → 🌱 Sprout → 🪴 Sapling → 🌳 Big Tree. Water, Water, Tend. Rain grows Seeded and Sprout at the Tide. Leaves push growing plants back one step.</p>
+        <p><i class="art-i" data-art="stage:1"></i> Seeded → <i class="art-i" data-art="stage:2"></i> Sprout → <i class="art-i" data-art="stage:3"></i> Sapling → <i class="art-i" data-art="stage:4"></i> Big Tree. Water, Water, Tend. Rain grows Seeded and Sprout at the Tide. Leaves push growing plants back one step.</p>
       </div>
       <div class="blk">
         <h3>Forest Tide</h3>
-        <p>1 · New weather. 2 · Rain grows, sun dries (not on a Big Tree). 3 · Forest Breath: leaves drift one ring inward. 🍂🍂 = sealed.</p>
+        <p>1 · New weather. 2 · Rain grows, sun dries (not on a Big Tree). 3 · Forest Breath: leaves drift one ring inward. <i class="art-i" data-art="leaves:2"></i> = sealed.</p>
       </div>
       <div class="blk">
         <h3>Weather</h3>
-        <ul><li>☀️ Sun: −1 water at the Tide</li><li>🌧️ Rain: plants grow; no harvest; Clear costs 2</li><li>🌫️ Fog: Explore costs 2</li></ul>
+        <ul><li><i class="art-i" data-art="weather:sun"></i> Sun: −1 water at the Tide</li><li><i class="art-i" data-art="weather:rain"></i> Rain: plants grow; no harvest; Clear costs 2</li><li><i class="art-i" data-art="weather:fog"></i> Fog: Explore costs 2</li></ul>
       </div>
       <div class="blk">
         <h3>Talking</h3>
-        <ul><li>📍 Why your value</li><li>🃏 First time in Ring 3, 2, 1: Light, Story, Deep</li><li>🍎 Harvest story</li><li>💛 Heartwood question</li><li>✨ Treasure: everyone, one sentence</li></ul>
+        <ul><li><i class="art-i" data-art="medallion:stump"></i> Why your value</li><li><i class="art-i" data-art="icon:cards"></i> First time in Ring 3, 2, 1: Light, Story, Deep</li><li><i class="art-i" data-art="icon:harvest"></i> Harvest story</li><li><i class="art-i" data-art="icon:heart"></i> Heartwood question</li><li><i class="art-i" data-art="sparkle"></i> Treasure: everyone, one sentence</li></ul>
       </div>
       <div class="blk">
         <h3>Roles (always on)</h3>
@@ -836,10 +839,12 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
 </main>
 
 <footer>
-  <p>🌲 Heartwood · World Tree · made for the ZERA International School leadership retreat.</p>
-  <p><a href="#what">↑ Back to the top</a> · <a href="wiki.html">📖 Wiki</a> · <a href="/">← Back to the game</a></p>
+  <p><i class="art-i" data-art="worldTree:awake"></i> Heartwood · World Tree · made for the ZERA International School leadership retreat.</p>
+  <p><a href="#what">↑ Back to the top</a> · <a href="wiki.html"><i class="art-i" data-art="icon:book"></i> Wiki</a> · <a href="/">← Back to the game</a></p>
 </footer>
 
 </div>
+<script src="art.js"></script>
+<script>ART.hydrate();</script>
 </body>
 </html>

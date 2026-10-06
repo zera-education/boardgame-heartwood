@@ -53,6 +53,11 @@
  *       48-unit badges (size = diameter in units, default 48).
  *   ART.icon(name, {size, disc})  move explore sow water tend clear harvest take drink pass end trust owl timer
  *       in a 48-unit box; disc:true puts it on a round cream button.
+ *       More for the help and wiki pages, same box: cards (one card of each ring deck), deck1 deck2 deck3 (Deep,
+ *       Story, Light), book, heart (Heartwood), wind (Forest Tide), breath (Forest Breath), phone, phoneOff (phones
+ *       down), camera, ear (listening), talk (sharing), team, roles (Enneagram), goal, keeper (microphone), round, gift
+ *       (tribute), medal (recognition), guess, key (rejoin code), eye, weather (any), live (connected), board (centre +
+ *       Ring 1 in value colours), ring, sector, pact (the Forest Pact scroll).
  *
  * Players
  *   ART.medallion({photo, name, color, water, fruit, treasure, state: ''|'turn'|'dry', r, stump, label})
@@ -75,6 +80,18 @@
  *   ART.petal(color, {size}), ART.puff({size, color}) (dust / steam), ART.rays({size, n, color, opacity}) (sunburst,
  *       100-unit box), ART.sprig({size}) (a leafy twig for panel corners, 40 units wide).
  *   ART.firefly(x, y, {seed}), ART.fireflies(n, {w, h, x, y, seed})   glowing motes (class art-firefly).
+ *
+ * Inline pictures in text (help and wiki pages)
+ *   Markup <i class="art-i" data-art="SPEC"></i>, then ART.hydrate(root = document) draws every [data-art] under root
+ *   (again only if its spec changed). The <i> is ≈1.25em tall, baseline-aligned, as wide as the drawing, decorative
+ *   (aria-hidden) unless it has an aria-label; data-size="2" makes it 2em tall, or set --art-h in CSS. Drawings in
+ *   text stand still (class art-still). Inside an SVG figure use <g data-art="SPEC" data-size="40" transform="…">:
+ *   the drawing is centred on the g's origin, data-size user units across.
+ *   ART.pic(spec) → [inner markup, [x, y, w, h] box], ART.inline(spec, {height, cls}) → a standalone <svg> string.
+ *   SPEC: drop | drop:empty | fruit | acorn | treasure (all three) | treasure:compass|lantern|rope | stage:1..4[:sector]
+ *     (Seeded, Sprout, Sapling, Big Tree; a plain Big Tree is the green oak) | worldTree[:awake] | hollow (the heart
+ *     with the treasures) | leaves:1|2[:tile] | leaf (an action leaf) | spring | weather | weather:sun|rain|fog |
+ *     value:0..5 | role:1..9 | icon:NAME | tile:up|down | sparkle | medallion[:colour index][:turn|dry][:stump].
  *
  * Animation classes (CSS in ART.css; every element carries its own transform-box/origin and delay inline, and
  * never a transform attribute, so wrap it to position it):
@@ -932,6 +949,266 @@
     return G({ class: 'art-fireflies' }, s);
   }
 
+  // ---------- more icons, for the help and wiki pages (same 48-unit box as ICON) ----------
+  const rrD = (x, y, w, h, r) => D`M${x + r},${y} L${x + w - r},${y} Q${x + w},${y} ${x + w},${y + r} L${x + w},${y + h - r} Q${x + w},${y + h} ${x + w - r},${y + h} L${x + r},${y + h} Q${x},${y + h} ${x},${y + h - r} L${x},${y + r} Q${x},${y} ${x + r},${y}Z`;
+  const flatLeafUp = (x, y, L, ang, col, curl) => G({ transform: T(x, y, 1, ang) }, curledLeaf(0, 0, L, 0, col, curl).replace(/scale\(1,[^)]*\)/, 'scale(1,1)'));
+  // a fan of three ring cards; ring = 1 Deep, 2 Story, 3 Light (each deck in its ring's green), none = one of each
+  function cards(ring) {
+    const RC = ['', UP[1], UP[2], UP[3]], cols = ring ? [RC[ring], RC[ring], RC[ring]] : [RC[1], RC[2], RC[3]];
+    const card = (x, y, rot, col, front) => {
+      const t = tone(col, .55, .14, .16);
+      return G({ transform: T(x, y, 1, rot) }, stack([shape(rrD(-8.5, -12.5, 17, 25, 3.2), t, { c: [0, 0, 11], k: .86, ow: 1.8 })]),
+        Pa(rrD(-5.8, -9.8, 11.6, 19.6, 2), { fill: 'none', stroke: light(col, .55), 'stroke-width': 1.1, opacity: .85 }),
+        front ? stack([leaf(-3.4, 4, 9, 4.2, -55, tone('#fbf1d8', .42, .06, .04), { ow: 1.1 })]) : Ci(0, 0, 2.2, { fill: light(col, .45), opacity: .8 }),
+        gloss(-4.4, -8.6, 1.8, .8, -40, .6));
+    };
+    return card(-8.5, 0, -18, cols[0]) + card(0, -2, 0, cols[1]) + card(8.5, 1, 16, cols[2], true);
+  }
+  // wind: curly gusts; withLeaves adds the dead leaves the Forest Breath carries
+  function gusts(withLeaves) {
+    const air = tone('#c9ecfb', .62, .08, .5);
+    const ds = withLeaves
+      ? ['M-21,-6 L-2,-6 C6,-6 8,-16 1.5,-17 C-3,-17.6 -3.6,-11.6 .6,-11', 'M-17,6 L9,6 C16,6 17,15 11,15.6 C7,16 6.5,11.6 9.4,10.8']
+      : ['M-21,-9 L2,-9 C10,-9 12,-19 5.5,-20 C1,-20.6 .4,-14.6 4.6,-14', 'M-15,1 L15,1 C22,1 22.6,10.4 16.6,11 C12.6,11.4 12,7 14.8,6.2', 'M-20,11 L1,11 C7,11 8,18 3.6,18.6 C.6,19 .2,15.6 2.4,15'];
+    let s = stack(ds.map(d => limb(d, 3.6, air)));
+    if (withLeaves) s += flatLeafUp(13, -10, 13, -30, '#cf8a3e', 1) + flatLeafUp(-6, 14, 12, 18, '#b8643a', 0) + stack([leaf(14, 9, 9, 4, -60, LEAFT, { ow: 1.2 })]);
+    return s;
+  }
+  function phoneBody() {
+    const body = tone('#3f5566', .5, .12, .14), scr = tone('#8fd3f4', .45, .1, .2);
+    return stack([shape(rrD(-11, -19, 22, 38, 5), body, { c: [0, 0, 16], k: .92, hl: gloss(-7.6, -11, 1.1, 3.4, 8, .45) })])
+      + Pa(rrD(-8, -14.6, 16, 26.4, 2.2), { fill: scr.d, stroke: scr.o, 'stroke-width': 1.1 }) + Pa(rrD(-7, -13.6, 11, 19, 2), { fill: scr.l })
+      + stack([leaf(-3.6, 4.4, 9, 4.2, -55, LEAFT, { ow: 1.1 })]) + Pa('M-6,-11.6 L-2,-13', { stroke: '#fff', 'stroke-width': 1.3, opacity: .8, 'stroke-linecap': 'round' })
+      + Pa(rrD(-3, -17.6, 6, 1.6, .8), { fill: body.o }) + Ci(0, 15.4, 1.6, { fill: body.l, stroke: body.o, 'stroke-width': .8 });
+  }
+  const noSign = () => ['M0,0 m-17,0 a17,17 0 1 0 34,0 a17,17 0 1 0 -34,0', 'M-12,-12 L12,12'].map(d => Pa(d, { fill: 'none', stroke: '#7a1f1a', 'stroke-width': 7.4, 'stroke-linecap': 'round' })).join('')
+    + ['M0,0 m-17,0 a17,17 0 1 0 34,0 a17,17 0 1 0 -34,0', 'M-12,-12 L12,12'].map(d => Pa(d, { fill: 'none', stroke: '#e2453c', 'stroke-width': 4.2, 'stroke-linecap': 'round' })).join('')
+    + Pa('M-12.6,-7.6 A14.6,14.6 0 0 1 -6.4,-13.2', { fill: 'none', stroke: '#fff', 'stroke-width': 1.4, opacity: .7, 'stroke-linecap': 'round' });
+  // a person seen from the front, no face (team, the medallion stand-in photo)
+  const person = (x, y, s, col) => { const t = tone(col, .52, .14, .18); return stack([shape(D`M${x - 9 * s},${y + 10 * s} C${x - 9 * s},${y + 2 * s} ${x - 5 * s},${y - 1 * s} ${x},${y - 1 * s} C${x + 5 * s},${y - 1 * s} ${x + 9 * s},${y + 2 * s} ${x + 9 * s},${y + 10 * s} Q${x},${y + 12 * s} ${x - 9 * s},${y + 10 * s}Z`, t, { c: [x, y + 5 * s, 8 * s] }), blob(x, y - 7 * s, 5.4 * s, t, { hl: true })]); };
+  // a top-down map of the centre and Ring 1 (one hex per sector, Z at the top right, clockwise)
+  function miniBoard(kind) {
+    const k = 8.4, w = R3 * k, AX = [[0, 0], [1, -1], [1, 0], [0, 1], [-1, 1], [-1, 0], [0, -1]];
+    const hexP = (cx, cy, kk) => ptsStr([0, 1, 2, 3, 4, 5].map(i => { const a = (60 * i - 30) * RAD; return [cx + kk * Math.cos(a), cy + kk * Math.sin(a)]; }));
+    let o = '', f = '';
+    AX.forEach(([q, r], i) => {
+      const x = w * (q + r / 2), y = 1.5 * k * r;
+      const col = !i ? '#8a5a36' : kind === 'ring' ? '#f2c14a' : kind === 'sector' ? (i === 1 ? VAL[0] : '#4f7a4a') : VAL[i - 1], t = tone(col, .55, .12, .16);
+      o += el('polygon', { points: hexP(x, y, k - .9), fill: t.o, stroke: t.o, 'stroke-width': 3.4, 'stroke-linejoin': 'round' });
+      f += el('polygon', { points: hexP(x, y, k - .9), fill: t.d }) + el('polygon', { points: hexP(x - .8, y - 1, k * .66), fill: t.l })
+        + Pa(D`M${x - k * .62},${y - k * .2} L${x - k * .62},${y - k * .38} L${x - k * .1},${y - k * .68}`, { fill: 'none', stroke: '#fff', 'stroke-width': 1.1, opacity: .45, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+    });
+    return o + f + (kind === 'ring' ? '' : stack([blob(0, -1.2, 2.6, tone('#5cb84a'), { ow: 1.1 })]));
+  }
+  // the 9-point Enneagram figure on a cream disc
+  function enneagram() {
+    const P = n => { const a = (-90 + n * 40) * RAD; return [Math.cos(a) * 12.4, Math.sin(a) * 12.4]; };
+    const line = ns => 'M' + ns.map(n => N(P(n)[0]) + ',' + N(P(n)[1])).join(' L') + 'Z';
+    const dots = ['#c8463f', '#e0703a', '#e0a32e', '#7bbd3c', '#3f9e9a', '#4f74b0', '#7d5bb0', '#cf6f97', '#9a6338'];
+    let s = disc(19, '#f2dcae', { ol: .55 }) + Ci(0, 0, 12.4, { fill: 'none', stroke: '#b58a52', 'stroke-width': 1.2 })
+      + Pa(line([9, 3, 6]), { fill: 'none', stroke: '#8a5a24', 'stroke-width': 1.5, 'stroke-linejoin': 'round' })
+      + Pa(line([1, 4, 2, 8, 5, 7]), { fill: 'none', stroke: '#8a5a24', 'stroke-width': 1.3, 'stroke-linejoin': 'round' });
+    for (let n = 1; n <= 9; n++) { const [x, y] = P(n), t = tone(dots[n - 1], .5, .1, .2); s += Ci(x, y, 3.1, { fill: t.o }) + Ci(x, y, 2.3, { fill: t.d }) + Ci(x - .5, y - .5, 1.3, { fill: t.l }); }
+    return s;
+  }
+  Object.assign(ICON, {
+    cards: () => cards(0), deck1: () => cards(1), deck2: () => cards(2), deck3: () => cards(3),
+    book: () => {
+      const cov = tone('#b5533a', .55, .14, .14), pg = tone('#fbf1d8', .45, .08, .06);
+      const lines = [-1, 1].map(sx => [0, 4.6, 9.2].map((dy, i) => Pa(D`M${sx * 15.6},${-6 + dy} Q${sx * 9.6},${-9 + dy} ${sx * (i === 2 ? 8 : 4)},${-6.4 + dy - (i === 2 ? 1.4 : 0)}`, { fill: 'none', stroke: pg.o, 'stroke-width': 1, opacity: .45, 'stroke-linecap': 'round' })).join('')).join('');
+      return stack([shape(D`M-21,-8 Q-11,-13.4 0,-9 Q11,-13.4 21,-8 L21,14 Q11,9 0,14 Q-11,9 -21,14Z`, cov, { c: [0, 2, 18], k: .92 })])
+        + stack([shape(D`M-18.6,-10.6 Q-9,-15.4 -.8,-10 L-.8,11.2 Q-9,6.4 -18.6,10.8Z`, pg, { c: [-9, -1, 9], k: .88, ow: 1.3 }), shape(D`M18.6,-10.6 Q9,-15.4 .8,-10 L.8,11.2 Q9,6.4 18.6,10.8Z`, pg, { c: [9, -1, 9], k: .88, ow: 1.3 })])
+        + lines + stack([limb('M2.6,11 L4,19.4', 2.2, tone('#d23a35'), { light: false, ow: .9 })]) + gloss(-13.4, -9, 2.6, 1, -24, .75);
+    },
+    heart: () => { const t = tone('#f5b52e', .52, .12, .2); return stack([shape(heartD(0, 2, 16.4), t, { c: [0, 0, 16], hl: gloss(-7.6, -5.6, 3.4, 1.7, -40, .9) + Ci(8.4, -4.6, 1.4, { fill: '#fff', opacity: .55 }) })]) + Pa(heartD(0, 4.4, 8), { fill: 'none', stroke: t.o, 'stroke-width': 1.1, opacity: .35 }) + Pa(heartD(0, 5.8, 3.6), { fill: 'none', stroke: t.o, 'stroke-width': 1, opacity: .3 }); },
+    wind: () => gusts(false), breath: () => gusts(true),
+    phone: () => phoneBody(), phoneOff: () => G({ transform: 'scale(.86)' }, phoneBody()) + noSign(),
+    camera: () => {
+      const body = tone('#4a6478', .5, .12, .14), lens = tone('#2e4a66', .5, .12, .2);
+      return stack([shape('M-8,-8 L-5,-14 L5,-14 L8,-8Z', body, { c: [0, -11, 5], ow: 1.8, light: false }), shape(rrD(-19, -9, 38, 25, 5.4), body, { c: [0, 3, 16], k: .9 }), shape(rrD(10, -12.6, 6.4, 4, 1.4), tone('#d23a35'), { ow: 1.2, light: false })])
+        + Pa(rrD(-17, -3.4, 34, 3, 1.4), { fill: body.o, opacity: .35 }) + stack([blob(0, 3.6, 10, tone('#b9c6cf', .5, .12, .12))]) + Ci(0, 3.6, 6.8, { fill: lens.o }) + Ci(0, 3.6, 5.8, { fill: lens.d }) + Ci(-1, 2.6, 4, { fill: '#5aa6e0' })
+        + gloss(-2.6, 1, 1.8, 1, -40, .95) + Ci(2.4, 6, .9, { fill: '#fff', opacity: .6 }) + Pa(rrD(-15.6, -6.6, 6, 3.2, 1.2), { fill: '#ffe08a', stroke: '#b9781a', 'stroke-width': .8 }) + gloss(-13, 9, 1, 2.6, 0, .35);
+    },
+    ear: () => {
+      const t = tone('#efae86', .5, .12, .16), air = tone('#c9ecfb', .62, .08, .5);
+      return stack([limb('M-12,-7 Q-15.4,0 -12,7', 2.4, air, { light: false }), limb('M-18,-12 Q-23.4,0 -18,12', 2.4, air, { light: false })])
+        + stack([shape('M1,-18 C11,-19 18,-11 17,-1 C16.4,6 10.6,8.4 9.6,13 C8.6,18.4 2.6,20.4 -1.6,17.6 C-4.6,15.6 -3.6,11.4 -.6,10.6 C2.6,9.6 3.6,5 .6,2 C-2.4,-1 -5.4,-3.4 -5.4,-8.4 C-5.4,-14 -3,-17.6 1,-18Z', t, { c: [6, -2, 12], k: .84 })])
+        + Pa('M-.4,-11.6 C5.6,-13.6 11,-8.6 10.4,-2.6 C10,1.4 6.6,3 5.6,6.8', { fill: 'none', stroke: t.o, 'stroke-width': 1.7, opacity: .7, 'stroke-linecap': 'round' })
+        + El(4.6, -1.6, 2.6, 3.6, { fill: t.o, opacity: .35 }) + gloss(1.4, -14.6, 2.4, 1.1, -10, .7);
+    },
+    talk: () => stack([shape('M-18,-7 C-18,-16 -10,-19 0,-19 C10,-19 18,-16 18,-7 C18,2 10,5 0,5 L-2,5 L-11,14 L-9.2,4.2 C-15,2.6 -18,-1.6 -18,-7Z', tone('#fbf1d8', .5, .08, .06), { c: [0, -7, 16], k: .9, hl: gloss(-10.6, -13, 3, 1.3, -20, .8) })])
+      + [-8, 0, 8].map(x => Ci(x, -7, 2.5, { fill: '#8a5a24' }) + Ci(x - .7, -7.7, .8, { fill: '#c58a4e' })).join(''),
+    team: () => person(-9.5, -2, .8, '#4f74b0') + person(9.5, -2, .8, '#3f9e4a') + person(0, 3.4, 1, '#e0703a'),
+    roles: enneagram,
+    goal: () => {
+      const red = tone('#d8473f', .5, .12, .16), cr = tone('#fbf1d8', .45, .06, .05);
+      return stack([blob(-2, 2, 17, red, { hl: true })]) + Ci(-2, 2, 12.6, { fill: red.o }) + Ci(-2, 2, 11.6, { fill: cr.d }) + Ci(-2.8, 1.2, 9.6, { fill: cr.l })
+        + Ci(-2, 2, 7.4, { fill: red.o }) + Ci(-2, 2, 6.4, { fill: red.d }) + Ci(-2.6, 1.4, 5, { fill: red.l }) + stack([blob(-2, 2, 2.6, tone('#f2b32e'), { ow: 1.1 })])
+        + stack([limb('M-1,1 L15,-15', 2.4, WOOD, { ow: 1 }), leaf(15, -15, 8, 3.4, -112, LEAFT, { ow: 1, rib: false }), leaf(15, -15, 8, 3.4, 22, LEAFT, { ow: 1, rib: false })]);
+    },
+    keeper: () => {
+      const met = tone('#b9c6cf', .5, .12, .14), dk = tone('#6a4430', .5, .14, .16);
+      return stack([limb('M-10.4,-4 Q-10.4,9.4 0,9.4 Q10.4,9.4 10.4,-4', 2.2, dk, { light: false }), limb('M0,9.4 L0,16.6', 2.6, dk, { light: false }), shape('M-9,19.4 Q0,14.6 9,19.4 Q0,21.4 -9,19.4Z', dk, { ow: 1.2, light: false })])
+        + stack([shape(rrD(-6.8, -20, 13.6, 23.4, 6.8), met, { c: [0, -8, 9], hl: gloss(-3.2, -14.6, 1.3, 3.4, 10, .85) })])
+        + Pa('M-5,-13 L5,-13 M-5.8,-9 L5.8,-9 M-5.8,-5 L5.8,-5', { stroke: met.o, 'stroke-width': .9, opacity: .5, 'stroke-linecap': 'round' })
+        + Pa('M-6.6,-.6 L6.6,-.6', { stroke: '#e0a32e', 'stroke-width': 2.6 }) + Pa('M-6.6,.6 L6.6,.6', { stroke: '#9a6a1a', 'stroke-width': .8, opacity: .6 });
+    },
+    round: () => {
+      const t = tone('#7bd35a'), R = 14, P = a => [Math.cos(a * RAD) * R, Math.sin(a * RAD) * R + 1], A = P(150), B = P(40);
+      const hd = shape('M-3,-7.6 L8.6,0 L-3,7.6Z', t, { ow: 2, light: false }), tr = T(B[0], B[1], 1, 130);
+      return stack([limb(D`M${A[0]},${A[1]} A${R},${R} 0 1 1 ${B[0]},${B[1]}`, 5, t), [G({ transform: tr }, hd[0]), G({ transform: tr }, hd[1])]])
+        + stack([leaf(-1, 7, 9, 4.4, -60, LEAFT, { ow: 1.2 }), leaf(-1, 7, 7.6, 4, -140, LEAFT, { ow: 1.2 })]);
+    },
+    gift: () => {
+      const box = tone('#d8473f', .52, .14, .14), lid = tone('#e86a50', .52, .14, .16), rib = tone('#f2b32e', .52, .12, .2);
+      return stack([shape('M-14,-3 L14,-3 L13,17 L-13,17Z', box, { c: [0, 7, 13] }), shape(rrD(-16.6, -10.4, 33.2, 8, 2), lid, { c: [0, -6, 14] })])
+        + stack([shape('M-3.2,-2.4 L3.2,-2.4 L3.2,16.4 L-3.2,16.4Z', rib, { ow: 1.2, light: false }), shape('M-3.4,-10 L3.4,-10 L3.4,-2.6 L-3.4,-2.6Z', rib, { ow: 1.2, light: false })])
+        + stack([shape('M0,-10.4 C-3,-21 -15,-20 -11,-12.4 C-9,-9.6 -4,-9.6 0,-10.4Z', rib, { c: [-6, -14, 5], ow: 1.4 }), shape('M0,-10.4 C3,-21 15,-20 11,-12.4 C9,-9.6 4,-9.6 0,-10.4Z', rib, { c: [6, -14, 5], ow: 1.4 }), blob(0, -10.6, 3, rib, { ow: 1.2 })])
+        + gloss(-9.6, 2, 1.4, 3.2, 8, .45) + Pa('M-12,-7.6 L-6,-7.6', { stroke: '#fff', 'stroke-width': 1.3, opacity: .55, 'stroke-linecap': 'round' });
+    },
+    medal: () => {
+      const g = tone('#f2b32e', .52, .12, .2);
+      return stack([shape('M-11,-21 L-3.6,-21 L4,-3 L-3.4,-3Z', tone('#3f9e9a'), { c: [-3, -12, 6], ow: 1.6 }), shape('M11,-21 L3.6,-21 L-4,-3 L3.4,-3Z', tone('#c8463f'), { c: [3, -12, 6], ow: 1.6 })])
+        + stack([blob(0, 7, 12, g, { hl: true })]) + Ci(0, 7, 8.6, { fill: 'none', stroke: g.o, 'stroke-width': 1, opacity: .45 })
+        + stack([shape(starD(0, 7.4, 6.6, 2.9, 5, 0), tone('#fff1b0', .4, .06, .1), { c: [0, 7, 5], ow: 1, light: false })]);
+    },
+    guess: () => disc(17.6, '#8a6a9a') + el('text', { y: 9.6, 'text-anchor': 'middle', 'font-family': 'Lilita One, Nunito, sans-serif', 'font-weight': 800, 'font-size': 28, fill: '#fff', stroke: dark('#8a6a9a', .55), 'stroke-width': 4.4, 'paint-order': 'stroke', 'stroke-linejoin': 'round' }, '?'),
+    key: () => { const t = tone('#e2a93b', .55, .14, .18); return G({ transform: 'translate(1,1) rotate(-38)' }, stack([limb('M-3,0 L19,0', 4.4, t), shape('M11,1 L11,7 L14.4,7 L14.4,1Z', t, { ow: 1.4, light: false }), shape('M15.6,1 L15.6,5.4 L18.8,5.4 L18.8,1Z', t, { ow: 1.4, light: false }), blob(-10, 0, 8.6, t, { hl: true })]) + Ci(-10, 0, 3.2, { fill: t.o }) + Ci(-10.4, -.4, 2.2, { fill: dark(t.c, .7) })); },
+    eye: () => ROLE[4](),
+    weather: () => {
+      const cl = tone('#e9f1f8', .5, .1, .06), dr = tone('#3aa6f0', .5, .12, .2);
+      return G({ transform: T(7, -6.4, .72) }, sunBody(1)) + stack([shape(dropD(-8, 14.6, 2.6), dr, { c: [-8, 15, 2.6], ow: 1.4 }), shape(dropD(1, 16.6, 2.6), dr, { c: [1, 17, 2.6], ow: 1.4 })])
+        + stack([shape(cloudD(-3.4, 3, .9), cl, { c: [-3, 1, 13] })]) + gloss(-11.6, -1.4, 3.2, 1.5, -25, .8);
+    },
+    live: () => Ci(0, 0, 17, { fill: '#7bc47f', opacity: .2 }) + Ci(0, 0, 13, { fill: '#7bc47f', opacity: .28 }) + stack([blob(0, 0, 8.6, tone('#4caf50', .55, .12, .22), { hl: true })]),
+    board: () => miniBoard(''), ring: () => miniBoard('ring'), sector: () => miniBoard('sector'),
+    pact: () => {   // a scroll with a leaf seal (the Forest Pact)
+      const pap = tone('#fbf1d8', .45, .08, .06), rl = tone('#e2c48e', .5, .12, .12), seal = tone('#c8463f', .5, .12, .18);
+      return stack([shape('M-12,-13 L12,-13 L12,13 L-12,13Z', pap, { c: [0, 0, 12], k: .9 })])
+        + [-7.4, -2.8, 1.8].map((y, i) => Pa(D`M-7.6,${y} L${i === 2 ? 1.6 : 7.6},${y}`, { stroke: pap.o, 'stroke-width': 1.3, opacity: .45, 'stroke-linecap': 'round' })).join('')
+        + stack([shape(rrD(-15.5, -19.4, 31, 7, 3.5), rl, { c: [0, -16, 8], hl: gloss(-9.6, -17.4, 3, .9, 0, .6) }), shape(rrD(-15.5, 12.4, 31, 7, 3.5), rl, { c: [0, 16, 8] })])
+        + stack([blob(7, 7.2, 5.6, seal, { ow: 1.4, hl: true })]) + stack([leaf(4.4, 9.6, 6.4, 2.8, -45, tone('#f6d6c8', .4, .06, .1), { ow: .8, rib: false })]);
+    },
+  });
+
+  // ---------- inline pictures from short specs (help and wiki pages) ----------
+  // A spec names one drawing: 'drop', 'fruit', 'acorn', 'treasure' (all three) or 'treasure:compass|lantern|rope',
+  // 'stage:1..4[:sector]' (Seeded, Sprout, Sapling, Big Tree; Big Tree defaults to the green oak), 'worldTree[:awake]',
+  // 'hollow' (the World Tree's heart with the three treasures), 'leaves:1|2[:tile]', 'leaf' (an action leaf), 'spring',
+  // 'weather' or 'weather:sun|rain|fog', 'value:0..5', 'role:1..9', 'icon:<name>', 'tile:up|down', 'sparkle',
+  // 'drop:empty', 'medallion[:colour index][:turn|dry][:stump]' (a stand-in silhouette photo).
+  // pic(spec) → [inner markup, [x, y, w, h] box around the drawing (square where it is roughly round)]
+  const PLAYER = ['#1e88e5', '#e53935', '#43a047', '#fb8c00', '#5e35b1', '#d81b60', '#00acc1', '#fdd835'];
+  const silhouette = c => 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="' + light(c, .62) + '"/><circle cx="50" cy="41" r="19" fill="' + dark(c, .2) + '"/><path d="M12 104 C14 72 33 63 50 63 C67 63 86 72 88 104Z" fill="' + dark(c, .2) + '"/></svg>');
+  // measured boxes (outline included, faint ground shadows trimmed), keyed by spec
+  const BOX = { drop: [-13.9, -13.3, 27.8, 27.8], 'drop:empty': [-12.7, -11.3, 25.3, 25.3], fruit: [-15.7, -18.4, 31.4, 31.4],
+    acorn: [-13.8, -14, 27.6, 27.6], treasure: [-20.4, -21.5, 41.5, 41.5], 'treasure:compass': [-18.1, -19.2, 36.2, 36.2],
+    'treasure:lantern': [-21.6, -20.6, 43.2, 43.2], 'treasure:rope': [-16.3, -16.3, 34.7, 34.7],
+    'stage:1': [-17.6, -25.8, 35.2, 35.2], 'stage:2': [-20.9, -37.8, 43.8, 43.8], 'stage:3': [-21.9, -58, 46, 64],
+    'stage:4:0': [-47.2, -88.2, 94.2, 94.2], 'stage:4:1': [-46.3, -86.6, 92.6, 92.6], 'stage:4:2': [-32.6, -85.6, 67.2, 91.6],
+    'stage:4:3': [-45.6, -85.8, 91.8, 91.8], 'stage:4:4': [-46.4, -86.8, 92.8, 92.8], 'stage:4:5': [-49, -87.9, 98.1, 98.1],
+    worldTree: [-99.9, -185.8, 199.8, 199.8], 'worldTree:awake': [-104.3, -194.6, 208.6, 208.6],
+    'leaves:1': [-21.2, -19.6, 38.7, 38.7], 'leaves:2': [-37.6, -32.1, 74.2, 46.7], leaf: [-14.5, -14.6, 29.2, 29.2],
+    spring: [-30.9, -37.5, 62.3, 62.3], 'tile:up': [-36, -27.6, 72.1, 72.1], 'tile:down': [-36, -27.6, 72.1, 72.1],
+    sparkle: [-18.6, -19.7, 37.6, 37.6], medallion: [-32.2, -36.4, 64.4, 64.4], 'medallion:stump': [-35.2, -62.7, 70.3, 70.3],
+    'icon:move': [-21.2, -17, 42.8, 42.8], 'icon:explore': [-19.8, -19.8, 38.4, 38.4], 'icon:sow': [-19.6, -21.3, 39.2, 39.2],
+    'icon:water': [-17.9, -17.7, 35.8, 35.8], 'icon:tend': [-20.8, -22.8, 41.5, 41.5], 'icon:clear': [-24.6, -25.6, 47.7, 47.7],
+    'icon:harvest': [-21.5, -23, 43, 43], 'icon:take': [-19.6, -22.6, 41.1, 41.1], 'icon:drink': [-18, -22, 39.6, 39.6],
+    'icon:pass': [-20.6, -20.6, 41.2, 41.2], 'icon:end': [-20.8, -20.8, 41.6, 41.6], 'icon:trust': [-16.3, -16.3, 32.7, 32.7],
+    'icon:owl': [-19.1, -17.6, 38.2, 38.2], 'icon:timer': [-21.7, -21.6, 43.4, 43.4], 'icon:cards': [-23.2, -22.5, 45.9, 45.9],
+    'icon:deck1': [-23.2, -22.5, 45.9, 45.9], 'icon:deck2': [-23.2, -22.5, 45.9, 45.9], 'icon:deck3': [-23.2, -22.5, 45.9, 45.9],
+    'icon:book': [-24.1, -20.6, 47.7, 47.7], 'icon:heart': [-19, -16.1, 38, 38], 'icon:wind': [-24.2, -24.7, 47.5, 47.5],
+    'icon:breath': [-24.2, -23.2, 47.9, 47.9], 'icon:phone': [-14.6, -22.5, 28.2, 44.1],
+    'icon:phoneOff': [-19.6, -19.7, 39.3, 39.3], 'icon:camera': [-21.6, -20.6, 43.2, 43.2], 'icon:ear': [-23.3, -21.1, 43, 43],
+    'icon:talk': [-20.7, -23.8, 41.3, 41.3], 'icon:team': [-19.3, -19.2, 38.6, 38.6], 'icon:roles': [-24.2, -24.2, 48.4, 48.4],
+    'icon:goal': [-23.8, -26, 49.8, 49.8], 'icon:keeper': [-13, -22.6, 26, 45.6], 'icon:round': [-18.4, -16.3, 40.4, 40.4],
+    'icon:gift': [-20.2, -20.8, 40.4, 40.4], 'icon:medal': [-16.8, -23.6, 33.6, 47.4], 'icon:guess': [-22.8, -22.8, 45.6, 45.6],
+    'icon:key': [-24.6, -23.4, 49.9, 49.9], 'icon:eye': [-18.6, -12.2, 37.2, 24.4], 'icon:weather': [-22.1, -21.2, 43.8, 43.8],
+    'icon:live': [-19.6, -19.6, 39.2, 39.2], 'icon:board': [-23.6, -23.6, 47.3, 47.3], 'icon:ring': [-23.6, -23.6, 47.3, 47.3],
+    'icon:sector': [-23.6, -23.6, 47.3, 47.3], 'icon:pact': [-22.3, -22.5, 44.5, 44.5],
+    'tile:leaves': [-36, -31, 72.1, 72.1] };
+  const BADGE = [-24.5, -24.5, 49, 49];
+  function pic(spec) {
+    const p = String(spec || '').split(':'), k = p[0], a = p[1];
+    let key = p.slice(0, 2).join(':'), inner = '';
+    switch (k) {
+      case 'drop': inner = a === 'empty'
+        ? stack([shape(dropD(0, 1.6, 7.6), tone('#8e9cab', .5, .12, .12), { c: [0, 2.4, 7.6], ow: 2.2 })]) + Pa('M-3,-1 L1,3 L-1,5 L3,9', { fill: 'none', stroke: '#4f5a66', 'stroke-width': 1.2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })
+        : ART.drop(); break;
+      case 'fruit': inner = ART.fruit(); break;
+      case 'acorn': inner = ART.acorn(); break;
+      case 'treasure': inner = a ? treasure(a)
+        : G({ transform: T(0, -6, .56) }, treasureBody('lantern')) + G({ transform: T(-10, 5, .54) }, treasureBody('compass')) + G({ transform: T(10.6, 6, .54) }, treasureBody('rope')); break;
+      case 'stage': {
+        const st = Math.max(1, Math.min(4, +a || 1)), sec = p[2] != null ? (+p[2] % 6 + 6) % 6 : st === 4 ? 5 : null;
+        inner = plant(st, sec, { seed: 3 }); key = 'stage:' + st + (st === 4 ? ':' + sec : ''); break;
+      }
+      case 'worldTree': inner = a === 'awake'
+        ? worldTree({ awake: true, treasures: ['compass', 'lantern', 'rope'] }).replace(/<circle cx="0" cy="0" r="100" fill="url\(#art-dawn\)"\/>/, '')   // no dawn halo in text
+        : worldTree({}); break;
+      case 'hollow': {   // the heart hollow with the three treasures, in a round bark frame
+        const id = 'art-cp' + (++uid);
+        return [el('clipPath', { id }, Ci(0, -55, 21)) + Ci(0, -55, 23.4, { fill: '#3a2414' }) + G({ 'clip-path': 'url(#' + id + ')' }, worldTree({ awake: true, treasures: ['compass', 'lantern', 'rope'] }))
+          + Ci(0, -55, 21.6, { fill: 'none', stroke: '#8e5b3a', 'stroke-width': 2 }) + Pa('M-15,-68 A20,20 0 0 1 -4,-74.6', { fill: 'none', stroke: '#fff', 'stroke-width': 1.6, opacity: .5, 'stroke-linecap': 'round' }), [-25, -80, 50, 50]];
+      }
+      case 'leaves':   // 'leaves:1|2[:tile]': on its own, or lying on a hex as on the board
+        if (p[2] === 'tile') { inner = tile({ ring: 4, up: true, seed: 12 }) + leaves(a === '2' ? 2 : 1, { seed: 6 }); key = 'tile:leaves'; break; }
+        inner = a === '2' ? leaves(2, { seed: 4 }) : flatLeafUp(-5.4, 3.6, 18, -26, '#cf8a3e', 1) + flatLeafUp(5.4, -3.8, 16, 32, '#b8643a', 0); key = a === '2' ? 'leaves:2' : 'leaves:1'; break;
+      case 'leaf': inner = leafSprite(); break;
+      case 'spring': inner = spring({ seed: 2 }); break;
+      case 'weather': if (!a) { inner = icon('weather'); key = 'icon:weather'; } else return [weatherBadge(a), BADGE]; break;
+      case 'value': return [valueBadge(+a || 0), BADGE];
+      case 'role': return [roleBadge(+a || 1), BADGE];
+      case 'icon': inner = icon(a); break;
+      case 'tile': inner = tile({ ring: 4, up: a === 'up', seed: a === 'up' ? 12 : 5 }); break;
+      case 'sparkle': inner = sparkle(-5, -3, 11, 0, '#fff3b0') + sparkle(10, 8, 6.4, 0, '#fff3b0') + sparkle(9, -12, 4.2, 0, '#fff3b0'); break;
+      case 'medallion': {
+        const ci = p.find(x => /^\d+$/.test(x)), state = p.includes('turn') ? 'turn' : p.includes('dry') ? 'dry' : '', st = p.includes('stump'), col = PLAYER[(+ci || 0) % PLAYER.length];
+        inner = medallion({ photo: silhouette(col), name: '', color: col, water: state === 'dry' ? 0 : 5, state, stump: st }); key = st ? 'medallion:stump' : 'medallion'; break;
+      }
+    }
+    const b = BOX[key] || [-24, -24, 48, 48];
+    // a square box keeps icons in a list the same width; only the sealed heap stays wide
+    return [inner, b[2] === b[3] || key === 'leaves:2' ? b : b[2] < b[3] ? [b[0] - (b[3] - b[2]) / 2, b[1], b[3], b[3]] : [b[0], b[1] - (b[2] - b[3]) / 2, b[2], b[2]]];
+  }
+  // a whole <svg> for one spec; height in CSS units (default 1.25em), width follows the drawing's shape
+  function inline(spec, o = {}) {
+    install();
+    const [inner, b] = pic(spec), h = o.height || '1.25em';
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + b.map(N).join(' ') + '" style="height:' + h + ';width:auto;overflow:visible" class="art-inline art-still' + (o.cls ? ' ' + o.cls : '') + '" aria-hidden="true" focusable="false">' + inner + '</svg>';
+  }
+  // Fill every [data-art] element under root with its drawing (skips ones already drawn with the same spec).
+  //   HTML host (e.g. <i class="art-i" data-art="drop"></i>): an inline <svg> sized by CSS, ≈1.25em tall and as wide
+  //     as the drawing; data-size="2" makes it 2em tall. Decorative unless the host has an aria-label.
+  //   SVG host (a <g> inside a figure): the drawing centred on the host's origin, data-size user units across its longer side.
+  function hydrate(root) {
+    const doc = typeof document !== 'undefined' ? document : null;
+    if (!doc) return 0;
+    install(doc);
+    root = root || doc;
+    let n = 0;
+    for (const host of root.querySelectorAll('[data-art]')) {
+      const spec = host.getAttribute('data-art');
+      if (host.getAttribute('data-art-done') === spec) continue;
+      const [inner, b] = pic(spec), [x, y, w, h] = b;
+      if (host.namespaceURI === 'http://www.w3.org/2000/svg' && host.localName !== 'svg') {
+        const k = (+host.getAttribute('data-size') || 24) / Math.max(w, h);
+        host.innerHTML = G({ transform: 'scale(' + N(k * 1000) / 1000 + ') translate(' + N(-(x + w / 2)) + ',' + N(-(y + h / 2)) + ')' }, inner);
+      } else {
+        const size = +host.getAttribute('data-size');
+        if (size) host.style.setProperty('--art-h', size + 'em');
+        if (Math.abs(w / h - 1) > .02) host.style.setProperty('--art-ar', String(N(w / h * 100) / 100));
+        host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + b.map(N).join(' ') + '" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">' + inner + '</svg>';
+        if (!host.hasAttribute('aria-label')) host.setAttribute('aria-hidden', 'true');
+        else if (!host.hasAttribute('role')) host.setAttribute('role', 'img');
+      }
+      host.classList.add('art-still');
+      host.setAttribute('data-art-done', spec);
+      n++;
+    }
+    return n;
+  }
+
   // ---------- defs, css, install ----------
   function defs() {
     const stop = (o, c, a) => el('stop', { offset: o, 'stop-color': c, 'stop-opacity': a });
@@ -982,6 +1259,10 @@
     '@keyframes art-dapple{0%,100%{transform:translate(-5px,1px) scale(.9);opacity:.45}50%{transform:translate(6px,-2px) scale(1.08);opacity:1}}',
     '.art-mist{animation:art-mist 18s ease-in-out infinite}',
     '@keyframes art-mist{0%,100%{transform:translateX(-16px);opacity:.55}50%{transform:translateX(16px);opacity:1}}',
+    // inline pictures in text (ART.hydrate): baseline-aligned, sized to the text; still (no idle loops)
+    '.art-i{display:inline-block;height:var(--art-h,1.25em);width:calc(var(--art-h,1.25em) * var(--art-ar,1));vertical-align:var(--art-va,-.28em);line-height:0;flex:none;font-style:normal}',
+    '.art-i>svg{display:block;width:100%;height:100%;overflow:visible}',
+    '.art-still *{animation:none!important}',
     '@media (prefers-reduced-motion:reduce){.art-sway,.art-flicker,.art-needle,.art-glow,.art-ripple,.art-twinkle,.art-firefly,.art-drift,.art-bob,.art-rain,.art-fog,.art-shaft,.art-dapple,.art-mist{animation:none!important}.art-drift,.art-rain{opacity:0}}',
   ].join('\n');
   function install(doc) {
@@ -1016,6 +1297,7 @@
     weatherFx, firefly, fireflies, sparkle: (x, y, r, d) => sparkle(x, y, r, d),
     sectorWeather, dapple, mist, leaf: leafSprite, deadLeaf, petal, puff, rays, sprig,
     defs, css: CSS, install, svg,
+    pic, inline, hydrate,
     mix, dark, light, tone, rng,
   };
   if (typeof window !== 'undefined') window.ART = ART;
