@@ -96,6 +96,11 @@ body.kp, body.kx {
   margin: 0; background: #0b1710; color: var(--ink); font-family: var(--read); font-size: 16px; -webkit-tap-highlight-color: transparent;
 }
 body.kp { height: 100vh; overflow: hidden; -webkit-user-select: none; user-select: none; }
+/* a game screen, not a web page: no scrollbars anywhere (panels that overflow still scroll by wheel or touch) */
+html:has(body.kp) { overflow: hidden; }
+body.kp, body.kp * { scrollbar-width: none; }
+body.kp ::-webkit-scrollbar { display: none; }
+#k-tl[hidden] { display: none; }
 .kp button, .kx button { margin: 0; }
 .kp a { color: #8a5418; }
 .k-muted { color: #8a6a4e; }
@@ -308,8 +313,12 @@ body.k-drawer-open #k-drawer { transform: none; }
 #k-modal.k-m-mini { align-items: flex-end; padding-bottom: 22px; }
 .k-kicker { font: 800 14px var(--read); letter-spacing: .1em; text-transform: uppercase; color: #8a6a4e; }
 /* lobby */
-.k-lobby { display: grid; grid-template-columns: minmax(250px, 300px) 1fr; gap: 22px; width: 1600px; padding: 18px 22px 20px; }
-.k-lob-l { display: flex; flex-direction: column; align-items: center; text-align: center; }
+/* the lobby: two side panels over the live map (the map fits between them), nothing dimmed */
+#k-modal.k-m-lobby { justify-content: space-between; padding: 14px calc(54px * var(--hud, 1)) 14px 14px; }
+.k-lob-l { display: flex; flex-direction: column; align-items: center; text-align: center; width: 320px; padding: 18px 18px 16px; position: relative; }
+.k-lob-r { width: 590px; padding: 14px 20px 16px; position: relative; }
+.k-lob-r .k-rolekey { margin-top: 8px; padding: 6px 10px; }
+.k-lob-r .k-start { margin-top: 10px; }
 .k-lob-title { display: flex; flex-direction: column; align-items: center; }
 .k-lob-title h1 { font: 44px/1 var(--toon); color: #8fe06a; margin: 0; font-weight: 400; text-shadow: 0 4px 0 #1f4a18, 3px 3px 0 #1f4a18, -3px 3px 0 #1f4a18, 3px -3px 0 #1f4a18, -3px -3px 0 #1f4a18, 4px 0 0 #1f4a18, -4px 0 0 #1f4a18, 0 -3px 0 #1f4a18, 0 8px 0 rgba(0, 0, 0, .15); }
 .k-lob-title p { margin: 4px 0 10px; font-weight: 800; color: var(--ink2); }
@@ -319,12 +328,18 @@ body.k-drawer-open #k-drawer { transform: none; }
 .k-bigcode { font: 54px/1 var(--toon); letter-spacing: .16em; color: #fff; text-shadow: 0 4px 0 #6b3f1d, 3px 3px 0 #6b3f1d, -3px 3px 0 #6b3f1d, 3px -3px 0 #6b3f1d, -3px -3px 0 #6b3f1d, 4px 0 0 #6b3f1d, -4px 0 0 #6b3f1d, 0 -3px 0 #6b3f1d; margin: 4px 0 8px; }
 .k-lob-l .small { font-size: 13px; margin: 0; }
 .k-lob-l p { margin: 4px 0; }
-.k-lob-r { min-width: 0; }
 .k-lob-h { display: flex; align-items: baseline; gap: 12px; }
 .k-lob-h h2 { font: 30px var(--toon); color: var(--wood-d); margin: 0; font-weight: 400; }
 .k-count { color: #4cab37; } .k-count small { font-size: 20px; color: #8a6a4e; }
 .k-lob-help { margin: 2px 0 8px; font-size: 14px; font-weight: 700; }
 .k-lob-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 8px; }
+.k-lob-grid.host { grid-template-columns: 1fr; gap: 5px; }
+.k-lob-grid.host .k-lp { padding: 2px 8px 2px 4px; gap: 6px; }
+.k-lob-l, .k-lob-r { overflow-x: hidden !important; }
+.k-slot { visibility: hidden; }
+.k-lp-nm { font: 19px/1.1 var(--toon); font-weight: 400; color: var(--ink); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.k-lob-grid.host .k-types { margin: 0; }
+.k-lob-grid.host .k-ty { width: 25px; height: 25px; font-size: 14px; }
 .k-lob-grid.view { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
 .k-lp { display: flex; gap: 8px; align-items: center; background: #fffaf0; border: 3px solid var(--paper-line); border-radius: 16px; padding: 6px 8px; animation: k-in .45s var(--spring); }
 .k-lob-grid.view .k-lp { flex-direction: column; font: 18px var(--toon); }
@@ -476,8 +491,8 @@ body.k-drawer-open #k-drawer { transform: none; }
 #k-tl, #k-tr, .k-lobby, .k-card { position: relative; }
 #k-tl, #k-tr { position: fixed; }
 .k-card { overflow: visible !important; }
-.k-lobby .k-sprig.big.tl { left: 2px; top: 2px; }
-.k-lobby .k-sprig.br { right: 2px; bottom: 2px; }
+.k-lob-l .k-sprig.big.tl { left: 2px; top: 2px; }
+.k-lob-r .k-sprig.br { right: 8px; bottom: 12px; }
 .k-card-head { border-radius: 25px 25px 0 0; }
 .k-bring .k-mate.pic { padding: 1px; border-radius: 50%; }
 

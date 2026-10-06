@@ -288,13 +288,18 @@ function fit() {
   if (queueEnd - now() > 60) { clearTimeout(fit.q); fit.q = setTimeout(fit, queueEnd - now() + 50); return; }
   const W = innerWidth, H = innerHeight, v = HW.view;
   const drawer = ui.drawer && W >= 900 ? $('k-drawer').getBoundingClientRect().width + 14 : 0;
-  const top = 6, bottom = trayReserve(v), left = 10, right = 10 + drawer;
+  let left = 10, right = 10 + drawer;
+  // in the lobby the map sits between the join panel and the team panel
+  const lobL = v?.phase === 'lobby' && document.querySelector('#k-modal .k-lob-l'), lobR = lobL && document.querySelector('#k-modal .k-lob-r');
+  // (the value signs stick out past the hexes: keep them clear of the panels too)
+  if (lobL && lobR && W >= 900) { left = lobL.getBoundingClientRect().right + 40; right = Math.max(right, W - lobR.getBoundingClientRect().left + 40); }
+  const top = 6, bottom = trayReserve(v);
   const aw = W - left - right, ah = H - top - bottom, [bx, by, bw, bh] = B.bbox;
   const k = Math.min(aw / bw, ah / bh);
   const vx = bx + bw / 2 - (left + aw / 2) / k, vy = by + bh / 2 - (top + ah / 2) / k;
   const vb = `${vx.toFixed(2)} ${vy.toFixed(2)} ${(W / k).toFixed(2)} ${(H / k).toFixed(2)}`;
   if (vb === B.vb) return;
-  B.vb = vb; B.k = k; B.vx = vx; B.vy = vy; B.fitKey = `${W}|${H}|${drawer}|${bottom}`;
+  B.vb = vb; B.k = k; B.vx = vx; B.vy = vy; B.fitKey = `${W}|${H}|${drawer}|${bottom}|${left}|${right}`;
   for (const n of LAYERS) B.L[n].setAttribute('viewBox', vb);
 }
 addEventListener('resize', () => { clearTimeout(fit.t); fit.t = setTimeout(() => { hudScale(); trayMax.h = 0; if (HW.view) renderTray(HW.view); fit(); }, 80); });
@@ -364,15 +369,18 @@ function medState(v, p) {
   if (v.phase === 'turn' && p.water <= 0) return 'dry';
   return '';
 }
+// where a player stands on the map: in the lobby, everyone who has joined gathers around the World Tree
+const posOf = (v, p) => (v.phase === 'lobby' ? 0 : p ? p.pos : -1);
 function patchMeds(v, moved) {
   const by = {};
-  v.players.forEach(p => { if (p.pos >= 0 && p.pos < B.n) (by[p.pos] ||= []).push(p); });
+  v.players.forEach(p => { const at = posOf(v, p); if (at >= 0 && at < B.n) (by[at] ||= []).push(p); });
   const ids = new Set(v.players.map(p => p.id));
-  for (const id in B.meds) if (!ids.has(id) || !(HW.player(id)?.pos >= 0)) { B.meds[id].g.remove(); delete B.meds[id]; delete B.medPos[id]; }
+  for (const id in B.meds) if (!ids.has(id) || !(posOf(v, HW.player(id)) >= 0)) { B.meds[id].g.remove(); delete B.meds[id]; delete B.medPos[id]; }
   for (const p of v.players) {
-    if (!(p.pos >= 0 && p.pos < B.n)) continue;
-    const list = by[p.pos], n = list.length, [dx, dy, sc] = spot(p.pos, list.indexOf(p), n);
-    const [hx, hy] = B.xy[p.pos], x = hx + dx, y = hy + dy;
+    const at = posOf(v, p);
+    if (!(at >= 0 && at < B.n)) continue;
+    const list = by[at], n = list.length, [dx, dy, sc] = spot(at, list.indexOf(p), n);
+    const [hx, hy] = B.xy[at], x = hx + dx, y = hy + dy;
     let m = B.meds[p.id];
     if (!m) {
       const g = document.createElementNS(NS, 'g');
@@ -380,7 +388,12 @@ function patchMeds(v, moved) {
       g.innerHTML = '<g class="k-mv"><g class="k-sq"><g class="k-mb"></g></g></g>';
       m = B.meds[p.id] = { g, mv: g.firstChild, sq: g.firstChild.firstChild, mb: g.firstChild.firstChild.firstChild, key: '', hex: -1 };
     }
-    if (m.hex !== p.pos) { B.mg[p.pos].appendChild(m.g); m.hex = p.pos; }
+    if (m.hex !== at) {
+      B.mg[at].appendChild(m.g); m.hex = at;
+      // a player who just joined pops in
+      if (v.phase === 'lobby' && prevView && !matchMedia('(prefers-reduced-motion: reduce)').matches)
+        m.mv.animate([{ transform: 'translateY(-60px) scale(.3)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 650, easing: SPRING });
+    }
     const tf = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) scale(${sc})`;
     if (m.tf !== tf) {
       // A hop animates the move itself; everyone else on the hex slides to make room.
@@ -914,6 +927,7 @@ function render(v) {
   renderPop(v);
   renderDrawer(v);
   renderModal(v);
+  if (v.phase === 'lobby' || prevView?.phase === 'lobby') fit();
   prevView = v;
 }
 
@@ -930,6 +944,7 @@ function renderTopLeft(v) {
     ${lastP ? `<div class="k-next">Next Tide after <b>${esc(lastP.name)}</b>'s turn</div>` : ''}`;
   h += `<div class="timer k-timer" data-timer></div>`;
   HW.patch($('k-tl'), h);
+  $('k-tl').hidden = v.phase === 'lobby';
 }
 // ---------- HUD: the goal tracker ----------
 function renderGoals(v) {
@@ -1117,7 +1132,7 @@ function renderModal(v) {
     key = 'fin'; cls = ui.hidePanel ? 'mini' : 'fin';
     h = ui.hidePanel ? `<button class="k-btn wood big" data-k="showPanel">Show the ${v.phase === 'end' ? 'recognition' : v.phase === 'chain' ? 'tribute chain' : 'guesses'}</button>` : finaleHTML(v);
   }
-  $('k-dim').hidden = !key || cls === 'mini';
+  $('k-dim').hidden = !key || cls === 'mini' || cls === 'lobby';
   $('k-dim').className = cls === 'fin' && v.result === 'won' ? 'light' : '';
   el.hidden = !key;
   el.className = key ? 'k-m-' + cls : '';
@@ -1136,31 +1151,31 @@ function lobbyHTML(v) {
   const origin = phoneOrigin(v), joinUrl = `${origin}/play.html?g=${v.code}`, bare = u => u.replace(/^https?:\/\//, '');
   const min = v.minPlayers || 6, max = v.maxPlayers || 12, n = v.players.length;
   const roles = v.roles.length ? v.roles : [...Array(9)].map((_, k) => ({ type: k + 1, name: `Type ${k + 1}`, text: '' }));
-  let h = `<div class="k-panel k-lobby"><span class="k-sprig tl big">${I.sprig(80)}</span><span class="k-sprig br big">${I.sprig(80, true)}</span><div class="k-lob-l">
+  // two side panels over the live map: joining on the left, the team on the right
+  let h = `<div class="k-panel k-lob-l"><span class="k-sprig tl big">${I.sprig(80)}</span>
     <div class="k-lob-title">${I.world(false, 120)}<div><h1>World Tree</h1><p>The forest is asleep. Gather the team.</p></div></div>
     <img class="k-qr" src="/api/qr?u=${encodeURIComponent(joinUrl)}" alt="QR code to join">
     <p class="k-scan">Scan to join, or open</p><div class="k-url">${esc(bare(joinUrl))}</div>
     <p class="k-muted">or open <b>${esc(bare(origin))}</b> and enter</p><div class="k-bigcode">${esc(v.code)}</div>
-    <p class="k-muted small">Phones must be on the same Wi-Fi as this computer.</p></div>
-    <div class="k-lob-r"><div class="k-lob-h"><h2>The team <span class="k-count">${n}<small> of ${min}–${max}</small></span></h2>
+    ${origin !== location.origin ? '<p class="k-muted small">Phones must be on the same Wi-Fi as this computer.</p>' : ''}</div>
+    <div class="k-panel k-lob-r"><span class="k-sprig br big">${I.sprig(80, true)}</span><div class="k-lob-h"><h2>The team <span class="k-count">${n}<small> of ${min}–${max}</small></span></h2>
     ${n < min ? `<span class="k-muted">${min - n} more to start</span>` : ''}</div>`;
   if (!v.isHost) {
     h += `<div class="k-lob-grid view">${v.players.map(p => `<div class="k-lp">${medPic(p, 64, { badges: false })}<b>${esc(p.name)}</b></div>`).join('') || '<p class="k-muted">No one has joined yet.</p>'}</div>
-      <p class="k-muted">The Keeper gives each player 1 to 3 Enneagram types, then starts.</p></div></div>`;
+      <p class="k-muted">The Keeper gives each player 1 to 3 Enneagram types, then starts.</p></div>`;
     return h;
   }
   h += `<p class="k-muted k-lob-help">Tap a number to give a type or take it away: 1 to 3 per player. Several players may hold the same type.</p>
-    <div class="k-lob-grid">${v.players.map(p => `<div class="k-lp${p.types.length ? '' : ' need'}">${medPic(p, 64, { badges: false })}
-      <div class="k-lp-t"><div class="k-lp-n"><b>${esc(p.name)}</b>
-        ${p.photo ? `<button class="k-x sm" data-unphoto="${esc(p.id)}" title="Remove ${esc(p.name)}'s photo">photo ✕</button>` : ''}
-        <button class="k-x" data-kick="${esc(p.id)}" title="Remove ${esc(p.name)}">✕</button></div>
+    <div class="k-lob-grid host">${v.players.map(p => `<div class="k-lp${p.types.length ? '' : ' need'}">${medPic(p, 38, { badges: false })}
+      <b class="k-lp-nm" title="${esc(p.types.map(t => HW.roleName(t)).join(', '))}">${esc(p.name)}</b>
       <div class="k-types">${roles.map(r => `<button class="k-ty${p.types.includes(r.type) ? ' sel' : ''}" data-assign="${esc(p.id)}" data-type="${r.type}" title="${r.type} ${esc(r.name)}: ${esc(r.text)}">${r.type}</button>`).join('')}</div>
-      <div class="k-lp-roles">${p.types.map(t => `<span>${I.role(t, 22)}${esc(HW.roleName(t))}</span>`).join('') || '<small>no type yet</small>'}</div></div></div>`).join('') || '<p class="k-muted">No one has joined yet. Scan the code with your phone.</p>'}</div>
+      ${p.photo ? `<button class="k-x sm" data-unphoto="${esc(p.id)}" title="Remove ${esc(p.name)}'s photo">photo ✕</button>` : '<span class="k-x sm k-slot" aria-hidden="true">photo ✕</span>'}
+      <button class="k-x" data-kick="${esc(p.id)}" title="Remove ${esc(p.name)}">✕</button></div>`).join('') || '<p class="k-muted">No one has joined yet. Scan the code with your phone.</p>'}</div>
     <div class="k-rolekey">${roles.map(r => `<span title="${esc(r.text)}">${I.role(r.type, 26)}<b>${r.type}</b> ${esc(r.name)}</span>`).join('')}</div>`;
   const untyped = v.players.filter(p => !p.types.length);
   const why = n < min ? `Needs at least ${min} players (${n} joined).` : n > max ? `At most ${max} players.`
     : untyped.length ? `Give every player a type: ${untyped.map(p => esc(p.name)).join(', ')}.` : '';
-  return h + `<div class="k-start"><button class="k-btn big" data-k="start" ${why ? 'disabled' : ''}>Start: enter the forest</button>${why ? `<span class="k-muted">${why}</span>` : ''}</div></div></div>`;
+  return h + `<div class="k-start"><button class="k-btn big" data-k="start" ${why ? 'disabled' : ''}>Start: enter the forest</button>${why ? `<span class="k-muted">${why}</span>` : ''}</div></div>`;
 }
 
 function enterHTML(v) {
