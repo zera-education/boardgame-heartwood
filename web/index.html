@@ -3,33 +3,58 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#14281d">
 <title>World Tree</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E🌳%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@400;600;700;800;900&display=swap" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
-<div class="phone">
-  <div class="panel" style="text-align:center">
-    <div style="font-size:3rem">🌳</div>
-    <h1>WORLD TREE</h1>
-    <p class="muted">A Heartwood game for ZERA leaders. The forest is asleep: explore it together, grow a Big Tree for every value, share your stories, find three treasures and gather on the World Tree to wake it.</p>
-    <p class="muted" style="font-size:.9rem">Cooperative · 6 to 12 players · one big screen, a phone each</p>
-    <p><a href="howto.html">How to play</a> · <a href="wiki.html">Wiki</a></p>
-  </div>
-  <div class="panel">
-    <h2>Join a game</h2>
-    <label for="code">Game code</label>
-    <input id="code" maxlength="4" placeholder="ABCD" style="text-transform:uppercase" autocomplete="off">
-    <p><button id="join">Join on this device</button></p>
-  </div>
-  <div class="panel">
-    <h2>Host a game</h2>
-    <p class="muted">Opens the forest on this screen, for the projector. You run it as the Keeper: you give each player their Enneagram types, and you tap what the players say they do.</p>
-    <button id="create" class="ghost">Create a new game</button>
-  </div>
-</div>
+<body class="kx">
+<div class="kx-sky"></div>
+<main class="kx-main">
+  <header class="kx-hero">
+    <div class="kx-art" id="art" aria-hidden="true"></div>
+    <h1 class="kx-title">World Tree</h1>
+    <p class="kx-tag">A Heartwood game for ZERA leaders</p>
+    <p class="kx-lead">The forest is asleep. Explore it together, grow a Big Tree for every value, share your stories, find three treasures and gather on the World Tree to wake it.</p>
+    <p class="kx-meta"><span>Cooperative</span><span>6 to 12 players</span><span>one big screen, a phone each</span></p>
+  </header>
+  <section class="kx-cards">
+    <div class="k-panel kx-card">
+      <h2>Join a game</h2>
+      <label for="code">Game code from the big screen</label>
+      <input id="code" maxlength="4" placeholder="ABCD" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <button id="join" class="k-btn big">Join on this device</button>
+    </div>
+    <div class="k-panel kx-card">
+      <h2>Host a game</h2>
+      <p>Opens the forest on this screen, for the projector. You run it as the Keeper: you give each player their Enneagram types, and you tap what the players say they do.</p>
+      <button id="create" class="k-btn wood big">Create a new game</button>
+    </div>
+  </section>
+  <p class="kx-links"><a href="howto.html">How to play</a> · <a href="wiki.html">Wiki</a></p>
+</main>
 <script src="common.js"></script>
+<script src="art.js"></script>
 <script>
+// Title art: the World Tree on its hex with a ring of Big Trees, one per value, under fireflies.
+(function () {
+  const S = 40, P = (q, r) => ART.project(q, r, S), ring = [[0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1]];
+  const sector = (q, r) => ART.hexes(1).find(h => h.q === q && h.r === r)?.sector ?? 0;
+  const tiles = [[0, 0], ...ring].sort((a, b) => P(...a)[1] - P(...b)[1]);
+  let tl = '', ob = [];
+  for (const [q, r] of tiles) {
+    const [x, y] = P(q, r), w = !q && !r;
+    tl += `<g transform="translate(${x},${y})">${w ? ART.tile({ world: true }) : ART.tile({ ring: 4, sector: sector(q, r), up: true, q, r, outer: [] })}</g>`;
+    if (w) ob.push([y, `<g transform="translate(${x},${y})">${ART.worldTree({ awake: true, fruit: 6, treasures: ['compass', 'lantern', 'rope'] })}</g>`]);
+    else if (r <= 0 || q === 1) ob.push([y, `<g transform="translate(${x},${y})">${ART.plant(4, sector(q, r), { harvestable: true, seed: q * 7 + r })}</g>`]);
+    else ob.push([y, `<g transform="translate(${x},${y})">${ART.plant(q < 0 ? 2 : 3, sector(q, r), { seed: 5 })}</g>`]);
+  }
+  ob.sort((a, b) => a[0] - b[0]);
+  document.getElementById('art').innerHTML = ART.svg(tl + ob.map(o => o[1]).join('') + ART.fireflies(9, { w: 300, h: 220, x: -150, y: -220, seed: 3 }),
+    { viewBox: '-150 -235 300 300', width: '100%', height: '100%' });
+})();
 const go = () => {
   const c = document.getElementById('code').value.trim().toUpperCase();
   if (c.length === 4) location.href = `play.html?g=${c}`;

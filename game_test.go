@@ -334,8 +334,8 @@ func TestFullGame(t *testing.T) {
 		t.Fatal("won too early")
 	}
 	x.must(x.as(last, "move", Action{Hex: 0}))
-	if g.Result != "won" || g.Phase != PhaseGuess || last.Placed != 1 || len(g.Placed) != 3 {
-		t.Fatalf("result %q phase %s placed %d treasures %v", g.Result, g.Phase, last.Placed, g.Placed)
+	if g.Result != "won" || g.Phase != PhaseGuess || last.Placed != 1 || len(g.Placed) != 3 || g.EndedAt == 0 {
+		t.Fatalf("result %q phase %s placed %d treasures %v ended at %d", g.Result, g.Phase, last.Placed, g.Placed, g.EndedAt)
 	}
 	if x.lastEvent("wake") == nil || x.lastEvent("place") == nil {
 		t.Fatal("missing wake or place event")
@@ -430,12 +430,12 @@ func TestActions(t *testing.T) {
 	x.fails(x.as(p, "tend", own), "tending a seed")
 	x.must(x.as(p, "water", own))
 	x.must(x.as(p, "water", own))
-	if g.Tiles[h].Stage != 3 || p.Water != 2 {
-		t.Fatalf("water: stage %d water %d", g.Tiles[h].Stage, p.Water)
+	if g.Tiles[h].Stage != 3 || p.Water != 2 || g.Log[len(g.Log)-1] != "P0 waters it: Sapling." {
+		t.Fatalf("water: stage %d water %d log %q", g.Tiles[h].Stage, p.Water, g.Log[len(g.Log)-1])
 	}
 	x.turnOf(p)
-	x.fails(x.as(p, "water", own), "watering a Shrub")
-	x.fails(x.as(p, "harvest", own), "harvesting a Shrub")
+	x.fails(x.as(p, "water", own), "watering a Sapling")
+	x.fails(x.as(p, "harvest", own), "harvesting a Sapling")
 	x.must(x.as(p, "tend", own))
 	if g.Tiles[h].Stage != 4 || !g.goals().Trees[0] {
 		t.Fatal("tend")
@@ -615,14 +615,17 @@ func TestRoles(t *testing.T) {
 	x.turnOf(helper)
 	x.fails(x.as(helper, "water", Action{Hex: ringHexes(4, 4)[0]}), "a Helper watering far away")
 
-	// Achiever: sows straight to Grass.
+	// Achiever: sows straight to Sprout.
 	a := ringHexes(4, 5)[3]
 	g.Tiles[a] = &Tile{Up: true, Kind: "empty"}
 	achiever.Pos = a
 	x.turnOf(achiever)
 	x.must(x.as(achiever, "sow", own))
-	if g.Tiles[a].Stage != 2 {
-		t.Fatal("Achiever sow")
+	if g.Tiles[a].Stage != 2 || StageNames[2] != "Sprout" || !strings.HasSuffix(g.Log[len(g.Log)-1], "springs up as a Sprout.") {
+		t.Fatalf("Achiever sow: stage %d log %q", g.Tiles[a].Stage, g.Log[len(g.Log)-1])
+	}
+	if Roles[2].Text != "After you Sow, the hex grows straight to Sprout." {
+		t.Fatalf("Achiever text %q", Roles[2].Text)
 	}
 
 	// Individualist: Explore also peeks at a hidden neighbour, privately.
@@ -751,10 +754,10 @@ func TestForestTide(t *testing.T) {
 	g.NextWeather = [6]string{"rain", "sun", "fog", "fog", "fog", "fog"}
 	set := func(i int, tl Tile) int { g.Tiles[i] = &tl; return i }
 
-	// Rain in Zealous grows unsealed Seeded and Grass, nothing else.
+	// Rain in Zealous grows unsealed Seeded and Sprout, nothing else.
 	seed := set(ringHexes(3, 0)[0], Tile{Up: true, Kind: "empty", Stage: 1})
-	sealedGrass := set(ringHexes(3, 0)[1], Tile{Up: true, Kind: "empty", Stage: 2, Leaves: 2})
-	shrub := set(ringHexes(3, 0)[2], Tile{Up: true, Kind: "empty", Stage: 3, Harvested: true})
+	sealedSprout := set(ringHexes(3, 0)[1], Tile{Up: true, Kind: "empty", Stage: 2, Leaves: 2})
+	sapling := set(ringHexes(3, 0)[2], Tile{Up: true, Kind: "empty", Stage: 3, Harvested: true})
 
 	// Sun in Excellence dries walkers, except on a Big Tree; never below 0.
 	ps[1].Pos = set(ringHexes(4, 1)[0], Tile{Up: true, Kind: "empty"})
@@ -784,8 +787,8 @@ func TestForestTide(t *testing.T) {
 		t.Fatalf("tide %d round %d weather %v", g.Tide, g.Round, g.Weather)
 	}
 	tl := func(i int) Tile { return *g.Tiles[i] }
-	if tl(seed).Stage != 2 || tl(sealedGrass).Stage != 2 || tl(shrub).Stage != 3 || tl(shrub).Harvested {
-		t.Fatalf("rain: seed %+v sealed %+v shrub %+v", tl(seed), tl(sealedGrass), tl(shrub))
+	if tl(seed).Stage != 2 || tl(sealedSprout).Stage != 2 || tl(sapling).Stage != 3 || tl(sapling).Harvested {
+		t.Fatalf("rain: seed %+v sealed %+v sapling %+v", tl(seed), tl(sealedSprout), tl(sapling))
 	}
 	if ps[1].Water != 3 || ps[2].Water != 4 || ps[3].Water != 0 || ps[4].Water != 4 || ps[5].Water != 4 {
 		t.Fatalf("sun: %d %d %d %d %d", ps[1].Water, ps[2].Water, ps[3].Water, ps[4].Water, ps[5].Water)
@@ -1021,8 +1024,8 @@ func TestLoseWhenEveryoneIsDry(t *testing.T) {
 	ps[0].Pos, ps[0].Water = h, 1
 	x.turnOf(ps[0])
 	x.must(x.as(ps[0], "water", own))
-	if g.Result != "lost" || g.Phase != PhaseGuess || x.lastEvent("dry") == nil {
-		t.Fatalf("result %q phase %s", g.Result, g.Phase)
+	if g.Result != "lost" || g.Phase != PhaseGuess || x.lastEvent("dry") == nil || g.EndedAt == 0 {
+		t.Fatalf("result %q phase %s ended at %d", g.Result, g.Phase, g.EndedAt)
 	}
 
 	// The sun can do it too, at the Tide.
@@ -1080,7 +1083,10 @@ func TestViewShape(t *testing.T) {
 	keys(hv, "code", "phase", "version", "now", "isHost", "lan", "colors", "values", "roles", "treasures",
 		"minPlayers", "maxPlayers", "actionsPerTurn", "round", "tide", "result", "hexes", "tiles", "weather",
 		"breathCount", "players", "order", "current", "turn", "share", "goals", "events", "log", "timerEnd",
-		"timerLabel", "tribute", "recognition", "me")
+		"timerLabel", "tribute", "recognition", "me", "stages", "ringDecks")
+	if fmt.Sprint(hv["stages"]) != "[ Seeded Sprout Sapling Big Tree]" || fmt.Sprint(hv["ringDecks"]) != "[ Deep Story Light]" {
+		t.Fatalf("stages %v ringDecks %v", hv["stages"], hv["ringDecks"])
+	}
 	if hv["isHost"] != true || hv["me"] != nil || hv["minPlayers"] != 6.0 || hv["maxPlayers"] != 12.0 || hv["actionsPerTurn"] != 2.0 {
 		t.Fatalf("host view basics %v %v %v", hv["isHost"], hv["me"], hv["minPlayers"])
 	}
@@ -1101,7 +1107,10 @@ func TestViewShape(t *testing.T) {
 	keys(hv["roles"].([]any)[0].(map[string]any), "type", "name", "text")
 	pl := hv["players"].([]any)[0].(map[string]any)
 	keys(pl, "id", "name", "color", "value", "types", "pos", "water", "fruit", "treasure", "placed", "reached",
-		"trustLeft", "guessed")
+		"trustLeft", "guessed", "photo")
+	if pl["photo"] != 0.0 {
+		t.Fatalf("photo %v", pl["photo"])
+	}
 	if _, secret := pl["secret"]; secret || len(pl["reached"].([]any)) != 3 {
 		t.Fatal("player secret leaked, or reached is not 3 bools")
 	}
@@ -1149,7 +1158,10 @@ func TestViewShape(t *testing.T) {
 	cards(rec, httptest.NewRequest("GET", "/api/cards", nil))
 	var c map[string]any
 	x.must(json.Unmarshal(rec.Body.Bytes(), &c))
-	keys(c, "values", "ringDecks", "heartwood", "harvest", "treasures", "roles")
+	keys(c, "values", "ringDecks", "heartwood", "harvest", "treasures", "roles", "stages", "ringDeckNames")
+	if fmt.Sprint(c["stages"]) != "[ Seeded Sprout Sapling Big Tree]" || fmt.Sprint(c["ringDeckNames"]) != "[ Deep Story Light]" {
+		t.Fatalf("cards stages %v ringDeckNames %v", c["stages"], c["ringDeckNames"])
+	}
 	rd := c["ringDecks"].(map[string]any)
 	for _, r := range []string{"1", "2", "3"} {
 		if len(rd[r].([]any)) != 30 {
@@ -1201,9 +1213,12 @@ func TestEndGameEarly(t *testing.T) {
 	g.Shares = append(g.Shares, &Share{Kind: "why", Player: x.ps[0].ID, Trusted: map[string]bool{}})
 	x.fails(x.host("endGame", Action{}), "ending the game during a share")
 	x.must(x.host("doneShare", Action{}))
+	if g.EndedAt != 0 {
+		t.Fatal("ended at is set before the end")
+	}
 	x.must(x.host("endGame", Action{}))
-	if g.Result != "ended" || g.Phase != PhaseGuess || g.Turn != nil || g.Log[len(g.Log)-2] != "The Keeper closed the game early." {
-		t.Fatalf("result %q phase %s log %v", g.Result, g.Phase, g.Log[len(g.Log)-2:])
+	if g.Result != "ended" || g.Phase != PhaseGuess || g.Turn != nil || g.Log[len(g.Log)-2] != "The Keeper closed the game early." || g.EndedAt == 0 {
+		t.Fatalf("result %q phase %s log %v ended at %d", g.Result, g.Phase, g.Log[len(g.Log)-2:], g.EndedAt)
 	}
 	if buildView(g, "", "", "host")["result"] != "ended" {
 		t.Fatal("view result")

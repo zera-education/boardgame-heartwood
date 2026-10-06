@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heartwood art sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@400;700;800&display=swap">
+<style>
+  :root { --bg: #10201a; --card: #183026; --line: #2c4a3a; --ink: #f3efe2; --muted: #a9bba9; --gold: #f2b32e; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--ink); font: 15px/1.4 Nunito, system-ui, sans-serif;
+    background: radial-gradient(ellipse at 50% -10%, #23402f 0%, #10201a 55%, #0b1712 100%) fixed; }
+  header { padding: 28px 32px 8px; }
+  h1 { font: 44px/1 'Lilita One', sans-serif; margin: 0; color: #ffe6a6; text-shadow: 0 3px 0 #6a3a12, 0 6px 14px #0008; letter-spacing: .01em; }
+  header p { color: var(--muted); margin: 8px 0 0; max-width: 900px; }
+  section { padding: 10px 32px 18px; }
+  h2 { font: 26px/1 'Lilita One', sans-serif; color: #cfeec0; margin: 18px 0 12px; text-shadow: 0 2px 0 #0a1a10; }
+  .grid { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+  .cell { background: linear-gradient(#1b3529, #142a20); border: 1px solid var(--line); border-radius: 14px; padding: 8px 8px 6px; text-align: center; box-shadow: inset 0 1px 0 #ffffff10, 0 4px 10px #0005; }
+  .cell svg { display: block; margin: 0 auto; }
+  .cell b { display: block; font: 13px/1.2 'Lilita One', sans-serif; color: #ffe6a6; letter-spacing: .02em; margin-top: 4px; }
+  .cell i { display: block; font-style: normal; font-size: 11px; color: var(--muted); }
+  .board { border-radius: 18px; border: 1px solid var(--line); overflow: hidden; background: radial-gradient(ellipse at 50% 40%, #1d3a2a, #0c1912 80%); }
+  .board svg { display: block; width: 100%; height: auto; }
+  .row-label { color: var(--muted); font-size: 12px; width: 100%; margin: 6px 0 -4px; }
+  body.only-board header, body.only-board section:not(.board-sec) { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>The Sleeping Forest · art sheet</h1>
+  <p>Every sprite drawn by <code>web/art.js</code> (window.ART), in every state. Shaded toon: coloured outlines, two-tone cel shading, one gloss, soft ground shadows. Idle animations stop under <i>prefers-reduced-motion</i>.</p>
+</header>
+<main id="main"></main>
+<script src="art.js"></script>
+<script>
+(function () {
+  ART.install();
+  const S = ART.S, main = document.getElementById('main');
+  const VN = ['Zealous', 'Excellence', 'Resilience', 'Authenticity', 'Open-mindedness', 'Sustainability'];
+  function section(title, html) { const s = document.createElement('section'); s.innerHTML = '<h2>' + title + '</h2><div class="grid">' + html + '</div>'; main.appendChild(s); }
+  function cell(label, sub, inner, vb, w, h) {
+    return '<div class="cell">' + ART.svg(inner, { viewBox: vb, width: w, height: h }) + '<b>' + label + '</b>' + (sub ? '<i>' + sub + '</i>' : '') + '</div>';
+  }
+  const rowLabel = t => '<div class="row-label">' + t + '</div>';
+
+  // stand-in photos: a plain coloured background with a soft head-and-shoulders silhouette
+  function photo(bg, fg, label) {
+    const s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><radialGradient id="g" cx=".4" cy=".3" r=".9"><stop offset="0" stop-color="' + bg + '"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></radialGradient></defs>'
+      + '<rect width="100" height="100" fill="' + bg + '"/><rect width="100" height="100" fill="url(#g)"/>'
+      + '<circle cx="50" cy="40" r="19" fill="' + fg + '"/><path d="M14 104 C16 72 34 62 50 62 C66 62 84 72 86 104Z" fill="' + fg + '"/>'
+      + '<text x="50" y="94" font-family="sans-serif" font-size="11" font-weight="700" fill="#fff" fill-opacity=".75" text-anchor="middle">photo</text></svg>';
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(s);
+  }
+  const PH = [photo('#7fb3d5', '#2f4a63'), photo('#e8b27a', '#6a3d22'), photo('#9fd18b', '#33582a'), photo('#d7a6c8', '#5d3355'), photo('#f0d27a', '#6e5320')];
+
+  // ---- tiles ----
+  let h = rowLabel('Face up, by ring (colour deepens toward the centre) — Zealous and Open-mindedness sectors; Ring 4 with its outer trim');
+  for (const sec of [0, 4]) for (let ring = 4; ring >= 1; ring--)
+    h += cell('Ring ' + ring + ' · up', VN[sec], ART.tile({ ring, sector: sec, up: true, seed: ring * 11 + sec, outer: ring === 4 ? [3, 4, 5] : null }), '-46 -34 92 78', 138, 117);
+  h += cell('World Tree hex', 'ring 0', ART.tile({ world: true }), '-46 -34 92 100', 138, 150);
+  h += rowLabel('Face down (mossy leaf blanket), by ring');
+  for (const sec of [2, 5]) for (let ring = 4; ring >= 1; ring--)
+    h += cell('Ring ' + ring + ' · down', VN[sec], ART.tile({ ring, sector: sec, up: false, seed: ring * 7 + sec, outer: ring === 4 ? [3, 4, 5] : null }), '-46 -34 92 78', 138, 117);
+  section('Tiles', h);
+
+  // ---- plants ----
+  const stageName = ['', 'Seeded', 'Sprout', 'Sapling', 'Big Tree'];
+  h = '';
+  for (let st = 1; st <= 3; st++) h += cell(stageName[st], '≈' + [0, .5, .8, 1.3][st] + '·S', ART.tile({ ring: 3, sector: 5, up: true, seed: 3 }) + ART.plant(st, 5, { seed: st }), '-46 -70 92 120', 120, 156);
+  h += rowLabel('Saplings take a hint of their sector colour');
+  for (let sec = 0; sec < 6; sec++) h += cell('Sapling', VN[sec], ART.plant(3, sec, { seed: sec }), '-32 -60 64 66', 96, 99);
+  section('Growth stages', h);
+
+  h = '';
+  const SP = ['Flame maple', 'Golden ginkgo', 'Pine', 'Cherry blossom', 'Jacaranda', 'Wide oak'];
+  for (let sec = 0; sec < 6; sec++) h += cell(SP[sec], VN[sec], ART.tile({ ring: 2, sector: sec, up: true, seed: sec + 40 }) + ART.plant(4, sec, { seed: sec }), '-50 -96 100 140', 150, 210);
+  h += rowLabel('Harvestable: heart fruit hangs in the canopy');
+  for (let sec = 0; sec < 6; sec++) h += cell(SP[sec] + ' · fruit', VN[sec], ART.tile({ ring: 2, sector: sec, up: true, seed: sec + 40 }) + ART.plant(4, sec, { seed: sec, harvestable: true }), '-50 -96 100 140', 150, 210);
+  section('Big Trees (one species per value)', h);
+
+  // ---- world tree ----
+  h = '';
+  const wt = (o, label, sub) => cell(label, sub, ART.tile({ world: true }) + ART.worldTree(o), '-80 -190 160 236', 220, 324);
+  h += wt({ awake: false, treasures: [], fruit: 0 }, 'Asleep', '0 treasures, no fruit');
+  h += wt({ awake: false, treasures: ['compass'], fruit: 3 }, 'Asleep', 'Compass placed, 3 fruit');
+  h += wt({ awake: false, treasures: ['compass', 'lantern', 'rope'], fruit: 7 }, 'Asleep', 'all 3 treasures, 7 fruit');
+  h += wt({ awake: true, treasures: ['compass', 'lantern', 'rope'], fruit: 12 }, 'Awake', 'the forest wakes!');
+  section('The World Tree', h);
+
+  // ---- leaves, spring, treasures, items ----
+  h = '';
+  h += cell('Dead leaves', '1 layer', ART.tile({ ring: 3, sector: 1, up: true, seed: 9 }) + ART.leaves(1), '-46 -40 92 84', 138, 126);
+  h += cell('Sealed', '2 layers: heap + brambles', ART.tile({ ring: 3, sector: 1, up: true, seed: 9 }) + ART.leaves(2), '-46 -40 92 84', 138, 126);
+  h += cell('Sealed sapling', 'leaves over a plant', ART.tile({ ring: 2, sector: 3, up: true, seed: 2 }) + ART.plant(3, 3) + ART.leaves(1, { seed: 5 }), '-46 -64 92 108', 138, 162);
+  h += cell('Spring', 'stone-ringed pond', ART.tile({ ring: 3, sector: 4, up: true, kind: 'spring', seed: 4 }) + ART.spring(), '-46 -40 92 84', 138, 126);
+  for (const id of ['compass', 'lantern', 'rope']) h += cell(id[0].toUpperCase() + id.slice(1), 'plain', ART.treasure(id), '-22 -24 44 48', 88, 96);
+  for (const id of ['compass', 'lantern', 'rope']) h += cell(id[0].toUpperCase() + id.slice(1), 'on a tile', ART.tile({ ring: 1, sector: 2, up: true, seed: 3 }) + ART.treasure(id, { onTile: true }), '-46 -56 92 100', 120, 130);
+  h += cell('Heart fruit', 'ART.fruit()', ART.fruit(), '-14 -14 28 28', 72, 72);
+  h += cell('Water drop', 'ART.drop()', ART.drop(), '-14 -14 28 28', 72, 72);
+  h += cell('Trust acorn', 'ART.acorn()', ART.acorn(), '-14 -14 28 28', 72, 72);
+  section('Leaves, springs, treasures, items', h);
+
+  // ---- medallions ----
+  h = '';
+  const C = ['#e53935', '#fb8c00', '#43a047', '#1e88e5', '#5e35b1', '#d81b60', '#00acc1', '#fdd835'];
+  const med = (o, label, sub) => cell(label, sub, ART.medallion(o), '-34 -62 68 76', 110, 123);
+  h += med({ photo: PH[0], name: 'Aisha', color: C[3], water: 4 }, 'Normal', 'photo, 4 water');
+  h += med({ photo: PH[1], name: 'Ben', color: C[1], water: 5, state: 'turn' }, 'Turn', 'golden glow, bob');
+  h += med({ photo: PH[2], name: 'Chen', color: C[2], water: 0, state: 'dry' }, 'Dry', '0 water: grey, droop');
+  h += med({ photo: PH[3], name: 'Dara', color: C[5], water: 3, fruit: 1 }, 'Fruit', '1 fruit');
+  h += med({ photo: PH[4], name: 'Eli', color: C[4], water: 2, fruit: 2, treasure: 'compass' }, 'Fruit ×2 + treasure', 'Compass');
+  h += med({ name: 'Farah', color: C[0], water: 5 }, 'No photo', 'initial');
+  h += med({ name: 'Gus', color: C[6], water: 1, state: 'turn', treasure: 'lantern' }, 'No photo · turn', 'Lantern');
+  h += med({ name: 'Hana', color: C[7], water: 0, state: 'dry', fruit: 1 }, 'No photo · dry', '');
+  h += med({ name: 'Ivo', color: C[4], water: 3, treasure: 'rope', label: true }, 'With name tag', 'label:true');
+  h += cell('Without stump', 'stump:false (HUD)', ART.medallion({ photo: PH[0], name: 'Aisha', color: C[3], water: 4, fruit: 2, stump: false }), '-32 -34 64 64', 100, 100);
+  section('Player medallions', h);
+
+  // ---- badges ----
+  h = '';
+  for (const w of ['sun', 'rain', 'fog']) h += cell(w[0].toUpperCase() + w.slice(1), 'weather', ART.weatherBadge(w), '-26 -26 52 52', 80, 80);
+  for (const w of ['sun', 'rain', 'fog']) h += cell(w[0].toUpperCase() + w.slice(1) + ' overlay', 'ART.weatherFx', ART.tile({ ring: 3, sector: 0, up: true, seed: 21 }) + ART.plant(2, 0) + ART.weatherFx(w), '-46 -76 92 120', 92, 120);
+  for (let i = 0; i < 6; i++) h += cell(VN[i], 'value', ART.valueBadge(i), '-26 -26 52 52', 80, 80);
+  section('Weather and value badges', h);
+  h = '';
+  const RN = ['', 'Reformer', 'Helper', 'Achiever', 'Individualist', 'Investigator', 'Loyalist', 'Enthusiast', 'Challenger', 'Peacemaker'];
+  for (let t = 1; t <= 9; t++) h += cell(RN[t], 'type ' + t, ART.roleBadge(t), '-26 -26 52 52', 80, 80);
+  section('Role badges', h);
+  h = '';
+  for (const n of ART.icons) h += cell(n, '', ART.icon(n), '-26 -26 52 52', 72, 72);
+  h += rowLabel('On a seed-packet disc (disc:true), small sizes');
+  for (const n of ART.icons) h += cell(n, '', ART.icon(n, { disc: true }), '-26 -26 52 52', 44, 44);
+  section('Action icons', h);
+
+  // ---- board preview ----
+  const hexes = ART.hexes(4), BS = 40;
+  const at = {}; hexes.forEach((x, i) => (at[x.q + ',' + x.r] = i));
+  const R = ART.rng(20261006);
+  const tiles = hexes.map((x, i) => (i ? { up: R() < .55 || x.ring === 4 && R() < .4, kind: 'empty', stage: 0, leaves: 0, treasure: '' } : null));
+  const set = (q, r, o) => Object.assign(tiles[at[q + ',' + r]], { up: true }, o);
+  // Big Trees in several sectors, all stages, springs, a treasure lying on its stump, leaves and sealed tiles
+  set(0, -3, { stage: 4, harvestable: true });   // Z (top)
+  set(2, -3, { stage: 4 });                      // E
+  set(3, -1, { stage: 4, harvestable: true });   // R
+  set(1, 2, { stage: 4 });                       // A
+  set(-2, 3, { stage: 4, harvestable: true });   // O
+  set(-3, 1, { stage: 4 });                      // S
+  set(-1, -2, { stage: 3 }); set(1, -2, { stage: 2 }); set(2, -1, { stage: 1 }); set(2, 1, { stage: 3 }); set(-1, 3, { stage: 2 });
+  set(-3, 0, { stage: 1 }); set(0, 4, { stage: 3 }); set(-4, 2, { stage: 2 }); set(4, -2, { stage: 3 }); set(3, 0, { stage: 2 });
+  set(-2, -1, { kind: 'spring' }); set(3, -4, { kind: 'spring' }); set(0, 3, { kind: 'spring' }); set(-4, 4, { kind: 'spring' });
+  set(1, -1, { kind: 'treasure', treasure: 'lantern' });
+  set(-1, 1, { leaves: 1 }); set(4, -3, { leaves: 2 }); set(1, 3, { leaves: 1 }); set(-2, 4, { leaves: 2 }); set(-1, -1, { stage: 2, leaves: 1 });
+  set(2, 0, { leaves: 2 }); set(-4, 3, { leaves: 1 });
+  const pr = (q, r) => ART.project(q, r, BS);
+  const order = hexes.map((x, i) => i).sort((a, b) => pr(hexes[a].q, hexes[a].r)[1] - pr(hexes[b].q, hexes[b].r)[1]);
+  const weather = ['sun', 'rain', 'fog', 'sun', 'fog', 'rain'];
+  let tl = '', wx = '', ob = [], md = [];
+  for (const i of order) {
+    const x = hexes[i], [px, py] = pr(x.q, x.r), t = tiles[i];
+    tl += '<g transform="translate(' + px.toFixed(1) + ',' + py.toFixed(1) + ')">' + (i ? ART.tile({ ring: x.ring, sector: x.sector, up: t.up, kind: t.kind, q: x.q, r: x.r, S: BS }) : ART.tile({ world: true, S: BS })) + '</g>';
+    if (i) wx += '<g transform="translate(' + px.toFixed(1) + ',' + py.toFixed(1) + ')">' + ART.weatherFx(weather[x.sector], { S: BS, seed: i }) + '</g>';
+    let o = '';
+    if (!i) o = ART.worldTree({ awake: false, treasures: ['compass'], fruit: 4, S: BS });
+    else {
+      if (t.up && t.kind === 'spring') o += ART.spring({ S: BS, seed: i });
+      if (t.up && t.treasure) o += ART.treasure(t.treasure, { onTile: true, S: BS });
+      if (t.stage) o += ART.plant(t.stage, x.sector, { S: BS, seed: i, harvestable: t.harvestable });
+      if (t.leaves) o += ART.leaves(t.leaves, { S: BS, seed: i });
+    }
+    if (o) ob.push([py, '<g transform="translate(' + px.toFixed(1) + ',' + py.toFixed(1) + ')">' + o + '</g>']);
+  }
+  const players = [[0, 0, PH[0], C[3], 'turn', 5, 0, ''], [0, 0, '', C[0], '', 2, 1, ''], [-1, -2, PH[1], C[1], '', 3, 0, ''], [3, -1, PH[2], C[2], '', 4, 2, ''], [1, 2, '', C[5], 'dry', 0, 0, ''], [-2, 3, PH[3], C[4], '', 1, 0, 'rope'], [4, 0, PH[4], C[6], '', 4, 0, ''], [-4, 1, '', C[7], '', 2, 1, '']];
+  const names = ['Aisha', 'Farah', 'Ben', 'Chen', 'Hana', 'Dara', 'Eli', 'Gus'];
+  players.forEach(([q, r, ph, col, state, water, fruit, tr], k) => {
+    let [px, py] = pr(q, r);
+    if (q === 0 && r === 0) { px += k ? 34 : -34; py += 16; } else { px += 15; py += 10; }
+    md.push([py, '<g transform="translate(' + px.toFixed(1) + ',' + py.toFixed(1) + ')">' + ART.medallion({ photo: ph, name: names[k], color: col, water, fruit, treasure: tr, state, r: 15 }) + '</g>']);
+  });
+  ob.sort((a, b) => a[0] - b[0]); md.sort((a, b) => a[0] - b[0]);
+  const board = '<g>' + tl + '</g><g>' + wx + '</g><g>' + ob.map(x => x[1]).join('') + '</g><g>' + md.map(x => x[1]).join('') + '</g>' + ART.fireflies(14, { w: 560, h: 300, x: -280, y: -230, seed: 9 });
+  const sec = document.createElement('section');
+  sec.className = 'board-sec';
+  if (location.hash === '#board') document.body.classList.add('only-board');
+  sec.innerHTML = '<h2>Board preview · 61 hexes, 2.5D</h2><p style="color:var(--muted);margin:-6px 0 10px">Layers back to front: tiles → weather (Z/A sun, E/O fog, R/S rain) → objects (sorted by screen y) → medallions → fireflies.</p><div class="board">' + ART.svg(board, { viewBox: '-322 -228 644 428', width: 1500, height: 997 }) + '</div>';
+  main.appendChild(sec);
+})();
+</script>
+</body>
+</html>

@@ -42,7 +42,7 @@ Locally, the server prints the address phones on the same Wi-Fi should use, and 
   Keeper can issue a 4-digit rejoin code (one use, 10 minutes) or get a link that moves the Keeper controls to another
   device.
 - **The Keeper screen is animated.** It shows the forest (61 hexes, weather tint per sector, plants, dead leaves,
-  pawns), the three goals, each player's water, fruit and treasure, the open share card and the trail log. Everything
+  each player's photo medallion), the three goals, each player's water, fruit and treasure, the open share card and the trail log. Everything
   that happens is played as animation from the view's `events`.
 - **Players say it, the Keeper taps it. Phones down.** Every public action (enter, move, explore, sow, water, tend,
   clear, harvest, take, drink, pass, end turn) is tapped by the Keeper, acting for that player (`host` + `as`). The
@@ -52,7 +52,8 @@ Locally, the server prints the address phones on the same Wi-Fi should use, and 
 - **Players (6 to 12)** scan the QR code or open `play.html?g=CODE`, pick a name and one of 12 colours. Join refuses a
   13th player; Start needs at least 6 and every player needs at least one Enneagram type (the Keeper gives 1 to 3 in
   the lobby). Their seat is kept in the URL (`&p=…`) and on the device, so a reload or a reopened browser goes straight
-  back to it.
+  back to it. After joining, each player may take a photo (or skip); it shows in their round medallion on the board.
+  With no photo, the medallion shows their initial.
 - Every screen shows a connection badge: **● Live**, **● Reconnecting…** or **● Offline**.
 
 ## Realtime
@@ -65,7 +66,7 @@ socket is down. Screens redraw only the parts that changed.
 
 Each view also carries `events` (the last 80, with increasing ids: `move`, `flip`, `grow`, `harvest`, `clear`,
 `take`, `drink`, `pass`, `place`, `treasure`, `tide`, `wake`, `dry`). The Keeper screen plays the events it hasn't seen
-yet as animation: pawns slide, tiles flip, plants grow, leaves drift in at the Forest Tide. Private results (the
+yet as animation: medallions hop, tiles flip, plants grow, leaves drift in at the Forest Tide. Private results (the
 Individualist's peek, the Investigator's look) go only into that player's `me`, never into events.
 
 It used server-sent events before. Browsers allow only six open HTTP/1.1 connections per host, so a board plus five
@@ -75,17 +76,34 @@ player tabs on one computer froze every other request. WebSockets don't share th
 
 Lobby → **enter** (in turn order, each player chooses the value they stand for and a Ring 4 hex of its sector, and
 says why) → **turns** (clockwise, up to 2 actions each; after the last player the **Forest Tide** runs by itself: new
-weather per sector, rain grows Seeded/Grass, sun dries players not on a Big Tree, Forest Breath drifts dead leaves one
+weather per sector, rain grows Seeded/Sprout, sun dries players not on a Big Tree, Forest Breath drifts dead leaves one
 ring inward) → the game ends the moment the forest **wakes** (a Big Tree in every sector, every player has placed a
 fruit, all 3 treasures placed, everyone on the World Tree) or every player is at 0 water → **guess** (Secret Owl, on
 the phones) → **chain** (tribute chain around the Secret Owl loop) → **end** (result and recognition: trust received
 and from how many people, the Secret Owl, guessed right, stayed hidden).
 
 Shares queue up and pause play until the Keeper taps Done sharing: *why* (entering), *ring* cards (the first time a
-player reaches Ring 3, 2 and 1: light, a story, deep), *harvest* stories (about the value of the tree's sector),
+player reaches Ring 3, 2 and 1: the Light, Story and Deep decks), *harvest* stories (about the value of the tree's sector),
 *Heartwood* questions (one per placing that includes fruit) and *treasure* group moments (everyone answers; no trust).
 Listeners may give one trust acorn per share from their 10. Springs are the only way to refill water and never run
 dry; placing on the World Tree is automatic.
+
+Plants grow in four stages: 🫘 Seeded → 🌱 Sprout → 🪴 Sapling → 🌳 Big Tree. The view carries the names as
+`stages` (by stage number) and the ring decks as `ringDecks` (`["", "Deep", "Story", "Light"]`, by ring), so screens
+don't hard-code them; `/api/cards` has the same as `stages` and `ringDeckNames`.
+
+## Photos
+
+- `POST /api/games/{code}/photo` with `{pid, secret, data}`, where `data` is a data URL
+  (`data:image/jpeg;base64,…`; the phone sends a 320×320 JPEG). The photo must be a JPEG or PNG, at most 300 KB and
+  1024 pixels a side. `data: ""` removes it. Players can change it until the game ends and remove it any time. The
+  Keeper removes one with the action `removePhoto` (`host`, `target`).
+- Photos are kept outside the game state, in the `photos` table. `players[].photo` in the view is 0 for no photo, and a
+  new number on every change; every change bumps the game version and is pushed live.
+- `GET /api/games/{code}/photo/{pid}?v=N` serves it (`Cache-Control: private, max-age=86400`), or 404.
+- **Deleted after the game:** kicking a player deletes their photo at once. A sweep at startup and every 10 minutes
+  deletes the photos of games whose result was set more than 2 hours ago (`endedAt`), of games not updated for 24
+  hours, and of players or games that are gone.
 
 ## Roles (Enneagram types, always on)
 
@@ -95,7 +113,7 @@ The Keeper gives each player 1 to 3 types in the lobby; several players may hold
 |---|---|---|
 | 1 | Reformer | Clear removes 2 layers of dead leaves (still 1 action in rain) |
 | 2 | Helper | Water or Tend a hex next to you without standing on it |
-| 3 | Achiever | After you Sow, the hex grows straight to Grass |
+| 3 | Achiever | After you Sow, the hex grows straight to Sprout |
 | 4 | Individualist | When you Explore, also peek at one face-down hex next to you (phone only) |
 | 5 | Investigator | Always sees the next Forest Breath; once a round, on their turn, sees one sector's next weather |
 | 6 | Loyalist | Plants on your hex and next to you don't lose a stage to dead leaves |
@@ -108,8 +126,9 @@ The Keeper gives each player 1 to 3 types in the lobby; several players may hold
 - `game.go`: rules engine (board, tiles, turns and actions, weather, Forest Tide, shares, trust, Secret Owl, finale)
 - `content.go`: values, ring decks, Heartwood questions, the harvest prompt, treasures, roles, colours (edit prompts here)
 - `main.go`: HTTP API, WebSocket live updates, rejoin codes, QR codes, `/api/cards`, SQLite (`games` holds each game's
-  state as JSON; `events` logs every action)
-- `game_test.go`, `sim_test.go`: rules tests and the bot balance simulation
+  state as JSON; `events` logs every action; `photos` holds the players' photos)
+- `photo.go`: photo upload, serving, and the sweep that deletes them after the game
+- `game_test.go`, `photo_test.go`, `sim_test.go`: rules tests, photo tests and the bot balance simulation
 - `web/`: `board.html` (Keeper screen), `play.html` (phone), `index.html` (create a game), `howto.html` (rules for
   players), `wiki.html` (one page per term, all content in its script; link with `[[id]]`; card pages filled from
   `/api/cards`), `common.js` (connection, timers, helpers), `style.css`

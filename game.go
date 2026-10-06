@@ -53,7 +53,8 @@ const (
 	Peacemaker
 )
 
-var StageNames = [5]string{"", "Seeded", "Grass", "Shrub", "Big Tree"}
+// StageNames names the growth stages by number (0 = nothing growing).
+var StageNames = [5]string{"", "Seeded", "Sprout", "Sapling", "Big Tree"}
 
 var WeatherKinds = [3]string{"sun", "rain", "fog"}
 
@@ -123,7 +124,7 @@ type Tile struct {
 	Up        bool   `json:"up"`        // explored
 	Kind      string `json:"kind"`      // empty, spring or treasure
 	Treasure  string `json:"treasure"`  // the treasure still lying here; "" once taken
-	Stage     int    `json:"stage"`     // 0 none, 1 Seeded, 2 Grass, 3 Shrub, 4 Big Tree
+	Stage     int    `json:"stage"`     // 0 none, 1 Seeded, 2 Sprout, 3 Sapling, 4 Big Tree
 	Leaves    int    `json:"leaves"`    // dead leaves; 2 = sealed
 	Harvested bool   `json:"harvested"` // since the last Forest Tide
 }
@@ -165,6 +166,7 @@ type Player struct {
 	Target    string         `json:"target"`
 	Guess     string         `json:"guess"`
 	Peeks     []Peek         `json:"peeks"`
+	Photo     int            `json:"photo"` // 0 = no photo; a new number on every change (the photo is in the photos table)
 }
 
 func (p *Player) has(t int) bool {
@@ -208,8 +210,9 @@ type Game struct {
 	TurnIdx     int                  `json:"turnIdx"`
 	Round       int                  `json:"round"`
 	Tide        int                  `json:"tide"`
-	Result      string               `json:"result"` // "", won, lost, ended (closed early by the Keeper)
-	Tiles       []*Tile              `json:"tiles"`  // index 0 (the World Tree) is nil
+	Result      string               `json:"result"`  // "", won, lost, ended (closed early by the Keeper)
+	EndedAt     int64                `json:"endedAt"` // unix seconds when Result was set; photos go 2 hours later
+	Tiles       []*Tile              `json:"tiles"`   // index 0 (the World Tree) is nil
 	Weather     [6]string            `json:"weather"`
 	NextWeather [6]string            `json:"nextWeather"`
 	Breath      []Drift              `json:"breath"` // the next Forest Breath, rolled ahead
@@ -775,7 +778,7 @@ func (g *Game) sow(me *Player) error {
 	}
 	g.event("grow", Event{"hex": me.Pos, "stage": t.Stage})
 	if t.Stage == 2 {
-		g.logf("%s sows a seed and it springs up as Grass.", me.Name)
+		g.logf("%s sows a seed and it springs up as a Sprout.", me.Name)
 	} else {
 		g.logf("%s sows a seed.", me.Name)
 	}
@@ -800,7 +803,7 @@ func (g *Game) water(me *Player, hex int) error {
 	}
 	t := g.tile(j)
 	if t == nil || (t.Stage != 1 && t.Stage != 2) || t.Leaves >= 2 {
-		return errors.New("water a Seeded or Grass hex that isn't sealed")
+		return errors.New("water a Seeded or Sprout hex that isn't sealed")
 	}
 	if me.Water < 1 {
 		return fmt.Errorf("%s has no water", me.Name)
@@ -822,14 +825,14 @@ func (g *Game) tend(me *Player, hex int) error {
 	}
 	t := g.tile(j)
 	if t == nil || t.Stage != 3 || t.Leaves >= 2 {
-		return errors.New("tend a Shrub that isn't sealed")
+		return errors.New("tend a Sapling that isn't sealed")
 	}
 	if err := g.spend(1); err != nil {
 		return err
 	}
 	t.Stage = 4
 	g.event("grow", Event{"hex": j, "stage": 4})
-	g.logf("%s tends the Shrub: a Big Tree in %s!", me.Name, Values[Board[j].Sector].Name)
+	g.logf("%s tends the Sapling: a Big Tree in %s!", me.Name, Values[Board[j].Sector].Name)
 	return nil
 }
 
@@ -1134,7 +1137,7 @@ func (g *Game) check() {
 		return
 	}
 	if g.goals().won() {
-		g.Result = "won"
+		g.end("won")
 		g.logf("🌳 The forest wakes!")
 		g.event("wake", nil)
 		g.toGuess()
@@ -1145,10 +1148,18 @@ func (g *Game) check() {
 			return
 		}
 	}
-	g.Result = "lost"
+	g.end("lost")
 	g.logf("Everyone is out of water. The forest sleeps.")
 	g.event("dry", nil)
 	g.toGuess()
+}
+
+// end sets the result and notes when, so the photos can be deleted a while later.
+func (g *Game) end(result string) {
+	g.Result = result
+	if g.EndedAt == 0 {
+		g.EndedAt = time.Now().Unix()
+	}
 }
 
 func (g *Game) toGuess() {
@@ -1300,9 +1311,19 @@ func (g *Game) hostAction(a Action) error {
 		if len(g.Shares) > 0 {
 			return errors.New("finish the share first")
 		}
-		g.Result = "ended"
+		g.end("ended")
 		g.logf("The Keeper closed the game early.")
 		g.toGuess()
+	case "removePhoto":
+		// The Keeper takes a player's photo off the board (the server deletes it).
+		p := g.player(a.Target)
+		if p == nil {
+			return errors.New("no such player")
+		}
+		if p.Photo == 0 {
+			return fmt.Errorf("%s has no photo", p.Name)
+		}
+		p.Photo = 0
 	case "timer":
 		g.setTimer(a.N, "Timer")
 	default:

@@ -184,6 +184,7 @@ const W = [
   <li>Taps <b>Done sharing</b> when a [[share]] ends, and can start a [[timer]].</li>
   <li>Leads the [[finale]]: starts the [[tribute-chain]] and taps <b>Next</b> for each tribute.</li>
   <li>May pause any story, and gives [[rejoin-code|rejoin codes]] when a player changes phone.</li>
+  <li>Can remove a player's [[photo]] from the board.</li>
 </ul>` },
 
 { id: 'forest-pact', cat: 'basics', icon: '🌲', title: 'Forest Pact',
@@ -240,8 +241,8 @@ const W = [
 <tr><td>🥾 [[move]]</td><td>Step to a hex next to you.</td></tr>
 <tr><td>✦ [[explore]]</td><td>Turn over the hex you stand on (2 in [[fog]]).</td></tr>
 <tr><td>🫘 [[sow]]</td><td>Plant a seed on an empty explored hex.</td></tr>
-<tr><td>💧 [[water-action|Water]]</td><td>Seeded → Grass, Grass → Shrub. Uses 1 [[water]].</td></tr>
-<tr><td>🤲 [[tend]]</td><td>Shrub → [[big-tree]].</td></tr>
+<tr><td>💧 [[water-action|Water]]</td><td>Seeded → Sprout, Sprout → Sapling. Uses 1 [[water]].</td></tr>
+<tr><td>🤲 [[tend]]</td><td>Sapling → [[big-tree]].</td></tr>
 <tr><td>🧹 [[clear]]</td><td>Remove a layer of [[dead-leaves]] (2 in [[rain]]).</td></tr>
 <tr><td>🍎 [[harvest]]</td><td>Take a [[fruit]] from a Big Tree, and tell a [[harvest-story]].</td></tr>
 <tr><td>✋ [[take]]</td><td>Pick up a [[treasure]] on your hex.</td></tr>
@@ -255,7 +256,7 @@ const W = [
 <p>Before the first [[round]], in turn order, each player:</p>
 <ol>
   <li>Chooses the [[values|value]] they <b>stand for</b>. Several players may stand for the same value.</li>
-  <li>Chooses a hex on Ring 4 of that value's [[sector]]. The [[keeper]] places their pawn there. You may share a hex.</li>
+  <li>Chooses a hex on Ring 4 of that value's [[sector]]. The [[keeper]] places their medallion there. You may share a hex.</li>
   <li>Tells the room <b>why</b> they stand for this value. This is a [[share]]: listeners may give a [[trust-acorn]].</li>
 </ol>
 <p>Everyone starts with 4 [[water]] and 10 trust acorns to give.</p>
@@ -291,9 +292,9 @@ const W = [
 <div class="tablewrap"><table>
 <tr><th>Ring</th><th>Hexes</th><th>The first time you step in</th></tr>
 <tr><td>Ring 4 (the edge)</td><td>24</td><td>You start here: [[entering]]</td></tr>
-<tr><td>Ring 3</td><td>18</td><td>A [[ring-card]]: a light question</td></tr>
-<tr><td>Ring 2</td><td>12</td><td>A ring card: a story from your life</td></tr>
-<tr><td>Ring 1</td><td>6</td><td>A ring card: a deep question</td></tr>
+<tr><td>Ring 3</td><td>18</td><td>A [[ring-card]] from the Light deck: an easy question</td></tr>
+<tr><td>Ring 2</td><td>12</td><td>A ring card from the Story deck: a story from your life</td></tr>
+<tr><td>Ring 1</td><td>6</td><td>A ring card from the Deep deck: a deep question</td></tr>
 <tr><td>[[world-tree]]</td><td>1</td><td>Nothing to draw: [[placing]]</td></tr>
 </table></div>
 <p>The [[treasure|treasures]] hide only in Rings 1 and 2. [[spring|Springs]] can be in any ring.</p>
@@ -372,23 +373,23 @@ const W = [
   body: `
 <p>1 [[action]]: plant a seed on the hex you stand on. It becomes <b>Seeded</b> (see [[plant]]).</p>
 <p>The hex must be explored, with no plant, not a [[spring]], not [[sealed]], and no [[treasure]] lying there. (Once a treasure is taken, its hex can be sown.)</p>
-<p>The [[achiever]]'s seed grows straight to Grass.</p>` },
+<p>The [[achiever]]'s seed grows straight to Sprout.</p>` },
 
 { id: 'water-action', cat: 'actions', icon: '💧', title: 'Water (the action)',
-  short: 'Seeded → Grass, or Grass → Shrub. Uses 1 of your water.',
+  short: 'Seeded → Sprout, or Sprout → Sapling. Uses 1 of your water.',
   body: `
 <p>1 [[action]], and 1 of your [[water]]: help a plant grow one step.</p>
 <ul>
-  <li>Seeded → Grass, or Grass → Shrub. A Shrub needs [[tend]], not water.</li>
+  <li>Seeded → Sprout, or Sprout → Sapling. A Sapling needs [[tend]], not water.</li>
   <li>On the hex you stand on. The [[helper]] can water a hex next to them.</li>
   <li>Not on a [[sealed]] hex.</li>
 </ul>
-<p>[[rain|Rain]] at the [[forest-tide]] also grows Seeded and Grass, for free.</p>` },
+<p>[[rain|Rain]] at the [[forest-tide]] also grows Seeded and Sprout, for free.</p>` },
 
 { id: 'tend', cat: 'actions', icon: '🤲', title: 'Tend',
-  short: 'Shrub → Big Tree.',
+  short: 'Sapling → Big Tree.',
   body: `
-<p>1 [[action]]: a Shrub on your hex becomes a [[big-tree]]. It uses no water.</p>
+<p>1 [[action]]: a Sapling on your hex becomes a [[big-tree]]. It uses no water.</p>
 <p>The [[helper]] can tend a hex next to them. Not on a [[sealed]] hex.</p>` },
 
 { id: 'clear', cat: 'actions', icon: '🧹', title: 'Clear',
@@ -436,15 +437,15 @@ const W = [
 <p>If they stand on the [[world-tree]], what you pass is [[placing|placed]] at once.</p>` },
 
 // ───────────── Plants, water and fruit
-{ id: 'plant', cat: 'growing', icon: '🌱', title: 'Plant (Seeded, Grass, Shrub)',
+{ id: 'plant', cat: 'growing', icon: '🌱', title: 'Plant (Seeded, Sprout, Sapling)',
   short: 'The steps from a seed to a Big Tree.',
   body: `
 <div class="tablewrap"><table>
 <tr><th>Step</th><th>How it gets there</th></tr>
 <tr><td>🫘 Seeded</td><td>[[sow]] an empty clearing</td></tr>
-<tr><td>🌱 Grass</td><td>[[water-action|Water]] a Seeded hex, or [[rain]] at the Tide</td></tr>
-<tr><td>🌿 Shrub</td><td>Water a Grass hex, or rain at the Tide</td></tr>
-<tr><td>🌳 [[big-tree]]</td><td>[[tend]] a Shrub</td></tr>
+<tr><td>🌱 Sprout</td><td>[[water-action|Water]] a Seeded hex, or [[rain]] at the Tide</td></tr>
+<tr><td>🪴 Sapling</td><td>Water a Sprout hex, or rain at the Tide</td></tr>
+<tr><td>🌳 [[big-tree]]</td><td>[[tend]] a Sapling</td></tr>
 </table></div>
 <p>When [[dead-leaves]] land on a growing plant, it drops back one step. A Seeded hex loses its seed. A [[loyalist]] on the hex or next to it keeps the plant safe.</p>
 <p>Nobody can water, tend or harvest on a [[sealed]] hex.</p>` },
@@ -452,7 +453,7 @@ const W = [
 { id: 'big-tree', cat: 'growing', icon: '🌳', title: 'Big Tree',
   short: 'The last step of a plant. Gives fruit and shade.',
   body: `
-<p>A Shrub becomes a Big Tree when someone [[tend|tends]] it. The team needs one Big Tree in every [[sector]] (see [[goal]]).</p>
+<p>A Sapling becomes a Big Tree when someone [[tend|tends]] it. The team needs one Big Tree in every [[sector]] (see [[goal]]).</p>
 <ul>
   <li><b>Fruit:</b> [[harvest]] it for 1 [[fruit]], once between [[forest-tide|Forest Tides]], and tell a [[harvest-story]].</li>
   <li><b>Shade:</b> if you stand on a Big Tree, the [[sun]] does not dry you.</li>
@@ -505,7 +506,7 @@ const W = [
 <div class="tablewrap"><table>
 <tr><th>Weather</th><th>During the round</th><th>At the Forest Tide</th></tr>
 <tr><td>☀️ Sun</td><td>All normal</td><td>Players here lose 1 water, unless on a Big Tree</td></tr>
-<tr><td>🌧️ Rain</td><td>No harvest; Clear costs 2</td><td>Seeded and Grass grow one step</td></tr>
+<tr><td>🌧️ Rain</td><td>No harvest; Clear costs 2</td><td>Seeded and Sprout grow one step</td></tr>
 <tr><td>🌫️ Fog</td><td>Explore costs 2; no Enthusiast double step</td><td>Nothing</td></tr>
 </table></div>
 <div class="tip"><h3>Watch out</h3><p>At the Tide, the new weather comes first, and then it acts. A sector that turns sunny at the Tide dries you at once.</p></div>` },
@@ -520,7 +521,7 @@ const W = [
   short: 'Grows young plants at the Tide. No harvest, and Clear costs 2.',
   body: `
 <ul>
-  <li>At the [[forest-tide]], every Seeded and Grass hex in a rainy [[sector]] grows one step (see [[plant]]), unless it is [[sealed]].</li>
+  <li>At the [[forest-tide]], every Seeded and Sprout hex in a rainy [[sector]] grows one step (see [[plant]]), unless it is [[sealed]].</li>
   <li>No [[harvest]] in rain.</li>
   <li>[[clear]] costs 2 actions in rain (the [[reformer]] still pays 1).</li>
   <li>Nobody dries out in rain. But rain does not fill your [[water]] either.</li>
@@ -541,7 +542,7 @@ const W = [
 <p>After the last player's [[turn]] in a [[round]], the Forest Tide runs by itself. The big screen shows each step.</p>
 <ol>
   <li><b>New weather.</b> Each [[sector]] turns to its new [[weather]]. Every [[big-tree]] can be harvested again.</li>
-  <li><b>Rain grows, sun dries.</b> In [[rain]], Seeded and Grass grow one step. In [[sun]], players who are not on a Big Tree lose 1 [[water]].</li>
+  <li><b>Rain grows, sun dries.</b> In [[rain]], Seeded and Sprout grow one step. In [[sun]], players who are not on a Big Tree lose 1 [[water]].</li>
   <li><b>[[forest-breath]].</b> [[dead-leaves]] drift in toward the centre.</li>
 </ol>
 <p>Then a new round begins with the first player.</p>` },
@@ -649,9 +650,9 @@ const W = [
   body: `
 <p>Each [[ring]] has its own deck. The deeper the ring, the deeper the question:</p>
 <ul>
-  <li><b>Ring 3:</b> a light question. <i>"Where do you feel most relaxed?"</i></li>
-  <li><b>Ring 2:</b> a story from your life. <i>"Tell us about a mistake that taught you a lot."</i></li>
-  <li><b>Ring 1:</b> a deep question. <i>"When do you feel most like yourself?"</i></li>
+  <li><b>Ring 3, the Light deck:</b> an easy question. <i>"Where do you feel most relaxed?"</i></li>
+  <li><b>Ring 2, the Story deck:</b> a story from your life. <i>"Tell us about a mistake that taught you a lot."</i></li>
+  <li><b>Ring 1, the Deep deck:</b> a deep question. <i>"When do you feel most like yourself?"</i></li>
 </ul>
 <p>You draw one <b>only the first time</b> you step into each ring, moving inward. So each player draws at most 3 ring cards in a game. If a [[challenger]] brings you into a new ring, you draw too.</p>
 <p>See every card: [[cards-ring-3]], [[cards-ring-2]], [[cards-ring-1]], or [[all-cards]].</p>` },
@@ -704,7 +705,7 @@ const W = [
 <tr><th>Type</th><th>What it does</th></tr>
 <tr><td>1 [[reformer]]</td><td>Clear removes 2 layers (1 action even in rain).</td></tr>
 <tr><td>2 [[helper]]</td><td>Water or Tend a hex next to you.</td></tr>
-<tr><td>3 [[achiever]]</td><td>Your seed grows straight to Grass.</td></tr>
+<tr><td>3 [[achiever]]</td><td>Your seed grows straight to Sprout.</td></tr>
 <tr><td>4 [[individualist]]</td><td>Explore also peeks at a hex next to you.</td></tr>
 <tr><td>5 [[investigator]]</td><td>See the next Forest Breath; once a round, one sector's next weather.</td></tr>
 <tr><td>6 [[loyalist]]</td><td>Plants on and next to your hex are safe from dead leaves.</td></tr>
@@ -726,9 +727,9 @@ const W = [
 <p>Like everyone, you can also [[clear]] a hex next to you.</p>` },
 
 { id: 'achiever', cat: 'roles', icon: '3️⃣', title: 'Achiever',
-  short: 'Type 3 · drive. Your seed grows straight to Grass.',
+  short: 'Type 3 · drive. Your seed grows straight to Sprout.',
   body: `
-<div class="box"><p><b>After you [[sow]], the hex grows straight to Grass.</b></p></div>
+<div class="box"><p><b>After you [[sow]], the hex grows straight to Sprout.</b></p></div>
 <p>This saves one Water action and 1 [[water]].</p>` },
 
 { id: 'individualist', cat: 'roles', icon: '4️⃣', title: 'Individualist',
@@ -845,7 +846,7 @@ const W = [
   body: `
 <p>Every card in the game, exactly as the game deals it. Search the wiki to find any question.</p>
 <ul>
-  <li>🃏 [[cards-ring-3]]: light questions, for the first time you reach Ring 3.</li>
+  <li>🃏 [[cards-ring-3]]: easy questions, for the first time you reach Ring 3.</li>
   <li>🃏 [[cards-ring-2]]: a story from your life, for Ring 2.</li>
   <li>🃏 [[cards-ring-1]]: deep questions, for Ring 1.</li>
   <li>💛 [[cards-heartwood]]: when you place fruit on the World Tree.</li>
@@ -854,17 +855,17 @@ const W = [
   <li>🧩 [[cards-roles]]: the nine Enneagram roles.</li>
 </ul>` },
 
-{ id: 'cards-ring-3', cat: 'cards', icon: '🃏', title: 'Ring 3 cards (light)',
-  short: 'Light questions for the first time you step into Ring 3.',
+{ id: 'cards-ring-3', cat: 'cards', icon: '🃏', title: 'Light deck (Ring 3)',
+  short: 'Easy questions for the first time you step into Ring 3.',
   body: `<p>Drawn the first time you step into [[ring|Ring 3]]. Light and easy: a good way to start. See [[ring-card]].</p>
 <div data-deck="ring:3"></div>` },
 
-{ id: 'cards-ring-2', cat: 'cards', icon: '🃏', title: 'Ring 2 cards (a story)',
+{ id: 'cards-ring-2', cat: 'cards', icon: '🃏', title: 'Story deck (Ring 2)',
   short: 'A story from your life, for the first time you step into Ring 2.',
   body: `<p>Drawn the first time you step into [[ring|Ring 2]]. Each asks for a short story from your own life. See [[ring-card]].</p>
 <div data-deck="ring:2"></div>` },
 
-{ id: 'cards-ring-1', cat: 'cards', icon: '🃏', title: 'Ring 1 cards (deep)',
+{ id: 'cards-ring-1', cat: 'cards', icon: '🃏', title: 'Deep deck (Ring 1)',
   short: 'Deep questions for the first time you step into Ring 1.',
   body: `<p>Drawn the first time you step into [[ring|Ring 1]], next to the World Tree. Take your time. See [[ring-card]].</p>
 <div data-deck="ring:1"></div>` },
@@ -900,6 +901,7 @@ const W = [
   <li>💧🍎💎 What you carry, and which [[ring|rings]] you have reached.</li>
   <li>🧩 Your [[roles]], as a reminder.</li>
   <li>👀 Your private looks: the [[individualist]]'s peek, the [[investigator]]'s Forest Breath and weather.</li>
+  <li>📷 Your [[photo]]: retake it or remove it until the game ends.</li>
   <li>🌰 <b>Give trust</b> after someone else's [[share]]: see [[trust-acorn]].</li>
   <li>❓ Your [[guess]] at the end.</li>
 </ul>
@@ -913,6 +915,17 @@ const W = [
 <tr><td>"That's my turn."</td><td><b>End turn</b></td></tr>
 </table></div>
 <p>If your phone loses its connection, see [[live-badge]] and [[rejoin-code]].</p>` },
+
+{ id: 'photo', cat: 'phone', icon: '📷', title: 'Your photo',
+  short: 'Take a photo when you join. It shows in your medallion on the board.',
+  body: `
+<p>When you join, your phone asks you to <b>take your photo</b>. Move and zoom it to fit the circle, then use it. You may also skip it.</p>
+<ul>
+  <li>Your photo shows in your round <b>medallion</b> on the big screen. That is you on the board.</li>
+  <li>No photo? Your medallion shows your initial, in your colour.</li>
+  <li>Until the game ends, you can retake it or remove it under <b>Your photo</b> on your phone. The [[keeper]] can also remove it.</li>
+  <li>Your photo is <b>deleted after the game ends</b>, about two hours after the result, so the [[finale]] still shows it. A game left unfinished loses its photos after a day.</li>
+</ul>` },
 
 { id: 'live-badge', cat: 'phone', icon: '🟢', title: 'Live badge',
   short: 'Shows whether your phone is connected. It catches up by itself.',
@@ -955,9 +968,10 @@ function tile(e) {
 }
 
 // Card decks come from the game itself (GET /api/cards), so these pages always match what's dealt:
-// {values, ringDecks:{1:[],2:[],3:[]}, heartwood:[], harvest:"…", treasures:[{id,icon,name,meaning,question}], roles:[{type,name,text}]}
+// {values, stages:["",…], ringDeckNames:["","Deep","Story","Light"], ringDecks:{1:[],2:[],3:[]}, heartwood:[], harvest:"…",
+//  treasures:[{id,icon,name,meaning,question}], roles:[{type,name,text}]}
 let CARDS = null;
-const RING_DEPTH = { 1: 'deep', 2: 'a story', 3: 'light' };
+const RING_DECKS = ['', 'Deep', 'Story', 'Light']; // until /api/cards answers with ringDeckNames
 function harvestLine(tpl, name) {
   const t = String(tpl || 'Tell us a story from your own life about {Value}.');
   return /\{value\}|%s/i.test(t) ? t.replace(/\{value\}|%s/gi, name) : `${t} (${name})`;
@@ -967,7 +981,8 @@ function deckHTML(deck) {
   const [kind, arg] = deck.split(':');
   if (kind === 'ring') {
     const xs = (C.ringDecks || {})[arg] || [];
-    return `<p class="muted">Ring ${arg} · ${RING_DEPTH[arg] || ''} · ${xs.length} cards</p>` + li(xs);
+    const name = (C.ringDeckNames || RING_DECKS)[arg] || '';
+    return `<p class="muted">${esc(name)} deck · Ring ${arg} · ${xs.length} cards</p>` + li(xs);
   }
   if (kind === 'heartwood') return `<p class="muted">${(C.heartwood || []).length} questions</p>` + li(C.heartwood);
   if (kind === 'harvest') return (C.values || []).map(v => `<div class="box"><h3 style="margin-top:0">${esc(v.icon)} ${esc(v.name)}</h3>

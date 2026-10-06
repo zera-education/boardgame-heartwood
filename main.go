@@ -100,7 +100,8 @@ func openDB(path string) (*sql.DB, error) {
 	db.SetMaxOpenConns(1)
 	_, err = db.Exec(`
 CREATE TABLE IF NOT EXISTS games (code TEXT PRIMARY KEY, state TEXT NOT NULL, updated_at INTEGER NOT NULL);
-CREATE TABLE IF NOT EXISTS events (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT NOT NULL, actor TEXT, type TEXT, payload TEXT, at INTEGER NOT NULL);`)
+CREATE TABLE IF NOT EXISTS events (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT NOT NULL, actor TEXT, type TEXT, payload TEXT, at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS photos (code TEXT, pid TEXT, data BLOB, PRIMARY KEY(code, pid));`)
 	return db, err
 }
 
@@ -304,6 +305,10 @@ func (s *Server) action(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err.Error())
 		return
 	}
+	if a.Type == "kick" || a.Type == "removePhoto" {
+		// Only the Keeper gets this far with these: the player's photo goes at once.
+		s.deletePhoto(g.Code, a.Target)
+	}
 	payload, _ := json.Marshal(map[string]any{"hex": a.Hex, "target": a.Target, "n": a.N, "types": a.Types, "as": a.As, "text": a.Text})
 	actor := a.Pid
 	if a.Host != "" {
@@ -425,13 +430,15 @@ func (s *Server) live(w http.ResponseWriter, r *http.Request) {
 // cards serves every deck in the game, for the how-to and wiki pages.
 func cards(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, 200, map[string]any{
-		"values":    Values,
-		"ringDecks": map[string][]string{"1": RingDecks[1], "2": RingDecks[2], "3": RingDecks[3]},
-		"threads":   RegionThreads, // ringDecks[r][v*5+k] is value v's card k, theme threads[v][k]
-		"heartwood": HeartwoodCards,
-		"harvest":   HarvestPrompt,
-		"treasures": Treasures,
-		"roles":     Roles,
+		"values":        Values,
+		"stages":        StageNames,    // by stage number: "", Seeded, Sprout, Sapling, Big Tree
+		"ringDeckNames": RingDeckNames, // by ring: "", Deep, Story, Light
+		"ringDecks":     map[string][]string{"1": RingDecks[1], "2": RingDecks[2], "3": RingDecks[3]},
+		"threads":       RegionThreads, // ringDecks[r][v*5+k] is value v's card k, theme threads[v][k]
+		"heartwood":     HeartwoodCards,
+		"harvest":       HarvestPrompt,
+		"treasures":     Treasures,
+		"roles":         Roles,
 	})
 }
 
@@ -452,7 +459,7 @@ func buildView(g *Game, pid, secret, host string) map[string]any {
 		players = append(players, map[string]any{
 			"id": p.ID, "name": p.Name, "color": p.Color, "value": p.Value, "types": types, "pos": p.Pos,
 			"water": p.Water, "fruit": p.Fruit, "treasure": p.Treasure, "placed": p.Placed, "reached": p.Reached,
-			"trustLeft": p.TrustLeft, "guessed": p.Guess != "",
+			"trustLeft": p.TrustLeft, "guessed": p.Guess != "", "photo": p.Photo,
 		})
 	}
 	tiles := make([]any, len(g.Tiles))
@@ -480,6 +487,7 @@ func buildView(g *Game, pid, secret, host string) map[string]any {
 		"code": g.Code, "phase": g.Phase, "version": g.Version, "now": time.Now().UnixMilli(), "isHost": isHost,
 		"lan": lan, "colors": Colors, "values": Values, "roles": Roles, "treasures": treasures,
 		"minPlayers": MinPlayers, "maxPlayers": MaxPlayers, "actionsPerTurn": ActionsPerTurn,
+		"stages": StageNames, "ringDecks": RingDeckNames,
 		"round": g.Round, "tide": g.Tide, "result": g.Result,
 		"hexes": Board, "tiles": tiles, "weather": g.Weather, "breathCount": len(g.Breath),
 		"players": players, "order": order, "current": "", "turn": nil, "share": nil,
@@ -561,6 +569,20 @@ func main() {
 		log.Fatal(err)
 	}
 	lan = lanURLs(*addr)
+	s.sweepPhotos(time.Now())
+	go func() {
+		for range time.Tick(10 * time.Minute) {
+			s.sweepPhotos(time.Now())
+		}
+	}()
+	log.Printf("Heartwood (World Tree) on http://localhost%s (db %s, %d saved games)", *addr, *dbPath, len(s.games))
+	for _, u := range lan {
+		log.Printf("Phones on the same Wi-Fi: %s", u)
+	}
+	log.Fatal(http.ListenAndServe(*addr, s.routes()))
+}
+
+func (s *Server) routes() *http.ServeMux {
 	sub, _ := fs.Sub(webFS, "web")
 	static := http.FileServerFS(sub)
 	mux := http.NewServeMux()
@@ -573,14 +595,12 @@ func main() {
 	mux.HandleFunc("POST /api/games/{code}/rejoin", s.rejoin)
 	mux.HandleFunc("POST /api/games/{code}/rejoin-code", s.rejoinCode)
 	mux.HandleFunc("POST /api/games/{code}/action", s.action)
+	mux.HandleFunc("POST /api/games/{code}/photo", s.photo)
+	mux.HandleFunc("GET /api/games/{code}/photo/{pid}", s.photoImage)
 	mux.HandleFunc("GET /api/games/{code}/state", s.state)
 	mux.HandleFunc("GET /api/games/{code}/live", s.live)
 	mux.HandleFunc("GET /api/qr", qrCode)
 	mux.HandleFunc("GET /api/cards", cards)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) { fmt.Fprintln(w, "ok") })
-	log.Printf("Heartwood (World Tree) on http://localhost%s (db %s, %d saved games)", *addr, *dbPath, len(s.games))
-	for _, u := range lan {
-		log.Printf("Phones on the same Wi-Fi: %s", u)
-	}
-	log.Fatal(http.ListenAndServe(*addr, mux))
+	return mux
 }

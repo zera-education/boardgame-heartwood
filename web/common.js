@@ -158,7 +158,11 @@ const HW = {
 
   // ---- World Tree lookups ----
   WEATHER: { sun: ['☀️', 'Sun'], rain: ['🌧️', 'Rain'], fog: ['🌫️', 'Fog'] },
-  STAGES: ['', 'Seeded', 'Grass', 'Shrub', 'Big Tree'],
+  // Names come from the view (view.stages / view.ringDecks); these are the fallbacks.
+  STAGES: ['', 'Seeded', 'Sprout', 'Sapling', 'Big Tree'],
+  RING_DECKS: ['', 'Deep', 'Story', 'Light'],
+  stageName(s) { return HW.view?.stages?.[s] || HW.STAGES[s] || ''; },
+  ringDeck(r) { return HW.view?.ringDecks?.[r] || HW.RING_DECKS[r] || ''; },
   STAGE_ICON: ['', '🫘', '🌱', '🌿', '🌳'],   // 🌰 means trust only
   MAX_WATER: 5, MAX_FRUIT: 2,
   roleName(t) { return HW.view?.roles?.find(r => r.type === t)?.name || `Type ${t}`; },

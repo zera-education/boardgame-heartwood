@@ -1,8 +1,8 @@
 package main
 
 // Card text, treasures and roles. The six values on the map are ZERA's core
-// values, ZERAOS; each value has five cards with a Seed (light), Sapling (story)
-// and Oak (deep) prompt, pooled into one deck per ring.
+// values, ZERAOS; each value has five cards with a Light, a Story and a Deep
+// prompt, pooled into one deck per ring.
 
 // Value is one of ZERA's core values. The map's wedges follow them clockwise,
 // so the forest spells Z-E-R-A-O-S. Each player stands for one.
@@ -24,8 +24,8 @@ var Values = [6]Value{
 	{"S", "Sustainability", "Start with the end in mind.", "Long-term thinking built into everything: creating lasting impact and building systems that outlast any single leader or cohort.", "🌍", "#3f9e9a"},
 }
 
-// valueCards is each value's five cards, each with a Seed (light), Sapling
-// (story) and Oak (deep) prompt. The ring decks are built from it.
+// valueCards is each value's five cards, each with a Light, a Story and a Deep
+// prompt. The ring decks are built from it.
 var valueCards = [6][][3]string{
 	{ // Zealous
 		{"What could you do for hours without noticing the time?", "Tell us about a time you got other people excited about something you love.", "What makes you care so much about your work?"},                                   // What lights you up
@@ -83,9 +83,12 @@ var RegionThreads = [6][]string{
 }
 
 // RingDecks holds the card a player draws the first time they reach a ring
-// (index 1..3; 0 is unused): Ring 3 the Seed prompts, Ring 2 the Sapling ones,
-// Ring 1 the Oak ones, pooled across the six values (30 each).
+// (index 1..3; 0 is unused): Ring 3 the Light deck, Ring 2 the Story deck,
+// Ring 1 the Deep deck, pooled across the six values (30 each).
 var RingDecks = buildRingDecks()
+
+// RingDeckNames names each ring's deck, by ring (0 is unused).
+var RingDeckNames = [4]string{"", "Deep", "Story", "Light"}
 
 func buildRingDecks() [4][]string {
 	var d [4][]string
@@ -160,7 +163,7 @@ type Role struct {
 var Roles = []Role{
 	{1, "Reformer", "When you Clear, remove 2 layers (still 1 action in rain)."},
 	{2, "Helper", "Water, Tend or Clear a hex next to you without standing on it."},
-	{3, "Achiever", "After you Sow, the hex grows straight to Grass."},
+	{3, "Achiever", "After you Sow, the hex grows straight to Sprout."},
 	{4, "Individualist", "When you Explore, also peek at one unexplored hex next to you."},
 	{5, "Investigator", "See which hexes the next Forest Breath will hit; once a round, see one sector's next weather."},
 	{6, "Loyalist", "Plants on your hex and next to you are safe from dead leaves."},
