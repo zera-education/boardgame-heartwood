@@ -101,7 +101,7 @@ func openDB(path string) (*sql.DB, error) {
 	_, err = db.Exec(`
 CREATE TABLE IF NOT EXISTS games (code TEXT PRIMARY KEY, state TEXT NOT NULL, updated_at INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS events (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT NOT NULL, actor TEXT, type TEXT, payload TEXT, at INTEGER NOT NULL);
-CREATE TABLE IF NOT EXISTS photos (code TEXT, pid TEXT, data BLOB, PRIMARY KEY(code, pid));`)
+CREATE TABLE IF NOT EXISTS photos (code TEXT, pid TEXT, data BLOB, PRIMARY KEY(code, pid));` + recordingsSchema)
 	return db, err
 }
 
@@ -494,6 +494,7 @@ func buildView(g *Game, pid, secret, host string) map[string]any {
 		"goals": g.goals(), "timerEnd": g.TimerEnd, "timerLabel": g.TimerLabel,
 		"tribute": nil, "recognition": nil, "me": nil,
 	}
+	recordingView(g, isHost, v)
 	events := g.Events
 	if n := len(events); n > 80 {
 		events = events[n-80:]
@@ -570,9 +571,11 @@ func main() {
 	}
 	lan = lanURLs(*addr)
 	s.sweepPhotos(time.Now())
+	s.sweepRecordings(time.Now())
 	go func() {
 		for range time.Tick(10 * time.Minute) {
 			s.sweepPhotos(time.Now())
+			s.sweepRecordings(time.Now())
 		}
 	}()
 	log.Printf("Heartwood (World Tree) on http://localhost%s (db %s, %d saved games)", *addr, *dbPath, len(s.games))
@@ -598,6 +601,7 @@ func (s *Server) routes() *http.ServeMux {
 	mux.HandleFunc("POST /api/games/{code}/photo", s.photo)
 	mux.HandleFunc("GET /api/games/{code}/photo/{pid}", s.photoImage)
 	mux.HandleFunc("GET /api/games/{code}/state", s.state)
+	s.recordingRoutes(mux) // story recordings and their transcripts (recording.go)
 	mux.HandleFunc("GET /api/games/{code}/live", s.live)
 	mux.HandleFunc("GET /api/qr", qrCode)
 	mux.HandleFunc("GET /api/cards", cards)

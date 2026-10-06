@@ -236,6 +236,10 @@ type Game struct {
 	TimerShare  int                  `json:"timerShare"` // the share the running timer belongs to (0: none)
 	Version     int                  `json:"version"`
 	Rejoin      map[string]RejoinPin `json:"rejoin"`
+	// Story recording (recording.go): on unless the Keeper switches it off; one
+	// Keeper device records.
+	NoRecord  bool   `json:"noRecord,omitempty"`
+	RecDevice string `json:"recDevice,omitempty"`
 }
 
 type RejoinPin struct {
@@ -1353,6 +1357,9 @@ func (g *Game) hostAction(a Action) error {
 	case "timer":
 		g.setTimer(a.N, "Timer")
 	default:
+		if ok, err := g.recordAction(a); ok { // record, recordHere
+			return err
+		}
 		return errors.New("unknown host action")
 	}
 	return nil

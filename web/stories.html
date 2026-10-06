@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>World Tree · The stories</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E🌳%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@400;600;700;800;900&display=swap" media="print" onload="this.media='all'">
+<style>
+:root {
+  --toon: 'Lilita One', 'Nunito', system-ui, sans-serif; --read: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --bg: #13241b; --paper: #fff6df; --paper2: #fbecc8; --line: #e2c48e; --wood: #5a3418; --wood-d: #3e220f; --ink: #2a1a0c;
+  --ink2: #6f4f36; --muted: #8a6a4e; --gold: #e0a32e; --good: #2c6a1f; --bad: #b3261e;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; min-height: 100vh; font: 600 16px/1.5 var(--read); color: var(--ink);
+  background: radial-gradient(120% 70% at 50% 0%, #2f5e40 0%, #183424 45%, #0a1710 85%) fixed, var(--bg); }
+.wrap { max-width: 920px; margin: 0 auto; padding: 18px 16px 60px; }
+a { color: #8a5418; }
+h1, h2, h3 { font-family: var(--toon); font-weight: 400; margin: 0; line-height: 1.1; }
+
+/* the sign at the top */
+.sign { position: relative; display: flex; align-items: center; gap: 14px; padding: 14px 18px; background: var(--paper);
+  border: 5px solid var(--wood); border-radius: 26px; box-shadow: 0 7px 0 var(--wood-d), 0 18px 40px rgba(0, 0, 0, .45); }
+.sign .tree { flex: none; line-height: 0; }
+.sign h1 { font-size: clamp(30px, 6vw, 46px); color: #8fe06a; letter-spacing: .01em;
+  text-shadow: 0 4px 0 #1f4a18, 3px 3px 0 #1f4a18, -3px 3px 0 #1f4a18, 3px -3px 0 #1f4a18, -3px -3px 0 #1f4a18, 3px 0 0 #1f4a18, -3px 0 0 #1f4a18, 0 -3px 0 #1f4a18; }
+.sign p { margin: 4px 0 0; color: var(--ink2); font-weight: 700; }
+.sign .code { font: 20px var(--toon); letter-spacing: .12em; color: #8a5418; }
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 18px 0 6px; }
+.bar .grow { flex: 1; }
+.counts { color: #e9dcbf; font-weight: 800; }
+.counts b { font: 20px var(--toon); font-weight: 400; color: #fff3d6; }
+.btn { font: 18px/1 var(--toon); letter-spacing: .02em; color: #fff; background: linear-gradient(#88dc64, #4cab37); border: 3px solid #2c6a1f;
+  border-radius: 14px; padding: 9px 14px 10px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+  text-shadow: 0 2px 0 #2c6a1f; box-shadow: inset 0 3px 0 rgba(255, 255, 255, .38), 0 5px 0 #2c6a1f, 0 9px 14px rgba(0, 0, 0, .3); }
+.btn:active { transform: translateY(4px); box-shadow: inset 0 3px 0 rgba(255, 255, 255, .38), 0 1px 0 #2c6a1f; }
+.btn:disabled { filter: grayscale(.85); opacity: .5; cursor: not-allowed; transform: none; }
+.btn.cream { color: var(--wood); background: linear-gradient(#fffbf2, #ecd8ad); border-color: #8a5a2c; text-shadow: none;
+  box-shadow: inset 0 3px 0 #fff, 0 5px 0 #8a5a2c, 0 9px 14px rgba(0, 0, 0, .22); }
+.btn.cream:active { box-shadow: inset 0 3px 0 #fff, 0 1px 0 #8a5a2c; }
+.btn.red { background: linear-gradient(#f2806e, #c8463f); border-color: #7a1f1a; text-shadow: 0 2px 0 #7a1f1a; box-shadow: inset 0 3px 0 rgba(255, 255, 255, .3), 0 5px 0 #7a1f1a; }
+.btn.sm { font-size: 15px; padding: 6px 10px 7px; border-radius: 11px; }
+.about { color: #cfc4a8; font-size: 14px; font-weight: 700; margin: 4px 0 0; }
+
+/* rounds and story cards */
+.round { margin-top: 26px; }
+.round > h2 { font-size: 26px; color: #fff3d6; text-shadow: 0 3px 0 rgba(0, 0, 0, .45); margin: 0 0 10px 4px; }
+.story { position: relative; display: grid; grid-template-columns: 76px 1fr; gap: 6px 16px; padding: 14px 18px 16px; margin: 0 0 16px;
+  background: var(--paper); border: 4px solid var(--wood); border-radius: 22px; box-shadow: 0 6px 0 var(--wood-d), 0 14px 30px rgba(0, 0, 0, .35); }
+.story::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 12px; border-radius: 18px 0 0 18px; background: var(--kc, #5cb84a); }
+.med { grid-row: span 2; line-height: 0; padding-left: 4px; }
+.med svg { display: block; }
+.who { font: 22px/1.1 var(--toon); color: var(--ink); }
+.kind { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font: 800 13px/1.2 var(--read); letter-spacing: .06em; text-transform: uppercase; color: var(--kc, #5cb84a); filter: brightness(.82); }
+.kind .ic { line-height: 0; }
+.q { grid-column: 2; font: 800 19px/1.3 var(--read); color: var(--ink); }
+.sub { font: italic 700 15px/1.3 var(--read); color: var(--ink2); margin-top: 2px; }
+.body { grid-column: 1 / -1; }
+audio { width: 100%; height: 40px; margin: 10px 0 4px; display: block; }
+.gone { margin: 10px 0 4px; font-weight: 700; color: var(--muted); font-size: 14px; }
+.text { margin-top: 8px; padding: 12px 14px; background: #fffdf6; border: 3px dashed var(--line); border-radius: 14px; font: 600 17px/1.55 var(--read); color: var(--ink); white-space: pre-wrap; }
+.text p { margin: 0 0 .6em; } .text p:last-child { margin: 0; }
+.text.wait { color: var(--muted); font-style: italic; border-style: dotted; }
+.text.fail { color: var(--bad); border-color: #e7b0a4; background: #fff1ec; white-space: normal; }
+.text.empty { color: var(--muted); font-style: italic; }
+.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin-top: 8px; font-size: 13.5px; font-weight: 700; color: var(--muted); }
+.meta .grow { flex: 1; }
+.meta button.link { font: inherit; color: #9a4a2a; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; padding: 8px 10px; border-radius: 12px; background: #fde9e3; font-weight: 800; color: #5a1610; }
+.panel { margin-top: 22px; padding: 22px; text-align: center; background: var(--paper); border: 4px solid var(--wood); border-radius: 22px; box-shadow: 0 6px 0 var(--wood-d); }
+.panel h2 { font-size: 26px; color: var(--wood); margin-bottom: 6px; }
+.panel p { margin: 6px 0; color: var(--ink2); font-weight: 700; }
+#toast { position: fixed; left: 50%; top: 14px; transform: translateX(-50%) translateY(-160px); transition: transform .25s; z-index: 30; max-width: 90vw;
+  padding: .7em 1.1em; background: #fff6df; color: var(--ink); border: 3px solid var(--wood); border-radius: 16px; font-weight: 800; box-shadow: 0 5px 0 rgba(0, 0, 0, .3); }
+#toast.show { transform: translateX(-50%) translateY(0); }
+#toast.bad { background: #ffe3dc; border-color: #9a2a1f; color: #5a1610; }
+#toast.ok { background: #e6f7da; border-color: var(--good); color: #1f4a18; }
+@media (max-width: 560px) {
+  .story { grid-template-columns: 52px 1fr; padding: 12px 12px 14px 16px; gap: 4px 10px; }
+  .med svg { width: 52px; height: 52px; }
+  .q { grid-column: 1 / -1; font-size: 17px; }
+  .sign { padding: 12px; gap: 10px; }
+  .sign .tree svg { width: 64px; height: 64px; }
+}
+@media (prefers-reduced-motion: reduce) { #toast { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="sign">
+    <span class="tree" id="tree"></span>
+    <div><h1>The stories</h1><p>Game <span class="code" id="code"></span> · every story told in the forest, as the Keeper's laptop heard it.</p></div>
+  </header>
+  <div class="bar">
+    <span class="counts grow" id="counts"></span>
+    <button class="btn cream sm" id="csv" disabled>Transcripts: CSV</button>
+    <button class="btn cream sm" id="json" disabled>JSON</button>
+    <a class="btn sm" id="back" href="#">Back to the game</a>
+  </div>
+  <p class="about">Recorded on the Keeper's laptop and turned into text on our own computer: the audio goes nowhere else. Only the Keeper can open this page. Audio is kept 30 days after its transcript; the text stays.</p>
+  <main id="list"></main>
+</div>
+<script src="art.js"></script>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const params = new URLSearchParams(location.search);
+const CODE = (params.get('g') || '').toUpperCase();
+// A Keeper link (?k=…) works here too, like the Keeper screen.
+if (params.get('k') && CODE) {
+  try { localStorage.setItem('hw-host-' + CODE, params.get('k')); } catch { }
+  params.delete('k');
+  history.replaceState(null, '', `${location.pathname}?${params}`);
+}
+const HOST = (() => { try { return localStorage.getItem('hw-host-' + CODE) || ''; } catch { return ''; } })();
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const art = (spec, h) => ART.inline(spec, { height: h });
+const LANG = { en: 'English', ms: 'Malay', zh: 'Chinese', yue: 'Cantonese', ta: 'Tamil' };
+const DECK = { 1: '#1f6e5a', 2: '#b8742a', 3: '#7cbf3a' };
+let cards = { values: [], ringDeckNames: ['', 'Deep', 'Story', 'Light'], treasures: [] };
+let players = {};   // id → player from the live game (for photos), when it is still loaded
+let recs = [];
+
+function toast(msg, kind) {
+  let t = $('toast');
+  if (!t) { t = document.createElement('div'); t.id = 'toast'; t.setAttribute('role', 'status'); document.body.appendChild(t); }
+  t.textContent = msg; t.className = `show ${kind || ''}`;
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), kind === 'bad' ? 4000 : 2200);
+}
+async function api(path, opts = {}) {
+  const r = await fetch(`/api/games/${encodeURIComponent(CODE)}${path}`, { cache: 'no-store', ...opts, headers: { 'X-Keeper': HOST, ...(opts.headers || {}) } });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(j.error || 'request failed'), { status: r.status });
+  return j;
+}
+
+// ---------- labels ----------
+function kindOf(r) {
+  const v = cards.values[r.value];
+  switch (r.kind) {
+    case 'why': return { label: v ? `Why ${v.name}` : 'Why this value', icon: r.value >= 0 ? `value:${r.value}` : 'icon:talk', color: v?.color || '#5cb84a' };
+    case 'ring': { const n = +r.sub || 0; return { label: `${cards.ringDeckNames[n] || 'Ring'} · Ring ${n} card`, icon: n ? `icon:deck${n}` : 'icon:cards', color: DECK[n] || '#b8742a' }; }
+    case 'harvest': return { label: v ? `Harvest story · ${v.name}` : 'Harvest story', icon: 'fruit', color: '#e8344f' };
+    case 'heartwood': return { label: 'Heartwood question', icon: 'icon:heart', color: '#8a5a36' };
+    case 'treasure': {
+      const t = cards.treasures.find(x => x.id === r.sub);
+      return { label: `${t ? t.name : 'Treasure'} · answer${r.of ? ` ${r.seq} of ${r.of}` : ''}`, icon: t ? `treasure:${t.id}` : 'treasure', color: '#c98a1a' };
+    }
+  }
+  return { label: r.kind, icon: 'icon:talk', color: '#5cb84a' };
+}
+const subOf = r => r.kind === 'why' || r.kind === 'harvest' ? r.sub : r.kind === 'treasure' ? (cards.treasures.find(x => x.id === r.sub)?.meaning || '') : '';
+const roundName = n => n ? `Round ${n}` : 'Entering the forest';
+const when = s => new Date(s * 1000).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+const dur = ms => { const s = Math.round((ms || 0) / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+function medallion(r) {
+  const p = players[r.player];
+  const photo = p && p.photo ? `/api/games/${encodeURIComponent(CODE)}/photo/${encodeURIComponent(p.id)}?v=${p.photo}` : '';
+  return ART.svg(ART.medallion({ photo, name: r.playerName, color: r.playerColor || p?.color || '#8d8f8a', water: 5, r: 20, stump: false }), { viewBox: '-42 -44 84 86', size: 72 });
+}
+
+// ---------- drawing (keyed: a refresh never touches a playing clip) ----------
+function textHTML(r) {
+  if (r.status === 'done') {
+    if (!r.transcript.trim()) return '<div class="text empty">Nothing was said in this clip.</div>';
+    return `<div class="text">${r.transcript.split(/\n{2,}/).map(p => `<p>${esc(p)}</p>`).join('')}</div>`;
+  }
+  if (r.status === 'failed') return `<div class="text fail">This clip couldn't be turned into text${r.error ? ` (${esc(r.error)})` : ''}.
+    ${r.audio ? '<button class="btn cream sm" data-retry="' + r.id + '">Try again</button>' : ''}</div>`;
+  return '<div class="text wait">Waiting for transcription…</div>';
+}
+function metaHTML(r) {
+  const bits = [dur(r.durationMs), r.language ? LANG[r.language] || r.language : '', when(r.createdAt), r.partial ? 'cut short (the Keeper screen was reloaded)' : ''].filter(Boolean);
+  return `${bits.map(b => `<span>${esc(b)}</span>`).join('')}<span class="grow"></span>
+    ${r.audio ? `<a href="${audioURL(r)}" download>Download audio</a>` : ''}<button class="link" data-del="${r.id}">Delete</button>`;
+}
+const audioURL = r => `/api/games/${encodeURIComponent(CODE)}/recordings/${r.id}/audio?host=${encodeURIComponent(HOST)}`;
+
+function cardEl(r) {
+  const k = kindOf(r), sub = subOf(r);
+  const el = document.createElement('article');
+  el.className = 'story'; el.dataset.id = r.id; el.style.setProperty('--kc', k.color);
+  el.innerHTML = `<div class="med">${medallion(r)}</div>
+    <div><div class="who">${esc(r.playerName)}</div><div class="kind"><span class="ic">${art(k.icon, '1.6em')}</span>${esc(k.label)}</div></div>
+    <div class="q">${esc(r.prompt)}${sub ? `<div class="sub">${esc(sub)}</div>` : ''}</div>
+    <div class="body"><div class="aud"></div><div class="tx"></div><div class="meta"></div><div class="cf"></div></div>`;
+  return el;
+}
+function patch(el, html) { if (el._h !== html) { el._h = html; el.innerHTML = html; } }
+
+function render() {
+  const list = $('list');
+  const done = recs.filter(r => r.status === 'done').length, waiting = recs.filter(r => r.status === 'waiting').length;
+  $('counts').innerHTML = recs.length ? `<b>${recs.length}</b> ${recs.length === 1 ? 'clip' : 'clips'} · <b>${done}</b> transcribed${waiting ? ` · <b>${waiting}</b> waiting` : ''}` : '';
+  $('csv').disabled = $('json').disabled = !recs.length;
+  if (!recs.length) {
+    list.innerHTML = `<div class="panel">${art('icon:keeper', '3.2em')}<h2>No stories yet</h2><p>Each share is recorded on the Keeper screen and appears here when it ends.</p></div>`;
+    list._rounds = null;
+    return;
+  }
+  if (!list._rounds) { list.innerHTML = ''; list._rounds = new Map(); list._cards = new Map(); }
+  const want = new Set(recs.map(r => r.id));
+  for (const [id, el] of list._cards) if (!want.has(id)) { el.remove(); list._cards.delete(id); }
+  let prevRound = null;
+  for (const r of recs) {
+    let sec = list._rounds.get(r.round);
+    if (!sec) {
+      sec = document.createElement('section'); sec.className = 'round';
+      sec.innerHTML = `<h2>${esc(roundName(r.round))}</h2><div class="cards"></div>`;
+      list._rounds.set(r.round, sec);
+      const after = prevRound == null ? null : list._rounds.get(prevRound);
+      list.insertBefore(sec, after ? after.nextSibling : list.firstChild);
+    }
+    prevRound = r.round;
+    let el = list._cards.get(r.id);
+    if (!el) { el = cardEl(r); list._cards.set(r.id, el); }
+    const box = sec.querySelector('.cards');
+    // place it after the previous card of its round (only moves when out of place)
+    const prev = recs[recs.indexOf(r) - 1];
+    const prevEl = prev && prev.round === r.round ? list._cards.get(prev.id) : null;
+    if (prevEl ? prevEl.nextSibling !== el : box.firstChild !== el) box.insertBefore(el, prevEl ? prevEl.nextSibling : box.firstChild);
+    patch(el.querySelector('.aud'), r.audio ? `<audio controls preload="none" src="${audioURL(r)}"></audio>` : '<p class="gone">The audio was deleted 30 days after it was transcribed; the text is kept.</p>');
+    patch(el.querySelector('.tx'), textHTML(r));
+    patch(el.querySelector('.meta'), metaHTML(r));
+  }
+  for (const [n, sec] of list._rounds) if (!sec.querySelector('.story')) { sec.remove(); list._rounds.delete(n); }
+}
+
+// ---------- downloads ----------
+function rows() {
+  return recs.map((r, i) => ({
+    game: CODE, story: i + 1, share: r.share, round: r.round, kind: r.kind, title: kindOf(r).label, player: r.playerName,
+    question: r.prompt, detail: subOf(r), seq: r.seq || '', of: r.of || '', language: r.language ? LANG[r.language] || r.language : '',
+    duration_s: Math.round((r.durationMs || 0) / 100) / 10, recorded_at: new Date(r.createdAt * 1000).toISOString(),
+    status: r.status, partial: r.partial ? 'yes' : '', transcript: r.transcript ?? '',
+  }));
+}
+function save(name, type, text) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type }));
+  a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+$('csv').onclick = () => {
+  const rs = rows(), cols = Object.keys(rs[0]);
+  const cell = v => { const s = String(v ?? ''); return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+  // a byte-order mark, so a spreadsheet reads Chinese and Malay text as UTF-8
+  save(`world-tree-${CODE}-stories.csv`, 'text/csv;charset=utf-8', '﻿' + [cols.join(','), ...rs.map(r => cols.map(c => cell(r[c])).join(','))].join('\r\n') + '\r\n');
+};
+$('json').onclick = () => save(`world-tree-${CODE}-stories.json`, 'application/json', JSON.stringify({ game: CODE, exported: new Date().toISOString(), stories: rows() }, null, 2));
+
+// ---------- actions ----------
+document.addEventListener('click', async e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  const card = b.closest('.story'), cf = card?.querySelector('.cf');
+  if (b.dataset.del) {
+    cf.innerHTML = `<div class="confirm">Delete this story for good, its audio and its text?<button class="btn red sm" data-delyes="${b.dataset.del}">Delete</button><button class="btn cream sm" data-delno>Keep it</button></div>`;
+  } else if (b.dataset.delno != null) {
+    cf.innerHTML = '';
+  } else if (b.dataset.delyes) {
+    b.disabled = true;
+    try { await api(`/recordings/${b.dataset.delyes}`, { method: 'DELETE' }); toast('Deleted.', 'ok'); await load(); }
+    catch (err) { b.disabled = false; toast(err.message, 'bad'); }
+  } else if (b.dataset.retry) {
+    b.disabled = true;
+    try { await api(`/recordings/${b.dataset.retry}/retry`, { method: 'POST' }); toast('It will be transcribed again within a few minutes.', 'ok'); await load(); }
+    catch (err) { b.disabled = false; toast(err.message, 'bad'); }
+  }
+});
+
+// A recorder's WebM has no duration in its header: the player would show no length and seek badly. Seeking past the
+// end once makes the browser find it; then play goes on from the start. (Media events don't bubble: capture.)
+document.addEventListener('loadedmetadata', e => {
+  const a = e.target;
+  if (!(a instanceof HTMLMediaElement) || Number.isFinite(a.duration) || a._fixing) return;
+  a._fixing = true;
+  const playing = !a.paused;
+  const found = () => {
+    if (!Number.isFinite(a.duration)) return;
+    a.removeEventListener('durationchange', found);
+    a.currentTime = 0;
+    if (playing) a.play().catch(() => {});
+  };
+  a.addEventListener('durationchange', found);
+  a.currentTime = 1e7;
+}, true);
+
+// ---------- loading ----------
+async function load() {
+  const j = await api('/recordings');
+  recs = j.recordings || [];
+  render();
+}
+async function start() {
+  $('code').textContent = CODE || '?';
+  $('tree').innerHTML = art('worldTree:awake', '84px');
+  $('back').href = `board.html?g=${encodeURIComponent(CODE)}`;
+  if (!CODE || !HOST) {
+    $('list').innerHTML = `<div class="panel">${art('icon:keeper', '3.2em')}<h2>Only the Keeper can open the stories</h2>
+      <p>Open this page from the Keeper screen: <b>Players · tools · log</b>, then <b>Stories and transcripts</b>.</p></div>`;
+    $('back').hidden = !CODE;
+    return;
+  }
+  try { cards = { ...cards, ...(await (await fetch('/api/cards')).json()) }; } catch { }
+  try {
+    const st = await (await fetch(`/api/games/${encodeURIComponent(CODE)}/state?host=${encodeURIComponent(HOST)}`, { cache: 'no-store' })).json();
+    for (const p of st.players || []) players[p.id] = p;
+  } catch { /* the game may be gone: names and colours come with the recordings */ }
+  try { await load(); }
+  catch (err) {
+    $('list').innerHTML = `<div class="panel"><h2>${err.status === 403 ? 'Only the Keeper can open the stories' : "The stories couldn't load"}</h2><p>${esc(err.message)}</p></div>`;
+    return;
+  }
+  // new stories during the game, and transcripts as they arrive
+  setInterval(() => { if (!document.hidden) load().catch(() => {}); }, 20000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) load().catch(() => {}); });
+}
+start();
+</script>
+</body>
+</html>

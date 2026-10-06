@@ -105,6 +105,34 @@ don't hard-code them; `/api/cards` has the same as `stages` and `ringDeckNames`.
   deletes the photos of games whose result was set more than 2 hours ago (`endedAt`), of games not updated for 24
   hours, and of players or games that are gone.
 
+## Story recordings
+
+- **On the Keeper screen** (`web/recorder.js`, injected into `board.html`): one clip per share, from the moment a
+  share opens until it closes (Opus in WebM, mono, 32 kbit/s; MP4 on Safari). The lobby asks for the microphone first
+  (**Allow the microphone**), so the browser's question doesn't interrupt the first story. The share card shows
+  **● Recording** and **Don't keep this one**; Keeper tools have **Switch recording off/on** (stored on the game:
+  `recording` in every view, so the phone's join screen says it) and the **Stories and transcripts** link (also in
+  the finale). Only one Keeper device records: `recDevice` in the Keeper's view, taken by the first device that
+  allows the microphone, or with **Record on this device**; in one browser only one tab (Web Locks). Clips wait in
+  IndexedDB until the server has them (retry with backoff, also after a reload; a reload mid-story sends what was
+  recorded, `partial`). No microphone, a refusal or a plain-http page only means no clips; the game never waits.
+- **Server** (`recording.go`, table `recordings`, Keeper secret in `X-Keeper` or `?host=`):
+  `POST /api/games/{code}/recordings?clip&share&kind&player&value&prompt&sub&seq&of&round&ms&partial` (raw audio
+  body, WebM/MP4/Ogg checked by type and magic bytes, 25 MB at most; the same `clip` again is stored once),
+  `GET /api/games/{code}/recordings` (metadata and transcripts, in story order), `GET …/recordings/{id}/audio`,
+  `DELETE …/recordings/{id}`, `POST …/recordings/{id}/retry`. Keeper actions `record` (n=1/0) and `recordHere`
+  (text = device id). Recordings are the team's story record: the photo sweep never touches them; the audio alone
+  is deleted 30 days after its transcript (same 10-minute sweep).
+- **Transcription on the Mac mini** (`ops/transcribe`, offline Whisper through `steward run transcribe text`): the
+  lanes job `heartwood/stories/transcribe` runs `~/.local/bin/hw-transcribe` every 5 minutes. It asks
+  `GET /api/transcribe/queue`, downloads `GET /api/transcribe/{id}/audio`, posts `POST /api/transcribe/{id}`
+  `{text, language, duration}` or `{error}` (3 tries, then the Keeper can retry). Bearer token in
+  `~/.config/heartwood/transcribe-token` on the Mini only; the server has its SHA-256 (`transcribeTokenHash`).
+  Quiet with nothing to do; it fails (one lanes alert) when Whisper is missing, the token is refused, or the server
+  is unreachable for 30 minutes. Install: `ops/transcribe/install.sh` (after a deploy).
+- **Stories page** `stories.html?g=CODE` (Keeper only): every clip by round, with the question, the player, an
+  audio player and the transcript; downloads as CSV and JSON.
+
 ## Roles (Enneagram types, always on)
 
 The Keeper gives each player 1 to 3 types in the lobby; several players may hold the same type.
@@ -128,6 +156,8 @@ The Keeper gives each player 1 to 3 types in the lobby; several players may hold
 - `main.go`: HTTP API, WebSocket live updates, rejoin codes, QR codes, `/api/cards`, SQLite (`games` holds each game's
   state as JSON; `events` logs every action; `photos` holds the players' photos)
 - `photo.go`: photo upload, serving, and the sweep that deletes them after the game
+- `recording.go`: story recordings, the Keeper's and the transcription worker's API, the audio sweep;
+  `ops/transcribe/`: the worker on the Mac mini, its lanes seed and install script
 - `game_test.go`, `photo_test.go`, `sim_test.go`: rules tests, photo tests and the bot balance simulation
 - `web/`: `board.html` (Keeper screen), `play.html` (phone), `index.html` (create a game), `howto.html` (rules for
   players), `wiki.html` (one page per term, all content in its script; link with `[[id]]`; card pages filled from

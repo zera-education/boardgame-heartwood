@@ -1,0 +1,48 @@
+{
+  "settings": {},
+  "channels": [],
+  "domains": [
+    {
+      "key": "heartwood",
+      "name": "Heartwood",
+      "description": "The Heartwood board game (heartwood.zera.edu.my). Jobs on the Mac mini for the game server.",
+      "timezone": "Asia/Kuala_Lumpur",
+      "default_channel": "axon-bot",
+      "quiet_start": "23:30",
+      "quiet_end": "06:30",
+      "events": [],
+      "lanes": [
+        {
+          "key": "stories",
+          "name": "Stories",
+          "description": "The story recordings from the Keeper screen, turned into text offline on the Mini.",
+          "timezone": "UTC",
+          "max_concurrent_jobs": 1,
+          "items": [
+            {
+              "key": "transcribe",
+              "kind": "job",
+              "title": "Transcribe story recordings",
+              "enabled": true,
+              "schedule_type": "cron",
+              "schedule": "*/5 * * * *",
+              "timezone": null,
+              "catchup": "skip",
+              "command": ["/Users/el/.local/bin/hw-transcribe"],
+              "workdir": "/Users/el/lab/heartwood",
+              "env_file": "",
+              "env": {
+                "HOME": "/Users/el",
+                "PATH": "/Users/el/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin",
+                "HW_SERVER": "https://heartwood.zera.edu.my"
+              },
+              "timeout_sec": 900,
+              "notify_on": "failure",
+              "notes": "heartwood repo, ops/transcribe (installed by ops/transcribe/install.sh). Quiet when there is nothing to transcribe; fails (one alert) when Whisper is missing, the token is refused, or the server is unreachable for 30 minutes."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

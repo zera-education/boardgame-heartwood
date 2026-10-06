@@ -347,6 +347,7 @@ body.sheet-open { overflow: hidden; }
         <label class="lbl">Your colour</label>
         <div class="swatches" id="swatches"></div>
         <button class="tb block huge" data-act="join">Join the forest</button>
+        <p class="small" id="recNote"></p>
       </div>
       <p id="joinClosed" class="small" hidden></p>
     </div>
@@ -614,6 +615,9 @@ function renderEntry(v) {
     ? `This game is full (${v.maxPlayers || 12} players). If you were playing, continue above or ask the Keeper for a rejoin code.`
     : 'This game has already started. If you were playing, continue above or ask the Keeper for a rejoin code.';
   if (!open) return;
+  // story recording (recorder.js on the Keeper screen): say so before anyone joins
+  $('recNote').textContent = v.recording === false ? 'Stories are not recorded in this game.'
+    : "Stories are recorded on the Keeper's laptop and turned into text for the team. The Keeper can switch it off or drop a clip.";
   const taken = new Set(v.players.map(p => p.color));
   if (taken.has(ui.color)) ui.color = '';
   HW.patch($('swatches'), v.colors.map(c => {

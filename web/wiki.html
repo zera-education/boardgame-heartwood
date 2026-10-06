@@ -188,6 +188,7 @@ const W = [
   <li>Leads the [[finale]]: starts the [[tribute-chain]] and taps <b>Next</b> for each tribute.</li>
   <li>May pause any story, and gives [[rejoin-code|rejoin codes]] when a player changes phone.</li>
   <li>Can remove a player's [[photo]] from the board.</li>
+  <li>Records the stories on the laptop ([[recording]]): can switch it off, or drop a clip.</li>
 </ul>` },
 
 { id: 'forest-pact', cat: 'basics', icon: 'icon:pact', title: 'Forest Pact',
@@ -644,6 +645,7 @@ const W = [
   <li>While a share is open, nobody can act. Shares come one at a time, in the order they happened.</li>
   <li>The [[keeper]] taps <b>Done sharing</b> to close it. The Keeper may start a [[timer]].</li>
   <li>Listeners may give a [[trust-acorn]] (not after a group moment).</li>
+  <li>Each share is [[recording|recorded]] on the Keeper's laptop and turned into text for the team.</li>
   <li>Every question is an invitation: see the [[forest-pact]].</li>
 </ul>` },
 
@@ -696,6 +698,17 @@ const W = [
   short: 'A gentle guide the Keeper can start.',
   body: `
 <p>The [[keeper]] can start a timer on the big screen, for example while someone shares, or for each tribute in the [[tribute-chain]]. It is a guide, not a rule. When it runs out, finish your thought kindly.</p>` },
+
+{ id: 'recording', cat: 'talking', icon: 'icon:keeper', title: 'Recording',
+  short: 'Every story is recorded on the Keeper\'s laptop and turned into text for the team.',
+  body: `
+<p>While a [[share]] is open, the Keeper's laptop records it: one clip per story, from the moment the card opens until the [[keeper]] taps <b>Done sharing</b>. The card on the big screen says <b>Recording</b> with a red dot.</p>
+<ul>
+  <li>{{icon:book}} Each clip is turned into text on our own computer, so the team keeps its stories. The recordings stay with the team: only the Keeper can open them.</li>
+  <li>{{icon:keeper}} The Keeper can switch recording off for the whole game, or tap <b>Don't keep this one</b> while a story is told. Just ask.</li>
+  <li>{{icon:phone}} The join screen on your phone says whether this game is recorded.</li>
+  <li>{{icon:timer}} The audio is deleted 30 days after it is turned into text; the text stays.</li>
+</ul>` },
 
 // ───────────── Enneagram roles
 { id: 'roles', cat: 'roles', icon: 'icon:roles', title: 'Enneagram roles',
