@@ -432,8 +432,7 @@ const W = [
 <h3>Who can pass to whom</h3>
 <ul>
   <li><b>Same hex:</b> always.</li>
-  <li><b>Neighbouring hexes:</b> if a [[peacemaker]] stands on either hex.</li>
-  <li><b>Two steps apart:</b> if someone stands on the hex between them, and a Peacemaker stands on any of the three hexes.</li>
+  <li><b>Neighbouring hexes:</b> only between a [[peacemaker]] and a teammate next to them, either way.</li>
 </ul>
 <h3>Limits</h3>
 <p>The teammate can hold 5 [[water]], 2 [[fruit]] and 1 [[treasure]] at most.</p>
@@ -714,7 +713,7 @@ const W = [
 <tr><td>6 [[loyalist]]</td><td>Plants on and next to your hex are safe from dead leaves.</td></tr>
 <tr><td>7 [[enthusiast]]</td><td>Once a turn, move 2 hexes for 1 action.</td></tr>
 <tr><td>8 [[challenger]]</td><td>Enter sealed hexes; bring a teammate when you move.</td></tr>
-<tr><td>9 [[peacemaker]]</td><td>Teammates can pass things through you.</td></tr>
+<tr><td>9 [[peacemaker]]</td><td>You can pass with a teammate next to you.</td></tr>
 </table></div>` },
 
 { id: 'reformer', cat: 'roles', icon: 'role:1', title: 'Reformer',
@@ -770,12 +769,12 @@ const W = [
 <p>The teammate moves with you. If they enter a new [[ring]] for the first time, they draw its [[ring-card]] too. If you both arrive on the [[world-tree]], what they carry is [[placing|placed]].</p>` },
 
 { id: 'peacemaker', cat: 'roles', icon: 'role:9', title: 'Peacemaker',
-  short: 'Type 9 · harmony. Teammates can pass things through you.',
+  short: 'Type 9 · harmony. You can pass with a teammate next to you.',
   body: `
-<div class="box"><p><b>Teammates in a chain up to 2 hexes long through you can [[pass]] things to each other.</b></p></div>
+<div class="box"><p><b>You and a teammate on a hex next to yours can [[pass]] things to each other.</b></p></div>
 <ul>
-  <li>Two players on neighbouring hexes can pass, if you stand on either hex.</li>
-  <li>Two players two steps apart can pass, if someone stands on the hex between them and you stand on any of the three hexes.</li>
+  <li>Either way: you give to them, or they give to you.</li>
+  <li>Only with you: two teammates next to you can't pass to each other through you.</li>
 </ul>` },
 
 // ───────────── The end

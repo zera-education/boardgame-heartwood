@@ -119,7 +119,7 @@ The Keeper gives each player 1 to 3 types in the lobby; several players may hold
 | 6 | Loyalist | Plants on your hex and next to you don't lose a stage to dead leaves |
 | 7 | Enthusiast | Once a turn, one Move may go 2 hexes (no fog, no sealed hexes) |
 | 8 | Challenger | May enter sealed hexes, and bring one teammate from the same hex when moving |
-| 9 | Peacemaker | Teammates in a chain up to 2 hexes long through you can pass things to each other |
+| 9 | Peacemaker | You and a teammate on a hex next to yours can pass things to each other |
 
 ## Files
 

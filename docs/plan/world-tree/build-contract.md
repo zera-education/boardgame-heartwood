@@ -61,8 +61,8 @@ Keep the house style: plain HTML/JS/CSS, no build step, no frameworks, dark fore
   - **Take** a revealed treasure lying on your hex (carry at most 1).
   - **Drink** at a revealed spring → water 5.
   - **Free, any time during `turn` when no share is open:** **pass** water / fruit / treasure to a player on
-    the same hex; or along a chain through a Peacemaker: the two players' hexes are neighbours with a
-    Peacemaker on either, or connected through one occupied middle hex with a Peacemaker on any of the three.
+    the same hex; or between a Peacemaker and a teammate on a neighbouring hex, either way (El, 2026-10-06:
+    the 2-hex chain is gone).
     Limits: water ≤ 5, fruit ≤ 2, treasure ≤ 1.
   - **Automatic placing:** whenever a player stands on the World Tree holding fruit or a treasure (after any
     move, pass, or Challenger carry), **everything they carry is placed at once**. If at least one fruit was
@@ -78,7 +78,7 @@ Keep the house style: plain HTML/JS/CSS, no build step, no frameworks, dark fore
   A player standing on a hex that seals can still walk out.
 - **Roles (Enneagram types 1–9, always on):** 1 Reformer, 2 Helper, 3 Achiever, 4 Individualist,
   5 Investigator, 6 Loyalist, 7 Enthusiast, 8 Challenger, 9 Peacemaker; texts in engine.js `ROLE_TEXT`
-  (Peacemaker: "Teammates in a chain up to 2 hexes long through you can pass things to each other.").
+  (Peacemaker: "You and a teammate on a hex next to yours can pass things to each other.").
   The Keeper gives each player 1–3 types in the lobby (a player can't hold one twice; several players may
   hold the same type). Investigator: always sees the next Forest Breath list on their phone, and once per
   round (during their own turn) looks at one sector's next weather (phone action `investigate`, `n`=sector).

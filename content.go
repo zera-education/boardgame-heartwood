@@ -169,7 +169,7 @@ var Roles = []Role{
 	{6, "Loyalist", "Plants on your hex and next to you are safe from dead leaves."},
 	{7, "Enthusiast", "One Move a turn may be 2 hexes (not in fog, not through sealed hexes)."},
 	{8, "Challenger", "You may enter sealed hexes, and bring one teammate from your hex when you Move."},
-	{9, "Peacemaker", "Teammates in a chain up to 2 hexes long through you can pass things to each other."},
+	{9, "Peacemaker", "You and a teammate on a hex next to yours can pass things to each other."},
 }
 
 var Colors = []string{"#e53935", "#fb8c00", "#fdd835", "#43a047", "#00897b", "#1e88e5", "#5e35b1", "#d81b60", "#6d4c41", "#546e7a", "#00acc1", "#7cb342"}

@@ -530,20 +530,20 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
     <li><b>Same hex:</b> you can always pass to someone on your hex.</li>
     <li><b>Limits:</b> the teammate can hold 5 water, 2 fruit and 1 treasure at most.</li>
   </ul>
-  <h3><i class="art-i" data-art="role:9"></i> Through a Peacemaker</h3>
-  <p>A <a href="#roles">Peacemaker</a> links teammates, so they can pass to each other without standing on the same hex:</p>
+  <h3><i class="art-i" data-art="role:9"></i> The Peacemaker</h3>
+  <p>A <a href="#roles">Peacemaker</a> can pass across hexes: to, and from, a teammate on a hex next to theirs. Nobody else can.</p>
   <div class="grid two">
     <div class="card">
-      <svg class="passfig" viewBox="0 0 160 60" role="img" aria-label="Two neighbouring hexes. Player A on one, Peacemaker B on the other. A and B can pass to each other.">
+      <svg class="passfig" viewBox="0 0 160 60" role="img" aria-label="Two neighbouring hexes. Player A on one, the Peacemaker on the other. A and the Peacemaker can pass to each other.">
         <polygon points="78,16 78,44 54,58 30,44 30,16 54,2" fill="#24402f" stroke="#7bc47f" stroke-width="2"/>
         <polygon points="130,16 130,44 106,58 82,44 82,16 106,2" fill="#24402f" stroke="#7bc47f" stroke-width="2"/>
         <circle cx="54" cy="30" r="11" fill="#1e88e5" stroke="#fff" stroke-width="2"/><text x="54" y="31" fill="#fff" font-size="12" font-weight="800" text-anchor="middle" dominant-baseline="central">A</text>
         <g transform="translate(106,30)" data-art="role:9" data-size="27"></g>
       </svg>
-      <p class="small" style="margin:0"><b>Neighbours:</b> two players on hexes next to each other can pass if a Peacemaker stands on either hex.</p>
+      <p class="small" style="margin:0"><b>Yes:</b> A and the Peacemaker stand on hexes next to each other, so they can pass to each other, either way.</p>
     </div>
     <div class="card">
-      <svg class="passfig" viewBox="0 0 160 60" role="img" aria-label="Three hexes in a row. Player A, a Peacemaker in the middle, and player C. A and C can pass to each other through the middle.">
+      <svg class="passfig" viewBox="0 0 160 60" role="img" aria-label="Three hexes in a row. Player A, the Peacemaker in the middle, and player C. A and C cannot pass to each other.">
         <polygon points="52,16 52,44 28,58 4,44 4,16 28,2" fill="#24402f" stroke="#7bc47f" stroke-width="2"/>
         <polygon points="104,16 104,44 80,58 56,44 56,16 80,2" fill="#24402f" stroke="#7bc47f" stroke-width="2"/>
         <polygon points="156,16 156,44 132,58 108,44 108,16 132,2" fill="#24402f" stroke="#7bc47f" stroke-width="2"/>
@@ -551,7 +551,7 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
         <g transform="translate(80,30)" data-art="role:9" data-size="27"></g>
         <circle cx="132" cy="30" r="11" fill="#43a047" stroke="#fff" stroke-width="2"/><text x="132" y="31" fill="#fff" font-size="12" font-weight="800" text-anchor="middle" dominant-baseline="central">C</text>
       </svg>
-      <p class="small" style="margin:0"><b>A chain of three hexes:</b> two players can pass if someone stands on the hex between them, and a Peacemaker stands on any of the three hexes.</p>
+      <p class="small" style="margin:0"><b>No:</b> A and C can't pass to each other through the Peacemaker. Each of them can pass with the Peacemaker.</p>
     </div>
   </div>
 </section>
@@ -698,8 +698,8 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
     </li>
     <li class="role" data-n="9">
       <div class="top"><span class="t">9</span><div><h3>Peacemaker</h3><span class="gift">gift: harmony</span></div></div>
-      <p class="fx">Teammates in a chain <b>up to 2 hexes long through you</b> can pass things to each other.</p>
-      <p class="note">See <a href="#pass">Passing</a> for the two shapes of a chain.</p>
+      <p class="fx">You and a teammate on a <b>hex next to yours</b> can pass things to each other.</p>
+      <p class="note">See <a href="#pass">Passing</a>.</p>
     </li>
   </ul>
 </section>

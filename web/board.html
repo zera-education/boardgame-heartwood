@@ -133,17 +133,11 @@ function moveTargets(v, p) {
       for (const j of B.adj[m]) if (j !== p.pos && !sealed(v, j) && wxOf(v, j) !== 'fog' && !one.includes(j) && !two.includes(j)) two.push(j);
   return { one, two };
 }
-// Passing: same hex, or a chain of up to 2 steps over occupied hexes through a Peacemaker.
+// Passing: on the same hex, or between a Peacemaker and a teammate on a neighbouring hex (either way).
 function canPass(v, a, b) {
   if (!a || !b || a.id === b.id || a.pos < 0 || b.pos < 0) return false;
   if (a.pos === b.pos) return true;
-  const peace = v.players.filter(p => has(p, 9)).map(p => p.pos);
-  if (!peace.length) return false;
-  const occ = new Set(v.players.map(p => p.pos));
-  const nb = i => B.adj[i].filter(j => occ.has(j));
-  if (nb(a.pos).includes(b.pos)) return peace.includes(a.pos) || peace.includes(b.pos);
-  for (const m of nb(a.pos)) if (nb(m).includes(b.pos) && [a.pos, m, b.pos].some(i => peace.includes(i))) return true;
-  return false;
+  return (has(a, 9) || has(b, 9)) && B.adj[a.pos].includes(b.pos);
 }
 const reachable = (v, p) => [p.pos, ...(has(p, 2) ? B.adj[p.pos] : [])].filter(i => i > 0);
 function targetsFor(v, p, mode) {
@@ -798,13 +792,12 @@ const ANIM = {
   pass(v, e) {
     const a = photoXY(e.from), b = photoXY(e.to), to = HW.player(e.to);
     const art = e.item === 'water' ? ART.drop({ size: 13 }) : e.item === 'fruit' ? ART.fruit({ size: 14 }) : ART.treasure(to?.treasure || 'compass', { size: 18 });
-    // through the Peacemaker when the two stand apart
-    const pa = HW.player(e.from), pts = [a];
+    // across hexes it is the Peacemaker's gift: a little burst on the Peacemaker
+    const pa = HW.player(e.from), pts = [a, b];
     if (pa && to && pa.pos !== to.pos) {
-      const pm = v.players.find(q => has(q, 9) && q.id !== e.from && q.id !== e.to && (q.pos === pa.pos || q.pos === to.pos || (B.adj[pa.pos].includes(q.pos) && B.adj[q.pos].includes(to.pos))));
-      if (pm) { pts.push(photoXY(pm.id)); setTimeout(() => { popMed(pm.id, 0, 1.1); burst(B.medPos[pm.id][0], B.medPos[pm.id][1], '#c9a6ff', 26, 600); }, 420); }
+      const pm = has(pa, 9) ? pa : has(to, 9) ? to : null;
+      if (pm) setTimeout(() => { popMed(pm.id, 0, 1.1); burst(B.medPos[pm.id][0], B.medPos[pm.id][1], '#c9a6ff', 26, 600); }, pm === pa ? 0 : 640);
     }
-    pts.push(b);
     const g = fx(art, a[0], a[1]), legs = pts.length - 1, fr = [];
     for (let s = 0; s < legs; s++) arc(pts[s], pts[s + 1], 40, { spin: 30 }).forEach((f, k) => { if (k || !s) fr.push(Object.assign(f, { offset: (s + f.offset) / legs })); });
     popMed(e.from, 0, 1.08);

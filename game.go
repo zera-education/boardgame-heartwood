@@ -967,8 +967,8 @@ func (g *Game) drink(me *Player) error {
 	return nil
 }
 
-// canPass: on the same hex, or along a chain of up to 2 steps over
-// neighbouring occupied hexes that runs through a Peacemaker.
+// canPass: on the same hex, or between a Peacemaker and a teammate on a
+// neighbouring hex (either way). Nobody else passes across hexes.
 func (g *Game) canPass(a, b *Player) bool {
 	if a == b || a.Pos < 0 || b.Pos < 0 {
 		return false
@@ -976,25 +976,7 @@ func (g *Game) canPass(a, b *Player) bool {
 	if a.Pos == b.Pos {
 		return true
 	}
-	peace, occ := map[int]bool{}, map[int]bool{}
-	for _, p := range g.Players {
-		occ[p.Pos] = true
-		if p.has(Peacemaker) {
-			peace[p.Pos] = true
-		}
-	}
-	if len(peace) == 0 {
-		return false
-	}
-	if neighbours(a.Pos, b.Pos) {
-		return peace[a.Pos] || peace[b.Pos]
-	}
-	for _, m := range Adj[a.Pos] {
-		if occ[m] && neighbours(m, b.Pos) && (peace[a.Pos] || peace[m] || peace[b.Pos]) {
-			return true
-		}
-	}
-	return false
+	return (a.has(Peacemaker) || b.has(Peacemaker)) && neighbours(a.Pos, b.Pos)
 }
 
 // pass is free: water, fruit or a treasure, to a teammate you can reach.
@@ -1006,7 +988,7 @@ func (g *Game) pass(a, b *Player, item string) error {
 		return errors.New("choose a teammate to pass to")
 	}
 	if !g.canPass(a, b) {
-		return errors.New("pass on the same hex, or along a chain through a Peacemaker")
+		return errors.New("pass on the same hex, or between a Peacemaker and a teammate next to them")
 	}
 	switch item {
 	case "water":

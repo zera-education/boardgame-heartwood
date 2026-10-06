@@ -843,7 +843,7 @@ func TestForestTide(t *testing.T) {
 	}
 }
 
-// Passing: on the same hex, or along a chain of up to 2 steps through a Peacemaker.
+// Passing: on the same hex, or between a Peacemaker and a teammate on a neighbouring hex.
 func TestPassing(t *testing.T) {
 	x := newTable(t, 6, func(i int) []int {
 		if i == 2 {
@@ -889,15 +889,20 @@ func TestPassing(t *testing.T) {
 	place(line[0], line[1], park, park)
 	x.fails(pass("water"), "passing to a neighbour without a Peacemaker")
 	place(line[0], line[1], line[1], park)
-	x.must(pass("water")) // neighbours, Peacemaker on the receiver's hex
+	x.fails(pass("water"), "neighbours, with a Peacemaker standing beside the receiver")
 	place(line[0], line[2], line[1], park)
-	x.must(pass("water")) // a chain through the Peacemaker in the middle
-	place(line[0], line[2], line[2], line[1])
-	x.must(pass("water")) // a chain with the Peacemaker at the end
-	place(line[0], line[2], line[2], park)
-	x.fails(pass("water"), "a chain over an empty middle hex")
-	place(line[0], line[3], line[2], line[1])
-	x.fails(pass("water"), "a chain 3 steps long")
+	x.fails(pass("water"), "relaying through a Peacemaker in the middle")
+	// the Peacemaker gives to, and takes from, a teammate next to them
+	place(line[1], line[1], line[0], park)
+	peace.Water, giver.Water = 3, 3
+	x.must(x.as(peace, "pass", Action{Target: giver.ID, Text: "water"}))
+	x.must(x.as(giver, "pass", Action{Target: peace.ID, Text: "water"}))
+	if peace.Water != 3 || giver.Water != 3 {
+		t.Fatal("Peacemaker passing with a neighbour")
+	}
+	place(line[2], line[2], line[0], park)
+	x.fails(x.as(peace, "pass", Action{Target: giver.ID, Text: "water"}), "a Peacemaker passing 2 hexes away")
+	recv.Water = 2
 
 	// Limits: water ≤ 5, fruit ≤ 2, treasure ≤ 1, and you need what you pass.
 	place(line[0], line[0], park, park)
@@ -923,12 +928,12 @@ func TestPassing(t *testing.T) {
 	x.fails(pass("water"), "passing during a share")
 	x.must(x.host("doneShare", Action{}))
 
-	// Passing to someone on the World Tree places it there at once.
+	// Passing to someone on the World Tree places it there at once (here the Peacemaker, next to the tree).
 	ring1 := ringHexes(1, -1)[0]
-	giver.Fruit, giver.Treasure = 1, ""
+	peace.Fruit, peace.Treasure = 1, ""
 	recv.Fruit, recv.Treasure, recv.Placed = 0, "", 0
 	place(ring1, 0, ring1, park)
-	x.must(pass("fruit"))
+	x.must(x.as(peace, "pass", Action{Target: recv.ID, Text: "fruit"}))
 	if recv.Placed != 1 || recv.Fruit != 0 || g.openShare() == nil || g.openShare().Kind != "heartwood" || g.openShare().Player != recv.ID {
 		t.Fatalf("fruit passed onto the World Tree: placed %d share %+v", recv.Placed, g.openShare())
 	}
@@ -1194,7 +1199,7 @@ func TestViewShape(t *testing.T) {
 		t.Fatal("cards")
 	}
 	keys(c["treasures"].([]any)[0].(map[string]any), "id", "icon", "name", "meaning", "question")
-	if Roles[8].Text != "Teammates in a chain up to 2 hexes long through you can pass things to each other." {
+	if Roles[8].Text != "You and a teammate on a hex next to yours can pass things to each other." {
 		t.Fatal("Peacemaker text")
 	}
 }
