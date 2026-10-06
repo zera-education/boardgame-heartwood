@@ -3,6 +3,7 @@ const N = +process.argv[2] || 500, CAP = 40;
 const variants = [
   ['Defaults: rain +1 water, 4 springs, Breath 2 (+1 every 2 tides)', {}],
   ['No rain refill (springs only)', { rainRefill: false }],
+  ['Chosen: 2 actions, springs only, treasures in Rings 1-2', { rainRefill: false, treasureRings: [1, 2] }],
   ['No refill at all', { rainRefill: false, springs: 0 }],
   ['Harsher Breath: 3, +1 every tide', { breathStart: 3, breathEvery: 1 }],
   ['Gentler Breath: 1, +1 every 3 tides', { breathStart: 1, breathEvery: 3 }],
