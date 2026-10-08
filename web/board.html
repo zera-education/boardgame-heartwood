@@ -828,9 +828,9 @@ function shake(el, deg = 5, ms = 520, delay = 0) {
 }
 const leafPart = () => ART.deadLeaf({ size: 9 + Math.random() * 4, seed: Math.floor(Math.random() * 99) });
 const DIRT = ['#93603a', '#7a4a2c', '#b07a4a'];
-// a chip of the mossy stone a face-down hex wears (every third one a tuft of moss)
-const stoneChip = k => k % 3 === 2 ? `<ellipse rx="${2.4 + Math.random() * 1.4}" ry="1.8" fill="#78b443" stroke="#2f5a26" stroke-width=".7"/>`
-  : `<path d="M-3,-1.5 L0,-3 3.2,-1 2,2.2 -2.2,2.4Z" fill="${k % 2 ? '#a3a196' : '#8c8b80'}" stroke="#4e4d46" stroke-width=".8" stroke-linejoin="round"/>`;
+// a bit of the moss-covered stone a face-down hex wears: half are tufts of moss
+const stoneChip = k => k % 2 ? `<ellipse rx="${2.4 + Math.random() * 1.4}" ry="1.8" fill="#78b443" stroke="#2f5a26" stroke-width=".7"/>`
+  : `<path d="M-3,-1.5 L0,-3 3.2,-1 2,2.2 -2.2,2.4Z" fill="${k % 4 ? '#a3a196' : '#8c8b80'}" stroke="#4e4d46" stroke-width=".8" stroke-linejoin="round"/>`;
 const dirtPart = k => `<circle r="${1.8 + Math.random() * 1.6}" fill="${DIRT[k % 3]}" stroke="#4a2a17" stroke-width=".8"/>`;
 function banner(text, cls = '', ms = 2200) {
   const b = $('k-banner');
@@ -907,7 +907,7 @@ const ANIM = {
       if (kind === 'spring') { sparkles(x, y - 6, 9, 40, 200, '#d8f4ff'); burst(x, y, '#bfe8ff', 34, 650, 150); }
       if (kind !== 'treasure') found(i, kind === 'spring' ? 'A spring!' : 'Nothing here', kind === 'spring' ? 'spring' : '');
     };
-    // the mossy stone breaks away, and the ground is dug to dirt
+    // the moss and its stone break away, and the ground is dug to dirt
     toss(stoneChip, x, y - 6, 10, { speed: 74, grav: 70, spread: 2.6, ms: 760, stagger: 16 });
     toss(dirtPart, x, y - 2, 7, { speed: 44, grav: 90, spread: 2.2, ms: 600, spin: 0, stagger: 20 });
   },
@@ -1734,7 +1734,7 @@ function infoHTML(v, i, why) {
     const hx = v.hexes[i], t = v.tiles[i] || {}, w = v.weather[hx.sector], tr = t.treasure ? HW.treasure(t.treasure) : null, lv = t.leaves || 0;
     head = `${I.val(hx.sector, 44)}<div class="k-inf-t"><b>${esc(v.values[hx.sector]?.name || '')}</b><small>Ring ${hx.ring}${hx.ring === 4 ? ' · the edge' : hx.ring === 1 ? ' · by the World Tree' : ''}</small></div>`;
     rows += row(I.wx(w, 30), `<b>${esc(HW.WEATHER[w]?.[1] || '')}</b> · ${WX_NOW[w] || ''}`);
-    if (!t.up) rows += row(pic('tile:down', 28), '<b>Face down</b> · a mossy stone: explore to dig it away and see what lies here.');
+    if (!t.up) rows += row(pic('tile:down', 28), '<b>Face down</b> · covered in moss: explore to dig it away and see what lies here.');
     if (!t.up && t.hint) rows += row(svgI(hintMark(t.hint === 'something'), '-20 -28 40 40', 26), t.hint === 'something'
       ? '<b>Something lies here</b> · an Individualist sensed it: a spring or a treasure.' : '<b>Nothing here</b> · an Individualist sensed it is empty.');
     else if (t.stage) {

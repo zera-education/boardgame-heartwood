@@ -27,7 +27,7 @@
  * Tiles (origin = top-face centre; the face is √3·0.965·S ≈ 1.67·S wide × 1.16·S tall, the walls hang ART.depth below)
  *   Colour deepens toward the centre in clear steps: Ring 4 fresh spring green → Ring 1 deep emerald, the World Tree
  *   hex darkest (mossy earth) (ART.palette.up, index = ring). Each sector carries its value colour (ART.VALUE_TINT).
- *   Face down, a mossy stone sits on the hex; face up, the stone is dug away to a patch of dirt.
+ *   Face down, the whole hex is a moss-covered stone; face up, it is dug away to a patch of dirt on grass.
  *   ART.tile({ring, sector, up, kind, world, S, q, r, outer, seed})
  *     ring 1..4 (0 or world:true = World Tree hex), sector 0..5 (value tint), up = face-up,
  *     kind 'empty'|'spring'|'treasure' (spring adds wet flowers), q/r → deterministic decoration + the Ring 4
@@ -283,31 +283,43 @@
     return d + 'Z';
   }
   const lumpy = (R, w, h, k0, k1, dy = 0, n = 9) => Array.from({ length: n }, (_, i) => { const a = i / n * Math.PI * 2, k = k0 + R() * (k1 - k0); return [Math.cos(a) * w * k, Math.sin(a) * h * k + dy]; });
-  // Face down (El, 2026-10-09): a mossy stone sits on the hex, grey with a green cap of moss, deeper rings darker.
-  // Nothing like the dead leaves (brown, with purple brambles when sealed).
-  function mossStone(R, ring) {
+  // Face down (El, 2026-10-09): the whole hex is a stone slab under a cushion of moss, deeper rings darker, a touch
+  // of the sector's colour. Nothing like the dead leaves (brown, with purple brambles when sealed). The value-coloured
+  // edge of the hex stays visible round it.
+  function mossCover(R, ring, vc) {
     const deep = Math.max(0, 4 - ring);
-    const st = tone(mix('#a3a196', '#6d7670', deep * .14), .5, .14, .16), mo = tone(mix('#78b443', '#2f7a44', deep * .2), .5, .12, .18);
-    const w = 16 + R() * 2.5, h = 9 + R() * 1.2, th = 5.5, top = lumpy(R, w, h, .9, 1.06, -4), base = top.map(([x, y]) => [x, y + th]);
-    const left = top.reduce((a, p) => (p[0] < a[0] ? p : a)), right = top.reduce((a, p) => (p[0] > a[0] ? p : a));
-    const band = ptsStr([left, right, [right[0], right[1] + th], [left[0], left[1] + th]]);
-    const out = [El(1, th - 1, w + 5, h + 2.5, { fill: 'url(#art-shadow)' })];
-    // outline, the side (darker), the top (lighter)
-    out.push(Pa(smooth(base), { fill: st.o, stroke: st.o, 'stroke-width': 4.4, 'stroke-linejoin': 'round' }), el('polygon', { points: band, fill: st.o, stroke: st.o, 'stroke-width': 4.4, 'stroke-linejoin': 'round' }),
-      Pa(smooth(top), { fill: st.o, stroke: st.o, 'stroke-width': 4.4, 'stroke-linejoin': 'round' }));
-    out.push(Pa(smooth(base), { fill: dark(st.c, .3) }), el('polygon', { points: band, fill: dark(st.c, .3) }), Pa(smooth(top), { fill: st.d }));
-    out.push(Pa(smooth(top.map(([x, y]) => [x * .86 - 1.2, (y + 4) * .8 - 5])), { fill: st.l }));
-    // a crack on the grey rim, and the moss cap with a lighter layer, drips over the front edge and a few speckles
-    out.push(Pa(D`M${-w * .6},${-.6} l2.4,-2 l1.8,1.3 l2.4,-1.6`, { fill: 'none', stroke: st.o, 'stroke-width': .9, 'stroke-linecap': 'round', opacity: .7 }));
-    const cap = lumpy(R, w * .72, h * .66, .82, 1.12, -5.2, 11).map(([x, y]) => [x + 1.6, y]);
-    out.push(Pa(smooth(cap), { fill: mo.o, stroke: mo.o, 'stroke-width': 2.2, 'stroke-linejoin': 'round' }), Pa(smooth(cap), { fill: mo.d }));
-    for (let i = 0; i < 2; i++) { const x = (i ? 1 : -1) * w * (.18 + R() * .2), y = -4.4 + h * .5; out.push(El(x, y, 1.5 + R() * .5, 2 + R() * .9, { fill: mo.d, stroke: mo.o, 'stroke-width': .9 })); }
-    out.push(Pa(smooth(cap.map(([x, y]) => [x * .74 - 1.2, (y + 5.2) * .66 - 6.2])), { fill: mo.l }));
-    for (let i = 0; i < 5; i++) out.push(Ci(-w * .4 + R() * w * .8, -8 + R() * 5, .6 + R() * .5, { fill: i % 2 ? mo.h : mo.o, opacity: .55 }));
-    out.push(gloss(-w * .32, -7.6, 3.2, 1.3, -8, .35));
+    let mc = mix('#7cb646', '#2f7a44', deep * .2);
+    if (vc) mc = mix(mc, vc, .14);
+    const mo = tone(mc, .5, .12, .16), st = tone(mix('#a3a196', '#6d7670', deep * .14), .5, .14, .16);
+    const K = S0 * .965 * .86, lift = 3.2, th = 4.4, top = facePts(K, -lift), dn = p => [p[0], p[1] + th];
+    const out = [];
+    // the stone slab's front sides under the moss, with a couple of light flecks
+    out.push(el('polygon', { points: ptsStr([top[1], top[2], top[3], dn(top[3]), dn(top[2]), dn(top[1])]), fill: st.d, stroke: st.o, 'stroke-width': 1.5, 'stroke-linejoin': 'round' }));
+    for (let i = 0; i < 3; i++) { const A = i % 2 ? top[1] : top[2], B = i % 2 ? top[2] : top[3], u = .2 + R() * .6; out.push(El(A[0] + (B[0] - A[0]) * u, A[1] + (B[1] - A[1]) * u + th * .55, 1.6, .9, { fill: st.l, opacity: .8 })); }
+    // the moss: a slightly wobbly hex cushion, a lighter layer up-left, drips over the front edges
+    const edge = [];
+    for (let i = 0; i < 6; i++) { const a = top[i], b = top[(i + 1) % 6]; for (let j = 0; j < 3; j++) { const t = j / 3, w = (R() - .5) * 1.8; edge.push([a[0] + (b[0] - a[0]) * t + w, a[1] + (b[1] - a[1]) * t + w * .6]); } }
+    out.push(Pa(smooth(edge), { fill: mo.d, stroke: mo.o, 'stroke-width': 1.7, 'stroke-linejoin': 'round' }));
+    out.push(Pa(smooth(edge.map(([x, y]) => [x * .82 - 1.6, (y + lift) * .8 - lift - 1.6])), { fill: mo.l, opacity: .75 }));
+    for (const [A, B] of [[top[3], top[2]], [top[2], top[1]]]) for (let j = 0; j < 3; j++) {
+      const u = (j + .25 + R() * .5) / 3, x = A[0] + (B[0] - A[0]) * u, y = A[1] + (B[1] - A[1]) * u;
+      out.push(El(x, y + 1.4, 1.9 + R() * .7, 2.2 + R() * 1.3, { fill: mo.d, stroke: mo.o, 'stroke-width': .9 }));
+    }
+    // round clumps of moss all over, back to front: darker rim, a light top
+    const cl = [];
+    for (let i = 0; i < 15; i++) {
+      let x, y;
+      do { x = (R() * 2 - 1) * K * .8; y = (R() * 2 - 1) * K * .8; } while (!(Math.abs(x) < K * .8 * .866 && Math.abs(y) + Math.abs(x) * .577 < K * .8));
+      y = y * TILT - lift;
+      const r = 2.4 + R() * 2.4, t = R() < .3 ? tone(light(mc, .12), .5, .12, .2) : mo;
+      cl.push([y, El(x, y + .5, r * 1.3, r * .88, { fill: t.o, opacity: .9 }) + El(x, y, r * 1.08, r * .7, { fill: t.d }) + El(x - r * .28, y - r * .3, r * .6, r * .34, { fill: t.h, opacity: .55 })]);
+    }
+    cl.sort((a, b) => a[0] - b[0]).forEach(c => out.push(c[1]));
+    if (R() < .6) { const x = (R() - .5) * K * .9, y = (R() - .3) * K * .35 - lift; out.push(pebble(x, y, .55)); }
+    for (let i = 0; i < 7; i++) out.push(Ci((R() - .5) * K * 1.3, (R() - .5) * K * .6 - lift, .5 + R() * .4, { fill: i % 2 ? mo.h : '#fff6c0', opacity: .55 }));
     return out.join('');
   }
-  // Face up: the stone is dug away to a patch of dirt, darker where it dips at the back, with clods on the rim.
+  // Face up: the moss and stone are dug away to a patch of dirt, darker where it dips at the back, with clods on the rim.
   function dugDirt(R) {
     const so = tone('#8d5b34', .5, .12, .14), w = 16 + R() * 2, h = 9.5 + R(), rim = lumpy(R, w, h, .92, 1.06, 0, 10);
     const out = [Pa(smooth(rim), { fill: so.o, stroke: so.o, 'stroke-width': 2.2, 'stroke-linejoin': 'round' }), Pa(smooth(rim), { fill: so.d })];
@@ -370,16 +382,17 @@
       const moss = tone('#557a3c');
       for (let i = 0; i < 5; i++) { const [x, y] = inHex(30); out.push(El(x, y, 6 + R() * 5, (3 + R() * 2.5), { fill: moss.d, opacity: .8 }) + El(x - 1, y - .8, 4 + R() * 3, 2 + R(), { fill: moss.l, opacity: .7 })); }
       for (let i = 0; i < 4; i++) { const [x, y] = inHex(30); out.push(mushroom(x, y + 2, .55, '#7fd6c8')); }
+    } else if (!o.up) {
+      out.push(mossCover(R, ring, vc));
     } else {
-      // grass on the rim, then the middle: dug dirt (explored) or a mossy stone (face down); rim things behind the
-      // middle are drawn first so the stone stands in front of them
+      // grass on the rim, then dug dirt in the middle; rim things behind the dirt are drawn first
       for (let i = 0; i < 9; i++) { const a = R() * 360 * RAD, rr = 19 + R() * 12, x = Math.cos(a) * rr, y = Math.sin(a) * rr * TILT; out.push(Pa(D`M${x},${y} q.8,-2.4 2.2,-3.4`, { fill: 'none', stroke: i % 2 ? tt.h : tt.o, 'stroke-width': 1, opacity: i % 2 ? .6 : .35, 'stroke-linecap': 'round' })); }
       const decoN = 2 + Math.floor(R() * 3);
       const deco = [];
       for (let i = 0; i < decoN; i++) {
         const a = R() * 360 * RAD, rr = 22 + R() * 8, x = Math.cos(a) * rr, y = Math.sin(a) * rr * TILT;
         const pick = R();
-        if (o.up && o.kind === 'spring' && i < 2) deco.push([y, flower(x, y, .8, '#9fd8ff', '#fff3a8')]);
+        if (o.kind === 'spring' && i < 2) deco.push([y, flower(x, y, .8, '#9fd8ff', '#fff3a8')]);
         else if (pick < .42) deco.push([y, tuft(x, y + 1, .8 + R() * .3, tone(mix(top, '#2f7a32', .45), .5, .1, .05))]);
         else if (pick < .72) deco.push([y, flower(x, y, .7 + R() * .2, R() < .5 ? '#ffffff' : (vc ? light(vc, .45) : '#fff6b0'))]);
         else if (pick < .88) deco.push([y, pebble(x, y, .8 + R() * .3)]);
@@ -387,7 +400,7 @@
       }
       deco.sort((a, b) => a[0] - b[0]);
       deco.filter(d => d[0] < -4).forEach(d => out.push(d[1]));
-      out.push(o.up ? dugDirt(R) : mossStone(R, ring));
+      out.push(dugDirt(R));
       deco.filter(d => d[0] >= -4).forEach(d => out.push(d[1]));
     }
     // Ring 4's outer edges: a ribbon in the sector's value colour, and pennants on the front walls
