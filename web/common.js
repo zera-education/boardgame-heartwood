@@ -1,4 +1,4 @@
-// Shared helpers: API calls, live updates, timers and small World Tree lookups.
+// Shared helpers: API calls, live updates, timers and small Heartwood lookups.
 // The Keeper screen's board drawing lives in board.html; phones only use what is here.
 const HW = {
   code: (new URLSearchParams(location.search).get('g') || '').toUpperCase(),
@@ -156,7 +156,7 @@ const HW = {
     return x ? `${x.icon} ${x.name}` : '';
   },
 
-  // ---- World Tree lookups ----
+  // ---- Heartwood lookups ----
   WEATHER: { sun: ['☀️', 'Sun'], rain: ['🌧️', 'Rain'], fog: ['🌫️', 'Fog'] },
   // Names come from the view (view.stages / view.ringDecks); these are the fallbacks.
   STAGES: ['', 'Seeded', 'Sprout', 'Sapling', 'Big Tree'],

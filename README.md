@@ -1,6 +1,6 @@
 # Heartwood (digital)
 
-The digital Heartwood board game. Its current design is **World Tree**: a cooperative forest game for 6 to 12 school
+The digital **Heartwood** board game: a cooperative forest game for 6 to 12 school
 leaders, played in one room around an animated Keeper screen. The team explores a face-down forest of 61 hexes, grows a
 Big Tree in each of the six ZERAOS value sectors, harvests fruit while telling stories, finds three treasures and
 gathers on the World Tree in the centre. Its purpose: leaders get to know each other while working as one team. There

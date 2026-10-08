@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>World Tree · Keeper</title>
+<title>Heartwood · Keeper</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E🌳%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Fonts load without blocking: the game runs on a school Wi-Fi that may have no internet. -->
@@ -976,7 +976,7 @@ function render(v) {
 function renderTopLeft(v) {
   const playing = ['turn', 'guess', 'chain', 'end'].includes(v.phase) && v.round;
   const breath = v.breathCount || 0;
-  let h = `<span class="k-sprig tr">${I.sprig(54, true)}</span><div class="k-logo">${I.world(v.result === 'won', 58)}<div><div class="k-title">World Tree</div>
+  let h = `<span class="k-sprig tr">${I.sprig(54, true)}</span><div class="k-logo">${I.world(v.result === 'won', 58)}<div><div class="k-title">Heartwood</div>
     <div class="k-code">Game <b>${esc(v.code)}</b>${v.isHost ? '' : ' · <span class="k-vo">view only</span>'}</div></div></div>
     <div class="k-phase">${esc(HW.phaseTitle(v))}${playing && v.phase === 'turn' ? `<small> · Tide ${v.tide || 0}</small>` : ''}</div>`;
   if (v.phase === 'turn') h += `<div class="k-breath" title="Dead leaves the next Forest Tide blows onto the forest"><span class="k-lab">Forest Breath</span>
@@ -1223,7 +1223,7 @@ function lobbyHTML(v) {
   const roles = v.roles.length ? v.roles : [...Array(9)].map((_, k) => ({ type: k + 1, name: `Type ${k + 1}`, text: '' }));
   // two side panels over the live map: joining on the left, the team on the right
   let h = `<div class="k-panel k-lob-l"><span class="k-sprig tl big">${I.sprig(80)}</span>
-    <div class="k-lob-title">${I.world(false, 120)}<div><h1>World Tree</h1><p>The forest is asleep. Gather the team.</p></div></div>
+    <div class="k-lob-title">${I.world(false, 120)}<div><h1>Heartwood</h1><p>The forest is asleep. Gather the team.</p></div></div>
     <img class="k-qr" src="/api/qr?u=${encodeURIComponent(joinUrl)}" alt="QR code to join">
     <p class="k-scan">Scan to join, or open</p><div class="k-url">${esc(bare(joinUrl))}</div>
     <p class="k-muted">or open <b>${esc(bare(origin))}</b> and enter</p><div class="k-bigcode">${esc(v.code)}</div>

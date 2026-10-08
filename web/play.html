@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#14281d">
-<title>World Tree · Player</title>
+<title>Heartwood · Player</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2213%22 r=%2211%22 fill=%22%232f9a50%22 stroke=%22%231f5a30%22 stroke-width=%222.5%22/%3E%3Crect x=%2213%22 y=%2219%22 width=%226%22 height=%2211%22 rx=%222%22 fill=%22%238a5636%22/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Loaded without blocking: with no internet at the venue the page still works in system fonts. -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@400;600;700;800;900&display=swap" media="print" onload="this.media='all'">
 <style>
-/* The phone page for World Tree, in the Sleeping Forest toon style (docs/plan/toon-art/build-contract.md).
+/* The phone page for Heartwood, in the Sleeping Forest toon style (docs/plan/toon-art/build-contract.md).
    Self-contained on purpose: style.css belongs to the Keeper's full-screen board, so nothing here depends on it.
    Toon rules: thick coloured outlines (a darker shade of the fill, never black), a light layer on top, one
    gloss, chunky buttons with a pressed lip, springy overshoot. Lilita One for titles and numbers, Nunito to read. */
@@ -604,7 +604,7 @@ function render(v) {
 function renderEntry(v) {
   $('entry').hidden = false; $('game').hidden = true;
   HW.patch($('hero'), `<div class="scene">${treeScene({ awake: false, treasures: [], fruit: 0 }, 200)}</div>
-    <h1>World Tree</h1><p>Game <b>${esc(v.code || HW.code)}</b> · The forest is asleep. Wake it together.</p>`);
+    <h1>Heartwood</h1><p>Game <b>${esc(v.code || HW.code)}</b> · The forest is asleep. Wake it together.</p>`);
   const mine = Object.entries(loadSeats()).filter(([id]) => v.players.some(p => p.id === id));
   $('seatsBox').hidden = !mine.length;
   HW.patch($('seatsBox'), `${sign('Continue on this device')}` + mine.map(([id]) => { const p = player(id);
