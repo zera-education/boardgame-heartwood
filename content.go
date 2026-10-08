@@ -134,7 +134,7 @@ type Role struct {
 }
 
 var Roles = []Role{
-	{1, "Reformer", "integrity", "When you Clear, remove 2 layers (still 1 action in rain)."},
+	{1, "Reformer", "integrity", "One Clear sweeps a layer of dead leaves off your hex and all 6 hexes around it."},
 	{2, "Helper", "care", "Water, Tend or Clear a hex next to you without standing on it."},
 	{3, "Achiever", "drive", "After you Sow, the hex grows straight to Sprout."},
 	{4, "Individualist", "depth", "When you Explore, the board shows which face-down hexes around you hold something (not what)."},

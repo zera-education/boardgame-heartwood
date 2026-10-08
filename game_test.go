@@ -687,17 +687,37 @@ func TestRoles(t *testing.T) {
 	reformer, helper, achiever, individualist, investigator := x.ps[0], x.ps[1], x.ps[2], x.ps[3], x.ps[4]
 	enthusiast, challenger, plain := x.ps[6], x.ps[7], x.ps[8]
 
-	// Reformer: clears 2 layers, 1 action even in rain.
+	// Reformer: one Clear sweeps a layer off their hex and every hex around it.
 	h := ringHexes(3, 2)[1]
-	g.Tiles[h] = &Tile{Up: true, Kind: "empty", Leaves: 2}
-	reformer.Pos = Adj[h][0]
-	g.Weather[2] = "rain"
-	g.Weather[Board[reformer.Pos].Sector] = "rain"
-	x.turnOf(reformer)
-	x.must(x.as(reformer, "clear", Action{Hex: h}))
-	if g.Tiles[h].Leaves != 0 || g.Turn.Actions != 1 {
-		t.Fatalf("Reformer clear: leaves %d actions %d", g.Tiles[h].Leaves, g.Turn.Actions)
+	reformer.Pos = h
+	for _, j := range append([]int{h}, Adj[h]...) {
+		g.Tiles[j].Leaves = 0
 	}
+	far := ringHexes(4, 5)[0]
+	g.Tiles[h].Leaves, g.Tiles[Adj[h][0]].Leaves, g.Tiles[Adj[h][1]].Leaves, g.Tiles[far].Leaves = 1, 2, 1, 1
+	for s := range 6 {
+		g.Weather[s] = "sun"
+	}
+	x.turnOf(reformer)
+	x.must(x.as(reformer, "clear", Action{Hex: Adj[h][0]}))
+	if g.Tiles[h].Leaves != 0 || g.Tiles[Adj[h][0]].Leaves != 1 || g.Tiles[Adj[h][1]].Leaves != 0 || g.Tiles[far].Leaves != 1 || g.Turn.Actions != 1 {
+		t.Fatalf("Reformer sweep: leaves %d %d %d %d, actions %d", g.Tiles[h].Leaves, g.Tiles[Adj[h][0]].Leaves, g.Tiles[Adj[h][1]].Leaves, g.Tiles[far].Leaves, g.Turn.Actions)
+	}
+	if e := x.lastEvent("sweep"); e["hex"] != h || len(e["hexes"].([]int)) != 3 {
+		t.Fatalf("sweep event %v", e)
+	}
+	if !strings.HasSuffix(g.Log[len(g.Log)-1], "sweeps dead leaves off 3 hexes.") {
+		t.Fatalf("log %q", g.Log[len(g.Log)-1])
+	}
+	g.Weather[Board[h].Sector] = "rain" // 2 actions in the rain, as for anyone
+	x.fails(x.as(reformer, "clear", own), "a sweep in the rain with 1 action left")
+	x.turnOf(reformer)
+	x.must(x.as(reformer, "clear", own))
+	if g.Tiles[Adj[h][0]].Leaves != 0 || g.Turn.Actions != 0 {
+		t.Fatalf("rain sweep: leaves %d actions %d", g.Tiles[Adj[h][0]].Leaves, g.Turn.Actions)
+	}
+	x.turnOf(reformer)
+	x.fails(x.as(reformer, "clear", own), "a sweep with no leaves around")
 	x.calm()
 
 	// Helper: Water and Tend a neighbour; Clear works on a neighbour for anyone.

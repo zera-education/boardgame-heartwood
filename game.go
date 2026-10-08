@@ -1067,6 +1067,9 @@ func (g *Game) tend(me *Player, hex int) error {
 }
 
 func (g *Game) clear(me *Player, hex int) error {
+	if me.has(Reformer) {
+		return g.sweep(me)
+	}
 	if hex < 0 {
 		hex = me.Pos
 	}
@@ -1078,19 +1081,43 @@ func (g *Game) clear(me *Player, hex int) error {
 		return errors.New("no dead leaves there")
 	}
 	cost := 1
-	if g.wx(hex) == "rain" && !me.has(Reformer) {
+	if g.wx(hex) == "rain" {
 		cost = 2
 	}
 	if err := g.spend(cost); err != nil {
 		return err
 	}
-	n := 1
-	if me.has(Reformer) {
-		n = 2
-	}
-	t.Leaves = max(0, t.Leaves-n)
+	t.Leaves--
 	g.event("clear", Event{"hex": hex})
 	g.logf("%s clears dead leaves.", me.Name)
+	return nil
+}
+
+// sweep is a Reformer's Clear (El, 2026-10-09): one layer of dead leaves off
+// their own hex and every hex around it, for 1 action (2 when their own hex is
+// in the rain, as for anyone).
+func (g *Game) sweep(me *Player) error {
+	var hexes []int
+	for _, j := range append([]int{me.Pos}, Adj[me.Pos]...) {
+		if t := g.tile(j); t != nil && t.Leaves > 0 {
+			hexes = append(hexes, j)
+		}
+	}
+	if len(hexes) == 0 {
+		return errors.New("no dead leaves on your hex or around it")
+	}
+	cost := 1
+	if g.wx(me.Pos) == "rain" {
+		cost = 2
+	}
+	if err := g.spend(cost); err != nil {
+		return err
+	}
+	for _, j := range hexes {
+		g.Tiles[j].Leaves--
+	}
+	g.event("sweep", Event{"hex": me.Pos, "hexes": hexes})
+	g.logf("%s sweeps dead leaves off %s.", me.Name, plural(len(hexes), "hex", "hexes"))
 	return nil
 }
 

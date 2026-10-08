@@ -62,8 +62,9 @@ Keep the house style: plain HTML/JS/CSS, no build step, no frameworks, dark fore
     Grass).
   - **Water** (costs 1 water): Seeded → Grass, Grass → Shrub. Own hex, or a neighbour for the Helper.
   - **Tend:** Shrub → Big Tree. Own hex, or a neighbour for the Helper.
-  - **Clear:** remove 1 layer of leaves from your hex or a neighbour (Reformer: 2 layers). 2 actions in rain
-    (Reformer: still 1).
+  - **Clear:** remove 1 layer of leaves from your hex or a neighbour. 2 actions in rain. Reformer (El,
+    2026-10-09): sweeps instead, 1 layer off their own hex and every neighbour at once (event `sweep {hex, hexes}`);
+    2 actions when their own hex is in rain.
   - **Harvest:** on an unsealed Big Tree, not in rain, not harvested since the last Tide, carrying < 2 fruit →
     +1 fruit; share kind `harvest`: "Tell us a story from your own life about {Value}." with the value's
     tagline, where Value = the sector of the tree.

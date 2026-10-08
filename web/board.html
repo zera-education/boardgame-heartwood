@@ -177,7 +177,7 @@ function targetsFor(v, p, mode) {
     .filter(i => v.turn.actions >= clearCost(v, p, i));
   return [];
 }
-const clearCost = (v, p, i) => (wxOf(v, i) === 'rain' && !has(p, 1) ? 2 : 1);
+const clearCost = (v, p, i) => (wxOf(v, i) === 'rain' ? 2 : 1);
 
 // What the current player can do, with the reason when they can't.
 function turnOptions(v, p) {
@@ -203,6 +203,11 @@ function turnOptions(v, p) {
   o.clear.targets = ct;
   o.clear.cost = near.length && near.every(i => clearCost(v, p, i) === 2) ? 2 : 1;
   o.clear.wx = o.clear.cost > 1 ? 'rain' : '';
+  if (has(p, 1)) {
+    // a Reformer's Clear sweeps a layer off their hex and every hex around it, in one go (2 actions in the rain)
+    const cost = w === 'rain' ? 2 : 1;
+    o.clear = Object.assign(need(cost, near.length, 'no leaves here or around'), { targets: near.length ? [pos] : [], cost, wx: cost > 1 ? 'rain' : '' });
+  }
   o.harvest = need(1, tile && tile.stage === 4 && tile.leaves < 2 && w !== 'rain' && !tile.harvested && p.fruit < HW.MAX_FRUIT,
     !tile || tile.stage !== 4 ? 'no Big Tree here' : tile.leaves >= 2 ? 'sealed by leaves' : w === 'rain' ? 'not in the rain'
       : tile.harvested ? 'picked since the Tide' : 'carrying 2 fruit');
@@ -678,7 +683,7 @@ function takeEvents(v) {
   lastEv = maxId;
   return fresh;
 }
-const DUR = { move: 640, enter: 950, flip: 780, grow: 760, harvest: 1250, clear: 900, drink: 1350, take: 1250, pass: 1050, place: 1500, treasure: 4300, wake: 3800, dry: 2600, hint: 1100 };
+const DUR = { move: 640, enter: 950, flip: 780, grow: 760, harvest: 1250, clear: 900, drink: 1350, take: 1250, pass: 1050, place: 1500, treasure: 4300, wake: 3800, dry: 2600, hint: 1100, sweep: 1400 };
 const tideDur = e => 2500 + (e.leaves || []).length * 330 + 900;
 const durOf = e => (e.type === 'tide' ? tideDur(e) : DUR[e.type] || 500) * (e.type === 'move' && e.steps === 2 ? 1.6 : 1);
 
@@ -705,6 +710,7 @@ function plan(v, prev, fresh) {
       case 'hint': (B.adj[e.hex] || []).forEach(j => hold.obj.set(j, until(e.dt))); break;
       case 'grow': hold.obj.set(e.hex, until(e.dt)); break;
       case 'clear': hold.obj.set(e.hex, until(e.dt)); break;
+      case 'sweep': (e.hexes || []).forEach(i => hold.obj.set(i, until(e.dt))); break;
       case 'harvest': hold.obj.set(e.hex, until(e.dt)); ovr[e.pid] = { fruit: P(e.pid)?.fruit ?? 0 }; break;
       case 'take': hold.obj.set(e.hex, until(e.dt)); ovr[e.pid] = { treasure: '' }; break;
       case 'drink': ovr[e.pid] = { water: P(e.pid)?.water ?? 0 }; break;
@@ -947,6 +953,13 @@ const ANIM = {
     play(sw, [{ opacity: 1, transform: `translate(${x}px,${y}px)` }, { opacity: 0, transform: `translate(${x + 10}px,${y - 4}px)` }], { duration: 520, delay: 200 });
     toss(leafPart, x, y - 4, 9, { speed: 80, grav: 30, spread: 2.6, spin: 1100, ms: 820, stagger: 22, delay: 80 });
     setTimeout(() => { release(hold.obj, i); if (B.ow[i].innerHTML) popObj(i, 0, .9, 380); }, 160);
+  },
+  // a Reformer's sweep: a ring of wind from their hex, then a layer of leaves lifts off every hex around
+  sweep(v, e) {
+    const [x, y] = B.xy[e.hex];
+    burst(x, y, '#fff8e0', 96, 850, 0, 4);
+    burst(x, y, '#fff8e0', 70, 700, 120, 2.5);
+    (e.hexes || []).forEach((i, k) => setTimeout(() => ANIM.clear(v, { hex: i }), 140 + k * 70));
   },
   drink(v, e) {
     const i = e.hex, [x, y] = B.xy[i], to = photoXY(e.pid), p = HW.player(e.pid);
@@ -1464,7 +1477,7 @@ const SLIDE = {
   tide: v => ({ title: 'What stands in our way: dead leaves, running dry', sub: 'At every Forest Tide the wind blows dead leaves in from the edge, toward the centre: 2 drifts at first, up to 6 later.', body: `
     <div class="k-br-row three">
       ${hurdle(pic('leaves:1:tile', 104), 'Leaves on a plant', 'A growing plant drops back one step. A Seeded hex loses its seed.', 'Stand on it. A Loyalist keeps the 7 hexes around them safe. Grow it to a Big Tree: Big Trees never drop. The Investigator sees where the next leaves land.')}
-      ${hurdle(pic('leaves:2:tile', 104), 'A sealed hex', 'Two layers seal a hex: nobody can walk in, sow, water, tend or harvest there.', 'Clear a layer from your hex or the one next to it (a Reformer clears 2). A Challenger can still walk in.')}
+      ${hurdle(pic('leaves:2:tile', 104), 'A sealed hex', 'Two layers seal a hex: nobody can walk in, sow, water, tend or harvest there.', 'Clear a layer from your hex or the one next to it (a Reformer sweeps their hex and all 6 around at once). A Challenger can still walk in.')}
       ${hurdle(I.drop(96, true), 'Running dry', 'At 0 water you can\'t move. If all of us run dry at the same time, the game is over.', 'Find the springs early and drink before you run low. On your turn, pass water to a teammate on your hex.')}
     </div>` }),
   powers: v => {

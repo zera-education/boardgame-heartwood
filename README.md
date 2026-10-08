@@ -78,7 +78,7 @@ actor's new view, so taps feel instant. Clients keep the newest view by version 
 socket is down. Screens redraw only the parts that changed.
 
 Each view also carries `events` (the last 80, with increasing ids: `move`, `flip`, `grow`, `harvest`, `clear`,
-`take`, `drink`, `pass`, `place`, `treasure`, `tide`, `wake`, `dry`, `hint`). The Keeper screen plays the events it hasn't seen
+`take`, `drink`, `pass`, `place`, `treasure`, `tide`, `wake`, `dry`, `hint`, `sweep`). The Keeper screen plays the events it hasn't seen
 yet as animation: medallions hop, tiles flip, plants grow, leaves drift in at the Forest Tide. Private results (the
 Investigator's look) go only into that player's `me`, never into events. An Individualist's hint is public: a face-down
 tile carries `hint: "something" | "nothing"`, never its kind.
@@ -190,7 +190,7 @@ The Keeper gives each player 1 to 3 types in the lobby; several players may hold
 
 | Type | Role | Effect |
 |---|---|---|
-| 1 | Reformer | Clear removes 2 layers of dead leaves (still 1 action in rain) |
+| 1 | Reformer | One Clear sweeps a layer of dead leaves off your hex and all 6 around it (2 actions when your hex is in rain) |
 | 2 | Helper | Water or Tend a hex next to you without standing on it |
 | 3 | Achiever | After you Sow, the hex grows straight to Sprout |
 | 4 | Individualist | When you Explore, the board shows which face-down hexes around you hold something, not what (`Tile.Hint`) |

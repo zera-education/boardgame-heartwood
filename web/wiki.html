@@ -418,7 +418,7 @@ const W = [
   body: `
 <p>1 [[action]] (2 if that hex is in [[rain]]): remove 1 layer of [[dead-leaves]] from your hex or a hex next to you.</p>
 <p>Because you can clear the hex next to you, you can open a [[sealed]] hex from outside.</p>
-<p>The [[reformer]] removes 2 layers at once, and it costs them 1 action even in rain.</p>` },
+<p>The [[reformer]] sweeps instead: one Clear takes a layer off their own hex and every hex around it.</p>` },
 
 { id: 'harvest', cat: 'actions', icon: 'icon:harvest', title: 'Harvest',
   short: 'Take a fruit from the Big Tree you stand on, and tell a story.',
@@ -543,7 +543,7 @@ const W = [
 <ul>
   <li>At the [[forest-tide]], every Seeded and Sprout hex in a rainy [[sector]] grows one step (see [[plant]]), unless it is [[sealed]].</li>
   <li>No [[harvest]] in rain.</li>
-  <li>[[clear]] costs 2 actions in rain (the [[reformer]] still pays 1).</li>
+  <li>[[clear]] costs 2 actions in rain (for the [[reformer]]'s sweep: when their own hex is in rain).</li>
   <li>Nobody dries out in rain. But rain does not fill your [[water]] either.</li>
 </ul>` },
 
@@ -738,7 +738,7 @@ const W = [
 <p>Roles are <b>always on</b>: use them as often as you like. Your phone lists yours. Say it aloud when you use one, so the Keeper can tap it.</p>
 <div class="tablewrap"><table>
 <tr><th>Type</th><th>What it does</th></tr>
-<tr><td>1 [[reformer]]</td><td>Clear removes 2 layers (1 action even in rain).</td></tr>
+<tr><td>1 [[reformer]]</td><td>One Clear sweeps a layer off your hex and the 6 around it.</td></tr>
 <tr><td>2 [[helper]]</td><td>Water or Tend a hex next to you.</td></tr>
 <tr><td>3 [[achiever]]</td><td>Your seed grows straight to Sprout.</td></tr>
 <tr><td>4 [[individualist]]</td><td>Explore shows which hexes around you hold something.</td></tr>
@@ -750,10 +750,13 @@ const W = [
 </table></div>` },
 
 { id: 'reformer', cat: 'roles', icon: 'role:1', title: 'Reformer',
-  short: 'Type 1 · integrity. Clear removes 2 layers.',
+  short: 'Type 1 · integrity. One Clear sweeps your hex and the 6 around it.',
   body: `
-<div class="box"><p><b>When you [[clear]], remove 2 layers of [[dead-leaves]].</b> It costs you 1 action, even in [[rain]].</p></div>
-<p>One clear can open a [[sealed]] hex completely.</p>` },
+<div class="box"><p><b>One [[clear]] sweeps a layer of [[dead-leaves]] off your hex and all 6 hexes around it.</b></p></div>
+<ul>
+  <li>1 action, or 2 when your own hex is in [[rain]].</li>
+  <li>Every [[sealed]] hex around you opens to one layer, and every hex with one layer is clear.</li>
+</ul>` },
 
 { id: 'helper', cat: 'roles', icon: 'role:2', title: 'Helper',
   short: 'Type 2 · care. Water or Tend a hex next to you.',
