@@ -437,7 +437,8 @@
       const s = v.share;
       if (S.cur && (!s || s.idx !== S.cur.idx || !here(v))) {
         const off = v.recording === false;
-        stopClip(S.cur, !off);
+        // a card swapped for another ("not this one"): its clip holds no story, so it is dropped
+        stopClip(S.cur, !off && !(s && s.was === S.cur.idx));
         if (off && !S.switching) HW.toast("Recording is off: this story isn't kept.");
       }
       if (here(v) && s && !S.cur && !S.starting && !S.skip.has(s.idx) && micUsable() && Date.now() >= S.startAfter) startClip(s);

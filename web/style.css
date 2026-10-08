@@ -258,6 +258,11 @@ body.k-turning #k-map, body.k-turning .k-view button { pointer-events: none; }
 .k-cost svg { width: calc(var(--pw) * .19); height: calc(var(--pw) * .19); }
 .k-wxc { position: absolute; top: calc(var(--pw) * .08); left: 2px; line-height: 0; }
 .k-wxc svg { width: calc(var(--pw) * .22); height: calc(var(--pw) * .22); }
+/* a keyboard shortcut (M, E, Enter) in the packet's top-left corner, below the weather when there is one */
+.k-key { position: absolute; top: calc(var(--pw) * .1); left: 3px; min-width: calc(var(--pw) * .2); height: calc(var(--pw) * .2); padding: 0 2px; box-sizing: border-box;
+  display: grid; place-items: center; font: 800 calc(var(--pw) * .12)/1 var(--read); color: #5a3d24; background: rgba(255, 250, 238, .85);
+  border: 1px solid rgba(90, 61, 36, .45); border-bottom-width: 2px; border-radius: 4px; }
+.k-wxc ~ .k-key { top: calc(var(--pw) * .34); }
 .k-free { position: absolute; top: calc(var(--pw) * .1); right: 3px; writing-mode: vertical-rl; font: 800 calc(var(--pw) * .11)/1 var(--read); color: #6b4a2e; text-transform: uppercase; letter-spacing: .06em; }
 .k-pk:hover { transform: translateY(-5px); }
 .k-pk:active { transform: translateY(3px); box-shadow: 0 2px 0 #2e1709, 0 3px 6px rgba(0, 0, 0, .35); }
@@ -341,6 +346,7 @@ body.k-turning #k-map, body.k-turning .k-view button { pointer-events: none; }
 .k-mate { display: inline-flex; align-items: center; gap: 6px; background: #fffaf0; border: 3px solid var(--paper-line); border-radius: 99px; padding: 3px 12px 3px 4px; cursor: pointer; color: var(--ink); font-size: 16px; }
 .k-mate.sel { border-color: #4cab37; background: #e6f7da; box-shadow: 0 0 0 3px rgba(92, 184, 74, .35); }
 .k-mate.to { cursor: default; padding-right: 4px; }
+.k-bring .k-mate.off { opacity: .55; filter: grayscale(.7); border-style: dashed; }
 .k-item { background: #fff; border: 3px solid #8a5a2c; border-radius: 14px; padding: 3px 6px; cursor: pointer; box-shadow: 0 4px 0 #8a5a2c; line-height: 0; }
 .k-item:active { transform: translateY(3px); box-shadow: 0 1px 0 #8a5a2c; }
 .k-item.no, .k-item:disabled { opacity: .35; filter: grayscale(1); cursor: not-allowed; }
@@ -734,3 +740,8 @@ body.k-drawer-open #k-drawer { transform: none; }
 .kx #toast { background: #fff6df; color: var(--ink); border: 3px solid #5a3418; border-radius: 16px; font-weight: 800; }
 .kx #toast.bad { background: #ffe3dc; border-color: #9a2a1f; color: #5a1610; }
 .kx #toast.ok { background: #e6f7da; border-color: #2c6a1f; color: #1f4a18; }
+
+/* an Individualist's hint on a face-down hex: something lies here */
+.k-glint { animation: k-twinkle 1.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes k-twinkle { 0%, 100% { opacity: .75; transform: scale(.92); } 50% { opacity: 1; transform: scale(1.08); } }
+@media (prefers-reduced-motion: reduce) { .k-glint { animation: none; } }

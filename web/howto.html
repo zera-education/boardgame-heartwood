@@ -260,7 +260,7 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
     </div>
     <div class="card">
       <h3><i class="art-i" data-art="icon:keeper"></i> The Keeper</h3>
-      <p>The facilitator. The Keeper is not a player. The Keeper runs the big screen, gives each player 1 to 3 Enneagram roles, starts the game, taps what players say, closes each story with <b>Done sharing</b>, can start a timer, and leads the finale.</p>
+      <p>The facilitator. The Keeper is not a player. The Keeper runs the big screen, gives each player 1 to 3 Enneagram roles, starts the game, taps what players say, closes each story with <b>Done sharing</b>, can start a timer, and leads the finale. On a laptop, keys do the commonest taps: <b>M</b> Move, <b>E</b> Explore, <b>Enter</b> End turn, then <b>1</b> to <b>9</b> for a numbered hex.</p>
       <p class="small" style="margin:0">The Keeper may pause a story at any time, and can give a player a rejoin code if their phone changes.</p>
     </div>
   </div>
@@ -530,28 +530,29 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
     <li><b>Same hex:</b> you can always pass to someone on your hex.</li>
     <li><b>Limits:</b> the teammate can hold 5 water, 2 fruit and 1 treasure at most.</li>
   </ul>
-  <h3><i class="art-i" data-art="role:9"></i> The Peacemaker</h3>
-  <p>A <a href="#roles">Peacemaker</a> can pass across hexes: to, and from, a teammate on a hex next to theirs. Nobody else can.</p>
+  <h3><i class="art-i" data-art="role:9"></i> The Peacemaker's chain</h3>
+  <p>Across hexes you can pass only in a <a href="#roles">Peacemaker</a>'s chain: teammates linked to the Peacemaker hex by hex, each on or next to the next one's hex. Anyone in the chain can pass to a teammate on a hex next to theirs, one hex at a time, never further.</p>
   <div class="grid two">
     <div class="card">
-      <svg class="passfig" viewBox="0 0 160 60" role="img" aria-label="Two neighbouring hexes. Player A on one, the Peacemaker on the other. A and the Peacemaker can pass to each other.">
-        <polygon points="78,16 78,44 54,58 30,44 30,16 54,2" fill="#24402f" stroke="#7bc47f" stroke-width="2"/>
-        <polygon points="130,16 130,44 106,58 82,44 82,16 106,2" fill="#24402f" stroke="#7bc47f" stroke-width="2"/>
-        <circle cx="54" cy="30" r="11" fill="#1e88e5" stroke="#fff" stroke-width="2"/><text x="54" y="31" fill="#fff" font-size="12" font-weight="800" text-anchor="middle" dominant-baseline="central">A</text>
-        <g transform="translate(106,30)" data-art="role:9" data-size="27"></g>
-      </svg>
-      <p class="small" style="margin:0"><b>Yes:</b> A and the Peacemaker stand on hexes next to each other, so they can pass to each other, either way: each gives on their own turn.</p>
-    </div>
-    <div class="card">
-      <svg class="passfig" viewBox="0 0 160 60" role="img" aria-label="Three hexes in a row. Player A, the Peacemaker in the middle, and player C. A and C cannot pass to each other.">
+      <svg class="passfig" viewBox="0 0 160 60" role="img" aria-label="Three hexes in a row: player A, player B and the Peacemaker, each next to the next. A can pass to B.">
         <polygon points="52,16 52,44 28,58 4,44 4,16 28,2" fill="#24402f" stroke="#7bc47f" stroke-width="2"/>
         <polygon points="104,16 104,44 80,58 56,44 56,16 80,2" fill="#24402f" stroke="#7bc47f" stroke-width="2"/>
         <polygon points="156,16 156,44 132,58 108,44 108,16 132,2" fill="#24402f" stroke="#7bc47f" stroke-width="2"/>
-        <circle cx="28" cy="30" r="11" fill="#1e88e5" stroke="#fff" stroke-width="2"/><text x="28" y="31" fill="#fff" font-size="12" font-weight="800" text-anchor="middle" dominant-baseline="central">A</text>
-        <g transform="translate(80,30)" data-art="role:9" data-size="27"></g>
-        <circle cx="132" cy="30" r="11" fill="#43a047" stroke="#fff" stroke-width="2"/><text x="132" y="31" fill="#fff" font-size="12" font-weight="800" text-anchor="middle" dominant-baseline="central">C</text>
+        <circle cx="28" cy="30" r="11" fill="#1e88e5" stroke="#fff" stroke-width="2"/><text x="28" y="31" fill="#fff" font-size="12" font-weight="800" text-anchor="middle" dominant-baseline="central">A</text><circle cx="80" cy="30" r="11" fill="#43a047" stroke="#fff" stroke-width="2"/><text x="80" y="31" fill="#fff" font-size="12" font-weight="800" text-anchor="middle" dominant-baseline="central">B</text>
+        <g transform="translate(132,30)" data-art="role:9" data-size="27"></g>
       </svg>
-      <p class="small" style="margin:0"><b>No:</b> A and C can't pass to each other through the Peacemaker. Each of them can pass with the Peacemaker.</p>
+      <p class="small" style="margin:0"><b>Yes:</b> A, B and the Peacemaker stand in a line, each next to the next: a chain. A can pass to B, and B to the Peacemaker, each on their own turn.</p>
+    </div>
+    <div class="card">
+      <svg class="passfig" viewBox="0 0 212 60" role="img" aria-label="Four hexes in a row: player A, player B, an empty hex, and the Peacemaker. The gap breaks the chain, so A cannot pass to B.">
+        <polygon points="52,16 52,44 28,58 4,44 4,16 28,2" fill="#24402f" stroke="#7bc47f" stroke-width="2"/>
+        <polygon points="104,16 104,44 80,58 56,44 56,16 80,2" fill="#24402f" stroke="#7bc47f" stroke-width="2"/>
+        <polygon points="156,16 156,44 132,58 108,44 108,16 132,2" fill="#24402f" stroke="#7bc47f" stroke-width="2"/>
+        <polygon points="208,16 208,44 184,58 160,44 160,16 184,2" fill="#24402f" stroke="#7bc47f" stroke-width="2"/>
+        <circle cx="28" cy="30" r="11" fill="#1e88e5" stroke="#fff" stroke-width="2"/><text x="28" y="31" fill="#fff" font-size="12" font-weight="800" text-anchor="middle" dominant-baseline="central">A</text><circle cx="80" cy="30" r="11" fill="#43a047" stroke="#fff" stroke-width="2"/><text x="80" y="31" fill="#fff" font-size="12" font-weight="800" text-anchor="middle" dominant-baseline="central">B</text>
+        <g transform="translate(184,30)" data-art="role:9" data-size="27"></g>
+      </svg>
+      <p class="small" style="margin:0"><b>No:</b> the empty hex breaks the chain. A and B are not linked to the Peacemaker, so they pass only on the same hex.</p>
     </div>
   </div>
 </section>
@@ -631,11 +632,12 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
   <h3><i class="art-i" data-art="icon:cards"></i> Ring cards</h3>
   <p>Each ring has its own deck: <b>Light</b>, <b>Story</b> and <b>Deep</b>. The deeper the ring, the deeper the question:</p>
   <ul>
-    <li><b>Ring 3: Light.</b> <i>"What could you do for hours without noticing the time?"</i></li>
-    <li><b>Ring 2: Story.</b> <i>"Tell us about a hard time, big or small, that made you stronger."</i></li>
-    <li><b>Ring 1: Deep.</b> <i>"What makes you feel you truly belong somewhere?"</i></li>
+    <li><b>Ring 3: Light.</b> <i>"What did you want to be when you were a child?"</i></li>
+    <li><b>Ring 2: Story.</b> <i>"Tell us about a teacher who made a difference to you."</i></li>
+    <li><b>Ring 1: Deep.</b> <i>"What is a dream you still carry?"</i></li>
   </ul>
   <p>You draw a ring card <b>only the first time</b> you step into each ring, moving inward. So each player draws at most 3 ring cards in a game. If a Challenger brings you into a new ring, you draw too.</p>
+  <p><b>Not this one?</b> Say so, and you draw another card from the same deck: tap it on your phone, or the Keeper taps <span class="btn">Another question</span>. The same goes for a Heartwood question.</p>
   <h3><i class="art-i" data-art="acorn"></i> Trust acorns</h3>
   <p>You have <b>10 trust acorns</b> for the whole game. After someone else shares, pick up your phone and tap <span class="btn">Give trust <i class="art-i" data-art="acorn"></i></span> if their story moved you. One acorn per story. You cannot give trust to yourself, and there is no trust after a group moment.</p>
   <p>Trust is a gift, not a grade. It does not decide a winner. At the end, everyone sees how many acorns they received, and from how many people.</p>
@@ -678,8 +680,8 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
     </li>
     <li class="role" data-n="4">
       <div class="top"><span class="t">4</span><div><h3>Individualist</h3><span class="gift">gift: depth</span></div></div>
-      <p class="fx">When you Explore, you also <b>peek</b> at one face-down hex next to you.</p>
-      <p class="note">Only your phone shows what is there. Tell the team, or keep it for later.</p>
+      <p class="fx">When you Explore, the board shows which <b>face-down hexes around you</b> hold something.</p>
+      <p class="note">A gold glint: a spring or a treasure lies there (it doesn't say which). A faint ring: nothing. Everyone sees it on the big screen.</p>
     </li>
     <li class="role" data-n="5">
       <div class="top"><span class="t">5</span><div><h3>Investigator</h3><span class="gift">gift: insight</span></div></div>
@@ -698,13 +700,13 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
     </li>
     <li class="role" data-n="8">
       <div class="top"><span class="t">8</span><div><h3>Challenger</h3><span class="gift">gift: strength</span></div></div>
-      <p class="fx">You may <b>enter sealed hexes</b>. When you Move, you may <b>bring one teammate</b> from your hex.</p>
-      <p class="note">The teammate moves with you. If they enter a new ring, they draw its card too.</p>
+      <p class="fx">When you Move, <b>everyone standing with you</b> comes too. You may <b>enter sealed hexes</b>.</p>
+      <p class="note">Someone who wants to stay says so, and the Keeper leaves them behind. On the World Tree nobody comes unless picked. Anyone entering a new ring draws its card.</p>
     </li>
     <li class="role" data-n="9">
       <div class="top"><span class="t">9</span><div><h3>Peacemaker</h3><span class="gift">gift: harmony</span></div></div>
-      <p class="fx">You and a teammate on a <b>hex next to yours</b> can pass things to each other.</p>
-      <p class="note">See <a href="#pass">Passing</a>.</p>
+      <p class="fx"><b>Everyone in your chain</b> can pass to a teammate on a <b>hex next to theirs</b>.</p>
+      <p class="note">Your chain: teammates linked to you hex by hex. See <a href="#pass">Passing</a>.</p>
     </li>
   </ul>
 </section>
@@ -765,7 +767,8 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
         <li><i class="art-i" data-art="icon:owl"></i> The colleague you watch as their Secret Owl.</li>
         <li><i class="art-i" data-art="drop"></i><i class="art-i" data-art="fruit"></i><i class="art-i" data-art="treasure"></i> What you carry, and which rings you have reached.</li>
         <li>Your roles, as a reminder.</li>
-        <li>Your private looks: the Individualist's peek, the Investigator's Forest Breath and weather.</li>
+        <li>Your private looks: the Investigator's Forest Breath and weather.</li>
+        <li><b>Not this one</b>: when it's your ring card or Heartwood question, ask for another.</li>
         <li><i class="art-i" data-art="icon:camera"></i> <b>Your photo</b>: retake it or remove it until the game ends.</li>
         <li><i class="art-i" data-art="acorn"></i> <b>Give trust</b>, after someone else shares.</li>
         <li><i class="art-i" data-art="icon:guess"></i> Your Secret Owl guess, at the end.</li>
@@ -811,7 +814,7 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
       </div>
       <div class="blk">
         <h3>Free</h3>
-        <ul><li><i class="art-i" data-art="icon:pass"></i> Pass water, fruit or a treasure on your hex (or through a Peacemaker)</li><li><i class="art-i" data-art="worldTree:awake"></i> Placing on the World Tree happens by itself</li></ul>
+        <ul><li><i class="art-i" data-art="icon:pass"></i> Pass water, fruit or a treasure on your hex (or next door, in a Peacemaker's chain)</li><li><i class="art-i" data-art="worldTree:awake"></i> Placing on the World Tree happens by itself</li></ul>
       </div>
       <div class="blk">
         <h3>Carry</h3>

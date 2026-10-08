@@ -474,6 +474,10 @@ func buildView(g *Game, pid, secret, host string) map[string]any {
 		}
 		tiles[i] = map[string]any{"up": t.Up, "kind": kind, "treasure": tr, "stage": t.Stage, "leaves": t.Leaves,
 			"harvested": t.Harvested}
+		if t.Hint && !t.Up {
+			// an Individualist sensed it: whether something lies here, not what
+			tiles[i].(map[string]any)["hint"] = map[bool]string{true: "something", false: "nothing"}[t.Kind != "empty"]
+		}
 	}
 	treasures := []map[string]string{}
 	for _, t := range Treasures {
@@ -529,7 +533,7 @@ func buildView(g *Game, pid, secret, host string) map[string]any {
 	}
 	if s := g.openShare(); s != nil {
 		sv := map[string]any{"idx": s.Idx, "kind": s.Kind, "player": s.Player, "prompt": s.Prompt, "sub": s.Sub,
-			"trustCount": len(s.Trusted), "iGave": me != nil && s.Trusted[me.ID], "by": s.By, "seq": s.Seq, "of": s.Of}
+			"trustCount": len(s.Trusted), "iGave": me != nil && s.Trusted[me.ID], "by": s.By, "seq": s.Seq, "of": s.Of, "was": s.Was}
 		if s.Kind == "ring" {
 			sv["sub"] = s.Ring
 		}

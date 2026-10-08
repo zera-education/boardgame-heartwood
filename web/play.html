@@ -500,7 +500,7 @@ function DECK(ring, w = 64) {
       <text y="7.5" text-anchor="middle" font-family="Lilita One, Nunito, sans-serif" font-size="21" fill="${t.d}" stroke="${t.o}" stroke-width="1" paint-order="stroke">${ring}</text></g>`, '-22 -22 44 44', w);
   });
 }
-// A gold disc with a question mark: "a treasure" (a peek doesn't say which one).
+// A gold disc with a question mark: "a treasure", when it is not known which.
 const MYSTERY = (w = 30) => keep('my' + w, () => { const t = toon('#f2b32e'); return pic(`<circle r="11" fill="${t.o}"/><circle r="9.4" fill="${t.d}"/><circle cx="-1" cy="-1.2" r="7.6" fill="${t.l}"/>
   <text y="5" text-anchor="middle" font-family="Lilita One, Nunito, sans-serif" font-size="15" fill="#fff" stroke="${t.o}" stroke-width="2" paint-order="stroke">?</text><ellipse cx="-4.4" cy="-5" rx="2.4" ry="1.1" fill="#fff" opacity=".8" transform="rotate(-35 -4.4 -5)"/>`, '-13 -13 26 26', w); });
 const EMPTY = (w = 30) => keep('em' + w, () => pic('<circle r="10.5" fill="#e6cf9f" stroke="#b8955e" stroke-width="2.2" stroke-dasharray="4 3"/><circle r="4" fill="#d7ba82"/>', '-13 -13 26 26', w));
@@ -800,9 +800,12 @@ function sharePanel(v, me) {
     title = isMe ? 'Your turn to share.' : `${who} is sharing.`;
   }
   const sub = (s.kind === 'harvest' || s.kind === 'why') && s.sub ? `<p class="tagline">${esc(s.sub)}</p>` : '';
+  // "Not this one": the one sharing may swap a ring or Heartwood card for another from the same deck
+  const swap = isMe && (s.kind === 'ring' || s.kind === 'heartwood')
+    ? `<button class="tb cream sm block" data-act="another" ${ui.busy ? 'disabled' : ''}>${ui.busy === 'another' ? 'Drawing…' : '↻ Not this one: another question'}</button>` : '';
   return { cls: isMe ? 'hot' : '', color: isMe ? '' : color, html: `${sign(label, color)}<span class="sticker">${sticker}</span>
     <div class="sharehead">${medal(sp, 'sharer', 64, { state: isMe ? 'turn' : '' })}<p class="lead">${title}</p></div>
-    ${s.prompt ? `<div class="prompt">${esc(s.prompt)}</div>` : ''}${sub}${timer}
+    ${s.prompt ? `<div class="prompt">${esc(s.prompt)}</div>` : ''}${swap}${sub}${timer}
     ${trustBlock(v, me, s, isMe)}` };
 }
 
@@ -841,13 +844,6 @@ function packPanel(v, me) {
 
 function privatePanel(v, me, mv) {
   let h = '';
-  // Individualist: private peeks at face-down neighbours (weather looks are shown with the Investigator).
-  const tilePeeks = mv.peeks.filter(e => e && e.type !== 'weather' && e.hex >= 0);
-  if (has(me, 4) || tilePeeks.length) {
-    const peeks = tilePeeks.slice(-3).reverse();
-    h += `<div class="sec"><div class="sech">${A.role(4, 36)}<b>Your peeks</b><small>· Individualist</small></div>` + (peeks.length ? peeks.map((e, i) => peekLine(v, e, i === 0)).join('')
-      : `<p class="small">When you Explore, you also peek at one face-down hex next to you. It shows up here, only for you.</p>`) + '</div>';
-  }
   if (has(me, 5)) {
     h += `<div class="sec"><div class="sech">${A.role(5, 36)}<b>Investigator</b></div>`;
     const br = mv.breath;
@@ -883,11 +879,6 @@ function breathRows(v, br) {
       : t.up && t.stage >= 1 && t.stage <= 3 ? `<span class="tagx risk">${esc(v.stages[t.stage])} at risk</span>` : '';
     return `<div class="brow"><span>${loc(to)}</span>${k > 1 ? `<b class="x2">×${k}</b>` : ''}${tag}</div>`;
   }).join('');
-}
-function peekLine(v, e, latest) {
-  const seen = v.tiles?.[e.hex]?.up;
-  const [icon, what] = e.kind === 'spring' ? [A.drop(30), 'a spring'] : e.kind === 'treasure' ? [MYSTERY(30), 'a treasure'] : [LEAF(false, 30), 'nothing'];
-  return `<div class="note ${latest && !seen ? 'new' : ''}">${icon}<span>${loc(e.hex)} hides <b>${what}</b>.${seen ? ' <small>(explored since)</small>' : ''}</span></div>`;
 }
 
 function rolesPanel(v, me) {
@@ -1276,6 +1267,7 @@ document.addEventListener('click', async e => {
       return;
     case 'seat': { const seat = loadSeats()[d.pid]; if (seat) takeSeat({ pid: d.pid, ...seat }); return; }
     case 'trust': { const to = pname(V()?.share?.player); return send('trust', {}, `You gave ${to} 1 trust acorn.`); }
+    case 'another': return send('another', {}, 'Here is another question.');
     case 'investigate': { const n = +d.n; return send('investigate', { n }, `You looked at ${valueOf(n)?.name || 'the sector'}'s next weather.`); }
     case 'pick': ui.guessPick = d.id; return draw();
     case 'guess': if (!ui.guessPick) return flash('Tap a player first.', true);

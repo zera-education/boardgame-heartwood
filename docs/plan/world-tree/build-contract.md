@@ -47,12 +47,17 @@ Keep the house style: plain HTML/JS/CSS, no build step, no frameworks, dark fore
 - **Turn (phase `turn`):** clockwise in join order; up to **2 actions**. Actions (1 action unless noted):
   - **Move** to a neighbouring hex that isn't sealed (Challenger may enter sealed). Not at 0 water.
     Enthusiast: once per turn a move may go 2 hexes (both steps unsealed, neither hex in fog, own hex not in
-    fog). Challenger may bring one teammate standing on the same hex (`target`).
+    fog). Challenger: everyone standing on the same hex comes along (El, 2026-10-09); `bring` lists who comes
+    when the Keeper leaves someone behind, and on the World Tree nobody comes unless listed.
     **Ring card:** the first time a player enters Ring 3, Ring 2 or Ring 1 (moving inward), they draw a card
     from that ring's deck (share kind `ring`): Ring 3 = Light, Ring 2 = Story, Ring 1 = Deep: get-to-know-you
-    questions chosen by El (2026-10-08), no longer tied to the values; a deck that runs out is shuffled again. Applies to the brought teammate too.
-  - **Explore** the face-down hex you stand on (2 actions in fog). Individualist also privately peeks at one
-    face-down neighbour (goes to their phone). Revealing a treasure triggers that treasure's group moment.
+    questions chosen by El (2026-10-08 and 09), no longer tied to the values; a deck that runs out is shuffled again. Applies to the brought teammates too.
+    **Not this one** (`another`, El 2026-10-09): the one sharing (phone) or the Keeper swaps an open ring or
+    Heartwood card for another from the same deck; the passed card goes under the deck, and the new card is a new
+    share (`idx`, with `was` = the old one, so its recording starts fresh).
+  - **Explore** the face-down hex you stand on (2 actions in fog). Individualist: the board shows which
+    face-down neighbours hold something (a spring or a treasure), not what (El, 2026-10-09; public, `tiles[i].hint`).
+    Revealing a treasure triggers that treasure's group moment.
   - **Sow** on an explored empty hex with no plant, no treasure lying there, not sealed → Seeded (Achiever →
     Grass).
   - **Water** (costs 1 water): Seeded → Grass, Grass → Shrub. Own hex, or a neighbour for the Helper.
@@ -65,8 +70,9 @@ Keep the house style: plain HTML/JS/CSS, no build step, no frameworks, dark fore
   - **Take** a revealed treasure lying on your hex (carry at most 1).
   - **Drink** at a revealed spring → water 5.
   - **Free, on the giver's own turn when no share is open** (El, 2026-10-06: only the current player gives):
-    **pass** water / fruit / treasure to a player on the same hex; or between a Peacemaker and a teammate on a neighbouring hex, either way (El, 2026-10-06:
-    the 2-hex chain is gone).
+    **pass** water / fruit / treasure to a player on the same hex; or to a teammate on a neighbouring hex when the
+    giver is in a Peacemaker's chain: teammates linked hex by hex, each on or next to the next one's hex, a
+    Peacemaker among them (El, 2026-10-09). Never 2 hexes away.
     Limits: water ≤ 5, fruit ≤ 2, treasure ≤ 1.
   - **Automatic placing:** whenever a player stands on the World Tree holding fruit or a treasure (after any
     move, pass, or Challenger carry), **everything they carry is placed at once**. If at least one fruit was
@@ -84,7 +90,7 @@ Keep the house style: plain HTML/JS/CSS, no build step, no frameworks, dark fore
   A player standing on a hex that seals can still walk out.
 - **Roles (Enneagram types 1–9, always on):** 1 Reformer, 2 Helper, 3 Achiever, 4 Individualist,
   5 Investigator, 6 Loyalist, 7 Enthusiast, 8 Challenger, 9 Peacemaker; texts in engine.js `ROLE_TEXT`
-  (Peacemaker: "You and a teammate on a hex next to yours can pass things to each other.").
+  (the game's own texts are `Roles` in content.go).
   The Keeper gives each player 1–3 types in the lobby (a player can't hold one twice; several players may
   hold the same type), or deals one random type to everyone (`randomTypes`: all different up to 9 players, no
   type twice before all 9 are dealt; El, 2026-10-08). Investigator: always sees the next Forest Breath list on their phone, and once per
@@ -142,14 +148,14 @@ Errors are plain sentences shown to the user.
   minPlayers: 6, maxPlayers: 12, actionsPerTurn: 2,
   round, tide, result: ""|"won"|"lost",
   hexes: [{q,r,ring,sector}],                      // 61, index 0 = World Tree
-  tiles: [null, {up, kind, treasure, stage, leaves, harvested}, ...],
+  tiles: [null, {up, kind, treasure, stage, leaves, harvested, hint?}, ...],   // kind only once up; hint: something | nothing
                                                    // kind and treasure are "" while face down
   weather: ["sun"|"rain"|"fog" x6], breathCount,
   players: [{id,name,color,value,types,pos,water,fruit,treasure,placed,reached:[r1,r2,r3 bools],
              trustLeft, guessed}],               // treasure = id or ""
   order: [ids], current: id (enter/turn only),
   turn: {player, actions, enthusiastUsed, investigated} | null,
-  share: null | {idx, kind, player, prompt, sub, trustCount, iGave},
+  share: null | {idx, kind, player, prompt, sub, trustCount, iGave, was},
   goals: {trees:[6 bools], placedPlayers, players, treasures:[ids placed], onTree},
   events: [{id, type, ...}],                       // the last 80; ids increase
   log: [last 40 strings],
@@ -164,8 +170,9 @@ Errors are plain sentences shown to the user.
 **Events** (for the Keeper animation; each has `id` and `type`): `move {pid,from,to}`, `flip {hex}`,
 `grow {hex,stage}`, `harvest {hex,pid}`, `clear {hex}`, `take {hex,pid,treasure}`, `drink {hex,pid}`,
 `pass {from,to,item}`, `place {pid,fruit,treasure}`, `treasure {hex,treasure}` (revealed),
-`tide {weather:[6], growth:[hexes], dry:[pids], leaves:[{from,to}], sealed:[hexes]}`, `wake {}`, `dry {}`.
-Private results (Individualist peek, Investigator look) go into that player's `me.peeks`, never into events.
+`tide {weather:[6], growth:[hexes], dry:[pids], leaves:[{from,to}], sealed:[hexes]}`, `wake {}`, `dry {}`,
+`hint {hex,pid}` (an Individualist sensed the hexes around). Private results (the Investigator's look) go into that
+player's `me.peeks`, never into events.
 
 ## File ownership (parallel agents — edit only your files)
 

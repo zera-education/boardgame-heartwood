@@ -50,6 +50,8 @@ Locally, the server prints the address phones on the same Wi-Fi should use, and 
   and whether its plant is safe at the next Forest Tide (and **Move here** when the current player can go there).
   Nothing moves on a plain tap: the Keeper picks the action first (**Move**, Water, Tend, Clear), then the hexes it can
   reach glow with numbers 1, 2, 3… in reading order, so the team can say "move to 3"; the number keys pick them too.
+  Keys do the commonest taps: **M** Move, **E** Explore, **Enter** End turn (each packet shows its key), so a turn can be
+  M, 3, E, Enter.
   The drawer (**Tools · log**: Keeper tools and the trail log) opens over the map without moving it. **Undo** at the
   top of the trail log (or Ctrl+Z) takes back the Keeper's last tap for a player, newest first, until the turn ends.
   **Turn the map** (in the top-left sign) shows the forest from any of its six sides: the ground turns like a table,
@@ -58,8 +60,8 @@ Locally, the server prints the address phones on the same Wi-Fi should use, and 
 - **Players say it, the Keeper taps it. Phones down.** Every public action (enter, move, explore, sow, water, tend,
   clear, harvest, take, drink, pass, end turn) is tapped by the Keeper, acting for that player (`host` + `as`). The
   server refuses `trust`, `investigate` and `guess` from the Keeper. The phone keeps only private things: the Secret
-  Owl name, what you carry, rings reached, your roles, private looks (Individualist peek, Investigator forecast and
-  weather look), Give trust, and the Secret Owl guess.
+  Owl name, what you carry, rings reached, your roles, private looks (Investigator forecast and weather look), Give
+  trust, **Not this one** on your own ring card or Heartwood question, and the Secret Owl guess.
 - **Players (6 to 12)** scan the QR code or open `play.html?g=CODE`, pick a name and one of 12 colours. Join refuses a
   13th player; Start needs at least 6 and every player needs at least one Enneagram type (the Keeper gives 1 to 3 in
   the lobby). Their seat is kept in the URL (`&p=…`) and on the device, so a reload or a reopened browser goes straight
@@ -76,9 +78,10 @@ actor's new view, so taps feel instant. Clients keep the newest view by version 
 socket is down. Screens redraw only the parts that changed.
 
 Each view also carries `events` (the last 80, with increasing ids: `move`, `flip`, `grow`, `harvest`, `clear`,
-`take`, `drink`, `pass`, `place`, `treasure`, `tide`, `wake`, `dry`). The Keeper screen plays the events it hasn't seen
+`take`, `drink`, `pass`, `place`, `treasure`, `tide`, `wake`, `dry`, `hint`). The Keeper screen plays the events it hasn't seen
 yet as animation: medallions hop, tiles flip, plants grow, leaves drift in at the Forest Tide. Private results (the
-Individualist's peek, the Investigator's look) go only into that player's `me`, never into events.
+Investigator's look) go only into that player's `me`, never into events. An Individualist's hint is public: a face-down
+tile carries `hint: "something" | "nothing"`, never its kind.
 
 It used server-sent events before. Browsers allow only six open HTTP/1.1 connections per host, so a board plus five
 player tabs on one computer froze every other request. WebSockets don't share that limit (tested with 12).
@@ -190,12 +193,12 @@ The Keeper gives each player 1 to 3 types in the lobby; several players may hold
 | 1 | Reformer | Clear removes 2 layers of dead leaves (still 1 action in rain) |
 | 2 | Helper | Water or Tend a hex next to you without standing on it |
 | 3 | Achiever | After you Sow, the hex grows straight to Sprout |
-| 4 | Individualist | When you Explore, also peek at one face-down hex next to you (phone only) |
+| 4 | Individualist | When you Explore, the board shows which face-down hexes around you hold something, not what (`Tile.Hint`) |
 | 5 | Investigator | Always sees the next Forest Breath; once a round, on their turn, sees one sector's next weather |
 | 6 | Loyalist | Plants on your hex and the 6 hexes around you (7 in all) don't lose a stage to dead leaves |
 | 7 | Enthusiast | Once a turn, one Move may go 2 hexes (no fog, no sealed hexes) |
-| 8 | Challenger | May enter sealed hexes, and bring one teammate from the same hex when moving |
-| 9 | Peacemaker | You and a teammate on a hex next to yours can pass things to each other |
+| 8 | Challenger | Everyone on your hex moves with you (the Keeper may leave someone behind; nobody is taken off the World Tree unless picked); may enter sealed hexes |
+| 9 | Peacemaker | Everyone in your chain (teammates linked to you hex by hex) can pass to a teammate on a neighbouring hex |
 
 ## Files
 

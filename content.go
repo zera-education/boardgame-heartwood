@@ -26,7 +26,8 @@ var Values = [6]Value{
 // RingDecks holds the card a player draws the first time they reach a ring
 // (index 1..3; 0 is unused). Questions to get to know each other, from light
 // at the edge to deep near the World Tree: Ring 3 the Light deck, Ring 2 the
-// Story deck, Ring 1 the Deep deck (chosen by El, 2026-10-08). When a deck
+// Story deck, Ring 1 the Deep deck (chosen by El, 2026-10-08 and 09). A player
+// may say "not this one" and draw another from the same deck. When a deck
 // runs out in a big game, it is shuffled again.
 var RingDecks = [4][]string{
 	1: {
@@ -37,6 +38,8 @@ var RingDecks = [4][]string{
 		"What would you tell your younger self?",
 		"What is something you're still learning about yourself?",
 		"What keeps you going when work gets hard?",
+		"What does a good life look like to you?",
+		"What quality in others do you admire most?",
 	},
 	2: {
 		"Tell us about a teacher who made a difference to you.",
@@ -50,6 +53,10 @@ var RingDecks = [4][]string{
 		"Tell us about a challenge that made you better.",
 		"What kind of support helps you most when you're struggling?",
 		"What are you most grateful for right now?",
+		"Tell us about a time you changed your mind about someone.",
+		"Tell us about a kindness you saw that you still remember.",
+		"Tell us about a conversation you still think about.",
+		"Tell us about a time you stood up for someone.",
 	},
 	3: {
 		"What's your favourite food from your childhood?",
@@ -63,13 +70,18 @@ var RingDecks = [4][]string{
 		"Are you a morning person or a night person?",
 		"What's something you're surprisingly good at?",
 		"If you had a free day tomorrow, how would you spend it?",
+		"What was your favourite subject at school?",
+		"What's your usual order at the mamak?",
+		"What's one thing you always carry with you?",
+		"What's a movie you could watch again and again?",
 	},
 }
 
 // RingDeckNames names each ring's deck, by ring (0 is unused).
 var RingDeckNames = [4]string{"", "Deep", "Story", "Light"}
 
-// HeartwoodCards: one is asked each time a player places fruit on the World Tree.
+// HeartwoodCards: one is asked each time a player places fruit on the World
+// Tree. As with the ring cards, the player may ask for another.
 var HeartwoodCards = []string{
 	"What do you want the people at this table to know about you that they might not?",
 	"Who at this table has helped you grow, and how?",
@@ -125,12 +137,12 @@ var Roles = []Role{
 	{1, "Reformer", "integrity", "When you Clear, remove 2 layers (still 1 action in rain)."},
 	{2, "Helper", "care", "Water, Tend or Clear a hex next to you without standing on it."},
 	{3, "Achiever", "drive", "After you Sow, the hex grows straight to Sprout."},
-	{4, "Individualist", "depth", "When you Explore, also peek at one unexplored hex next to you."},
+	{4, "Individualist", "depth", "When you Explore, the board shows which face-down hexes around you hold something (not what)."},
 	{5, "Investigator", "insight", "See which hexes the next Forest Breath will hit; once a round, see one sector's next weather."},
 	{6, "Loyalist", "loyalty", "Plants on your hex and the 6 hexes around you (7 in all) are safe from dead leaves."},
 	{7, "Enthusiast", "joy", "One Move a turn may be 2 hexes (not in fog, not through sealed hexes)."},
-	{8, "Challenger", "strength", "You may enter sealed hexes, and bring one teammate from your hex when you Move."},
-	{9, "Peacemaker", "harmony", "You and a teammate on a hex next to yours can pass things to each other."},
+	{8, "Challenger", "strength", "When you Move, everyone standing with you comes too. You may enter sealed hexes."},
+	{9, "Peacemaker", "harmony", "Everyone in your chain (teammates linked to you hex by hex) can pass to a teammate next to them."},
 }
 
 var Colors = []string{"#e53935", "#fb8c00", "#fdd835", "#43a047", "#00897b", "#1e88e5", "#5e35b1", "#d81b60", "#6d4c41", "#546e7a", "#00acc1", "#7cb342"}

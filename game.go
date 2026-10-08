@@ -122,12 +122,13 @@ func neighbours(a, b int) bool {
 
 // Tile is what lies on a hex (every hex but the World Tree).
 type Tile struct {
-	Up        bool   `json:"up"`        // explored
-	Kind      string `json:"kind"`      // empty, spring or treasure
-	Treasure  string `json:"treasure"`  // the treasure still lying here; "" once taken
-	Stage     int    `json:"stage"`     // 0 none, 1 Seeded, 2 Sprout, 3 Sapling, 4 Big Tree
-	Leaves    int    `json:"leaves"`    // dead leaves; 2 = sealed
-	Harvested bool   `json:"harvested"` // since the last Forest Tide
+	Up        bool   `json:"up"`             // explored
+	Kind      string `json:"kind"`           // empty, spring or treasure
+	Treasure  string `json:"treasure"`       // the treasure still lying here; "" once taken
+	Stage     int    `json:"stage"`          // 0 none, 1 Seeded, 2 Sprout, 3 Sapling, 4 Big Tree
+	Leaves    int    `json:"leaves"`         // dead leaves; 2 = sealed
+	Harvested bool   `json:"harvested"`      // since the last Forest Tide
+	Hint      bool   `json:"hint,omitempty"` // face down, and an Individualist sensed whether something lies here
 }
 
 // Drift is one gust of the Forest Breath: dead leaves picked up at From land on
@@ -138,8 +139,8 @@ type Drift struct {
 }
 
 // Peek is a private look that goes only to one player's phone: an
-// Individualist's peek at a hidden tile, or an Investigator's look at a
-// sector's next weather.
+// Investigator's look at a sector's next weather (games before 2026-10-09 also
+// kept an Individualist's peek at a hidden tile here).
 type Peek struct {
 	Type    string `json:"type"` // "tile" or "weather"
 	Hex     int    `json:"hex"`  // tile: the hex peeked at (-1 for weather)
@@ -208,6 +209,9 @@ type Share struct {
 	By  string `json:"by,omitempty"`
 	Seq int    `json:"seq,omitempty"`
 	Of  int    `json:"of,omitempty"`
+	// Was is the share this one replaced when its player said "not this one"
+	// and drew another card (another).
+	Was int `json:"was,omitempty"`
 }
 
 // Event is one thing that happened, for the Keeper screen's animation.
@@ -274,6 +278,9 @@ type Action struct {
 	Text   string `json:"text"`
 	Types  []int  `json:"types"`
 	As     string `json:"as"` // the player the Keeper acts for
+	// Move: the teammates on a Challenger's hex who come along. Left out, all
+	// of them come (but nobody is taken off the World Tree).
+	Bring []string `json:"bring"`
 }
 
 func NewGame(code, hostSecret string) *Game {
@@ -406,16 +413,20 @@ func (g *Game) setTimer(secs int, label string) {
 
 // draw takes the next card of a deck ("ring1".."ring3", "heartwood"),
 // reshuffling it when it runs out.
-func (g *Game) draw(deck string) string {
-	cards := HeartwoodCards
+func deckCards(deck string) []string {
 	switch deck {
 	case "ring1":
-		cards = RingDecks[1]
+		return RingDecks[1]
 	case "ring2":
-		cards = RingDecks[2]
+		return RingDecks[2]
 	case "ring3":
-		cards = RingDecks[3]
+		return RingDecks[3]
 	}
+	return HeartwoodCards
+}
+
+func (g *Game) draw(deck string) string {
+	cards := deckCards(deck)
 	for {
 		if len(g.Decks[deck]) == 0 {
 			g.Decks[deck] = rand.Perm(len(cards))
@@ -654,6 +665,48 @@ func (g *Game) doneShare() error {
 	return nil
 }
 
+// another is a player saying "not this one" to a ring or Heartwood card: they
+// draw another from the same deck, and the card they passed on goes under the
+// deck for someone else. The new card is a new share (a fresh recording and
+// timer); by is the player asking on their phone, nil for the Keeper.
+func (g *Game) another(by *Player) error {
+	s := g.openShare()
+	if s == nil || (s.Kind != "ring" && s.Kind != "heartwood") {
+		return errors.New("only a ring card or a Heartwood card can be swapped")
+	}
+	if by != nil && by.ID != s.Player {
+		return errors.New("only the one sharing can ask for another card")
+	}
+	deck := "heartwood"
+	if s.Kind == "ring" {
+		deck = fmt.Sprintf("ring%d", s.Ring)
+	}
+	cards := deckCards(deck)
+	if len(cards) < 2 {
+		return errors.New("this deck has no other card")
+	}
+	old, next := s.Prompt, s.Prompt
+	for range 2 * len(cards) {
+		if next = g.draw(deck); next != old {
+			break
+		}
+	}
+	if next == old {
+		return errors.New("this deck has no other card")
+	}
+	for k, c := range cards {
+		if c == old {
+			g.Decks[deck] = append(g.Decks[deck], k)
+		}
+	}
+	g.ShareSeq++
+	s.Was, s.Idx, s.Prompt = s.Idx, g.ShareSeq, next
+	if p := g.player(s.Player); p != nil {
+		g.logf("%s draws another card.", p.Name)
+	}
+	return nil
+}
+
 // ---- entering ----
 
 func (g *Game) current() *Player {
@@ -731,7 +784,7 @@ func (g *Game) doubleStep(p *Player, to int) bool {
 	return false
 }
 
-func (g *Game) move(me *Player, to int, bring string) error {
+func (g *Game) move(me *Player, to int, bring []string) error {
 	if me.Water <= 0 {
 		return fmt.Errorf("%s has no water and can't move until someone passes 1", me.Name)
 	}
@@ -746,18 +799,9 @@ func (g *Game) move(me *Player, to int, bring string) error {
 		}
 		return errors.New("move to a hex next to you")
 	}
-	var mate *Player
-	if bring != "" {
-		mate = g.player(bring)
-		if mate == nil || mate == me {
-			return errors.New("choose a teammate to bring")
-		}
-		if !me.has(Challenger) {
-			return errors.New("only a Challenger brings a teammate")
-		}
-		if mate.Pos != me.Pos {
-			return errors.New("bring a teammate from your own hex")
-		}
+	mates, err := g.bring(me, bring)
+	if err != nil {
+		return err
 	}
 	if err := g.spend(1); err != nil {
 		return err
@@ -766,10 +810,13 @@ func (g *Game) move(me *Player, to int, bring string) error {
 		g.Turn.EnthusiastUsed = true
 	}
 	from := me.Pos
-	movers := []*Player{me}
-	if mate != nil {
-		movers = append(movers, mate)
-		g.logf("%s moves, bringing %s.", me.Name, mate.Name)
+	movers := append([]*Player{me}, mates...)
+	if len(mates) > 0 {
+		names := make([]string, len(mates))
+		for k, p := range mates {
+			names[k] = p.Name
+		}
+		g.logf("%s moves, bringing %s.", me.Name, andList(names))
 	} else {
 		g.logf("%s moves.", me.Name)
 	}
@@ -784,6 +831,49 @@ func (g *Game) move(me *Player, to int, bring string) error {
 		g.autoPlace(p)
 	}
 	return nil
+}
+
+// bring is who comes along when a Challenger moves: everyone standing with
+// them (El, 2026-10-09), or the ones the Keeper picked. Off the World Tree
+// nobody comes unless picked, since that is where the team gathers.
+func (g *Game) bring(me *Player, ids []string) ([]*Player, error) {
+	if ids == nil {
+		if !me.has(Challenger) || me.Pos == 0 {
+			return nil, nil
+		}
+		var all []*Player
+		for _, p := range g.Players {
+			if p != me && p.Pos == me.Pos {
+				all = append(all, p)
+			}
+		}
+		return all, nil
+	}
+	if len(ids) > 0 && !me.has(Challenger) {
+		return nil, errors.New("only a Challenger brings teammates")
+	}
+	var mates []*Player
+	seen := map[string]bool{}
+	for _, id := range ids {
+		p := g.player(id)
+		if p == nil || p == me || seen[id] {
+			return nil, errors.New("choose teammates to bring")
+		}
+		if p.Pos != me.Pos {
+			return nil, fmt.Errorf("%s isn't on your hex", p.Name)
+		}
+		seen[id] = true
+		mates = append(mates, p)
+	}
+	return mates, nil
+}
+
+// andList joins names as "A", "A and B", "A, B and C".
+func andList(s []string) string {
+	if len(s) <= 1 {
+		return strings.Join(s, "")
+	}
+	return strings.Join(s[:len(s)-1], ", ") + " and " + s[len(s)-1]
 }
 
 // ringCard: the first time a player moves inward into Ring 3, 2 or 1, they draw
@@ -832,7 +922,7 @@ func plural(n int, one, many string) string {
 	return fmt.Sprintf("%d %s", n, many)
 }
 
-func (g *Game) explore(me *Player, peekHex int) error {
+func (g *Game) explore(me *Player) error {
 	t := g.tile(me.Pos)
 	if t == nil || t.Up {
 		return errors.New("nothing to explore here")
@@ -875,22 +965,26 @@ func (g *Game) explore(me *Player, peekHex int) error {
 			g.logf("%s explores and finds nothing here.", me.Name)
 		}
 	}
+	// An Individualist senses the hexes around: the board shows which face-down
+	// ones hold something (a spring or a treasure), not what (El, 2026-10-09).
 	if me.has(Individualist) {
-		var hidden []int
+		sensed, some := 0, 0
 		for _, j := range Adj[me.Pos] {
-			if j != 0 && !g.Tiles[j].Up {
-				hidden = append(hidden, j)
-			}
-		}
-		if len(hidden) > 0 {
-			j := hidden[rand.Intn(len(hidden))]
-			for _, h := range hidden {
-				if h == peekHex {
-					j = h
+			if t := g.Tiles[j]; j != 0 && !t.Up && !t.Hint {
+				t.Hint = true
+				sensed++
+				if t.Kind != "empty" {
+					some++
 				}
 			}
-			me.Peeks = append(me.Peeks, Peek{Type: "tile", Hex: j, Kind: g.Tiles[j].Kind, Sector: Board[j].Sector,
-				Round: g.Round, Tide: g.Tide})
+		}
+		if sensed > 0 {
+			g.event("hint", Event{"hex": me.Pos, "pid": me.ID})
+			what := "nothing there"
+			if some > 0 {
+				what = plural(some, "holds something", "hold something")
+			}
+			g.logf("%s senses the hexes around: %s.", me.Name, what)
 		}
 	}
 	return nil
@@ -1062,8 +1156,9 @@ func (g *Game) drink(me *Player) error {
 	return nil
 }
 
-// canPass: on the same hex, or between a Peacemaker and a teammate on a
-// neighbouring hex (either way). Nobody else passes across hexes.
+// canPass: on the same hex, or to a teammate on a neighbouring hex when the
+// two are in a Peacemaker's chain: teammates linked hex by hex, each on or next
+// to the next one's hex, with a Peacemaker among them (El, 2026-10-09).
 func (g *Game) canPass(a, b *Player) bool {
 	if a == b || a.Pos < 0 || b.Pos < 0 {
 		return false
@@ -1071,7 +1166,28 @@ func (g *Game) canPass(a, b *Player) bool {
 	if a.Pos == b.Pos {
 		return true
 	}
-	return (a.has(Peacemaker) || b.has(Peacemaker)) && neighbours(a.Pos, b.Pos)
+	return neighbours(a.Pos, b.Pos) && g.inChain(a)
+}
+
+// inChain says whether p is linked to a Peacemaker through teammates standing
+// on the same or neighbouring hexes (a Peacemaker is in their own chain).
+func (g *Game) inChain(p *Player) bool {
+	seen := map[string]bool{p.ID: true}
+	todo := []*Player{p}
+	for len(todo) > 0 {
+		a := todo[0]
+		todo = todo[1:]
+		if a.has(Peacemaker) {
+			return true
+		}
+		for _, b := range g.Players {
+			if !seen[b.ID] && b.Pos >= 0 && (b.Pos == a.Pos || neighbours(a.Pos, b.Pos)) {
+				seen[b.ID] = true
+				todo = append(todo, b)
+			}
+		}
+	}
+	return false
 }
 
 // pass is free: on your own turn, water, fruit or a treasure to a teammate you can reach.
@@ -1086,7 +1202,7 @@ func (g *Game) pass(a, b *Player, item string) error {
 		return errors.New("choose a teammate to pass to")
 	}
 	if !g.canPass(a, b) {
-		return errors.New("pass on the same hex, or between a Peacemaker and a teammate next to them")
+		return errors.New("pass on the same hex, or to a teammate next to you in a Peacemaker's chain")
 	}
 	switch item {
 	case "water":
@@ -1418,6 +1534,8 @@ func (g *Game) hostAction(a Action) error {
 		return errors.New("no such player")
 	case "doneShare":
 		return g.doneShare()
+	case "another":
+		return g.another(nil)
 	case "startChain":
 		if g.Phase != PhaseGuess {
 			return errors.New("not now")
@@ -1487,6 +1605,8 @@ func (g *Game) playerAction(me *Player, a Action) error {
 	switch a.Type {
 	case "trust":
 		return g.giveTrust(me)
+	case "another":
+		return g.another(me)
 	case "guess":
 		if g.Phase != PhaseGuess {
 			return errors.New("guess at the end of the game")
@@ -1529,9 +1649,9 @@ func (g *Game) playerAction(me *Player, a Action) error {
 	var err error
 	switch a.Type {
 	case "move":
-		err = g.move(me, a.Hex, a.Target)
+		err = g.move(me, a.Hex, a.Bring)
 	case "explore":
-		err = g.explore(me, a.Hex)
+		err = g.explore(me)
 	case "sow":
 		err = g.sow(me)
 	case "water":

@@ -726,38 +726,60 @@ func TestRoles(t *testing.T) {
 		t.Fatalf("Achiever text %q", Roles[2].Text)
 	}
 
-	// Individualist: Explore also peeks at a hidden neighbour, privately.
+	// Individualist: Explore senses the face-down hexes around. The board shows
+	// everyone which of them hold something, never what.
 	in := ringHexes(3, 4)[1]
 	individualist.Pos = in
-	var nb int
+	nb, up := -1, -1
 	for _, j := range Adj[in] {
-		if j != 0 {
+		g.Tiles[j].Kind, g.Tiles[j].Treasure = "empty", ""
+		if nb < 0 {
 			nb = j
-		}
-	}
-	for _, j := range Adj[in] {
-		if j != nb && j != 0 {
-			g.Tiles[j].Up = true // only nb stays hidden
+		} else if up < 0 {
+			up = j
 		}
 	}
 	g.Tiles[nb].Kind = "spring"
+	g.Tiles[up].Up = true
 	x.turnOf(individualist)
 	x.must(x.as(individualist, "explore", own))
-	if len(individualist.Peeks) != 1 || individualist.Peeks[0].Hex != nb || individualist.Peeks[0].Kind != "spring" {
-		t.Fatalf("peeks %+v", individualist.Peeks)
-	}
-	for _, e := range g.Events {
-		if e["type"] == "peek" || e["kind"] != nil {
-			t.Fatalf("a private peek leaked into events: %v", e)
+	hint := func(i int) any { return buildView(g, plain.ID, plain.Secret, "")["tiles"].([]any)[i].(map[string]any)["hint"] }
+	for _, j := range Adj[in] {
+		want := any("nothing")
+		switch j {
+		case nb:
+			want = "something"
+		case up:
+			want = nil
+		}
+		if hint(j) != want {
+			t.Fatalf("hint on %d: %v, want %v", j, hint(j), want)
+		}
+		if tl := buildView(g, plain.ID, plain.Secret, "")["tiles"].([]any)[j].(map[string]any); j != up && tl["kind"] != "" {
+			t.Fatalf("a face-down tile shows its kind: %v", tl)
 		}
 	}
-	mine := buildView(g, individualist.ID, individualist.Secret, "")["me"].(map[string]any)
-	if pk := mine["peeks"].([]Peek); len(pk) != 1 || pk[0].Kind != "spring" {
-		t.Fatalf("me.peeks %v", mine["peeks"])
+	if !strings.HasSuffix(g.Log[len(g.Log)-1], "senses the hexes around: 1 holds something.") {
+		t.Fatalf("log %q", g.Log[len(g.Log)-1])
+	}
+	g.Tiles[nb].Up = true
+	if hint(nb) != nil {
+		t.Fatal("an explored hex keeps its hint")
+	}
+	// anyone else's explore senses nothing
+	pl := ringHexes(3, 1)[1]
+	plain.Pos = pl
+	g.Tiles[pl].Up = false
+	x.turnOf(plain)
+	x.must(x.as(plain, "explore", own))
+	for _, j := range Adj[pl] {
+		if g.Tiles[j] != nil && g.Tiles[j].Hint && !slices.Contains(Adj[in], j) {
+			t.Fatalf("a plain explore sensed hex %d", j)
+		}
 	}
 	other := buildView(g, plain.ID, plain.Secret, "")["me"].(map[string]any)
-	if len(other["peeks"].([]Peek)) != 0 || other["breath"] != nil {
-		t.Fatal("another player sees the peek or the breath")
+	if other["breath"] != nil {
+		t.Fatal("another player sees the breath")
 	}
 
 	// Investigator: sees the next Breath; once a round, one sector's next weather.
@@ -815,7 +837,8 @@ func TestRoles(t *testing.T) {
 	x.turnOf(plain)
 	x.fails(x.as(plain, "move", Action{Hex: two}), "a 2-hex move without the Enthusiast")
 
-	// Challenger: enters sealed hexes and brings a teammate from the same hex.
+	// Challenger: enters sealed hexes, and everyone standing with them comes
+	// along, or the ones the Keeper picks; nobody is taken off the World Tree.
 	c := ringHexes(4, 3)[1]
 	var sealedNb int
 	for _, j := range Adj[c] {
@@ -824,19 +847,53 @@ func TestRoles(t *testing.T) {
 		}
 	}
 	g.Tiles[sealedNb].Leaves = 2
-	challenger.Pos, plain.Pos = c, c
+	for _, p := range x.ps {
+		p.Pos = ringHexes(4, 0)[0]
+	}
+	challenger.Pos, plain.Pos, helper.Pos = c, c, c
+	plain.Reached, helper.Reached, challenger.Reached = [3]bool{}, [3]bool{}, [3]bool{}
 	x.turnOf(plain)
 	x.fails(x.as(plain, "move", Action{Hex: sealedNb}), "a plain player entering a sealed hex")
-	x.fails(x.as(plain, "move", Action{Hex: sealedNb, Target: challenger.ID}), "a plain player bringing a teammate")
+	x.fails(x.as(plain, "move", Action{Hex: sealedNb, Bring: []string{challenger.ID}}), "a plain player bringing a teammate")
 	x.turnOf(challenger)
-	x.fails(x.as(challenger, "move", Action{Hex: sealedNb, Target: helper.ID}), "bringing a teammate from another hex")
-	x.fails(x.as(challenger, "move", Action{Hex: sealedNb, Target: challenger.ID}), "bringing yourself")
-	x.must(x.as(challenger, "move", Action{Hex: sealedNb, Target: plain.ID}))
-	if challenger.Pos != sealedNb || plain.Pos != sealedNb {
-		t.Fatal("Challenger carry")
+	x.fails(x.as(challenger, "move", Action{Hex: sealedNb, Bring: []string{investigator.ID}}), "bringing a teammate from another hex")
+	x.fails(x.as(challenger, "move", Action{Hex: sealedNb, Bring: []string{challenger.ID}}), "bringing yourself")
+	x.fails(x.as(challenger, "move", Action{Hex: sealedNb, Bring: []string{plain.ID, plain.ID}}), "bringing someone twice")
+	x.must(x.as(challenger, "move", Action{Hex: sealedNb}))
+	if challenger.Pos != sealedNb || plain.Pos != sealedNb || helper.Pos != sealedNb {
+		t.Fatal("everyone on the Challenger's hex comes along")
 	}
-	if len(g.Shares) != 2 || g.Shares[0].Player != challenger.ID || g.Shares[1].Player != plain.ID || g.Shares[1].Ring != 3 {
-		t.Fatalf("both draw their Ring 3 card: %+v", g.Shares)
+	if l, want := g.Log[len(g.Log)-4], challenger.Name+" moves, bringing "+helper.Name+" and "+plain.Name+"."; l != want {
+		t.Fatalf("log %q, want %q", l, want)
+	}
+	if len(g.Shares) != 3 {
+		t.Fatalf("all three draw their Ring 3 card: %+v", g.Shares)
+	}
+	for _, s := range g.Shares {
+		if s.Ring != 3 {
+			t.Fatalf("share %+v", s)
+		}
+	}
+	g.Shares = nil
+	// the Keeper picks who comes: here only Plain
+	x.must(x.as(challenger, "move", Action{Hex: c, Bring: []string{plain.ID}}))
+	if challenger.Pos != c || plain.Pos != c || helper.Pos != sealedNb {
+		t.Fatal("only the picked teammate comes")
+	}
+	// an empty pick: nobody comes
+	x.turnOf(challenger)
+	x.must(x.as(challenger, "move", Action{Hex: sealedNb, Bring: []string{}}))
+	if plain.Pos != c {
+		t.Fatal("an empty pick brought someone")
+	}
+	g.Shares = nil
+	// nobody is taken off the World Tree unless picked
+	ring1 := ringHexes(1, -1)[0]
+	challenger.Pos, plain.Pos, helper.Pos = 0, 0, 0
+	x.turnOf(challenger)
+	x.must(x.as(challenger, "move", Action{Hex: ring1}))
+	if plain.Pos != 0 || helper.Pos != 0 {
+		t.Fatal("a teammate was taken off the World Tree")
 	}
 }
 
@@ -996,7 +1053,7 @@ func TestRandomTypes(t *testing.T) {
 	x.fails(x.host("randomTypes", Action{}), "dealing types to nobody")
 }
 
-// Passing: on the same hex, or between a Peacemaker and a teammate on a neighbouring hex.
+// Passing: on the same hex, or to a neighbour in a Peacemaker's chain.
 func TestPassing(t *testing.T) {
 	x := newTable(t, 6, func(i int) []int {
 		if i == 2 {
@@ -1039,13 +1096,31 @@ func TestPassing(t *testing.T) {
 	x.fails(pass("water"), "passing water to someone full")
 	x.fails(pass("gold"), "passing gold")
 	x.fails(x.as(giver, "pass", Action{Target: giver.ID, Text: "water"}), "passing to yourself")
+	for _, l := range line {
+		if neighbours(park, l) {
+			t.Fatal("the parking hex touches the test line")
+		}
+	}
 	recv.Water = 2
 	place(line[0], line[1], park, park)
 	x.fails(pass("water"), "passing to a neighbour without a Peacemaker")
-	place(line[0], line[1], line[1], park)
-	x.fails(pass("water"), "neighbours, with a Peacemaker standing beside the receiver")
+	// a Peacemaker's chain: teammates linked hex by hex pass to a neighbour
+	chain := func(what string, at ...int) {
+		t.Helper()
+		place(at...)
+		giver.Water, recv.Water = 3, 2
+		x.must(pass("water"))
+		if giver.Water != 2 || recv.Water != 3 {
+			t.Fatalf("%s: water %d %d", what, giver.Water, recv.Water)
+		}
+	}
+	chain("a Peacemaker on the receiver's hex", line[0], line[1], line[1], park)
+	chain("a Peacemaker next to the receiver", line[0], line[1], line[2], park)
+	chain("a Peacemaker at the far end of the chain", line[0], line[1], line[3], line[2])
+	place(line[0], line[1], line[3], park)
+	x.fails(pass("water"), "a Peacemaker with a gap in the chain")
 	place(line[0], line[2], line[1], park)
-	x.fails(pass("water"), "relaying through a Peacemaker in the middle")
+	x.fails(pass("water"), "passing 2 hexes away, even through a Peacemaker")
 	// the Peacemaker gives to, and takes from, a teammate next to them
 	place(line[1], line[1], line[0], park)
 	peace.Water, giver.Water = 3, 3
@@ -1432,7 +1507,7 @@ func TestViewShape(t *testing.T) {
 		t.Fatal("cards")
 	}
 	keys(c["treasures"].([]any)[0].(map[string]any), "id", "icon", "name", "meaning", "question")
-	if Roles[8].Text != "You and a teammate on a hex next to yours can pass things to each other." {
+	if !strings.Contains(Roles[8].Text, "chain") {
 		t.Fatal("Peacemaker text")
 	}
 }
@@ -1554,4 +1629,53 @@ func TestDrawSkipsCardsThatAreGone(t *testing.T) {
 			t.Fatalf("drew %q", c)
 		}
 	}
+}
+
+// "Not this one": a player swaps their ring or Heartwood card for another from
+// the same deck, on their phone or by the Keeper; the card goes under the deck.
+func TestAnotherCard(t *testing.T) {
+	x := newTable(t, 6, nil)
+	x.play()
+	g, p, q := x.g, x.ps[0], x.ps[1]
+	g.Shares = nil
+	x.fails(x.host("another", Action{}), "another card with nobody sharing")
+	g.share("why", p, "Why do you stand for Zealous?", "", 0)
+	x.fails(x.phone(p, "another", Action{}), "swapping the why question")
+	g.Shares = nil
+	g.share("ring", p, g.draw("ring1"), "", 1)
+	s := g.openShare()
+	old, idx := s.Prompt, s.Idx
+	x.fails(x.phone(q, "another", Action{}), "someone else swapping the card")
+	x.must(x.phone(p, "another", Action{}))
+	if s.Prompt == old || !slices.Contains(RingDecks[1], s.Prompt) || s.Was != idx || s.Idx <= idx || s.Ring != 1 {
+		t.Fatalf("swapped share %+v (was %q)", s, old)
+	}
+	if d := g.Decks["ring1"]; RingDecks[1][d[len(d)-1]] != old {
+		t.Fatal("the card passed on goes under the deck")
+	}
+	if !strings.HasSuffix(g.Log[len(g.Log)-1], p.Name+" draws another card.") {
+		t.Fatalf("log %q", g.Log[len(g.Log)-1])
+	}
+	v := buildView(g, q.ID, q.Secret, "")["share"].(map[string]any)
+	if v["was"] != idx || v["prompt"] != s.Prompt {
+		t.Fatalf("share view %v", v)
+	}
+	// the Keeper too, as often as they like, never the same card twice running
+	for range 20 {
+		before := s.Prompt
+		x.must(x.host("another", Action{}))
+		if s.Prompt == before {
+			t.Fatal("the same card again")
+		}
+	}
+	g.Shares = nil
+	g.share("heartwood", p, g.draw("heartwood"), "", 0)
+	before := g.openShare().Prompt
+	x.must(x.host("another", Action{}))
+	if g.openShare().Prompt == before || !slices.Contains(HeartwoodCards, g.openShare().Prompt) {
+		t.Fatal("Heartwood swap")
+	}
+	g.Shares = nil
+	g.share("treasure", p, Treasures[0].Question, "compass", 0)
+	x.fails(x.host("another", Action{}), "swapping a treasure question")
 }

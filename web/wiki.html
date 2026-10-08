@@ -184,8 +184,9 @@ const W = [
   <li>Starts the game when 6 to 12 players are in and everyone has a role.</li>
   <li>Gives the [[briefing]] on the big screen, and reads the [[forest-pact]] in it.</li>
   <li>Taps what players say: [[entering]], every [[action]], every [[pass]], and <b>End turn</b>. A slip (the wrong hex) is taken back with <b>Undo</b> in the trail log, until the turn ends.</li>
+  <li>On a laptop, keys do the commonest taps: <b>M</b> Move, <b>E</b> Explore, <b>Enter</b> End turn, <b>1</b> to <b>9</b> a numbered hex, <b>Ctrl+Z</b> Undo, <b>Esc</b> cancels.</li>
   <li>Can <b>turn the map</b> to see the forest from any of its six sides (the buttons in the top-left sign).</li>
-  <li>Taps <b>Done sharing</b> when a [[share]] ends, and can start a [[timer]].</li>
+  <li>Taps <b>Done sharing</b> when a [[share]] ends, and can start a [[timer]]. When a player says "not this one" to a [[ring-card]] or a [[heartwood-question]], taps <b>Another question</b>.</li>
   <li>Leads the [[finale]]: starts the [[tribute-chain]] and taps <b>Next</b> for each tribute.</li>
   <li>May pause any story, and gives [[rejoin-code|rejoin codes]] when a player changes phone.</li>
   <li>Can remove a player's [[photo]] from the board.</li>
@@ -228,7 +229,7 @@ const W = [
 <p>Pick your phone up only to:</p>
 <ul>
   <li>{{acorn}} give a [[trust-acorn]] after someone else's [[share]];</li>
-  <li>{{icon:eye}} check your private looks (the [[individualist]]'s peek, the [[investigator]]'s forecast);</li>
+  <li>{{icon:eye}} check your private looks (the [[investigator]]'s forecast);</li>
   <li>{{icon:guess}} make your [[guess]] at the end.</li>
 </ul>
 <p>See [[your-phone]] for everything it shows.</p>` },
@@ -386,7 +387,7 @@ const W = [
   body: `
 <p>1 [[action]] (2 in [[fog]]): turn over the face-down [[hex]] you stand on. You find an empty clearing, a [[spring]] or a [[treasure]].</p>
 <p>If you find a treasure, the room has its [[group-moment]].</p>
-<p>The [[individualist]] also peeks at one face-down hex next to them.</p>` },
+<p>When the [[individualist]] explores, the board also shows which face-down hexes around them hold something.</p>` },
 
 { id: 'sow', cat: 'actions', icon: 'icon:sow', title: 'Sow',
   short: 'Plant a seed on an explored, empty hex. It becomes Seeded.',
@@ -449,7 +450,7 @@ const W = [
 <h3>Who can pass to whom</h3>
 <ul>
   <li><b>Same hex:</b> always.</li>
-  <li><b>Neighbouring hexes:</b> only between a [[peacemaker]] and a teammate next to them, either way.</li>
+  <li><b>Neighbouring hexes:</b> only in a [[peacemaker]]'s chain: teammates linked to the Peacemaker hex by hex, each on or next to the next one's hex. Anyone in the chain can pass to a teammate next to them, never further.</li>
 </ul>
 <h3>Limits</h3>
 <p>The teammate can hold 5 [[water]], 2 [[fruit]] and 1 [[treasure]] at most.</p>
@@ -675,6 +676,7 @@ const W = [
   <li><b>Ring 1, the Deep deck:</b> a deep question. <i>"What is a dream you still carry?"</i></li>
 </ul>
 <p>You draw one <b>only the first time</b> you step into each ring, moving inward. So each player draws at most 3 ring cards in a game. If a [[challenger]] brings you into a new ring, you draw too.</p>
+<p><b>Not this one?</b> Say so: you draw another card from the same deck (tap it on your phone, or the [[keeper]] taps <b>Another question</b>). The card you passed on goes under the deck for someone else.</p>
 <p>See every card: [[cards-ring-3]], [[cards-ring-2]], [[cards-ring-1]], or [[all-cards]].</p>` },
 
 { id: 'harvest-story', cat: 'talking', icon: 'icon:book', title: 'Harvest story',
@@ -691,6 +693,7 @@ const W = [
 <p>When you place fruit on the [[world-tree]] (see [[placing]]), you answer one Heartwood question. One question, however many fruit you placed at once.</p>
 <p>The deck shares the game's name: the heartwood is the heart of a tree, and these are questions from the heart.</p>
 <p>They are about this team and what you hope for. For example: <i>"What has this team given you that you didn't expect?"</i></p>
+<p>As with a [[ring-card]], you may say "not this one" and draw another.</p>
 <p>See them all: [[cards-heartwood]].</p>` },
 
 { id: 'placing', cat: 'talking', icon: 'hollow', title: 'Placing',
@@ -738,12 +741,12 @@ const W = [
 <tr><td>1 [[reformer]]</td><td>Clear removes 2 layers (1 action even in rain).</td></tr>
 <tr><td>2 [[helper]]</td><td>Water or Tend a hex next to you.</td></tr>
 <tr><td>3 [[achiever]]</td><td>Your seed grows straight to Sprout.</td></tr>
-<tr><td>4 [[individualist]]</td><td>Explore also peeks at a hex next to you.</td></tr>
+<tr><td>4 [[individualist]]</td><td>Explore shows which hexes around you hold something.</td></tr>
 <tr><td>5 [[investigator]]</td><td>See the next Forest Breath; once a round, one sector's next weather.</td></tr>
 <tr><td>6 [[loyalist]]</td><td>Plants on your hex and the 6 around it (7 in all) are safe from dead leaves.</td></tr>
 <tr><td>7 [[enthusiast]]</td><td>Once a turn, move 2 hexes for 1 action.</td></tr>
-<tr><td>8 [[challenger]]</td><td>Enter sealed hexes; bring a teammate when you move.</td></tr>
-<tr><td>9 [[peacemaker]]</td><td>You can pass with a teammate next to you.</td></tr>
+<tr><td>8 [[challenger]]</td><td>Everyone standing with you moves with you; enter sealed hexes.</td></tr>
+<tr><td>9 [[peacemaker]]</td><td>Everyone in your chain can pass to a teammate next to them.</td></tr>
 </table></div>` },
 
 { id: 'reformer', cat: 'roles', icon: 'role:1', title: 'Reformer',
@@ -765,10 +768,14 @@ const W = [
 <p>This saves one Water action and 1 [[water]].</p>` },
 
 { id: 'individualist', cat: 'roles', icon: 'role:4', title: 'Individualist',
-  short: 'Type 4 · depth. Explore also peeks at a hex next to you.',
+  short: 'Type 4 · depth. Explore shows which hexes around you hold something.',
   body: `
-<div class="box"><p><b>When you [[explore]], you also peek at one face-down hex next to you.</b></p></div>
-<p>Only your phone shows what is there. Tell the team, or keep it for later.</p>` },
+<div class="box"><p><b>When you [[explore]], the board shows which face-down hexes around you hold something.</b></p></div>
+<ul>
+  <li>A gold glint: a [[spring]] or a [[treasure]] lies there. It doesn't say which.</li>
+  <li>A faint ring: nothing lies there.</li>
+  <li>Everyone sees it on the big screen, until the hex is explored.</li>
+</ul>` },
 
 { id: 'investigator', cat: 'roles', icon: 'role:5', title: 'Investigator',
   short: 'Type 5 · insight. See the next Forest Breath and the next weather.',
@@ -793,18 +800,23 @@ const W = [
 <p>Not if your hex, the middle hex or the last hex is in [[fog]]. Not through [[sealed]] hexes.</p>` },
 
 { id: 'challenger', cat: 'roles', icon: 'role:8', title: 'Challenger',
-  short: 'Type 8 · strength. Enter sealed hexes; bring a teammate.',
+  short: 'Type 8 · strength. Everyone standing with you moves with you.',
   body: `
-<div class="box"><p><b>You may enter [[sealed]] hexes, and bring one teammate from your hex when you [[move]].</b></p></div>
-<p>The teammate moves with you. If they enter a new [[ring]] for the first time, they draw its [[ring-card]] too. If you both arrive on the [[world-tree]], what they carry is [[placing|placed]].</p>` },
+<div class="box"><p><b>When you [[move]], everyone standing on your hex comes too. You may enter [[sealed]] hexes, and they come in with you.</b></p></div>
+<ul>
+  <li>Someone who wants to stay says so: the [[keeper]] taps their face to leave them behind.</li>
+  <li>On the [[world-tree]], where the team gathers, nobody comes unless the Keeper picks them.</li>
+  <li>Anyone who enters a new [[ring]] for the first time draws its [[ring-card]]. Anyone arriving on the World Tree has what they carry [[placing|placed]].</li>
+</ul>` },
 
 { id: 'peacemaker', cat: 'roles', icon: 'role:9', title: 'Peacemaker',
-  short: 'Type 9 · harmony. You can pass with a teammate next to you.',
+  short: 'Type 9 · harmony. Everyone in your chain can pass to a teammate next to them.',
   body: `
-<div class="box"><p><b>You and a teammate on a hex next to yours can [[pass]] things to each other.</b></p></div>
+<div class="box"><p><b>Everyone in your chain can [[pass]] to a teammate on a hex next to theirs.</b></p></div>
 <ul>
-  <li>Either way: you give to them, or they give to you.</li>
-  <li>Only with you: two teammates next to you can't pass to each other through you.</li>
+  <li>Your chain: teammates linked to you hex by hex, each on or next to the next one's hex. You are in it too.</li>
+  <li>A pass goes one hex at a time, on the giver's own turn: never 2 hexes away.</li>
+  <li>An empty hex breaks the chain.</li>
 </ul>` },
 
 // ───────────── The end
@@ -935,7 +947,8 @@ const W = [
   <li>{{icon:owl}} The colleague you watch as their [[secret-owl]].</li>
   <li>{{drop}}{{fruit}}{{treasure}} What you carry, and which [[ring|rings]] you have reached.</li>
   <li>{{icon:roles}} Your [[roles]], as a reminder.</li>
-  <li>{{icon:eye}} Your private looks: the [[individualist]]'s peek, the [[investigator]]'s Forest Breath and weather.</li>
+  <li>{{icon:eye}} Your private looks: the [[investigator]]'s Forest Breath and weather.</li>
+  <li>{{icon:cards}} <b>Not this one</b>: when it's your [[ring-card]] or [[heartwood-question]], ask for another question.</li>
   <li>{{icon:camera}} Your [[photo]]: retake it or remove it until the game ends.</li>
   <li>{{acorn}} <b>Give trust</b> after someone else's [[share]]: see [[trust-acorn]].</li>
   <li>{{icon:guess}} Your [[guess]] at the end.</li>
@@ -946,6 +959,7 @@ const W = [
 <tr><td>"I stand for Resilience, because…"</td><td>Your value and a Ring 4 hex</td></tr>
 <tr><td>"I move to 3." / "I explore here."</td><td>The action first (<b>Move</b>, <b>Explore</b>…), then the numbered hex when it needs one</td></tr>
 <tr><td>"I pass Mei one water."</td><td>The [[pass]]</td></tr>
+<tr><td>"Not this one, please."</td><td><b>Another question</b></td></tr>
 <tr><td>(the story ends)</td><td><b>Done sharing</b></td></tr>
 <tr><td>"That's my turn."</td><td><b>End turn</b></td></tr>
 </table></div>

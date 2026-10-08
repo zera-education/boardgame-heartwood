@@ -88,7 +88,7 @@ function undo() {
 }
 
 // Keeper choices on this screen that aren't sent yet.
-const ui = { value: null, mode: null, bring: '', pass: false, scope: '', confirmEnd: false, hidePanel: false, brief: null, slideTo: null,
+const ui = { value: null, mode: null, bring: null, pass: false, scope: '', confirmEnd: false, hidePanel: false, brief: null, slideTo: null,
   drawer: store.get('hw-drawer', false), tip: '' };
 
 // ---------- small drawings for the HUD (ART markup, memoised) ----------
@@ -145,12 +145,29 @@ function moveTargets(v, p) {
       for (const j of B.adj[m]) if (j !== p.pos && !sealed(v, j) && wxOf(v, j) !== 'fog' && !one.includes(j) && !two.includes(j)) two.push(j);
   return { one, two };
 }
-// Passing: on the giver's own turn, on the same hex, or between a Peacemaker and a teammate on a neighbouring
-// hex (either way).
+// Passing: on the giver's own turn, on the same hex, or to a teammate on a neighbouring hex when both are in a
+// Peacemaker's chain (teammates linked hex by hex, each on or next to the next one's hex, a Peacemaker among them).
 function canPass(v, a, b) {
   if (!a || !b || a.id === b.id || a.pos < 0 || b.pos < 0) return false;
   if (a.pos === b.pos) return true;
-  return (has(a, 9) || has(b, 9)) && B.adj[a.pos].includes(b.pos);
+  return B.adj[a.pos].includes(b.pos) && !!chainOf(v, a);
+}
+// the Peacemaker that p is linked to hex by hex through teammates (p themself, maybe), or null
+function chainOf(v, p) {
+  const seen = new Set([p.id]), todo = [p];
+  while (todo.length) {
+    const a = todo.shift();
+    if (has(a, 9)) return a;
+    for (const b of v.players) if (!seen.has(b.id) && b.pos >= 0 && (b.pos === a.pos || B.adj[a.pos]?.includes(b.pos))) { seen.add(b.id); todo.push(b); }
+  }
+  return null;
+}
+// who comes along when a Challenger moves: everyone standing with them, or the Keeper's pick. On the World Tree,
+// where the team gathers, nobody comes unless picked.
+function bringing(v, p) {
+  const mates = has(p, 8) ? v.players.filter(q => q.id !== p.id && q.pos === p.pos) : [];
+  const b = ui.bring, pick = b && b.pid === p.id && b.pos === p.pos ? b.ids : p.pos === 0 ? [] : mates.map(q => q.id);
+  return mates.filter(q => pick.includes(q.id));
 }
 const reachable = (v, p) => [p.pos, ...(has(p, 2) ? B.adj[p.pos] : [])].filter(i => i > 0);
 function targetsFor(v, p, mode) {
@@ -430,7 +447,7 @@ function edgeOf(h, k = rot) {
 function objKey(v, i) {
   if (!i) return `W|${v.result === 'won' ? 1 : 0}|${(v.goals.treasures || []).join(',')}|${fruitPlaced(v)}`;
   const t = v.tiles[i] || {};
-  return [t.up ? 1 : 0, t.kind, t.treasure, t.stage, t.stage === 4 && !t.harvested && !isSealed(t) ? 1 : 0, t.leaves].join('|');
+  return [t.up ? 1 : 0, t.kind, t.treasure, t.stage, t.stage === 4 && !t.harvested && !isSealed(t) ? 1 : 0, t.leaves, t.hint || ''].join('|');
 }
 function objMarkup(v, i) {
   if (!i) return ART.worldTree({ awake: v.result === 'won', treasures: v.goals.treasures || [], fruit: fruitPlaced(v), seed: 31 });
@@ -440,8 +457,14 @@ function objMarkup(v, i) {
   if (t.up && t.treasure) o += ART.treasure(t.treasure, { onTile: true, seed: i });
   if (t.stage) o += ART.plant(t.stage, h.sector, { seed: i * 7 + 3, harvestable: t.stage === 4 && !t.harvested && !isSealed(t) });
   if (t.leaves) o += ART.leaves(t.leaves, { seed: i });
+  if (!t.up && t.hint) o += hintMark(t.hint === 'something');
   return o;
 }
+// an Individualist's hint on a face-down hex: a twinkling glint where something lies, a faint ring where nothing does
+const STAR = r => `M0,${-r} L${r * .26},${-r * .26} ${r},0 ${r * .26},${r * .26} 0,${r} ${-r * .26},${r * .26} ${-r},0 ${-r * .26},${-r * .26}Z`;
+const hintMark = some => some
+  ? `<g class="k-glint"><ellipse rx="17" ry="${17 * TILT}" fill="#ffe27a" opacity=".35"/><path d="${STAR(11)}" transform="translate(0,-9)" fill="#fff6c0" stroke="#e8a92a" stroke-width="1.2"/><path d="${STAR(5)}" transform="translate(11,-17)" fill="#fff6c0" stroke="#e8a92a" stroke-width=".8"/></g>`
+  : `<ellipse class="k-hint0" rx="14" ry="${14 * TILT}" fill="none" stroke="#f4ead8" stroke-width="2" stroke-dasharray="3 4" opacity=".7"/>`;
 const isHeld = (m, k) => { const t = m.get(k); if (t === undefined) return false; if (t > now()) return true; m.delete(k); return false; };
 function patchTile(v, i, force) {
   if (!force && isHeld(hold.tile, i)) return false;
@@ -655,7 +678,7 @@ function takeEvents(v) {
   lastEv = maxId;
   return fresh;
 }
-const DUR = { move: 640, enter: 950, flip: 780, grow: 760, harvest: 1250, clear: 900, drink: 1350, take: 1250, pass: 1050, place: 1500, treasure: 4300, wake: 3800, dry: 2600 };
+const DUR = { move: 640, enter: 950, flip: 780, grow: 760, harvest: 1250, clear: 900, drink: 1350, take: 1250, pass: 1050, place: 1500, treasure: 4300, wake: 3800, dry: 2600, hint: 1100 };
 const tideDur = e => 2500 + (e.leaves || []).length * 330 + 900;
 const durOf = e => (e.type === 'tide' ? tideDur(e) : DUR[e.type] || 500) * (e.type === 'move' && e.steps === 2 ? 1.6 : 1);
 
@@ -670,7 +693,7 @@ function plan(v, prev, fresh) {
   for (const e of fresh) {
     if (e.type === 'move') e.steps = HW.dist(v.hexes[e.from] || v.hexes[0], v.hexes[e.to] || v.hexes[0]);
     let start = t;
-    // a Challenger and the teammate they bring hop together
+    // a Challenger and the teammates they bring hop together
     if (e.type === 'move' && last?.type === 'move' && last.from === e.from && last.to === e.to) start = last.start + 110;
     e.start = start; e.dt = start - now();
     const d = durOf(e);
@@ -679,6 +702,7 @@ function plan(v, prev, fresh) {
     const P = id => prev.players.find(p => p.id === id);
     switch (e.type) {
       case 'flip': hold.tile.set(e.hex, until(e.dt)); hold.obj.set(e.hex, until(e.dt)); break;
+      case 'hint': (B.adj[e.hex] || []).forEach(j => hold.obj.set(j, until(e.dt))); break;
       case 'grow': hold.obj.set(e.hex, until(e.dt)); break;
       case 'clear': hold.obj.set(e.hex, until(e.dt)); break;
       case 'harvest': hold.obj.set(e.hex, until(e.dt)); ovr[e.pid] = { fruit: P(e.pid)?.fruit ?? 0 }; break;
@@ -877,6 +901,18 @@ const ANIM = {
     // the moss blanket blows off
     toss(() => ART.leaf({ size: 7 + Math.random() * 4, color: Math.random() < .5 ? '#6f9a4e' : '#93a85a' }), x, y - 2, 9, { speed: 70, grav: 40, spread: 2.8, ms: 760, stagger: 18 });
   },
+  // an Individualist senses the hexes around: a ripple, then a glint on each face-down hex that holds something
+  hint(v, e) {
+    const [x, y] = B.xy[e.hex];
+    popMed(e.pid, 0, 1.1);
+    burst(x, y, '#d9b8ff', 78, 900, 0, 3);
+    (B.adj[e.hex] || []).forEach((j, k) => setTimeout(() => {
+      release(hold.obj, j);
+      const h = v.tiles[j]?.hint, [hx, hy] = B.xy[j];
+      if (h === 'something') { sparkles(hx, hy - 10, 7, 30); burst(hx, hy, '#ffe27a', 30, 600); }
+      else if (h) burst(hx, hy, '#e9dfcf', 22, 500, 0, 2);
+    }, 260 + k * 90));
+  },
   grow(v, e) {
     const i = e.hex, [x, y] = B.xy[i];
     duck(i, 1000);
@@ -932,11 +968,11 @@ const ANIM = {
   pass(v, e) {
     const a = photoXY(e.from), b = photoXY(e.to), to = HW.player(e.to);
     const art = e.item === 'water' ? ART.drop({ size: 13 }) : e.item === 'fruit' ? ART.fruit({ size: 14 }) : ART.treasure(to?.treasure || 'compass', { size: 18 });
-    // across hexes it is the Peacemaker's gift: a little burst on the Peacemaker
+    // across hexes it is the Peacemaker's gift: a little burst on the Peacemaker of their chain
     const pa = HW.player(e.from), pts = [a, b];
     if (pa && to && pa.pos !== to.pos) {
-      const pm = has(pa, 9) ? pa : has(to, 9) ? to : null;
-      if (pm) setTimeout(() => { popMed(pm.id, 0, 1.1); burst(B.medPos[pm.id][0], B.medPos[pm.id][1], '#c9a6ff', 26, 600); }, pm === pa ? 0 : 640);
+      const pm = has(pa, 9) ? pa : has(to, 9) ? to : chainOf(v, pa);
+      if (pm && B.medPos[pm.id]) setTimeout(() => { popMed(pm.id, 0, 1.1); burst(B.medPos[pm.id][0], B.medPos[pm.id][1], '#c9a6ff', 26, 600); }, pm === to ? 640 : 0);
     }
     const g = fx(art, a[0], a[1]), legs = pts.length - 1, fr = [];
     for (let s = 0; s < legs; s++) arc(pts[s], pts[s + 1], 40, { spin: 30 }).forEach((f, k) => { if (k || !s) fr.push(Object.assign(f, { offset: (s + f.offset) / legs })); });
@@ -1048,7 +1084,7 @@ function render(v) {
   if (!B || B.code !== v.code || B.n !== v.hexes.length) buildBoard(v);
   // A new turn or phase drops half-made choices (a picked value, a Water target…).
   const scope = `${v.phase}|${v.current || ''}|${v.round}`;
-  if (scope !== ui.scope) { ui.scope = scope; ui.value = null; ui.mode = null; ui.bring = ''; ui.pass = false; ui.info = null; if (v.phase !== 'end') ui.hidePanel = false; }
+  if (scope !== ui.scope) { ui.scope = scope; ui.value = null; ui.mode = null; ui.bring = null; ui.pass = false; ui.info = null; if (v.phase !== 'end') ui.hidePanel = false; }
   if (v.share) { ui.mode = null; ui.pass = false; }
   if (!['enter', 'turn'].includes(v.phase)) ui.brief = null;
   const fresh = takeEvents(v);
@@ -1154,11 +1190,14 @@ $('k-q').addEventListener('mouseleave', () => B?.hov(null));
 
 // ---------- HUD: whose turn + the action tray of seed packets ----------
 const PK = { move: 'Move', explore: 'Explore', sow: 'Sow', water: 'Water', tend: 'Tend', clear: 'Clear', harvest: 'Harvest', take: 'Take', drink: 'Drink', pass: 'Pass', end: 'End turn' };
+// keyboard shortcuts for the Keeper's commonest taps (then 1-9 picks a numbered hex)
+const KEYS = { move: 'M', explore: 'E', end: '↵' };
 function packet(k, o) {
   // the cost in the corner: a leaf per action, and the weather that makes it 2 in the other corner
   const cost = o.free ? '<span class="k-free">free</span>' : `<span class="k-cost" title="${o.cost > 1 ? '2 actions' : '1 action'}">${I.leaf(true, 17)}${o.cost > 1 ? I.leaf(true, 17) : ''}</span>${o.cost > 1 && o.wx ? `<span class="k-wxc">${I.wx(o.wx, 18)}</span>` : ''}`;
+  const key = KEYS[k] ? `<kbd class="k-key" title="Shortcut: ${k === 'end' ? 'Enter' : KEYS[k]}">${KEYS[k]}</kbd>` : '';
   return `<button class="k-pk k-pk-${k}${o.ok ? '' : ' no'}${o.sel ? ' sel' : ''}${o.cost > 1 ? ' two' : ''}${ui.tip === k ? ' tip' : ''}" data-do="${k}"${o.ok ? '' : ` aria-disabled="true" data-why="${esc(o.why)}"`}>
-    <span class="k-pk-art">${I.icon(k, 46)}</span><span class="k-pk-name">${PK[k]}</span>${cost}${o.ok ? '' : `<span class="k-tipb">${esc(o.why)}</span>`}</button>`;
+    <span class="k-pk-art">${I.icon(k, 46)}</span><span class="k-pk-name">${PK[k]}</span>${cost}${key}${o.ok ? '' : `<span class="k-tipb">${esc(o.why)}</span>`}</button>`;
 }
 function whereLine(v, p) {
   const pos = p.pos;
@@ -1207,14 +1246,15 @@ function packets(v, p) {
   const holds = p.water > 0 || p.fruit > 0 || !!p.treasure, mates = v.players.some(r => canPass(v, p, r));
   let h = packet('move', mv);
   for (const k of ['explore', 'sow', 'water', 'tend', 'clear', 'harvest', 'take', 'drink']) h += packet(k, Object.assign({}, o[k], { sel: ui.mode === k, cost: o[k].cost || 1 }));
-  h += packet('pass', { ok: holds && mates, sel: ui.pass, free: true, why: !holds ? 'nothing to pass' : has(p, 9) ? 'nobody on this hex or next to it' : 'nobody on this hex' });
+  h += packet('pass', { ok: holds && mates, sel: ui.pass, free: true, why: !holds ? 'nothing to pass' : chainOf(v, p) ? 'nobody on this hex or next to it' : 'nobody on this hex' });
   h += packet('end', { ok: true, free: true, sel: false });
   return h;
 }
 
-// what to tap now, and the Challenger's bring choice, under the name in the who block
+// what to tap now, and who comes along with a Challenger (tap a face to leave them behind), under the name in the who block
 function turnHint(v, p) {
   const mates = has(p, 8) && v.turn.actions && p.water > 0 ? v.players.filter(q => q.id !== p.id && q.pos === p.pos) : [];
+  const coming = bringing(v, p).map(q => q.id);
   const hint = ui.pass ? `Pick what ${esc(p.name)} passes to whom`
     : ui.mode ? `Tap a numbered hex to <b>${ui.mode}</b>${ui.mode === 'move' && moveTargets(v, p).two.length ? ' (dashed: the double step)' : ''} · tap ${PK[ui.mode]} again to cancel`
       : p.water <= 0 ? 'No water: a teammate here must pass 1 on their turn'
@@ -1222,7 +1262,7 @@ function turnHint(v, p) {
           : 'Pick an action below · tap any hex to see what is there';
   // many mates (a crowd on the World Tree): just their medallions, the name shows on hover
   const few = mates.length <= 3;
-  return { hint, bring: mates.length && !ui.pass ? `<div class="k-bring"><span>${I.role(8, 22)} Bring:</span>${mates.map(q => `<button class="k-mate${few ? '' : ' pic'}${ui.bring === q.id ? ' sel' : ''}" data-bring="${esc(q.id)}" title="Bring ${esc(q.name)}">${few ? chip(q, 26) : medPic(q, 30, { badges: false })}</button>`).join('')}</div>` : '' };
+  return { hint, bring: mates.length && !ui.pass ? `<div class="k-bring"><span>${I.role(8, 22)} Comes along:</span>${mates.map(q => { const on = coming.includes(q.id); return `<button class="k-mate${few ? '' : ' pic'}${on ? ' sel' : ' off'}" data-bring="${esc(q.id)}" aria-pressed="${on}" title="${esc(on ? `${q.name} comes along: tap to leave them here` : `${q.name} stays: tap to bring them`)}">${few ? chip(q, 26) : medPic(q, 30, { badges: false })}</button>`; }).join('')}</div>` : '' };
 }
 // ---------- the pass panel over the tray ----------
 function renderPop(v) {
@@ -1550,7 +1590,9 @@ function shareHTML(v) {
     ? `<div class="k-card-who">${p ? `${chip(p, 46)}<span><b>${s.of ? `answer ${s.seq} of ${s.of}` : 'answers'}</b> · one sentence each, round the table${s.by && HW.player(s.by) ? ` · found by ${esc(HW.player(s.by).name)}` : ''}</span>` : ''}</div>`
     : `<div class="k-card-who">${chip(p, 46)}<span>shares · listeners give trust on their phones</span><span class="k-trust">${I.acorn(34)}<b id="trustN">${s.trustCount || 0}</b></span></div>`;
   h += `<div class="timer k-cardtimer" data-timer></div>`;
-  if (v.isHost) h += `<div class="k-card-btns"><button class="k-btn big" data-k="doneShare">Done sharing ✓</button><button class="k-btn cream" data-t="60">1 min</button><button class="k-btn cream" data-t="90">90 s</button></div>`;
+  // "Not this one": a ring or Heartwood card can be swapped for another from the same deck
+  const swap = s.kind === 'ring' || s.kind === 'heartwood' ? `<button class="k-btn cream" data-k="another" title="Not this one: draw another card from the same deck">↻ Another question</button>` : '';
+  if (v.isHost) h += `<div class="k-card-btns"><button class="k-btn big" data-k="doneShare">Done sharing ✓</button>${swap}<button class="k-btn cream" data-t="60">1 min</button><button class="k-btn cream" data-t="90">90 s</button></div>`;
   return h + '</div></div>';
 }
 
@@ -1648,8 +1690,8 @@ async function onHex(i) {
 async function moveTo(v, p, i) {
   closeInfo();
   ui.mode = null;
-  const bring = ui.bring && HW.player(ui.bring)?.pos === p.pos ? ui.bring : '';
-  if (await actAs(p.id, 'move', { hex: i, target: bring }, bring ? `✓ ${p.name} moves with ${HW.name(bring)}` : '')) ui.bring = '';
+  const bring = has(p, 8) ? bringing(v, p).map(q => q.id) : null;
+  if (await actAs(p.id, 'move', bring ? { hex: i, bring } : { hex: i }, bring?.length ? `✓ ${p.name} moves with ${bring.map(HW.name).join(', ')}` : '')) ui.bring = null;
   else render(HW.view);
 }
 
@@ -1676,6 +1718,8 @@ function infoHTML(v, i, why) {
     head = `${I.val(hx.sector, 44)}<div class="k-inf-t"><b>${esc(v.values[hx.sector]?.name || '')}</b><small>Ring ${hx.ring}${hx.ring === 4 ? ' · the edge' : hx.ring === 1 ? ' · by the World Tree' : ''}</small></div>`;
     rows += row(I.wx(w, 30), `<b>${esc(HW.WEATHER[w]?.[1] || '')}</b> · ${WX_NOW[w] || ''}`);
     if (!t.up) rows += row(pic('tile:down', 28), '<b>Face down</b> · explore it to see what lies here.');
+    if (!t.up && t.hint) rows += row(svgI(hintMark(t.hint === 'something'), '-20 -28 40 40', 26), t.hint === 'something'
+      ? '<b>Something lies here</b> · an Individualist sensed it: a spring or a treasure.' : '<b>Nothing here</b> · an Individualist sensed it is empty.');
     else if (t.stage) {
       const next = t.stage === 4 ? (t.harvested ? 'picked since the last Tide' : 'harvest a fruit here (not in rain)')
         : `next: ${esc(stageName(v, t.stage + 1))} by ${t.stage === 3 ? 'Tend' : 'Water, or rain at the Tide'}`;
@@ -1748,7 +1792,12 @@ document.addEventListener('click', async e => {
   }
   if (d.slide != null && d.slide !== '') return goSlide(+d.slide);
   if (d.val != null && d.val !== '') { ui.value = +d.val; HW.toast(`Now tap a glowing hex on the outer ring of ${v.values[ui.value].name}`); return render(v); }
-  if (d.bring) { ui.bring = ui.bring === d.bring ? '' : d.bring; return render(v); }
+  if (d.bring && v.turn) {
+    const p = HW.player(v.turn.player), ids = bringing(v, p).map(q => q.id), k = ids.indexOf(d.bring);
+    if (k >= 0) ids.splice(k, 1); else ids.push(d.bring);
+    ui.bring = { pid: p.id, pos: p.pos, ids };
+    return render(v);
+  }
   if (d.movehere && v.turn) return moveTo(v, HW.player(v.turn.player), +d.movehere);
   const cur = v.turn ? HW.player(v.turn.player) : null;
   if (d.do && cur) {
@@ -1799,6 +1848,7 @@ document.addEventListener('click', async e => {
     case 'closeInfo': return closeInfo();
     case 'undo': return undo();
     case 'doneShare': return act('doneShare', {}, '✓ Thank you');
+    case 'another': return act('another', {}, '✓ Another card from the same deck');
     case 'pickAgain': ui.value = null; return render(v);
     case 'closePass': ui.pass = false; return render(v);
     case 'startChain': {
@@ -1838,6 +1888,13 @@ addEventListener('keydown', e => {
   if (v && v.isHost && /^[1-9]$/.test(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey && $('k-modal').hidden && !e.target.closest?.('input, select, textarea')) {
     const i = B?.nums?.[+e.key - 1];
     if (i != null) { e.preventDefault(); return onHex(i); }
+  }
+  // M Move, E Explore, Enter End turn: the same as tapping that button in the tray
+  if (v && v.isHost && v.phase === 'turn' && v.turn && !v.share && !e.metaKey && !e.ctrlKey && !e.altKey && !e.repeat
+    && $('k-modal').hidden && !e.target.closest?.('input, select, textarea')) {
+    const k = { m: 'move', e: 'explore', Enter: 'end' }[e.key.length === 1 ? e.key.toLowerCase() : e.key];
+    const b = k && $('k-tray').querySelector(`[data-do="${k}"]`);
+    if (b) { e.preventDefault(); return b.click(); }
   }
   if (e.key !== 'Escape' || !HW.view) return;
   if (ui.info) return closeInfo();

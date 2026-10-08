@@ -232,7 +232,7 @@ func (b *bot) path(p *Player, from int, goal func(int) bool, ignoreLeaves bool) 
 func (b *bot) goToward(p *Player, goal func(int) bool) bool {
 	route, ok := b.path(p, p.Pos, goal, false)
 	if ok && len(route) > 0 {
-		return b.act(p, "move", Action{Hex: route[0]})
+		return b.act(p, "move", Action{Hex: route[0], Bring: []string{}})
 	}
 	if ok {
 		return false
@@ -246,7 +246,7 @@ func (b *bot) goToward(p *Player, goal func(int) bool) bool {
 		return b.act(p, "clear", Action{Hex: r[0]})
 	}
 	if b.g.canEnter(p, r[0]) {
-		return b.act(p, "move", Action{Hex: r[0]})
+		return b.act(p, "move", Action{Hex: r[0], Bring: []string{}})
 	}
 	return false
 }
