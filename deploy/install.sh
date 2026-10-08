@@ -12,6 +12,8 @@ BIN=/opt/heartwood/bin
 DATA=/var/lib/heartwood
 SNAPSHOTS=$DATA/pre-deploy
 KEEP_SNAPSHOTS=10
+AXON_ENV=/home/ubuntu/.axon/.env   # the Axon bot: TELEGRAM_BOT_TOKEN and El's TELEGRAM_OWNER_ID (admin login codes)
+ENV_FILE=/etc/heartwood/heartwood.env
 
 render() { sed -e "s|@ADDR@|$ADDR|g" -e "s|@SITE@|$SITE|g" -e "s|@BIN@|$BIN|g" -e "s|@DATA@|$DATA|g" "$1"; }
 
@@ -27,6 +29,21 @@ if [ -f "$DATA/heartwood.db" ]; then
   systemctl stop heartwood >/dev/null 2>&1 || true
   cp "$DATA/heartwood.db" "$SNAPSHOTS/pre-deploy-$(date -u +%Y%m%dT%H%M%SZ).db"
   ls -1t "$SNAPSHOTS"/pre-deploy-*.db | tail -n +$((KEEP_SNAPSHOTS + 1)) | xargs -r rm -f
+fi
+
+# The admin's login codes go to El's Telegram through the Axon bot (as blessed does). Copy only those two
+# values out of ~/.axon/.env on every deploy, so a rotated token reaches the service and it never sees
+# the rest of that file. Without them the game runs as before and the admin login says it isn't set up.
+token=$(sed -n 's/^TELEGRAM_BOT_TOKEN=//p' "$AXON_ENV" 2>/dev/null | tr -d "\"'\r" | head -n1)
+owner=$(sed -n 's/^TELEGRAM_OWNER_ID=//p' "$AXON_ENV" 2>/dev/null | tr -d "\"'\r" | head -n1)
+if [ -n "$token" ] && [ -n "$owner" ]; then
+  mkdir -p "$(dirname "$ENV_FILE")"
+  umask 077
+  printf 'HEARTWOOD_TG_TOKEN=%s\nHEARTWOOD_TG_CHAT=%s\n' "$token" "$owner" > "$ENV_FILE.new"
+  umask 022
+  mv -f "$ENV_FILE.new" "$ENV_FILE"
+else
+  echo "TELEGRAM_BOT_TOKEN or TELEGRAM_OWNER_ID missing from $AXON_ENV: the admin login can't send codes"
 fi
 
 cp ./heartwood "$BIN/heartwood.new"

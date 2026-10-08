@@ -150,8 +150,10 @@ don't hard-code them; `/api/cards` has the same as `stages` and `ringDeckNames`.
   every browser** ends every session. Every `/api/admin` route except `me`, `code` and `login` needs it; the session
   also opens any game's stories.
 - **Setup:** the bot token and El's chat id come from the env vars named by `-tg-token-var` (default
-  `HEARTWOOD_TG_TOKEN`) and `-tg-chat-var` (default `HEARTWOOD_TG_CHAT`); `-tg-api` sets the Bot API URL. Without
-  them the login says Telegram isn't set up, and the game works as before.
+  `HEARTWOOD_TG_TOKEN`) and `-tg-chat-var` (default `HEARTWOOD_TG_CHAT`); `-tg-api` sets the Bot API URL. On the EC2,
+  `deploy/install.sh` copies just `TELEGRAM_BOT_TOKEN` and `TELEGRAM_OWNER_ID` out of `~/.axon/.env` (the Axon bot,
+  as blessed does) into `/etc/heartwood/heartwood.env` (root only) on every deploy. Without them the login says
+  Telegram isn't set up, and the game works as before.
 
 ## Roles (Enneagram types, always on)
 

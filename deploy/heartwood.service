@@ -7,6 +7,9 @@ Wants=network-online.target
 [Service]
 User=heartwood
 WorkingDirectory=@DATA@
+# HEARTWOOD_TG_TOKEN and HEARTWOOD_TG_CHAT: the Axon bot and El's chat, for the admin's login codes.
+# install.sh copies just these two values out of /home/ubuntu/.axon/.env on every deploy.
+EnvironmentFile=-/etc/heartwood/heartwood.env
 ExecStart=@BIN@/heartwood -addr @ADDR@ -db @DATA@/heartwood.db
 Restart=on-failure
 RestartSec=3
