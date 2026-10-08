@@ -1232,7 +1232,7 @@ const briefLive = v => v.phase === 'brief';
 const briefOn = v => briefLive(v) || (ui.brief != null && ['enter', 'turn'].includes(v.phase));
 const slideAt = v => Math.max(0, Math.min(HW.SLIDES.length - 1, briefLive(v) ? ui.slideTo ?? v.slide ?? 0 : ui.brief ?? 0));
 // one obstacle: what it does, and how the team prevents it
-const hurdle = (art, name, does, prevent) => `<div class="k-br-c"><div class="k-br-art">${art}</div><h3>${name}</h3><p>${does}</p>
+const hurdle = (art, name, does, prevent) => `<div class="k-br-c k-br-hurdle"><div class="k-br-art">${art}</div><h3>${name}</h3><p>${does}</p>
   <p class="k-br-ok"><b>Prevent it</b>${prevent}</p></div>`;
 const SLIDE = {
   welcome: v => ({ title: 'The forest is asleep', sub: 'Today, as one team, we wake it.', body: `
@@ -1243,11 +1243,11 @@ const SLIDE = {
       ['owl', 'Side quest: the Secret Owl'], ['pact', 'The Forest Pact'], ['play', 'How we play']].map(([id, t]) => `<li><button data-slide="${HW.SLIDES.findIndex(s => s[0] === id)}">${t}</button></li>`).join('')}</ol></div>` }),
   goal: v => ({ title: 'Our goal: wake the forest, together', sub: 'One team. No points, and no winner among us: we all wake the forest, or it sleeps on.', body: `
     <div class="k-br-row three">
-      <div class="k-br-c"><span class="k-br-n">1</span><div class="k-br-art k-br-six">${[0, 1, 2, 3, 4, 5].map(s => I.bigTree(s, 104)).join('')}</div>
+      <div class="k-br-c k-br-goal"><span class="k-br-n">1</span><div class="k-br-art k-br-six">${[0, 1, 2, 3, 4, 5].map(s => I.bigTree(s, 104)).join('')}</div>
         <h3>A Big Tree in every value</h3><p>One in each of the six value sectors. It doesn't matter who grows it.</p></div>
-      <div class="k-br-c"><span class="k-br-n">2</span><div class="k-br-art">${I.fruit(84)}<i class="k-br-plus">+</i>${(v.treasures || []).map(t => I.treasure(t.id, 88)).join('')}</div>
+      <div class="k-br-c k-br-goal"><span class="k-br-n">2</span><div class="k-br-art">${I.fruit(88)}<i class="k-br-plus">+</i>${(v.treasures || []).map(t => I.treasure(t.id, 86)).join('')}</div>
         <h3>Fruit from every one of us, and the three treasures</h3><p>Each of us places at least one fruit on the World Tree. The Compass, the Lantern and the Rope lie hidden in Rings 1 and 2.</p></div>
-      <div class="k-br-c"><span class="k-br-n">3</span><div class="k-br-art">${I.icon('team', 100)}${I.world(true, 140)}</div>
+      <div class="k-br-c k-br-goal"><span class="k-br-n">3</span><div class="k-br-art">${I.icon('team', 110)}${I.world(true, 210)}</div>
         <h3>All of us on the World Tree</h3><p>We finish together, standing on the World Tree.</p></div>
     </div>
     <div class="k-br-bar"><span>${I.icon('goal', 42)}<span><b>The forest wakes the moment all three are true at once.</b> The board's top right shows how far we are.</span></span>
