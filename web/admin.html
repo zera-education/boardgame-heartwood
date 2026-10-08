@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Heartwood · Admin</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E🌳%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@400;600;700;800;900&display=swap" media="print" onload="this.media='all'">
+<style>
+/* The admin: every game on this server (admin.go). Paper and wood like the Stories page (web/stories.html). */
+:root {
+  --toon: 'Lilita One', 'Nunito', system-ui, sans-serif; --read: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --bg: #13241b; --paper: #fff6df; --paper2: #fbecc8; --line: #e2c48e; --wood: #5a3418; --wood-d: #3e220f; --ink: #2a1a0c;
+  --ink2: #6f4f36; --muted: #8a6a4e; --gold: #e0a32e; --good: #2c6a1f; --bad: #b3261e;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; min-height: 100vh; font: 600 16px/1.45 var(--read); color: var(--ink);
+  background: radial-gradient(120% 70% at 50% 0%, #2f5e40 0%, #183424 45%, #0a1710 85%) fixed, var(--bg); }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 16px 16px 60px; }
+a { color: #8a5418; }
+h1, h2, h3 { font-family: var(--toon); font-weight: 400; margin: 0; line-height: 1.1; }
+[hidden] { display: none !important; }
+
+/* the sign at the top */
+.sign { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--paper); flex-wrap: wrap;
+  border: 5px solid var(--wood); border-radius: 24px; box-shadow: 0 6px 0 var(--wood-d), 0 14px 30px rgba(0, 0, 0, .4); }
+.sign .tree { flex: none; line-height: 0; font-size: 38px; }
+.sign h1 { font-size: clamp(28px, 5vw, 40px); color: #8fe06a; letter-spacing: .01em;
+  text-shadow: 0 4px 0 #1f4a18, 3px 3px 0 #1f4a18, -3px 3px 0 #1f4a18, 3px -3px 0 #1f4a18, -3px -3px 0 #1f4a18, 3px 0 0 #1f4a18, -3px 0 0 #1f4a18, 0 -3px 0 #1f4a18; }
+.sign p { margin: 2px 0 0; color: var(--ink2); font-weight: 700; font-size: 15px; }
+.sign .me { margin-left: auto; display: flex; align-items: center; gap: 8px; font-weight: 800; color: var(--ink2); }
+
+.btn { font: 17px/1 var(--toon); letter-spacing: .02em; color: #fff; background: linear-gradient(#88dc64, #4cab37); border: 3px solid #2c6a1f;
+  border-radius: 14px; padding: 9px 14px 10px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  text-shadow: 0 2px 0 #2c6a1f; box-shadow: inset 0 3px 0 rgba(255, 255, 255, .38), 0 5px 0 #2c6a1f, 0 9px 14px rgba(0, 0, 0, .3); }
+.btn:active { transform: translateY(4px); box-shadow: inset 0 3px 0 rgba(255, 255, 255, .38), 0 1px 0 #2c6a1f; }
+.btn:disabled, .btn[aria-disabled="true"] { filter: grayscale(.85); opacity: .5; cursor: not-allowed; transform: none; }
+.btn.cream { color: var(--wood); background: linear-gradient(#fffbf2, #ecd8ad); border-color: #8a5a2c; text-shadow: none;
+  box-shadow: inset 0 3px 0 #fff, 0 5px 0 #8a5a2c, 0 9px 14px rgba(0, 0, 0, .22); }
+.btn.cream:active { box-shadow: inset 0 3px 0 #fff, 0 1px 0 #8a5a2c; }
+.btn.red { background: linear-gradient(#f2806e, #c8463f); border-color: #7a1f1a; text-shadow: 0 2px 0 #7a1f1a; box-shadow: inset 0 3px 0 rgba(255, 255, 255, .3), 0 5px 0 #7a1f1a; }
+.btn.sm { font-size: 15px; padding: 6px 10px 7px; border-radius: 11px; }
+.btn.big { font-size: 22px; padding: 12px 20px 13px; border-radius: 16px; }
+.btn.block { display: flex; width: 100%; margin: 0 0 10px; }
+.link { font: inherit; font-weight: 800; color: #8a5418; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.link:disabled { color: var(--muted); text-decoration: none; cursor: default; }
+.why { display: block; font-size: 13.5px; font-weight: 700; color: var(--muted); margin: -4px 0 12px; }
+
+.paper { background: var(--paper); color: var(--ink); border: 4px solid var(--wood); border-radius: 22px;
+  box-shadow: 0 6px 0 var(--wood-d), 0 14px 30px rgba(0, 0, 0, .35); padding: 14px 16px; }
+.crumb { color: #e9dcbf; font-weight: 800; margin: 14px 4px 10px; font-size: 15px; min-height: 1.4em; }
+.crumb a, .crumb button { color: #fff3d6; font-weight: 900; }
+.crumb button { font: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+
+/* master and detail */
+.md { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 16px; align-items: start; }
+.md.one { grid-template-columns: minmax(0, 1fr); }
+
+.seg { display: inline-flex; background: #f0dfb8; border: 3px solid #8a5a2c; border-radius: 14px; padding: 3px; gap: 3px; margin-bottom: 12px; }
+.seg button { font: 900 15px/1 var(--read); padding: 7px 12px; border-radius: 10px; color: var(--wood); background: none; border: 0; cursor: pointer; white-space: nowrap; }
+.seg button.on { background: var(--wood); color: #fff3d6; }
+.seg b { opacity: .7; margin-left: 3px; }
+.glist { list-style: none; margin: 0; padding: 0; }
+.glist li { margin: 0 0 8px; }
+.grow { display: grid; grid-template-columns: auto 1fr auto; gap: 3px 12px; align-items: center; width: 100%; text-align: left; cursor: pointer;
+  padding: 10px 12px; border-radius: 16px; border: 3px solid transparent; background: #fffdf6; font: inherit; color: inherit; }
+.grow:hover { border-color: #d8b98a; }
+.grow.sel { border-color: var(--wood); background: #fff3d2; box-shadow: 0 4px 0 var(--wood-d); }
+.grow.dim { opacity: .62; }
+.grow .code { font: 24px/1 var(--toon); letter-spacing: .1em; color: #8a5418; grid-row: span 2; }
+.grow .top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.grow .sub { font-size: 13.5px; color: var(--muted); font-weight: 700; }
+.grow .chev { grid-row: span 2; color: #b48a58; font: 24px var(--toon); }
+.ph { display: inline-block; font: 800 11.5px/1 var(--read); letter-spacing: .06em; text-transform: uppercase; padding: 5px 8px 4px; border-radius: 99px; border: 2px solid; white-space: nowrap; }
+.ph.lobby { background: #fffbf2; color: #8a5418; border-color: #d8b98a; }
+.ph.enter, .ph.brief { background: #fff1c9; color: #8a5a00; border-color: #e6bf5a; }
+.ph.turn { background: #e3f6d6; color: #1f5a14; border-color: #7fc463; }
+.ph.guess, .ph.chain { background: #efe4ff; color: #55308f; border-color: #b49ae6; }
+.ph.won { background: #d7f2c8; color: #1f4a18; border-color: #5cb84a; }
+.ph.lost { background: #e3e8ee; color: #3c4a5a; border-color: #9fb0c2; }
+.ph.ended { background: #f6ead8; color: #6f4f36; border-color: #cdb08a; }
+.ph.deleted { background: #eee; color: #666; border-color: #bbb; }
+.recd { color: #b3261e; font-weight: 800; }
+.empty { text-align: center; padding: 22px 10px; color: var(--ink2); }
+.empty h2 { color: var(--wood); font-size: 24px; margin: 6px 0; }
+.foot { margin-top: 10px; text-align: center; font-size: 14px; }
+
+/* medallions: a photo or an initial; a bot seat has a dashed ring */
+.meds { display: inline-flex; align-items: center; }
+.med { position: relative; display: inline-grid; place-items: center; flex: none; width: 26px; height: 26px; border-radius: 50%; overflow: hidden; background: var(--c, #888);
+  color: #fff; font: 800 12px/1 var(--read); border: 2px solid #fff; box-shadow: 0 0 0 2px var(--wood); margin-left: -6px; text-shadow: 0 1px 0 rgba(0, 0, 0, .35); }
+.meds .med:first-child { margin-left: 0; }
+.med img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.med.bot { border-style: dashed; }
+.med.lg { width: 38px; height: 38px; font-size: 15px; margin-left: 0; }
+.more { font-size: 13px; font-weight: 900; color: var(--muted); margin-left: 4px; }
+
+/* a game's page */
+.dh { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-bottom: 10px; }
+.dh .big { font: 38px/1 var(--toon); letter-spacing: .12em; color: #8a5418; }
+.dh .big.gone { color: #9a8a78; }
+.hint { font-size: 14px; color: var(--muted); font-weight: 700; }
+.goals { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); gap: 6px 12px; margin: 2px 0 12px; }
+.goals small { font-weight: 800; color: var(--ink2); font-size: 13px; }
+.bar { height: 10px; border-radius: 99px; background: #ead6ad; overflow: hidden; border: 2px solid #c9a46a; }
+.bar i { display: block; height: 100%; background: linear-gradient(#8fdc62, #4fa83a); }
+.kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); gap: 8px; margin: 0 0 12px; }
+.kv div { background: #fffdf6; border: 2px dashed var(--line); border-radius: 12px; padding: 6px 10px; }
+.kv small { display: block; font: 800 11px/1.2 var(--read); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.kv b { font: 19px/1.25 var(--toon); font-weight: 400; color: var(--ink); }
+.acts { margin-top: 14px; border-top: 2px dotted #e2c99a; padding-top: 12px; }
+.acts .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: 0 14px; align-items: start; }
+.acts .wide { grid-column: 1 / -1; }
+table.pl { width: 100%; border-collapse: collapse; font-size: 15px; }
+table.pl td, table.pl th { padding: 6px 5px; border-bottom: 2px dotted #e2c99a; text-align: left; vertical-align: middle; }
+table.pl th { font: 800 11px/1.2 var(--read); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+table.pl tr:last-child td { border-bottom: 0; }
+.who { display: flex; align-items: center; gap: 8px; font-weight: 800; white-space: nowrap; }
+table.pl .hint { white-space: nowrap; }
+.tag { font: 800 10px/1 var(--read); letter-spacing: .06em; text-transform: uppercase; background: #efe4ff; color: #55308f; border-radius: 99px; padding: 3px 6px; }
+.tys { display: inline-flex; gap: 3px; flex-wrap: wrap; }
+.ty { display: inline-grid; place-items: center; width: 21px; height: 21px; border-radius: 6px; background: #f0dfb8; color: var(--wood); font: 900 12px/1 var(--read); }
+.x { font: 800 13px/1 var(--read); color: #7a4a24; background: #f6e6c4; border: 2px solid #b48a58; border-radius: 99px; padding: 5px 9px; box-shadow: 0 2px 0 #b48a58; cursor: pointer; white-space: nowrap; }
+.x.armed { background: #fde9e3; color: #5a1610; border-color: #c8463f; box-shadow: 0 2px 0 #c8463f; }
+.acts h3 { font-size: 21px; color: var(--wood); margin-bottom: 10px; }
+.confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 12px; padding: 10px 12px; border-radius: 14px; background: #fde9e3;
+  font-weight: 800; color: #5a1610; border: 2px solid #e7b0a4; }
+.confirm p { margin: 0; flex-basis: 100%; }
+.confirm input { font: 20px var(--toon); letter-spacing: .2em; width: 7em; padding: 6px 10px; border-radius: 10px; border: 3px solid #b3261e; background: #fff; color: var(--ink); text-transform: uppercase; }
+
+/* logging in */
+.login { max-width: 27rem; margin: 22px auto 8px; text-align: center; padding: 20px 20px 18px; }
+.login h2 { font-size: 30px; color: var(--wood); margin-bottom: 6px; }
+.login p { color: var(--ink2); font-weight: 700; margin: 6px 0 14px; }
+.otp { display: block; width: 100%; max-width: 15rem; margin: 6px auto 14px; padding: 8px 6px; text-align: center; font: 34px/1.2 var(--toon); letter-spacing: .32em;
+  color: var(--ink); background: #fff; border: 3px solid #8a5a2c; border-radius: 14px; }
+.otp:focus { outline: none; border-color: #4cab37; box-shadow: 0 0 0 4px #c7efb3; }
+.err { color: var(--bad); font-weight: 800; margin: 0 0 12px; }
+.small { font-size: 14px; color: var(--muted); font-weight: 700; }
+
+#toast { position: fixed; left: 50%; top: 14px; transform: translateX(-50%) translateY(-160px); transition: transform .25s; z-index: 30; max-width: 90vw;
+  padding: .7em 1.1em; background: #fff6df; color: var(--ink); border: 3px solid var(--wood); border-radius: 16px; font-weight: 800; box-shadow: 0 5px 0 rgba(0, 0, 0, .3); }
+#toast.show { transform: translateX(-50%) translateY(0); }
+#toast.bad { background: #ffe3dc; border-color: #9a2a1f; color: #5a1610; }
+#toast.ok { background: #e6f7da; border-color: var(--good); color: #1f4a18; }
+
+/* one pane at a time on narrow screens */
+@media (max-width: 900px) {
+  .md { grid-template-columns: minmax(0, 1fr); }
+  .md.picked #listPane { display: none; }
+  .md:not(.picked) #detailPane { display: none; }
+}
+@media (max-width: 560px) {
+  .wrap { padding: 12px 10px 50px; }
+  .sign { padding: 8px 12px; gap: 8px; }
+  .sign .tree { font-size: 30px; }
+  .sign p { font-size: 13.5px; }
+  .paper { padding: 12px; border-radius: 18px; }
+  .grow .code { font-size: 21px; }
+  .dh .big { font-size: 31px; }
+  .seg button { padding: 7px 9px; font-size: 14px; }
+}
+@media (prefers-reduced-motion: reduce) { #toast { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="sign">
+    <span class="tree" id="tree">🌳</span>
+    <div><h1>Heartwood</h1><p id="subtitle">Admin</p></div>
+    <span class="me" id="me" hidden>El · <button class="btn cream sm" data-do="logout">Log out</button></span>
+  </header>
+  <main id="app"></main>
+</div>
+<script src="art.js"></script>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const TZ = 'Asia/Kuala_Lumpur';
+
+// what the page knows and shows
+const ui = { me: null, stage: 'request', err: '', wait: 0, games: [], filter: 'live', code: '', detail: null, confirm: '', armed: '', busy: false };
+
+function toast(msg, kind) {
+  let t = $('toast');
+  if (!t) { t = document.createElement('div'); t.id = 'toast'; t.setAttribute('role', 'status'); document.body.appendChild(t); }
+  t.textContent = msg; t.className = `show ${kind || ''}`;
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), kind === 'bad' ? 4500 : 2400);
+}
+async function api(method, path, body) {
+  const r = await fetch('/api/admin' + path, { method, cache: 'no-store', credentials: 'same-origin',
+    headers: body ? { 'Content-Type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined });
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 401 && path !== '/me') { ui.me = { ...(ui.me || {}), loggedIn: false }; ui.stage = 'request'; render(); }
+  if (!r.ok) throw Object.assign(new Error(j.error || 'Something went wrong'), { status: r.status, body: j });
+  return j;
+}
+
+// ---------- words ----------
+const day = d => new Intl.DateTimeFormat('en-GB', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+function when(ts) {
+  if (!ts) return '—';
+  const d = new Date(ts * 1000), now = new Date();
+  const t = new Intl.DateTimeFormat('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit' }).format(d).replace(/\s/g, '').toLowerCase();
+  if (day(d) === day(now)) return `${t} today`;
+  if (day(d) === day(new Date(now - 864e5))) return `${t} yesterday`;
+  return `${new Intl.DateTimeFormat('en-GB', { timeZone: TZ, weekday: 'short', day: 'numeric', month: 'short' }).format(d)}, ${t}`;
+}
+const idle = g => g.live && g.updatedAt && Date.now() / 1000 - g.updatedAt > 24 * 3600;
+function phaseLabel(g) {
+  const n = g.players.length;
+  switch (g.phase) {
+    case 'lobby': return n < 6 ? `Lobby · ${n} of 6` : `Lobby · ${n} players`;
+    case 'brief': return 'Briefing';
+    case 'enter': return 'Entering';
+    case 'turn': return `In play · round ${g.round}`;
+    case 'guess': return 'Finale · Secret Owl';
+    case 'chain': return 'Finale · tribute chain';
+    case 'end': return ({ won: 'Woke', lost: 'Ran dry', ended: 'Closed early' }[g.result] || 'Ended') + (g.round ? ` · round ${g.round}` : '');
+    case 'deleted': return 'Stories only';
+  }
+  return g.phase;
+}
+const phaseClass = g => (g.phase === 'end' ? g.result || 'ended' : g.phase);
+const badge = g => `<span class="ph ${esc(phaseClass(g))}">${esc(phaseLabel(g))}</span>`;
+const initials = p => (p.bot ? 'B' + p.name.replace(/\D/g, '') : (p.name.trim()[0] || '?').toUpperCase());
+function med(code, p, big) {
+  const img = p.photo ? `<img alt="" src="/api/games/${encodeURIComponent(code)}/photo/${encodeURIComponent(p.id)}?v=${p.photo}" onerror="this.remove()">` : '';
+  return `<span class="med${big ? ' lg' : ''}${p.bot ? ' bot' : ''}" style="--c:${esc(p.color)}" title="${esc(p.name)}">${esc(initials(p))}${img}</span>`;
+}
+function meds(g, max = 6) {
+  const ps = g.players, shown = ps.length > max ? ps.slice(0, max - 2) : ps;
+  return `<span class="meds">${shown.map(p => med(g.code, p)).join('')}</span>${ps.length > shown.length ? `<span class="more">+${ps.length - shown.length}</span>` : ''}`;
+}
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+const inFilter = (g, f) => f === 'all' || (f === 'live' ? g.live : !g.live);
+
+// ---------- the login ----------
+function loginHTML() {
+  const me = ui.me || {};
+  if (!me.configured) {
+    return `<div class="paper login"><h2>Telegram isn't set up yet</h2>
+      <p>This server can't send a login code until its Telegram bot is set up, so nobody can log in to the admin yet.</p>
+      <p class="small">Everything else in Heartwood works as before.</p></div>`;
+  }
+  if (ui.stage === 'verify') {
+    return `<form class="paper login" id="verify"><h2>Type the code</h2>
+      <p>It's in your Telegram. It works once, for 5 minutes.</p>
+      <input class="otp" id="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="9" placeholder="······" aria-label="Login code" autofocus>
+      ${ui.err ? `<p class="err">${esc(ui.err)}</p>` : ''}
+      <button class="btn big block" type="submit" ${ui.busy ? 'disabled' : ''}>${ui.busy ? 'Checking…' : 'Log in'}</button>
+      <p class="small">No code? <button class="link" type="button" data-do="send" ${ui.wait > 0 || ui.busy ? 'disabled' : ''}>${ui.wait > 0 ? `Send a new one in ${ui.wait} s` : 'Send a new one'}</button></p></form>`;
+  }
+  return `<div class="paper login"><h2>Hello, El</h2>
+    <p>The admin sends a login code to your Telegram. No password.</p>
+    ${ui.err ? `<p class="err">${esc(ui.err)}</p>` : ''}
+    <button class="btn big block" data-do="send" ${ui.wait > 0 || ui.busy ? 'disabled' : ''}>${ui.busy ? 'Sending…' : ui.wait > 0 ? `Send me a code (in ${ui.wait} s)` : 'Send me a code'}</button>
+    <p class="small"><button class="link" data-do="haveCode">I already have a code</button></p></div>`;
+}
+function tick() {
+  clearInterval(tick.t);
+  if (ui.wait <= 0) return;
+  tick.t = setInterval(() => { ui.wait = Math.max(0, ui.wait - 1); if (!ui.me?.loggedIn) render(); if (!ui.wait) clearInterval(tick.t); }, 1000);
+}
+async function sendCode() {
+  ui.busy = true; ui.err = ''; render();
+  try {
+    await api('POST', '/code');
+    ui.stage = 'verify'; ui.wait = 30; tick();
+    toast('Code sent to your Telegram', 'ok');
+  } catch (e) {
+    ui.err = e.message;
+    if (e.body?.wait) { ui.wait = e.body.wait; tick(); }
+  }
+  ui.busy = false; render();
+  $('otp')?.focus();
+}
+async function verify(code) {
+  ui.busy = true; ui.err = ''; render();
+  try {
+    await api('POST', '/login', { code });
+    ui.me = await api('GET', '/me');
+    ui.busy = false; ui.stage = 'request';
+    toast('Welcome back, El', 'ok');
+    await loadGames();
+    return;
+  } catch (e) { ui.err = e.message; }
+  ui.busy = false; render();
+  const o = $('otp'); if (o) { o.value = ''; o.focus(); }
+}
+
+// ---------- games ----------
+async function loadGames() {
+  try {
+    const r = await api('GET', '/games');
+    ui.games = r.games;
+    if (ui.code) await loadDetail(ui.code, true); else render();
+  } catch (e) { if (e.status !== 401) toast(e.message, 'bad'); }
+}
+async function loadDetail(code, quiet) {
+  try { ui.detail = await api('GET', '/games/' + encodeURIComponent(code)); }
+  catch (e) {
+    ui.detail = null;
+    if (e.status === 404) { ui.code = ''; setHash(); if (!quiet) toast(`${code} is gone`, 'bad'); }
+    else if (e.status !== 401) toast(e.message, 'bad');
+  }
+  render();
+}
+function listHTML() {
+  const n = f => ui.games.filter(g => inFilter(g, f)).length;
+  const seg = ['live', 'ended', 'all'].map(f => `<button class="${ui.filter === f ? 'on' : ''}" data-filter="${f}">${f[0].toUpperCase() + f.slice(1)} <b>${n(f)}</b></button>`).join('');
+  const rows = ui.games.filter(g => inFilter(g, ui.filter));
+  const body = rows.length ? `<ul class="glist">${rows.map(g => {
+    const sub = g.phase === 'deleted' ? `deleted ${when(g.deletedAt)} · ${plural(g.stories, 'story', 'stories')} kept`
+      : [g.players.length ? plural(g.players.length, 'player', 'players') : 'nobody joined',
+        idle(g) ? `untouched since ${when(g.updatedAt)}` : !g.live && g.endedAt ? `ended ${when(g.endedAt)}` : `active ${when(g.updatedAt)}`,
+        g.stories ? `<span class="recd">${g.recording && g.live ? '● ' : ''}${plural(g.stories, 'story', 'stories')}</span>` : g.recording && g.live ? '<span class="recd">● rec</span>' : ''].filter(Boolean).join(' · ');
+    return `<li><button class="grow${g.code === ui.code ? ' sel' : ''}${idle(g) || g.phase === 'deleted' ? ' dim' : ''}" data-code="${esc(g.code)}">
+      <span class="code">${esc(g.code)}</span><span class="top">${badge(g)}${g.players.length ? meds(g) : ''}</span><span class="chev">›</span>
+      <span class="sub">${sub}</span></button></li>`;
+  }).join('')}</ul>`
+    : `<div class="empty"><div style="font-size:42px">🌙</div><h2>${ui.filter === 'live' ? 'The forest is quiet' : 'Nothing here yet'}</h2>
+      <p>${ui.filter === 'live' ? 'No game is being played. A new game starts from the home page, on the screen that will run it.' : 'No game has ended yet.'}</p>
+      ${ui.filter === 'live' ? '<a class="btn cream sm" href="/">Open the home page</a>' : ''}</div>`;
+  return `<div class="paper"><div class="seg" role="tablist">${seg}</div>${body}
+    <p class="foot"><button class="link" data-do="logoutAll">Log out on every browser</button></p></div>`;
+}
+
+function detailHTML() {
+  const d = ui.detail;
+  if (!d) return `<div class="paper empty"><div style="font-size:42px">🌳</div><h2>Pick a game</h2><p>Its players, how far it got and what you can do with it show here.</p></div>`;
+  const code = esc(d.code);
+  if (d.phase === 'deleted') {
+    return `<div class="paper"><div class="dh"><span class="big gone">${code}</span>${badge(d)}<span class="hint">deleted ${when(d.deletedAt)}</span></div>
+      <p>The game is gone. Its ${plural(d.stories, 'story', 'stories')} and transcripts are kept.</p>
+      ${d.players.length ? `<p class="hint">${d.players.map(p => esc(p.name)).join(', ')}</p>` : ''}
+      <a class="btn cream block" href="${esc(d.storiesUrl)}" target="_blank" rel="noopener noreferrer">Stories · ${d.stories}</a>
+      ${ui.confirm === 'stories' ? `<div class="confirm"><p>Delete the ${plural(d.stories, 'story', 'stories')} of ${code} for good? Type the code to delete.</p>
+        <input id="typed" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Type the game code">
+        <button class="btn red sm" data-do="deleteStories">Delete the stories</button><button class="btn cream sm" data-do="cancel">Cancel</button></div>`
+        : `<button class="btn red block" data-do="ask" data-what="stories">Delete the stories too…</button><span class="why">This can't be undone.</span>`}</div>`;
+  }
+  const n = d.players.length;
+  const hint = d.phase === 'lobby' ? (n < d.minPlayers ? `needs ${d.minPlayers - n} more to start` : 'ready to start')
+    : d.phase === 'end' ? `ended ${when(d.endedAt)}` : `${d.tide ? `Tide ${d.tide} · ` : ''}active ${when(d.updatedAt)}`;
+  let goals = '';
+  if (d.goals) {
+    const g = d.goals, trees = g.trees.filter(Boolean).length, bar = (label, k, of) => `<div><small>${label} ${k} of ${of}</small><div class="bar"><i style="width:${of ? Math.round(100 * k / of) : 0}%"></i></div></div>`;
+    goals = `<div class="goals">${bar('Big Trees', trees, 6)}${bar('Fruit placed', g.placedPlayers, g.players)}${bar('Treasures', (g.treasures || []).length, 3)}${bar('On the World Tree', g.onTree, g.players)}</div>`;
+  }
+  const kv = `<div class="kv"><div><small>Players</small><b>${n}</b></div><div><small>Stories</small><b>${d.stories}</b></div>
+    <div><small>Photos</small><b>${d.photos}</b></div><div><small>Created</small><b>${when(d.createdAt)}</b></div>
+    <div><small>Recording</small><b>${d.recording ? 'on' : 'off'}</b></div></div>`;
+  const rows = d.players.map(p => `<tr><td><span class="who">${med(d.code, p, true)}${esc(p.name)}${p.bot ? ' <span class="tag">bot</span>' : ''}</span></td>
+    <td>${p.types.length ? `<span class="tys">${p.types.map(t => `<span class="ty" title="${esc(roleName(t))}">${t}</span>`).join('')}</span>` : '<span class="hint">no type yet</span>'}</td>
+    ${d.phase === 'lobby' ? `<td style="text-align:right"><button class="x${ui.armed === p.id ? ' armed' : ''}" data-kick="${esc(p.id)}" title="Remove ${esc(p.name)}" aria-label="Remove ${esc(p.name)}">${ui.armed === p.id ? 'Remove?' : '✕'}</button></td>`
+      : `<td>${esc(p.value || '—')}</td><td>${p.water}</td>`}</tr>`).join('');
+  const table = n ? `<table class="pl"><tr><th>Player</th><th>Types</th>${d.phase === 'lobby' ? '<th></th>' : '<th>Stands for</th><th>Water</th>'}</tr>${rows}</table>
+    <p class="hint">${d.phase === 'lobby' ? 'Types are given on the Keeper screen.' : "Players can't be removed once the game has started."}</p>`
+    : '<p class="hint">Nobody has joined yet.</p>';
+  const item = (h, wide) => `<div class="${wide ? 'wide' : ''}">${h}</div>`;
+  const acts = [
+    item(`<a class="btn block" href="${esc(d.keeperLink)}" target="_blank" rel="noopener noreferrer">Run as Keeper on this device</a><span class="why">Opens the Keeper screen with this game's Keeper link.</span>`),
+    item(`<a class="btn cream block" href="${esc(d.storiesUrl)}" target="_blank" rel="noopener noreferrer">Stories · ${d.stories}</a><span class="why">Every story told, with its transcript.</span>`),
+    item(d.canBot ? `<button class="btn cream block" data-do="bot" ${ui.busy ? 'disabled' : ''}>Add a bot seat</button><span class="why">Bot seats are played by the Keeper.</span>`
+      : `<button class="btn cream block" aria-disabled="true" data-why="${d.phase === 'lobby' ? 'The game is full.' : 'Only in the lobby: the game has started.'}">Add a bot seat</button><span class="why">${d.phase === 'lobby' ? `The game is full (${d.maxPlayers} players).` : 'Only in the lobby: the game has started.'}</span>`),
+  ];
+  if (d.phase === 'turn' || d.phase === 'enter') {
+    acts.push(ui.confirm === 'end' ? item(`<div class="confirm"><p>End the game now? The forest stays asleep, and everyone goes on to the Secret Owl guesses, the tribute chain and trust.</p>
+      <button class="btn red sm" data-do="end">Yes, end the game</button><button class="btn cream sm" data-do="cancel">Cancel</button></div>`, true)
+      : item(`<button class="btn cream block" data-do="ask" data-what="end" ${d.canEnd ? '' : `aria-disabled="true" data-why="${esc(d.endWhy)}"`}>End the game early…</button><span class="why">${d.canEnd ? 'Goes on to the Secret Owl, as on the Keeper screen.' : esc(d.endWhy)}</span>`));
+  }
+  const keep = d.stories ? `Its ${plural(d.stories, 'story stays', 'stories stay')}, under "Stories only".` : '';
+  const photos = d.photos ? `Its ${plural(d.photos, 'photo goes', 'photos go')} now.` : '';
+  acts.push(ui.confirm === 'delete' ? item(d.typeCode
+    ? `<div class="confirm"><p>Delete ${code}? ${plural(n, 'player is', 'players are')} in this game. ${photos} ${keep} Type the code to delete.</p>
+      <input id="typed" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Type the game code">
+      <button class="btn red sm" data-do="delete">Delete ${code}</button><button class="btn cream sm" data-do="cancel">Cancel</button></div>`
+    : `<div class="confirm"><p>Delete ${code}? The game goes from the list. ${photos} ${keep}</p>
+      <button class="btn red sm" data-do="delete">Yes, delete</button><button class="btn cream sm" data-do="cancel">Cancel</button></div>`, true)
+    : item(`<button class="btn red block" data-do="ask" data-what="delete">Delete this game…</button><span class="why">${d.typeCode ? 'It is still being played: you will type its code.' : 'Asks once more before it goes.'}</span>`));
+  return `<div class="paper"><div class="dh"><span class="big">${code}</span>${badge(d)}<span class="hint">${esc(hint)}</span></div>
+    ${goals}${kv}${table}<div class="acts"><h3>Manage</h3><div class="grid">${acts.join('')}</div></div></div>`;
+}
+let roles = {};
+const roleName = t => roles[t] || `Type ${t}`;
+
+// ---------- drawing ----------
+function setHash() { history.replaceState(null, '', `#${ui.filter}${ui.code ? '/' + ui.code : ''}`); }
+function render() {
+  const me = ui.me;
+  $('me').hidden = !me?.loggedIn;
+  $('subtitle').textContent = me?.loggedIn ? 'Admin · every game on this server' : 'Admin';
+  if (!me) { $('app').innerHTML = ''; return; }
+  if (!me.loggedIn) { $('app').innerHTML = loginHTML(); return; }
+  const typed = $('typed')?.value || '';
+  const crumb = ui.code ? `<div class="crumb"><button data-do="back">Games</button> › <b>${esc(ui.code)}</b></div>` : '<div class="crumb">Games</div>';
+  $('app').innerHTML = `${crumb}<div class="md${ui.code ? ' picked' : ''}"><div id="listPane">${listHTML()}</div><div id="detailPane">${detailHTML()}</div></div>`;
+  if ($('typed')) { $('typed').value = typed; if (!typed) $('typed').focus(); }
+}
+
+// ---------- taps ----------
+document.addEventListener('submit', e => {
+  if (e.target.id !== 'verify') return;
+  e.preventDefault();
+  const code = ($('otp').value || '').replace(/\D/g, '');
+  if (code.length !== 6) { ui.err = 'The code has 6 digits.'; render(); $('otp')?.focus(); return; }
+  verify(code);
+});
+document.addEventListener('input', e => {
+  if (e.target.id === 'otp' && e.target.value.replace(/\D/g, '').length === 6 && !ui.busy) verify(e.target.value.replace(/\D/g, ''));
+});
+document.addEventListener('click', async e => {
+  const b = e.target.closest('button');
+  if (!b || b.disabled) return;
+  const d = b.dataset;
+  if (b.getAttribute('aria-disabled') === 'true') { if (d.why) toast(d.why, 'bad'); return; }
+  if (d.filter) { ui.filter = d.filter; setHash(); return render(); }
+  if (d.code) {
+    ui.code = d.code; ui.confirm = ''; ui.armed = ''; setHash();
+    ui.detail = ui.detail?.code === d.code ? ui.detail : null;
+    render(); await loadDetail(d.code);
+    if (matchMedia('(max-width: 900px)').matches) scrollTo(0, 0);
+    return;
+  }
+  if (d.kick) {
+    if (ui.armed !== d.kick) { ui.armed = d.kick; render(); clearTimeout(ui.armT); ui.armT = setTimeout(() => { ui.armed = ''; render(); }, 3000); return; }
+    ui.armed = '';
+    const p = ui.detail.players.find(x => x.id === d.kick);
+    return act(() => api('POST', `/games/${encodeURIComponent(ui.code)}/kick`, { pid: d.kick }), `${p?.name || 'The player'} removed`);
+  }
+  switch (d.do) {
+    case 'send': return sendCode();
+    case 'haveCode': ui.stage = 'verify'; ui.err = ''; render(); return $('otp')?.focus();
+    case 'logout':
+      await api('POST', '/logout').catch(() => {});
+      ui.me = { ...ui.me, loggedIn: false }; ui.stage = 'request'; ui.games = []; ui.detail = null; ui.code = '';
+      toast('Logged out', 'ok'); return render();
+    case 'logoutAll':
+      if (!confirmTwice('logoutAll', 'Tap again to log out on every browser, this one too')) return;
+      await api('POST', '/logout', { all: true }).catch(() => {});
+      ui.me = { ...ui.me, loggedIn: false }; ui.stage = 'request'; ui.games = []; ui.detail = null; ui.code = '';
+      toast('Logged out on every browser', 'ok'); return render();
+    case 'back': ui.code = ''; ui.detail = null; ui.confirm = ''; setHash(); return render();
+    case 'ask': ui.confirm = d.what; return render();
+    case 'cancel': ui.confirm = ''; return render();
+    case 'bot': return act(async () => { const r = await api('POST', `/games/${encodeURIComponent(ui.code)}/bot`); return r; }, r => `✓ ${r.name} joined`);
+    case 'end': ui.confirm = ''; return act(() => api('POST', `/games/${encodeURIComponent(ui.code)}/end`), 'The game is closed: on to the Secret Owl guesses');
+    case 'delete': {
+      const code = ui.code, typed = ($('typed')?.value || '').trim();
+      if (ui.detail.typeCode && typed.toUpperCase() !== code) return toast(`Type ${code} to delete it`, 'bad');
+      try {
+        const r = await api('DELETE', `/games/${encodeURIComponent(code)}`, { confirm: typed });
+        toast(r.storiesKept ? `${code} deleted · ${plural(r.storiesKept, 'story', 'stories')} kept` : `${code} deleted`, 'ok');
+        ui.confirm = ''; ui.code = r.storiesKept ? code : ''; ui.detail = null; setHash();
+        return loadGames();
+      } catch (err) { return toast(err.message, 'bad'); }
+    }
+    case 'deleteStories': {
+      const code = ui.code, typed = ($('typed')?.value || '').trim();
+      if (typed.toUpperCase() !== code) return toast(`Type ${code} to delete its stories`, 'bad');
+      try {
+        await api('DELETE', `/games/${encodeURIComponent(code)}/stories`, { confirm: typed });
+        toast(`The stories of ${code} are deleted`, 'ok');
+        ui.confirm = ''; ui.code = ''; ui.detail = null; setHash();
+        return loadGames();
+      } catch (err) { return toast(err.message, 'bad'); }
+    }
+  }
+});
+const armedAt = {};
+function confirmTwice(key, msg) {
+  if (Date.now() - (armedAt[key] || 0) < 3000) { armedAt[key] = 0; return true; }
+  armedAt[key] = Date.now(); toast(msg); return false;
+}
+async function act(fn, ok) {
+  if (ui.busy) return;
+  ui.busy = true; render();
+  try { const r = await fn(); toast(typeof ok === 'function' ? ok(r) : ok, 'ok'); }
+  catch (err) { toast(err.message, 'bad'); }
+  ui.busy = false;
+  await loadGames();
+}
+addEventListener('keydown', e => { if (e.key === 'Escape' && ui.confirm) { ui.confirm = ''; render(); } });
+
+// ---------- start ----------
+async function start() {
+  try { if (window.ART) $('tree').innerHTML = ART.inline('worldTree:awake', { height: '46px' }); } catch { }
+  const [f, c] = location.hash.slice(1).split('/');
+  if (['live', 'ended', 'all'].includes(f)) ui.filter = f;
+  if (c) ui.code = c.toUpperCase();
+  try { const cards = await (await fetch('/api/cards')).json(); for (const r of cards.roles || []) roles[r.type] = r.name; } catch { }
+  try { ui.me = await api('GET', '/me'); } catch (e) { ui.me = { configured: false, loggedIn: false }; }
+  ui.wait = ui.me.wait || 0; tick();
+  render();
+  if (ui.me.loggedIn) await loadGames();
+  setInterval(() => { if (!document.hidden && ui.me?.loggedIn && !ui.confirm && !ui.busy) loadGames(); }, 15000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && ui.me?.loggedIn) loadGames(); });
+}
+start();
+</script>
+</body>
+</html>

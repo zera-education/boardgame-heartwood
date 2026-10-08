@@ -101,7 +101,7 @@ func openDB(path string) (*sql.DB, error) {
 	_, err = db.Exec(`
 CREATE TABLE IF NOT EXISTS games (code TEXT PRIMARY KEY, state TEXT NOT NULL, updated_at INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS events (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT NOT NULL, actor TEXT, type TEXT, payload TEXT, at INTEGER NOT NULL);
-CREATE TABLE IF NOT EXISTS photos (code TEXT, pid TEXT, data BLOB, PRIMARY KEY(code, pid));` + recordingsSchema)
+CREATE TABLE IF NOT EXISTS photos (code TEXT, pid TEXT, data BLOB, PRIMARY KEY(code, pid));` + recordingsSchema + adminSchema)
 	return db, err
 }
 
@@ -178,7 +178,7 @@ func (s *Server) create(w http.ResponseWriter, r *http.Request) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	code := ""
-	for code == "" || s.games[code] != nil {
+	for code == "" || s.games[code] != nil || s.codeTaken(code) {
 		code = strings.ToUpper(randID(4))
 	}
 	g := NewGame(code, randID(16))
@@ -560,6 +560,11 @@ func buildView(g *Game, pid, secret, host string) map[string]any {
 func main() {
 	addr := flag.String("addr", ":8490", "listen address")
 	dbPath := flag.String("db", "heartwood.db", "SQLite file")
+	// The admin's login codes go to El's Telegram: these flags name the env vars
+	// holding the bot token and his chat id (admin.go).
+	flag.StringVar(&tg.TokenVar, "tg-token-var", tg.TokenVar, "env var holding the Telegram bot token (admin login codes)")
+	flag.StringVar(&tg.ChatVar, "tg-chat-var", tg.ChatVar, "env var holding El's Telegram chat id")
+	flag.StringVar(&tg.API, "tg-api", tg.API, "Telegram Bot API base URL")
 	flag.Parse()
 	db, err := openDB(*dbPath)
 	if err != nil {
@@ -572,13 +577,20 @@ func main() {
 	lan = lanURLs(*addr)
 	s.sweepPhotos(time.Now())
 	s.sweepRecordings(time.Now())
+	s.sweepAdmin(time.Now())
 	go func() {
 		for range time.Tick(10 * time.Minute) {
 			s.sweepPhotos(time.Now())
 			s.sweepRecordings(time.Now())
+			s.sweepAdmin(time.Now())
 		}
 	}()
-	log.Printf("Heartwood (World Tree) on http://localhost%s (db %s, %d saved games)", *addr, *dbPath, len(s.games))
+	if tg.ready() {
+		log.Printf("Admin (/admin): login codes go to Telegram (token from $%s, chat from $%s)", tg.TokenVar, tg.ChatVar)
+	} else {
+		log.Printf("Admin (/admin): Telegram isn't set up ($%s and $%s), so nobody can log in; the game works as before", tg.TokenVar, tg.ChatVar)
+	}
+	log.Printf("Heartwood on http://localhost%s (db %s, %d saved games)", *addr, *dbPath, len(s.games))
 	for _, u := range lan {
 		log.Printf("Phones on the same Wi-Fi: %s", u)
 	}
@@ -602,6 +614,7 @@ func (s *Server) routes() *http.ServeMux {
 	mux.HandleFunc("GET /api/games/{code}/photo/{pid}", s.photoImage)
 	mux.HandleFunc("GET /api/games/{code}/state", s.state)
 	s.recordingRoutes(mux) // story recordings and their transcripts (recording.go)
+	s.adminRoutes(mux)     // the admin page and its API (admin.go)
 	mux.HandleFunc("GET /api/games/{code}/live", s.live)
 	mux.HandleFunc("GET /api/qr", qrCode)
 	mux.HandleFunc("GET /api/cards", cards)

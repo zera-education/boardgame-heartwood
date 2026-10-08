@@ -136,6 +136,22 @@ don't hard-code them; `/api/cards` has the same as `stages` and `ringDeckNames`.
 - **Stories page** `stories.html?g=CODE` (Keeper only): every clip by round, with the question, the player, an
   audio player and the transcript; downloads as CSV and JSON.
 
+## Admin
+
+- **`/admin`**: El's page for every game on this server (Live / Ended / All, newest activity first). A game's page shows
+  its players and progress and lets him run it as Keeper on this device (the `?k=` Keeper link), add a bot seat (lobby:
+  the next free "Bot N" and colour), remove a player (lobby), end the game early (during play) and delete it. A game
+  still being played needs its code typed. Deleting keeps the story recordings: the game stays as **Stories only**
+  (table `deleted_games`, which keeps its Keeper secret, so its Stories page still opens) until El deletes them too.
+- **Login:** a 6-digit code sent to El's Telegram through the Bot API: 5 minutes, works once, one per 30 s and at most
+  6 an hour, 5 wrong tries void it; only its hash is kept. A right code sets `hw_admin` (HttpOnly, Secure,
+  SameSite=Strict, 30 days, stored hashed in `admin_sessions`). A login from a new place sends an alert; **Log out on
+  every browser** ends every session. Every `/api/admin` route except `me`, `code` and `login` needs it; the session
+  also opens any game's stories.
+- **Setup:** the bot token and El's chat id come from the env vars named by `-tg-token-var` (default
+  `HEARTWOOD_TG_TOKEN`) and `-tg-chat-var` (default `HEARTWOOD_TG_CHAT`); `-tg-api` sets the Bot API URL. Without
+  them the login says Telegram isn't set up, and the game works as before.
+
 ## Roles (Enneagram types, always on)
 
 The Keeper gives each player 1 to 3 types in the lobby; several players may hold the same type.
@@ -159,6 +175,7 @@ The Keeper gives each player 1 to 3 types in the lobby; several players may hold
 - `main.go`: HTTP API, WebSocket live updates, rejoin codes, QR codes, `/api/cards`, SQLite (`games` holds each game's
   state as JSON; `events` logs every action; `photos` holds the players' photos)
 - `photo.go`: photo upload, serving, and the sweep that deletes them after the game
+- `admin.go`: the admin page's API (Telegram login code, sessions, games list and actions); `web/admin.html`: the page
 - `recording.go`: story recordings, the Keeper's and the transcription worker's API, the audio sweep;
   `ops/transcribe/`: the worker on the Mac mini, its lanes seed and install script
 - `game_test.go`, `photo_test.go`, `sim_test.go`: rules tests, photo tests and the bot balance simulation

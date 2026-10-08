@@ -1,6 +1,6 @@
 package main
 
-// World Tree: the rules engine. A cooperative game for 6 to 12 players: the
+// Heartwood: the rules engine. A cooperative game for 6 to 12 players: the
 // team wakes the forest (a Big Tree in every value, everyone places a fruit, the
 // three treasures on the World Tree, everyone gathered there), or everyone runs
 // out of water. Players say what they do and the Keeper taps it on the big
@@ -216,9 +216,10 @@ type Game struct {
 	TurnIdx     int                  `json:"turnIdx"`
 	Round       int                  `json:"round"`
 	Tide        int                  `json:"tide"`
-	Result      string               `json:"result"`  // "", won, lost, ended (closed early by the Keeper)
-	EndedAt     int64                `json:"endedAt"` // unix seconds when Result was set; photos go 2 hours later
-	Tiles       []*Tile              `json:"tiles"`   // index 0 (the World Tree) is nil
+	Result      string               `json:"result"`    // "", won, lost, ended (closed early by the Keeper)
+	EndedAt     int64                `json:"endedAt"`   // unix seconds when Result was set; photos go 2 hours later
+	CreatedAt   int64                `json:"createdAt"` // unix seconds; 0 for games made before it was noted
+	Tiles       []*Tile              `json:"tiles"`     // index 0 (the World Tree) is nil
 	Weather     [6]string            `json:"weather"`
 	NextWeather [6]string            `json:"nextWeather"`
 	Breath      []Drift              `json:"breath"` // the next Forest Breath, rolled ahead
@@ -263,7 +264,7 @@ type Action struct {
 
 func NewGame(code, hostSecret string) *Game {
 	g := &Game{Rules: RulesVersion, Code: code, HostSecret: hostSecret, Phase: PhaseLobby,
-		Decks: map[string][]int{}, Placed: []string{}}
+		Decks: map[string][]int{}, Placed: []string{}, CreatedAt: time.Now().Unix()}
 	g.lay()
 	for s := range 6 {
 		g.Weather[s] = drawWeather()

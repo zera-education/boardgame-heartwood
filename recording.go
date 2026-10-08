@@ -184,9 +184,10 @@ func keeperSecret(r *http.Request) string {
 	return r.URL.Query().Get("host")
 }
 
-// keeper checks the request comes from the game's Keeper and returns the game
-// code. A game that is no longer loaded (saved under older rules) is checked
-// against its saved state, so its stories stay reachable.
+// keeper checks the request comes from the game's Keeper (or the admin, see
+// admin.go) and returns the game code. A game that is no longer loaded (saved
+// under older rules) is checked against its saved state, and a deleted one
+// against the secret it left with its stories, so its stories stay reachable.
 func (s *Server) keeper(w http.ResponseWriter, r *http.Request) (string, bool) {
 	code := strings.ToUpper(r.PathValue("code"))
 	s.mu.Lock()
@@ -197,15 +198,22 @@ func (s *Server) keeper(w http.ResponseWriter, r *http.Request) (string, bool) {
 	s.mu.Unlock()
 	if !found {
 		var state string
-		if err := s.db.QueryRow(`SELECT state FROM games WHERE code=?`, code).Scan(&state); err != nil {
-			fail(w, 404, "no game with that code")
-			return "", false
+		if err := s.db.QueryRow(`SELECT state FROM games WHERE code=?`, code).Scan(&state); err == nil {
+			var saved struct {
+				HostSecret string `json:"hostSecret"`
+			}
+			json.Unmarshal([]byte(state), &saved)
+			hostSecret, found = saved.HostSecret, true
+		} else {
+			hostSecret, found = s.deletedSecret(code)
 		}
-		var saved struct {
-			HostSecret string `json:"hostSecret"`
-		}
-		json.Unmarshal([]byte(state), &saved)
-		hostSecret = saved.HostSecret
+	}
+	if !found {
+		fail(w, 404, "no game with that code")
+		return "", false
+	}
+	if s.isAdmin(r) {
+		return code, true
 	}
 	secret := keeperSecret(r)
 	if secret == "" || hostSecret == "" || subtle.ConstantTimeCompare([]byte(secret), []byte(hostSecret)) != 1 {
