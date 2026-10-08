@@ -1609,7 +1609,7 @@ function shareHTML(v) {
   h += `<div class="timer k-cardtimer" data-timer></div>`;
   // "Not this one": a ring or Heartwood card can be swapped for another from the same deck
   const swap = s.kind === 'ring' || s.kind === 'heartwood' ? `<button class="k-btn cream" data-k="another" title="Not this one: draw another card from the same deck">↻ Another question</button>` : '';
-  if (v.isHost) h += `<div class="k-card-btns"><button class="k-btn big" data-k="doneShare">Done sharing ✓</button>${swap}<button class="k-btn cream" data-t="60">1 min</button><button class="k-btn cream" data-t="90">90 s</button></div>`;
+  if (v.isHost) h += `<div class="k-card-btns"><button class="k-btn big" data-k="doneShare" title="Done sharing (Enter)">Done sharing ✓<kbd class="k-kbd">↵</kbd></button>${swap}<button class="k-btn cream" data-t="60">1 min</button><button class="k-btn cream" data-t="90">90 s</button></div>`;
   return h + '</div></div>';
 }
 
@@ -1905,6 +1905,11 @@ addEventListener('keydown', e => {
   if (v && v.isHost && /^[1-9]$/.test(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey && $('k-modal').hidden && !e.target.closest?.('input, select, textarea')) {
     const i = B?.nums?.[+e.key - 1];
     if (i != null) { e.preventDefault(); return onHex(i); }
+  }
+  // Enter while someone is sharing: Done sharing (held down, or pressed twice at once, it closes only one share)
+  if (v && v.isHost && v.share && e.key === 'Enter' && !e.metaKey && !e.ctrlKey && !e.altKey && !e.target.closest?.('input, select, textarea')) {
+    const b = document.querySelector('#k-modal [data-k="doneShare"]');
+    if (b) { e.preventDefault(); if (e.repeat || Date.now() - (ui.enterAt || 0) < 700) return; ui.enterAt = Date.now(); return b.click(); }
   }
   // M Move, E Explore, Enter End turn: the same as tapping that button in the tray
   if (v && v.isHost && v.phase === 'turn' && v.turn && !v.share && !e.metaKey && !e.ctrlKey && !e.altKey && !e.repeat

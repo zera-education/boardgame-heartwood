@@ -27,7 +27,7 @@
  * Tiles (origin = top-face centre; the face is √3·0.965·S ≈ 1.67·S wide × 1.16·S tall, the walls hang ART.depth below)
  *   Colour deepens toward the centre in clear steps: Ring 4 fresh spring green → Ring 1 deep emerald, the World Tree
  *   hex darkest (mossy earth) (ART.palette.up, index = ring). Each sector carries its value colour (ART.VALUE_TINT).
- *   Face down, the whole hex is a moss-covered stone; face up, it is dug away to a patch of dirt on grass.
+ *   Face down, the whole hex is a moss-covered stone; face up, it is dug away to dirt, edge to edge.
  *   ART.tile({ring, sector, up, kind, world, S, q, r, outer, seed})
  *     ring 1..4 (0 or world:true = World Tree hex), sector 0..5 (value tint), up = face-up,
  *     kind 'empty'|'spring'|'treasure' (spring adds wet flowers), q/r → deterministic decoration + the Ring 4
@@ -248,6 +248,8 @@
   // the slide", so a move into another value reads at a glance): a tint on the ground, and an edge of the colour
   // round the top face. A stronger tint alone turns warm values muddy on green; the edge keeps all six apart.
   const VALUE_TINT = .3, VALUE_EDGE = .8;
+  // An explored hex is dug to dirt, edge to edge (El, 2026-10-09), deepening toward the centre like the rings.
+  const DIRT_UP = ['#5a3a24', '#6b4128', '#7d4e2f', '#906037', '#a5733f'], DIRT_TINT = .14;
   const FACE_L = [.06, .05, .08, .1, .13];                                // light layer: deep rings stay deep
   const SOIL = ['#9c6b42', '#7a4a2c', '#4a2a17'];                         // lower-right wall, lower-left wall, outline
 
@@ -319,27 +321,13 @@
     for (let i = 0; i < 7; i++) out.push(Ci((R() - .5) * K * 1.3, (R() - .5) * K * .6 - lift, .5 + R() * .4, { fill: i % 2 ? mo.h : '#fff6c0', opacity: .55 }));
     return out.join('');
   }
-  // Face up: the moss and stone are dug away to a patch of dirt, darker where it dips at the back, with clods on the rim.
-  function dugDirt(R) {
-    const so = tone('#8d5b34', .5, .12, .14), w = 16 + R() * 2, h = 9.5 + R(), rim = lumpy(R, w, h, .92, 1.06, 0, 10);
-    const out = [Pa(smooth(rim), { fill: so.o, stroke: so.o, 'stroke-width': 2.2, 'stroke-linejoin': 'round' }), Pa(smooth(rim), { fill: so.d })];
-    out.push(Pa(smooth(rim.map(([x, y]) => [x * .8, y * .72 + 2.2])), { fill: so.l }));
-    out.push(Pa(smooth(rim.map(([x, y]) => [x * .74, y * .5 - 3.2])), { fill: dark(so.c, .32), opacity: .55 }));
-    for (let i = 0; i < 7; i++) {
-      const a = (i / 7 + R() * .05) * Math.PI * 2, x = Math.cos(a) * w * .98, y = Math.sin(a) * h * .98, r = 1.5 + R() * 1.2, t = tone(mix('#8d5b34', '#b07a4a', R()), .5, .1, .2);
-      out.push(El(x, y, r * 1.3, r * .9, { fill: t.o }) + El(x, y - .3, r * 1.05, r * .7, { fill: t.d }) + El(x - .4, y - .6, r * .6, r * .35, { fill: t.l }));
-    }
-    for (let i = 0; i < 4; i++) out.push(Ci((R() - .5) * w * 1.1, (R() - .3) * h * .9, .7 + R() * .5, { fill: so.o, opacity: .5 }));
-    if (R() < .6) out.push(pebble((R() - .5) * w * .8, (R() - .2) * h * .6, .6));
-    return out.join('');
-  }
-
   function tile(o = {}) {
     const S = o.S || ART.S, world = !!o.world || o.ring === 0, ring = world ? 0 : (o.ring ?? 4);
     const R = rng(o.seed ?? (o.q != null ? hashQR(o.q, o.r, ring + 7) : (ring * 977 + (o.sector ?? 0) * 131 + (o.up ? 7 : 3))));
     const vc = o.sector != null && o.sector >= 0 ? VAL[o.sector] : null;
-    let top = UP[ring];
-    if (vc) top = mix(top, vc, VALUE_TINT);
+    // face up the whole hex is dug to dirt, a touch of the sector colour in it; face down its grass shows round the moss
+    let top = !world && o.up ? DIRT_UP[ring] : UP[ring];
+    if (vc) top = mix(top, vc, o.up ? DIRT_TINT : VALUE_TINT);
     const tt = tone(top, .5, .12, FACE_L[ring]), k = S0 * .965, Dp = depth(ring, S0);
     const c = facePts(k), down = p => [p[0], p[1] + Dp];
     const deep = Math.max(0, 4 - ring) * .05;
@@ -385,23 +373,18 @@
     } else if (!o.up) {
       out.push(mossCover(R, ring, vc));
     } else {
-      // grass on the rim, then dug dirt in the middle; rim things behind the dirt are drawn first
-      for (let i = 0; i < 9; i++) { const a = R() * 360 * RAD, rr = 19 + R() * 12, x = Math.cos(a) * rr, y = Math.sin(a) * rr * TILT; out.push(Pa(D`M${x},${y} q.8,-2.4 2.2,-3.4`, { fill: 'none', stroke: i % 2 ? tt.h : tt.o, 'stroke-width': 1, opacity: i % 2 ? .6 : .35, 'stroke-linecap': 'round' })); }
-      const decoN = 2 + Math.floor(R() * 3);
-      const deco = [];
-      for (let i = 0; i < decoN; i++) {
-        const a = R() * 360 * RAD, rr = 22 + R() * 8, x = Math.cos(a) * rr, y = Math.sin(a) * rr * TILT;
-        const pick = R();
-        if (o.kind === 'spring' && i < 2) deco.push([y, flower(x, y, .8, '#9fd8ff', '#fff3a8')]);
-        else if (pick < .42) deco.push([y, tuft(x, y + 1, .8 + R() * .3, tone(mix(top, '#2f7a32', .45), .5, .1, .05))]);
-        else if (pick < .72) deco.push([y, flower(x, y, .7 + R() * .2, R() < .5 ? '#ffffff' : (vc ? light(vc, .45) : '#fff6b0'))]);
-        else if (pick < .88) deco.push([y, pebble(x, y, .8 + R() * .3)]);
-        else deco.push([y, mushroom(x, y, .7)]);
+      // dug dirt: tilled strokes, clods, a pebble or two, light grit; a spring brings two wet flowers to its edge
+      for (let i = 0; i < 7; i++) { const [x, y] = inHex(30); out.push(Pa(D`M${x - 4},${y} q4,-2.2 8,0`, { fill: 'none', stroke: tt.o, 'stroke-width': 1.1, opacity: .45, 'stroke-linecap': 'round' })); }
+      const bits = [];
+      for (let i = 0; i < 9; i++) {
+        const [x, y] = inHex(31), r = 1.4 + R() * 1.5, t = tone(mix(top, R() < .5 ? '#c79363' : '#5a3a24', .35 + R() * .2), .5, .1, .2);
+        bits.push([y, El(x, y, r * 1.35, r * .9, { fill: t.o }) + El(x, y - .3, r * 1.1, r * .7, { fill: t.d }) + El(x - .4, y - .6, r * .6, r * .35, { fill: t.l })]);
       }
-      deco.sort((a, b) => a[0] - b[0]);
-      deco.filter(d => d[0] < -4).forEach(d => out.push(d[1]));
-      out.push(dugDirt(R));
-      deco.filter(d => d[0] >= -4).forEach(d => out.push(d[1]));
+      for (let i = 0; i < 1 + Math.floor(R() * 2); i++) { const [x, y] = inHex(26); bits.push([y, pebble(x, y, .6 + R() * .3)]); }
+      if (o.kind === 'spring') for (let i = 0; i < 2; i++) { const a = (200 + i * 140 + R() * 30) * RAD; bits.push([Math.sin(a) * 26 * TILT, flower(Math.cos(a) * 26, Math.sin(a) * 26 * TILT, .8, '#9fd8ff', '#fff3a8')]); }
+      else if (R() < .35) { const a = R() * 360 * RAD; bits.push([Math.sin(a) * 27 * TILT, tuft(Math.cos(a) * 27, Math.sin(a) * 27 * TILT + 1, .65, tone('#5f9a3a', .5, .1, .05))]); }
+      bits.sort((a, b) => a[0] - b[0]).forEach(b => out.push(b[1]));
+      for (let i = 0; i < 8; i++) { const [x, y] = inHex(32); out.push(Ci(x, y, .5 + R() * .4, { fill: i % 2 ? tt.h : tt.o, opacity: .5 })); }
     }
     // Ring 4's outer edges: a ribbon in the sector's value colour, and pennants on the front walls
     let outer = o.outer;

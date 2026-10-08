@@ -42,7 +42,8 @@ Locally, the server prints the address phones on the same Wi-Fi should use, and 
   player one Enneagram type, all different up to 9 players (the Keeper can still change any of them). Under **Help a player rejoin · Keeper on another device** the
   Keeper can issue a 4-digit rejoin code (one use, 10 minutes) or get a link that moves the Keeper controls to another
   device.
-- **The Keeper screen is animated.** It shows the forest (61 hexes, weather tint per sector, plants, dead leaves,
+- **The Keeper screen is animated.** It shows the forest (61 hexes, each sector in its value's colour, face-down hexes
+  covered in moss and explored ones dug to dirt, weather tint per sector, plants, dead leaves,
   each player's photo medallion), the three goals (once fruit starts arriving, the fruit goal names who still has to bring one:
   a treasure alone doesn't count), each player's water, fruit and treasure, the open share card and the trail log. Everything
   that happens is played as animation from the view's `events`. An Explore always says what it found on the hex,
@@ -51,7 +52,7 @@ Locally, the server prints the address phones on the same Wi-Fi should use, and 
   Nothing moves on a plain tap: the Keeper picks the action first (**Move**, Water, Tend, Clear), then the hexes it can
   reach glow with numbers 1, 2, 3… in reading order, so the team can say "move to 3"; the number keys pick them too.
   Keys do the commonest taps: **M** Move, **E** Explore, **Enter** End turn (each packet shows its key), so a turn can be
-  M, 3, E, Enter.
+  M, 3, E, Enter. While someone is sharing, **Enter** is Done sharing (one share per press).
   The drawer (**Tools · log**: Keeper tools and the trail log) opens over the map without moving it. **Undo** at the
   top of the trail log (or Ctrl+Z) takes back the Keeper's last tap for a player, newest first, until the turn ends.
   **Turn the map** (in the top-left sign) shows the forest from any of its six sides: the ground turns like a table,

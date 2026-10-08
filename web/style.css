@@ -263,6 +263,9 @@ body.k-turning #k-map, body.k-turning .k-view button { pointer-events: none; }
   display: grid; place-items: center; font: 800 calc(var(--pw) * .12)/1 var(--read); color: #5a3d24; background: rgba(255, 250, 238, .85);
   border: 1px solid rgba(90, 61, 36, .45); border-bottom-width: 2px; border-radius: 4px; }
 .k-wxc ~ .k-key { top: calc(var(--pw) * .34); }
+/* a key on a big button (Enter on Done sharing) */
+.k-kbd { display: inline-grid; place-items: center; min-width: 1.3em; height: 1.3em; margin-left: .45em; padding: 0 .2em; font: 800 .62em/1 var(--read);
+  color: inherit; border: 1.5px solid currentColor; border-bottom-width: 2.5px; border-radius: 5px; opacity: .75; vertical-align: .12em; text-shadow: none; }
 .k-free { position: absolute; top: calc(var(--pw) * .1); right: 3px; writing-mode: vertical-rl; font: 800 calc(var(--pw) * .11)/1 var(--read); color: #6b4a2e; text-transform: uppercase; letter-spacing: .06em; }
 .k-pk:hover { transform: translateY(-5px); }
 .k-pk:active { transform: translateY(3px); box-shadow: 0 2px 0 #2e1709, 0 3px 6px rgba(0, 0, 0, .35); }
