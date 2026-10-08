@@ -218,38 +218,42 @@ type Share struct {
 type Event map[string]any
 
 type Game struct {
-	Rules       string               `json:"rules"`
-	Code        string               `json:"code"`
-	HostSecret  string               `json:"hostSecret"`
-	Phase       string               `json:"phase"`
-	Players     []*Player            `json:"players"`
-	Order       []string             `json:"order"`
-	TurnIdx     int                  `json:"turnIdx"`
-	Round       int                  `json:"round"`
-	Tide        int                  `json:"tide"`
-	Result      string               `json:"result"`    // "", won, lost, ended (closed early by the Keeper)
-	EndedAt     int64                `json:"endedAt"`   // unix seconds when Result was set; photos go 2 hours later
-	CreatedAt   int64                `json:"createdAt"` // unix seconds; 0 for games made before it was noted
-	Tiles       []*Tile              `json:"tiles"`     // index 0 (the World Tree) is nil
-	Weather     [6]string            `json:"weather"`
-	NextWeather [6]string            `json:"nextWeather"`
-	Breath      []Drift              `json:"breath"` // the next Forest Breath, rolled ahead
-	Turn        *TurnState           `json:"turn"`
-	Shares      []*Share             `json:"shares"` // the queue; [0] is open
-	ShareSeq    int                  `json:"shareSeq"`
-	Placed      []string             `json:"placed"` // treasures on the World Tree
-	Slide       int                  `json:"slide"`  // the briefing slide every screen shows
-	Decks       map[string][]int     `json:"decks"`
-	Chain       []string             `json:"chain"`
-	ChainIdx    int                  `json:"chainIdx"`
-	Log         []string             `json:"log"`
-	Events      []Event              `json:"events"`
-	EventSeq    int                  `json:"eventSeq"`
-	TimerEnd    int64                `json:"timerEnd"`
-	TimerLabel  string               `json:"timerLabel"`
-	TimerShare  int                  `json:"timerShare"` // the share the running timer belongs to (0: none)
-	Version     int                  `json:"version"`
-	Rejoin      map[string]RejoinPin `json:"rejoin"`
+	Rules       string           `json:"rules"`
+	Code        string           `json:"code"`
+	HostSecret  string           `json:"hostSecret"`
+	Phase       string           `json:"phase"`
+	Players     []*Player        `json:"players"`
+	Order       []string         `json:"order"`
+	TurnIdx     int              `json:"turnIdx"`
+	Round       int              `json:"round"`
+	Tide        int              `json:"tide"`
+	Result      string           `json:"result"`    // "", won, lost, ended (closed early by the Keeper)
+	EndedAt     int64            `json:"endedAt"`   // unix seconds when Result was set; photos go 2 hours later
+	CreatedAt   int64            `json:"createdAt"` // unix seconds; 0 for games made before it was noted
+	Tiles       []*Tile          `json:"tiles"`     // index 0 (the World Tree) is nil
+	Weather     [6]string        `json:"weather"`
+	NextWeather [6]string        `json:"nextWeather"`
+	Breath      []Drift          `json:"breath"` // the next Forest Breath, rolled ahead
+	Turn        *TurnState       `json:"turn"`
+	Shares      []*Share         `json:"shares"` // the queue; [0] is open
+	ShareSeq    int              `json:"shareSeq"`
+	Placed      []string         `json:"placed"` // treasures on the World Tree
+	Slide       int              `json:"slide"`  // the briefing slide every screen shows
+	Decks       map[string][]int `json:"decks"`
+	Chain       []string         `json:"chain"`
+	ChainIdx    int              `json:"chainIdx"`
+	Log         []string         `json:"log"`
+	Events      []Event          `json:"events"`
+	EventSeq    int              `json:"eventSeq"`
+	TimerEnd    int64            `json:"timerEnd"`
+	TimerLabel  string           `json:"timerLabel"`
+	TimerShare  int              `json:"timerShare"` // the share the running timer belongs to (0: none)
+	// TimerWait is a share's own timer (seconds) waiting for its card to show on
+	// the Keeper screen, after the board's animation (a treasure takes a few
+	// seconds to rise): "shareShown" starts it, so nobody loses seconds.
+	TimerWait int                  `json:"timerWait,omitempty"`
+	Version   int                  `json:"version"`
+	Rejoin    map[string]RejoinPin `json:"rejoin"`
 	// Story recording (recording.go): on unless the Keeper switches it off; one
 	// Keeper device records.
 	NoRecord  bool   `json:"noRecord,omitempty"`
@@ -448,8 +452,9 @@ func (g *Game) event(typ string, e Event) {
 }
 
 func (g *Game) setTimer(secs int, label string) {
+	g.TimerWait = 0
 	if secs <= 0 {
-		g.TimerEnd, g.TimerLabel = 0, ""
+		g.clearTimer()
 		return
 	}
 	g.TimerEnd = time.Now().Add(time.Duration(secs) * time.Second).UnixMilli()
@@ -659,11 +664,21 @@ func (g *Game) syncShareTimer() {
 		return
 	}
 	if g.TimerShare != 0 || s != nil {
-		g.TimerEnd, g.TimerLabel = 0, ""
+		g.clearTimer()
 	}
 	g.TimerShare = idx
 	if s != nil && ShareSeconds[s.Kind] > 0 {
-		g.setTimer(ShareSeconds[s.Kind], "Share")
+		g.TimerWait, g.TimerLabel = ShareSeconds[s.Kind], "Share" // starts when its card shows (shareShown)
+	}
+}
+
+func (g *Game) clearTimer() { g.TimerEnd, g.TimerLabel, g.TimerWait = 0, "", 0 }
+
+// shareShown is the Keeper screen saying the open share's card is on screen:
+// its waiting timer starts now. Said again, or for an old share, it does nothing.
+func (g *Game) shareShown(idx int) {
+	if s := g.openShare(); s != nil && s.Idx == idx && g.TimerShare == idx && g.TimerWait > 0 {
+		g.setTimer(g.TimerWait, "Share")
 	}
 }
 
@@ -794,7 +809,7 @@ func (g *Game) enter(me *Player, value, hex int) error {
 func (g *Game) newTurn() {
 	g.Turn = &TurnState{Player: g.Order[g.TurnIdx], Actions: ActionsPerTurn}
 	g.Undo = nil
-	g.TimerEnd, g.TimerLabel = 0, ""
+	g.clearTimer()
 }
 
 func (g *Game) spend(n int) error {
@@ -1482,7 +1497,7 @@ func (g *Game) toGuess() {
 	g.Phase = PhaseGuess
 	g.Turn = nil
 	g.Undo = nil
-	g.TimerEnd, g.TimerLabel = 0, ""
+	g.clearTimer()
 	g.logf("Everyone: guess who was your Secret Owl.")
 }
 
@@ -1626,7 +1641,7 @@ func (g *Game) hostAction(a Action) error {
 		g.ChainIdx++
 		if g.ChainIdx >= len(g.Chain) {
 			g.Phase = PhaseEnd
-			g.TimerEnd, g.TimerLabel = 0, ""
+			g.clearTimer()
 			if g.Result == "won" {
 				g.logf("The forest is awake. Thank you, all of you.")
 			} else {
@@ -1658,6 +1673,8 @@ func (g *Game) hostAction(a Action) error {
 		p.Photo = 0
 	case "timer":
 		g.setTimer(a.N, "Timer")
+	case "shareShown":
+		g.shareShown(a.N)
 	case "undo":
 		return g.undo()
 	case "foundCheer":

@@ -765,7 +765,7 @@ const zeroWater = () => `<div class="alert"><span style="filter:grayscale(1);opa
 function sharePanel(v, me) {
   const s = v.share, isMe = s.player === me.id, sp = player(s.player);
   const who = isMe ? 'You' : esc(sp?.name || '?');
-  const timer = v.timerEnd ? `<div class="timer">${A.icon('timer', 26)}<span data-timer></span></div>` : '';
+  const timer = v.timerEnd || v.timerWait ? `<div class="timer">${A.icon('timer', 26)}<span data-timer></span></div>` : '';
   if (s.kind === 'treasure') {
     const t = treasureOf(s.sub);
     return { cls: 'gold', color: '#d68a12', html: `${sign('Group moment', '#f2a62a')}

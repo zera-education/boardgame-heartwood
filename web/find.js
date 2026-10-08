@@ -164,8 +164,8 @@
   function keeperButtons(st) {
     if (!keeper()) return '';
     return st === 'ask'
-      ? '<small>Keeper: when the explaining is done</small><button class="hf-btn" data-hf="foundCheer">Explained</button><button class="hf-btn ghost" data-hf="foundClose">Close</button>'
-      : '<button class="hf-btn" data-hf="foundClose">Back to the forest</button>';
+      ? '<small>Keeper: when the explaining is done</small><button class="hf-btn" data-hf="foundCheer" data-enter="2">Explained</button><button class="hf-btn ghost" data-hf="foundClose">Close</button>'
+      : '<button class="hf-btn" data-hf="foundClose" data-enter="2">Back to the forest</button>';
   }
 
   function confetti() {

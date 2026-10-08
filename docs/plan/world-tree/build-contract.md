@@ -134,7 +134,9 @@ mechanics: versioned views, pushes after every change, Keeper secret, rejoin pin
 teammate id or ""), `explore`, `sow`, `water` (hex), `tend` (hex), `clear` (hex), `harvest`, `take`, `drink`,
 `pass` (target=receiver id, text=water|fruit|treasure), `endTurn`.
 **Keeper only:** `start`, `slide` (n), `begin`, `assignPowers` (target, types), `kick`, `doneShare`, `startChain`, `nextTribute`,
-`timer` (n seconds), `undo` (takes back the Keeper's last tap for a player this turn: the server keeps a copy of
+`timer` (n seconds), `shareShown` (n = share idx: the Keeper screen shows that share's card, so its own
+timer starts now; a `why` or a treasure answer's 10 s wait in `timerWait` until then, so the treasure's rise doesn't
+eat into them), `undo` (takes back the Keeper's last tap for a player this turn: the server keeps a copy of
 the game before each one, up to 6, until the turn ends or the phase changes; End turn is not taken back; view `undo`,
 Keeper only, is the trail log line of the tap it takes back).
 **Phone only (own pid+secret):** `trust`, `investigate` (n=sector), `guess` (target).
@@ -160,7 +162,7 @@ Errors are plain sentences shown to the user.
   goals: {trees:[6 bools], placedPlayers, players, treasures:[ids placed], onTree},
   events: [{id, type, ...}],                       // the last 80; ids increase
   log: [last 40 strings],
-  timerEnd, timerLabel,
+  timerEnd, timerLabel, timerWait,      // timerWait: a share's seconds waiting for its card (shown full, still)
   tribute: {giver, receiver, idx, total}           // chain phase
   recognition: [{id,name,color,trust,givers,owlName,owlHidden,guessedRight}]   // end phase
   me: {id, target, targetName, guess, peeks:[...], breath:[{from,to}] (Investigator only),

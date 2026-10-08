@@ -52,10 +52,11 @@ Locally, the server prints the address phones on the same Wi-Fi should use, and 
   Nothing moves on a plain tap: the Keeper picks the action first (**Move**, Water, Tend, Clear), then the hexes it can
   reach glow with numbers 1, 2, 3… in reading order, so the team can say "move to 3"; the number keys pick them too.
   Keys do the commonest taps: **M** Move, **E** Explore, **Enter** End turn (each packet shows its key), so a turn can be
-  M, 3, E, Enter. While someone is sharing, **Enter** is Done sharing (one share per press).
+  M, 3, E, Enter. Whenever something is open, **Enter** presses its default button, marked ↵ (Done sharing, Next, Start
+  the tribute chain…), once per press. `,` and `.` turn the map, during play and in the finale.
   The drawer (**Tools · log**: Keeper tools and the trail log) opens over the map without moving it. **Undo** at the
   top of the trail log (or Ctrl+Z) takes back the Keeper's last tap for a player, newest first, until the turn ends.
-  **Turn the map** (in the top-left sign, or the `,` and `.` keys) shows the forest from any of its six sides: the ground turns like a table,
+  **Turn the map** (in the top-left sign, or the `,` and `.` keys; also in the finale) shows the forest from any of its six sides: the ground turns like a table,
   trees and medallions ride on it upright, the value signs travel with their sectors. It is this screen's view only,
   kept per game.
 - **Players say it, the Keeper taps it. Phones down.** Every public action (enter, move, explore, sow, water, tend,

@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 )
 
 // table is a test game with its players, played through Apply the way the
@@ -647,8 +648,22 @@ func TestSpringsTreasuresAndFog(t *testing.T) {
 	seen := map[string]bool{}
 	for k := 1; k <= len(g.Order); k++ {
 		s := g.openShare()
-		if s == nil || s.Kind != "treasure" || s.Seq != k || seen[s.Player] || g.TimerShare != s.Idx || g.TimerEnd == 0 {
-			t.Fatalf("treasure answer %d: %+v (timer for %d, ends %d)", k, s, g.TimerShare, g.TimerEnd)
+		// the timer waits for the card to show on the Keeper screen (the treasure rises first)
+		if s == nil || s.Kind != "treasure" || s.Seq != k || seen[s.Player] || g.TimerShare != s.Idx || g.TimerEnd != 0 || g.TimerWait != 10 {
+			t.Fatalf("treasure answer %d: %+v (timer for %d, ends %d, waits %d)", k, s, g.TimerShare, g.TimerEnd, g.TimerWait)
+		}
+		x.must(x.host("shareShown", Action{N: s.Idx - 1})) // an old share: nothing
+		if g.TimerEnd != 0 {
+			t.Fatal("an old share started the timer")
+		}
+		x.must(x.host("shareShown", Action{N: s.Idx}))
+		if left := g.TimerEnd - time.Now().UnixMilli(); g.TimerWait != 0 || left < 9500 || left > 10000 {
+			t.Fatalf("the timer started with %d ms (waits %d)", left, g.TimerWait)
+		}
+		end0 := g.TimerEnd
+		x.must(x.host("shareShown", Action{N: s.Idx})) // said twice: it doesn't restart
+		if g.TimerEnd != end0 {
+			t.Fatal("the timer restarted")
 		}
 		seen[s.Player] = true
 		end := g.TimerEnd
@@ -658,7 +673,7 @@ func TestSpringsTreasuresAndFog(t *testing.T) {
 			t.Fatal("the timer did not reset for the next person")
 		}
 	}
-	if g.TimerEnd != 0 || g.TimerShare != 0 {
+	if g.TimerEnd != 0 || g.TimerShare != 0 || g.TimerWait != 0 {
 		t.Fatal("the share timer outlived the treasure round")
 	}
 	x.fails(x.as(p, "sow", own), "sowing where a treasure lies")
@@ -763,7 +778,9 @@ func TestRoles(t *testing.T) {
 	g.Tiles[up].Up = true
 	x.turnOf(individualist)
 	x.must(x.as(individualist, "explore", own))
-	hint := func(i int) any { return buildView(g, plain.ID, plain.Secret, "")["tiles"].([]any)[i].(map[string]any)["hint"] }
+	hint := func(i int) any {
+		return buildView(g, plain.ID, plain.Secret, "")["tiles"].([]any)[i].(map[string]any)["hint"]
+	}
 	for _, j := range Adj[in] {
 		want := any("nothing")
 		switch j {

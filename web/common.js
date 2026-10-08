@@ -183,9 +183,10 @@ const HW = {
   startTimers() {
     setInterval(() => {
       document.querySelectorAll('[data-timer]').forEach(el => {
-        const end = HW.view?.timerEnd || 0;
-        if (!end) { el.textContent = ''; el.classList.remove('over'); return; }
-        const left = Math.round((end - (Date.now() + HW.clockOffset)) / 1000);
+        const end = HW.view?.timerEnd || 0, wait = HW.view?.timerWait || 0;
+        if (!end && !wait) { el.textContent = ''; el.classList.remove('over'); return; }
+        // a share's timer waiting for its card on the big screen shows its full time, still
+        const left = end ? Math.round((end - (Date.now() + HW.clockOffset)) / 1000) : wait;
         const a = Math.abs(left);
         el.textContent = `${HW.view.timerLabel ? HW.view.timerLabel + ' · ' : ''}${left < 0 ? '-' : ''}${Math.floor(a / 60)}:${String(a % 60).padStart(2, '0')}`;
         el.classList.toggle('over', left < 0);

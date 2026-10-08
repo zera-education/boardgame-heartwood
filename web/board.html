@@ -1146,7 +1146,7 @@ function renderTopLeft(v) {
   if (v.phase === 'turn') h += `<div class="k-breath" title="Dead leaves the next Forest Tide blows onto the forest"><span class="k-lab">Forest Breath</span>
     <span class="k-gusts">${[0, 1, 2, 3, 4, 5].map(k => I.dead(20, k + 1, k >= breath)).join('')}</span><b>${breath}</b></div>`;
   // the map seen from another side (this screen only)
-  if (['enter', 'turn'].includes(v.phase)) h += `<div class="k-view"><span class="k-lab">Turn the map</span>${[-1, 1].map(d => `<button data-turn="${d}" title="Turn the map to the ${d < 0 ? 'left (,)' : 'right (.)'}" aria-label="Turn the map to the ${d < 0 ? 'left' : 'right'}">${turnIcon(d)}</button>`).join('')}</div>`;
+  if (MAP_PHASES.includes(v.phase)) h += `<div class="k-view"><span class="k-lab">Turn the map</span>${[-1, 1].map(d => `<button data-turn="${d}" title="Turn the map to the ${d < 0 ? 'left (,)' : 'right (.)'}" aria-label="Turn the map to the ${d < 0 ? 'left' : 'right'}">${turnIcon(d)}</button>`).join('')}</div>`;
   h += `<div class="timer k-timer" data-timer></div>`;
   HW.patch($('k-tl'), h);
   $('k-tl').hidden = v.phase === 'lobby';
@@ -1207,6 +1207,8 @@ $('k-q').addEventListener('mouseleave', () => B?.hov(null));
 
 // ---------- HUD: whose turn + the action tray of seed packets ----------
 const PK = { move: 'Move', explore: 'Explore', sow: 'Sow', water: 'Water', tend: 'Tend', clear: 'Clear', harvest: 'Harvest', take: 'Take', drink: 'Drink', pass: 'Pass', end: 'End turn' };
+// the phases the map can be turned in: play, and the finale after it (the forest awake, or not)
+const MAP_PHASES = ['enter', 'turn', 'guess', 'chain', 'end'];
 // keyboard shortcuts for the Keeper's commonest taps (then 1-9 picks a numbered hex)
 const KEYS = { move: 'M', explore: 'E', end: '↵' };
 function packet(k, o) {
@@ -1327,7 +1329,7 @@ function renderHost(v) {
   if (!canEnd) ui.confirmEnd = false;
   HW.patch($('endBox'), !canEnd ? '' : v.share ? '<p class="k-muted">Finish the share first.</p>'
     : ui.confirmEnd ? `<p>End the game now? The forest stays asleep, and everyone goes on to the Secret Owl guesses, the tribute chain and trust.</p>
-      <div class="k-row"><button class="k-btn red sm" data-k="endGame">Yes, end the game</button><button class="k-btn cream sm" data-k="cancelEnd">Cancel</button></div>`
+      <div class="k-row"><button class="k-btn red sm" data-k="endGame">Yes, end the game</button><button class="k-btn cream sm" data-k="cancelEnd" data-enter title="Cancel (Enter)">Cancel<kbd class="k-kbd">↵</kbd></button></div>`
     : `<p class="k-muted">Out of time? Close the game here and go on to the Secret Owl and the tribute chain.</p><button class="k-btn cream sm" data-k="askEnd">End the game early…</button>`);
   const tools = `<label for="rejoinWho">Give a player a rejoin code (for a new phone or browser):</label>
     <div class="k-row"><select id="rejoinWho">${v.players.map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select>
@@ -1367,7 +1369,7 @@ function renderModal(v) {
   }
   else if (['guess', 'chain', 'end'].includes(v.phase)) {
     key = 'fin'; cls = ui.hidePanel ? 'mini' : 'fin';
-    h = ui.hidePanel ? `<button class="k-btn wood big" data-k="showPanel">Show the ${v.phase === 'end' ? 'recognition' : v.phase === 'chain' ? 'tribute chain' : 'guesses'}</button>` : finaleHTML(v);
+    h = ui.hidePanel ? `<button class="k-btn wood big" data-k="showPanel" data-enter>Show the ${v.phase === 'end' ? 'recognition' : v.phase === 'chain' ? 'tribute chain' : 'guesses'}<kbd class="k-kbd">↵</kbd></button>` : finaleHTML(v);
   }
   $('k-dim').hidden = !key || cls === 'mini' || cls === 'lobby';
   $('k-dim').className = cls === 'fin' && v.result === 'won' ? 'light' : '';
@@ -1375,7 +1377,11 @@ function renderModal(v) {
   el.className = key ? 'k-m-' + cls : '';
   if (!key) { shownModal = ''; el._html = ''; el.innerHTML = ''; return; }
   if (cls === 'card') {
-    if (key !== shownModal) { el._html = ''; HW.patch(el, shareHTML(v)); }
+    if (key !== shownModal) {
+      el._html = ''; HW.patch(el, shareHTML(v));
+      // the share's own timer (a treasure answer, a why) starts now that its card is on screen
+      if (v.isHost && v.timerWait) HW.act(creds, 'shareShown', { n: v.share.idx });
+    }
     else {
       const n = $('trustN');
       if (n && n.textContent !== String(v.share.trustCount || 0)) { n.textContent = v.share.trustCount || 0; n.parentElement.animate([{ transform: 'scale(1.5)' }, { transform: 'scale(1)' }], { duration: 420, easing: SPRING }); }
@@ -1519,14 +1525,14 @@ const SLIDE = {
 function briefHTML(v) {
   const k = slideAt(v), n = HW.SLIDES.length, [id] = HW.SLIDES[k], live = briefLive(v), ctrl = v.isHost, last = k === n - 1;
   const s = SLIDE[id](v);
-  const end = live ? `<button class="k-btn big" data-k="begin">Enter the forest →</button>` : `<button class="k-btn big" data-k="closeBrief">Back to the game</button>`;
+  const end = live ? `<button class="k-btn big" data-k="begin" data-enter>Enter the forest →<kbd class="k-kbd">↵</kbd></button>` : `<button class="k-btn big" data-k="closeBrief" data-enter>Back to the game<kbd class="k-kbd">↵</kbd></button>`;
   return `<div class="k-panel k-brief" data-s="${id}">
     <div class="k-br-top"><span class="k-kicker">Briefing · ${k + 1} of ${n}</span>
       ${!ctrl ? '' : live ? (last ? '' : '<button class="k-x" data-k="skipBrief" title="End the briefing and enter the forest">Skip to the game</button>') : '<button class="k-x" data-k="closeBrief" aria-label="Close the briefing">✕</button>'}</div>
     <div class="k-br-main"><h2>${s.title}</h2>${s.sub ? `<p class="k-br-sub">${s.sub}</p>` : ''}<div class="k-br-body">${s.body}</div></div>
     <nav class="k-br-nav">${ctrl ? `<button class="k-btn cream" data-k="slidePrev" ${k ? '' : 'disabled'}>← Back</button>` : '<span></span>'}
       <ol class="k-br-dots">${HW.SLIDES.map(([, label], i) => `<li><button class="${i === k ? 'on' : i < k ? 'seen' : ''}" data-slide="${i}" ${ctrl ? '' : 'disabled'}><i></i><span>${esc(label)}</span></button></li>`).join('')}</ol>
-      ${!ctrl ? '<span class="k-muted">The Keeper is briefing the team.</span>' : last ? end : '<button class="k-btn" data-k="slideNext">Next →</button>'}</nav></div>`;
+      ${!ctrl ? '<span class="k-muted">The Keeper is briefing the team.</span>' : last ? end : '<button class="k-btn" data-k="slideNext" data-enter>Next →<kbd class="k-kbd">↵</kbd></button>'}</nav></div>`;
 }
 // a new slide: live, every screen follows the Keeper (the server keeps the number); during play, this screen only
 async function goSlide(i) {
@@ -1570,7 +1576,7 @@ function lobbyHTML(v) {
   const untyped = v.players.filter(p => !p.types.length);
   const why = n < min ? `Needs at least ${min} players (${n} joined).` : n > max ? `At most ${max} players.`
     : untyped.length ? `Give every player a type: ${untyped.map(p => esc(p.name)).join(', ')}.` : '';
-  return h + `<div class="k-start"><button class="k-btn big" data-k="start" ${why ? 'disabled' : ''}>Start: brief the team</button>${why ? `<span class="k-muted">${why}</span>` : ''}</div></div>`;
+  return h + `<div class="k-start"><button class="k-btn big" data-k="start" data-enter ${why ? 'disabled' : ''}>Start: brief the team<kbd class="k-kbd">↵</kbd></button>${why ? `<span class="k-muted">${why}</span>` : ''}</div></div>`;
 }
 
 function enterHTML(v) {
@@ -1609,7 +1615,7 @@ function shareHTML(v) {
   h += `<div class="timer k-cardtimer" data-timer></div>`;
   // "Not this one": a ring or Heartwood card can be swapped for another from the same deck
   const swap = s.kind === 'ring' || s.kind === 'heartwood' ? `<button class="k-btn cream" data-k="another" title="Not this one: draw another card from the same deck">↻ Another question</button>` : '';
-  if (v.isHost) h += `<div class="k-card-btns"><button class="k-btn big" data-k="doneShare" title="Done sharing (Enter)">Done sharing ✓<kbd class="k-kbd">↵</kbd></button>${swap}<button class="k-btn cream" data-t="60">1 min</button><button class="k-btn cream" data-t="90">90 s</button></div>`;
+  if (v.isHost) h += `<div class="k-card-btns"><button class="k-btn big" data-k="doneShare" data-enter title="Done sharing (Enter)">Done sharing ✓<kbd class="k-kbd">↵</kbd></button>${swap}<button class="k-btn cream" data-t="60">1 min</button><button class="k-btn cream" data-t="90">90 s</button></div>`;
   return h + '</div></div>';
 }
 
@@ -1623,7 +1629,7 @@ function finaleHTML(v) {
     const done = v.players.filter(p => p.guessed).length;
     h += `<div class="k-fin-h">${I.icon('owl', 54)}<div><h2>Who was your Secret Owl?</h2><p>Guess on your phone. <b>${done}/${v.players.length}</b> guessed.</p></div></div>
       <div class="k-guess">${v.players.map(p => `<div class="k-gp${p.guessed ? ' ok' : ''}">${medPic(p, 62, { badges: false })}<b>${esc(p.name)}</b><small>${p.guessed ? '✓ guessed' : 'thinking…'}</small></div>`).join('')}</div>`;
-    if (v.isHost) h += `<div class="k-fin-btns"><button class="k-btn big${done < v.players.length ? ' cream' : ''}" data-k="startChain">Start the tribute chain →</button></div>`;
+    if (v.isHost) h += `<div class="k-fin-btns"><button class="k-btn big${done < v.players.length ? ' cream' : ''}" data-k="startChain" data-enter>Start the tribute chain →<kbd class="k-kbd">↵</kbd></button></div>`;
   }
   if (v.phase === 'chain' && v.tribute) {
     const tr = v.tribute, g = HW.player(tr.giver), r = HW.player(tr.receiver);
@@ -1631,7 +1637,7 @@ function finaleHTML(v) {
       <div class="k-trib">${g ? `<div>${medPic(g, 120, { badges: false })}<b>${esc(g.name)}</b></div>` : ''}<span class="k-arrow">→</span>${r ? `<div>${medPic(r, 120, { badges: false })}<b>${esc(r.name)}</b></div>` : ''}</div>
       <p class="k-trib-q">“Three things I discovered about you today, and one thing I appreciate.”</p>
       <p class="k-muted">Then ${esc(r?.name || '')} says how many of the three were true, and gives their own tribute.</p><div class="timer k-cardtimer" data-timer></div>`;
-    if (v.isHost) h += `<div class="k-fin-btns"><button class="k-btn big" data-k="nextTribute">Next tribute →</button><button class="k-btn cream" data-t="60">1 min</button><button class="k-btn cream" data-t="90">90 s</button></div>`;
+    if (v.isHost) h += `<div class="k-fin-btns"><button class="k-btn big" data-k="nextTribute" data-enter>Next tribute →<kbd class="k-kbd">↵</kbd></button><button class="k-btn cream" data-t="60">1 min</button><button class="k-btn cream" data-t="90">90 s</button></div>`;
   }
   if (v.phase === 'end') {
     // each person's card; the Keeper taps one to put them in the spotlight while the team talks about them
@@ -1906,13 +1912,16 @@ addEventListener('keydown', e => {
     const i = B?.nums?.[+e.key - 1];
     if (i != null) { e.preventDefault(); return onHex(i); }
   }
-  // Enter while someone is sharing: Done sharing (held down, or pressed twice at once, it closes only one share)
-  if (v && v.isHost && v.share && e.key === 'Enter' && !e.metaKey && !e.ctrlKey && !e.altKey && !e.target.closest?.('input, select, textarea')) {
-    const b = document.querySelector('#k-modal [data-k="doneShare"]');
+  // Enter: the default button (data-enter, marked ↵) of whatever is open: Done sharing, Next, Start the tribute chain…
+  // The sealed find's buttons come first (data-enter="2": it covers everything). Held down, or pressed twice at once, it
+  // taps only once, so a treasure round never skips anyone. With nothing open, Enter ends the turn (below).
+  if (v && v.isHost && e.key === 'Enter' && !e.metaKey && !e.ctrlKey && !e.altKey && !e.target.closest?.('input, select, textarea')) {
+    const b = [...document.querySelectorAll('[data-enter]')].filter(b => !b.disabled && b.getClientRects().length)
+      .sort((a, c) => (+c.dataset.enter || 1) - (+a.dataset.enter || 1))[0];
     if (b) { e.preventDefault(); if (e.repeat || Date.now() - (ui.enterAt || 0) < 700) return; ui.enterAt = Date.now(); return b.click(); }
   }
   // , and . (or < and >) turn the map left and right, as the buttons in the top-left sign do
-  if (v && ['enter', 'turn'].includes(v.phase) && [',', '.', '<', '>'].includes(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey
+  if (v && MAP_PHASES.includes(v.phase) && [',', '.', '<', '>'].includes(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey
     && !e.target.closest?.('input, select, textarea')) {
     e.preventDefault();
     return turnMap(e.key === ',' || e.key === '<' ? -1 : 1);
