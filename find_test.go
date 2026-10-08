@@ -55,7 +55,7 @@ func TestSealedFind(t *testing.T) {
 	if g.Found == nil || g.Found.Player != mira.ID || g.Found.Hex != mira.Pos || g.Found.Stage != "ask" {
 		t.Fatalf("found %+v", g.Found)
 	}
-	if l := g.Log[len(g.Log)-1]; l != "mira Tan explores and finds something that does not belong in the forest…" {
+	if l := g.Log[len(g.Log)-1]; l != "mira Tan explores and finds something… unexpected!?" {
 		t.Fatalf("log %q", l)
 	}
 	for _, v := range []map[string]any{buildView(g, "", "", "host"), buildView(g, mate.ID, mate.Secret, ""), buildView(g, "", "", "")} {

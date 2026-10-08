@@ -67,7 +67,7 @@ func (g *Game) turnUp(me *Player) bool {
 		return false
 	}
 	g.Found = &Found{Player: me.ID, Hex: me.Pos, Stage: "ask"}
-	g.logf("%s explores and finds something that does not belong in the forest…", me.Name)
+	g.logf("%s explores and finds something… unexpected!?", me.Name)
 	return true
 }
 
