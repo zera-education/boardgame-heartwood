@@ -151,7 +151,7 @@ const W = [
 </div>
 <h3>The shape of the game</h3>
 <ol>
-  <li>The Keeper gives everyone their [[roles|Enneagram roles]]. Your phone tells you who you watch as a [[secret-owl]].</li>
+  <li>The Keeper gives everyone their [[roles|Enneagram roles]], then starts with the [[briefing]]. Your phone tells you who you watch as a [[secret-owl]].</li>
   <li>[[entering|Enter the forest]]: choose the [[values|value]] you stand for, and say why.</li>
   <li>Play [[round|rounds]]. In each, every player takes a [[turn]] of 2 [[action|actions]], then the [[forest-tide]] runs.</li>
   <li>The game ends when [[wake|the forest wakes]], or [[sleep|the forest sleeps on]].</li>
@@ -182,7 +182,7 @@ const W = [
   <li>Creates the game and shows the 4-letter join code and QR code on the big screen.</li>
   <li>Gives each player 1 to 3 Enneagram types in the lobby: their [[roles]].</li>
   <li>Starts the game when 6 to 12 players are in and everyone has a role.</li>
-  <li>Reads the [[forest-pact]].</li>
+  <li>Gives the [[briefing]] on the big screen, and reads the [[forest-pact]] in it.</li>
   <li>Taps what players say: [[entering]], every [[action]], every [[pass]], and <b>End turn</b>.</li>
   <li>Taps <b>Done sharing</b> when a [[share]] ends, and can start a [[timer]].</li>
   <li>Leads the [[finale]]: starts the [[tribute-chain]] and taps <b>Next</b> for each tribute.</li>
@@ -194,7 +194,7 @@ const W = [
 { id: 'forest-pact', cat: 'basics', icon: 'icon:pact', title: 'Forest Pact',
   short: 'The six promises everyone makes before playing.',
   body: `
-<p>The [[keeper]] reads the Forest Pact at the start. It holds for the whole game, and after it.</p>
+<p>The [[keeper]] reads the Forest Pact at the start, in the [[briefing]]. It holds for the whole game, and after it.</p>
 <div class="box">
 <p>{{worldTree:awake}} <b>What's shared in the forest stays in the forest.</b></p>
 <p>{{leaf}} <b>Every question is an invitation.</b> You may always say "not this one".</p>
@@ -205,6 +205,21 @@ const W = [
 </div>
 <p>The Keeper may pause any story.</p>` },
 
+{ id: 'briefing', cat: 'basics', icon: 'icon:goal', title: 'The briefing',
+  short: 'Slides on the big screen after Start: the goal, limits, obstacles, roles, the Secret Owl, the Forest Pact.',
+  body: `
+<p>When the [[keeper]] starts the game, the big screen shows the briefing before anyone enters. The Keeper steps through it with <b>Next</b> and <b>Back</b>, the arrow keys or a presenter clicker; every screen and phone follows.</p>
+<ol>
+  <li><b>Welcome:</b> the team around the sleeping [[world-tree]].</li>
+  <li><b>Our goal:</b> the three parts of the [[goal]], for the whole team.</li>
+  <li><b>What we have:</b> 2 [[action|actions]] a turn, [[water]], fruit and [[treasure]] limits, free [[pass|passing]].</li>
+  <li><b>The weather</b> and <b>dead leaves, running dry:</b> each obstacle and how to prevent it. See [[weather]] and [[forest-tide]].</li>
+  <li><b>Our powers:</b> the nine [[roles]] and who holds each. Your phone shows yours.</li>
+  <li><b>Side quest:</b> the [[secret-owl]]. Your phone shows whose Owl you are.</li>
+  <li><b>The [[forest-pact]]</b>, read aloud.</li>
+  <li><b>How we play:</b> the turn order and the [[share|shares]]. Then <b>Enter the forest</b> starts [[entering]].</li>
+</ol>
+<p>The Keeper may skip it, and can show the slides again during play from the Keeper tools.</p>` },
 { id: 'phones-down', cat: 'basics', icon: 'icon:phoneOff', title: 'Phones down',
   short: 'Look at each other and at the big screen, not at your phone.',
   body: `

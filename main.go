@@ -488,7 +488,7 @@ func buildView(g *Game, pid, secret, host string) map[string]any {
 		"lan": lan, "colors": Colors, "values": Values, "roles": Roles, "treasures": treasures,
 		"minPlayers": MinPlayers, "maxPlayers": MaxPlayers, "actionsPerTurn": ActionsPerTurn,
 		"stages": StageNames, "ringDecks": RingDeckNames,
-		"round": g.Round, "tide": g.Tide, "result": g.Result,
+		"round": g.Round, "tide": g.Tide, "result": g.Result, "slide": g.Slide,
 		"hexes": Board, "tiles": tiles, "weather": g.Weather, "breathCount": len(g.Breath),
 		"players": players, "order": order, "current": "", "turn": nil, "share": nil,
 		"goals": g.goals(), "timerEnd": g.TimerEnd, "timerLabel": g.TimerLabel,

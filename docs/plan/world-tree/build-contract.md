@@ -38,6 +38,10 @@ Keep the house style: plain HTML/JS/CSS, no build step, no frameworks, dark fore
   Tide. The next weather per sector is pre-drawn (for the Investigator). The World Tree has no weather.
 - **Water:** start 4, max 5. Only **springs** refill (Drink: back to 5, 1 action); springs never run dry.
   Rain does **not** refill. At 0 water a player cannot Move until someone passes them 1. No elimination.
+- **Briefing (phase `brief`, El, 2026-10-08):** Start deals the Secret Owls and opens the Keeper's briefing slides
+  (goal, limits, obstacles and how to prevent them, roles, the Secret Owl side quest, the Forest Pact, how we play).
+  Keeper `slide` (n) sets `Slide`, which every screen shows (view `slide`); phones show your roles and your Owl on
+  those slides. Keeper `begin` → phase `enter`.
 - **Entering (phase `enter`):** in turn order each player chooses their value and an outer-ring (ring 4) hex of
   that sector (sharing a hex is allowed), then shares **why** (share kind `why`).
 - **Turn (phase `turn`):** clockwise in join order; up to **2 actions**. Actions (1 action unless noted):
@@ -122,7 +126,7 @@ mechanics: versioned views, pushes after every change, Keeper secret, rejoin pin
 **Keeper acts for a player** (`host` + `as`; keeperActs): `enter` (n=value, hex), `move` (hex, target=brought
 teammate id or ""), `explore`, `sow`, `water` (hex), `tend` (hex), `clear` (hex), `harvest`, `take`, `drink`,
 `pass` (target=receiver id, text=water|fruit|treasure), `endTurn`.
-**Keeper only:** `start`, `assignPowers` (target, types), `kick`, `doneShare`, `startChain`, `nextTribute`,
+**Keeper only:** `start`, `slide` (n), `begin`, `assignPowers` (target, types), `kick`, `doneShare`, `startChain`, `nextTribute`,
 `timer` (n seconds).
 **Phone only (own pid+secret):** `trust`, `investigate` (n=sector), `guess` (target).
 Errors are plain sentences shown to the user.
@@ -131,7 +135,7 @@ Errors are plain sentences shown to the user.
 
 ```
 {
-  code, phase: "lobby"|"enter"|"turn"|"guess"|"chain"|"end", version, now, isHost, lan, colors,
+  code, phase: "lobby"|"brief"|"enter"|"turn"|"guess"|"chain"|"end", slide, version, now, isHost, lan, colors,
   values: Values, roles: [{type,name,text}], treasures: [{id,icon,name,meaning}],
   minPlayers: 6, maxPlayers: 12, actionsPerTurn: 2,
   round, tide, result: ""|"won"|"lost",

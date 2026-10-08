@@ -78,6 +78,7 @@ var own = Action{Hex: -1}
 func (x *table) play() {
 	x.t.Helper()
 	x.must(x.host("start", Action{}))
+	x.must(x.host("begin", Action{}))
 	for i, p := range x.ps {
 		x.must(x.as(p, "enter", Action{N: i % 6, Hex: ringHexes(4, i%6)[0]}))
 		x.must(x.host("doneShare", Action{}))
@@ -276,7 +277,7 @@ func TestPlayerLimits(t *testing.T) {
 		t.Fatal("kick failed")
 	}
 	x.must(x.host("start", Action{}))
-	if x.g.Phase != PhaseEnter || len(x.g.Order) != 11 {
+	if x.g.Phase != PhaseBrief || len(x.g.Order) != 11 {
 		t.Fatalf("phase %s order %d", x.g.Phase, len(x.g.Order))
 	}
 	x.fails(x.host("kick", Action{Target: p.ID}), "kick after the start")
@@ -294,12 +295,49 @@ func TestPlayerLimits(t *testing.T) {
 	}
 }
 
+// The briefing: after Start the Keeper shows slides on every screen, then the players enter.
+func TestBriefing(t *testing.T) {
+	x := newTable(t, 6, nil)
+	x.fails(x.host("slide", Action{N: 1}), "a slide in the lobby")
+	x.fails(x.host("begin", Action{}), "beginning in the lobby")
+	x.must(x.host("start", Action{}))
+	g, p := x.g, x.ps[0]
+	if g.Phase != PhaseBrief || g.Slide != 0 || p.Target == "" {
+		t.Fatalf("after start: phase %s slide %d target %q", g.Phase, g.Slide, p.Target)
+	}
+	x.must(x.host("slide", Action{N: 3}))
+	if g.Slide != 3 || buildView(g, "", "", "")["slide"] != 3 {
+		t.Fatalf("slide %d", g.Slide)
+	}
+	x.must(x.host("slide", Action{N: -2}))
+	x.must(x.host("slide", Action{N: 999}))
+	if g.Slide != MaxSlides-1 {
+		t.Fatalf("slide %d not clamped", g.Slide)
+	}
+	x.fails(x.phone(p, "slide", Action{N: 1}), "a player changing the slide")
+	x.fails(x.phone(p, "begin", Action{}), "a player ending the briefing")
+	x.fails(x.as(p, "enter", Action{N: 0, Hex: ringHexes(4, 0)[0]}), "entering during the briefing")
+	x.fails(x.host("start", Action{}), "starting twice")
+	x.fails(x.host("assignPowers", Action{Target: p.ID, Types: []int{3}}), "types changed during the briefing")
+	if _, err := g.Join("Late", "#000000"); err == nil {
+		t.Fatal("joined during the briefing")
+	}
+	x.must(x.host("begin", Action{}))
+	if g.Phase != PhaseEnter || g.current() != p {
+		t.Fatalf("after begin: phase %s current %v", g.Phase, g.current())
+	}
+	x.fails(x.host("slide", Action{N: 1}), "a slide after the briefing")
+	x.fails(x.host("begin", Action{}), "beginning twice")
+	x.must(x.as(p, "enter", Action{N: 0, Hex: ringHexes(4, 0)[0]}))
+}
+
 // Plays a whole 6-player game: enter with why shares, turns and a Forest Tide,
 // a forced win, then the finale with recognition.
 func TestFullGame(t *testing.T) {
 	x := newTable(t, 6, nil)
 	ps, g := x.ps, x.g
 	x.must(x.host("start", Action{}))
+	x.must(x.host("begin", Action{}))
 
 	// Entering: in join order, on the outer ring of your value, then say why.
 	x.fails(x.as(ps[1], "enter", Action{N: 1, Hex: ringHexes(4, 1)[0]}), "entering out of turn")
@@ -1347,6 +1385,8 @@ func TestLoadSkipsOldRules(t *testing.T) {
 func TestEndGameEarly(t *testing.T) {
 	x := newTable(t, 6, nil)
 	x.must(x.host("start", Action{}))
+	x.fails(x.host("endGame", Action{}), "ending the game during the briefing")
+	x.must(x.host("begin", Action{}))
 	x.fails(x.host("endGame", Action{}), "ending the game while entering")
 	x.play2()
 	g := x.g

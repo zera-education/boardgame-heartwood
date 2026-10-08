@@ -157,19 +157,20 @@ func treasureByID(id string) *Treasure {
 type Role struct {
 	Type int    `json:"type"`
 	Name string `json:"name"`
+	Gift string `json:"gift"`
 	Text string `json:"text"`
 }
 
 var Roles = []Role{
-	{1, "Reformer", "When you Clear, remove 2 layers (still 1 action in rain)."},
-	{2, "Helper", "Water, Tend or Clear a hex next to you without standing on it."},
-	{3, "Achiever", "After you Sow, the hex grows straight to Sprout."},
-	{4, "Individualist", "When you Explore, also peek at one unexplored hex next to you."},
-	{5, "Investigator", "See which hexes the next Forest Breath will hit; once a round, see one sector's next weather."},
-	{6, "Loyalist", "Plants on your hex and the 6 hexes around you (7 in all) are safe from dead leaves."},
-	{7, "Enthusiast", "One Move a turn may be 2 hexes (not in fog, not through sealed hexes)."},
-	{8, "Challenger", "You may enter sealed hexes, and bring one teammate from your hex when you Move."},
-	{9, "Peacemaker", "You and a teammate on a hex next to yours can pass things to each other."},
+	{1, "Reformer", "integrity", "When you Clear, remove 2 layers (still 1 action in rain)."},
+	{2, "Helper", "care", "Water, Tend or Clear a hex next to you without standing on it."},
+	{3, "Achiever", "drive", "After you Sow, the hex grows straight to Sprout."},
+	{4, "Individualist", "depth", "When you Explore, also peek at one unexplored hex next to you."},
+	{5, "Investigator", "insight", "See which hexes the next Forest Breath will hit; once a round, see one sector's next weather."},
+	{6, "Loyalist", "loyalty", "Plants on your hex and the 6 hexes around you (7 in all) are safe from dead leaves."},
+	{7, "Enthusiast", "joy", "One Move a turn may be 2 hexes (not in fog, not through sealed hexes)."},
+	{8, "Challenger", "strength", "You may enter sealed hexes, and bring one teammate from your hex when you Move."},
+	{9, "Peacemaker", "harmony", "You and a teammate on a hex next to yours can pass things to each other."},
 }
 
 var Colors = []string{"#e53935", "#fb8c00", "#fdd835", "#43a047", "#00897b", "#1e88e5", "#5e35b1", "#d81b60", "#6d4c41", "#546e7a", "#00acc1", "#7cb342"}

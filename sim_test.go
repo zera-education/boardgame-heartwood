@@ -94,8 +94,10 @@ func simGame(t *testing.T, players int, st *simStats) {
 			t.Fatal(err)
 		}
 	}
-	if err := g.Apply(Action{Host: "host", Type: "start"}); err != nil {
-		t.Fatal(err)
+	for _, ty := range []string{"start", "begin"} {
+		if err := g.Apply(Action{Host: "host", Type: ty}); err != nil {
+			t.Fatal(err)
+		}
 	}
 	b := &bot{g: g, shares: map[string]float64{}}
 	for g.Phase == PhaseEnter {

@@ -77,8 +77,9 @@ player tabs on one computer froze every other request. WebSockets don't share th
 
 ## Flow
 
-Lobby → **enter** (in turn order, each player chooses the value they stand for and a Ring 4 hex of its sector, and
-says why) → **turns** (clockwise, up to 2 actions each; after the last player the **Forest Tide** runs by itself: new
+Lobby → **brief** (the Keeper's briefing slides on every screen: the goal, limits, obstacles and how to prevent them,
+the roles, the Secret Owl side quest, the Forest Pact, how we play; phones show your roles and your Owl) → **enter**
+(in turn order, each player chooses the value they stand for and a Ring 4 hex of its sector, and says why) → **turns** (clockwise, up to 2 actions each; after the last player the **Forest Tide** runs by itself: new
 weather per sector, rain grows Seeded/Sprout, sun dries players not on a Big Tree, Forest Breath drifts dead leaves one
 ring inward, and from beyond the edge onto Ring 4; a plant someone stands on keeps its stage) → the game ends the moment the forest **wakes** (a Big Tree in every sector, every player has placed a
 fruit, all 3 treasures placed, everyone on the World Tree) or every player is at 0 water → **guess** (Secret Owl, on

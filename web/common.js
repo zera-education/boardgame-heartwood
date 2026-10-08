@@ -165,6 +165,10 @@ const HW = {
   ringDeck(r) { return HW.view?.ringDecks?.[r] || HW.RING_DECKS[r] || ''; },
   STAGE_ICON: ['', '🫘', '🌱', '🌿', '🌳'],   // 🌰 means trust only
   MAX_WATER: 5, MAX_FRUIT: 2,
+  // The Keeper's briefing slides after Start (view.slide is the index); phones follow along.
+  SLIDES: [['welcome', 'Welcome'], ['goal', 'Our goal'], ['carry', 'What we have'], ['weather', 'Weather'],
+    ['tide', 'Leaves and water'], ['powers', 'Our powers'], ['owl', 'Secret Owl'], ['pact', 'Forest Pact'], ['play', 'How we play']],
+  slideId(v) { return v?.phase === 'brief' ? (HW.SLIDES[v.slide || 0] || HW.SLIDES[0])[0] : ''; },
   roleName(t) { return HW.view?.roles?.find(r => r.type === t)?.name || `Type ${t}`; },
   roleText(t) { return HW.view?.roles?.find(r => r.type === t)?.text || ''; },
   treasure(id) { return HW.view?.treasures?.find(x => x.id === id) || null; },
@@ -191,7 +195,7 @@ const HW = {
 
   phaseTitle(v) {
     return {
-      lobby: 'Gathering the team', enter: 'Entering the forest', turn: `Round ${v.round || 1}`,
+      lobby: 'Gathering the team', brief: 'The briefing', enter: 'Entering the forest', turn: `Round ${v.round || 1}`,
       guess: 'Who was your Secret Owl?', chain: 'The tribute chain',
       end: v.result === 'won' ? 'The forest is awake!' : v.result === 'lost' ? 'The forest sleeps on' : v.result === 'ended' ? 'The game is closed' : 'The end',
     }[v.phase] || v.phase;

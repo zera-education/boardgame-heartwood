@@ -20,6 +20,7 @@ const RulesVersion = "world-tree-1"
 
 const (
 	PhaseLobby = "lobby"
+	PhaseBrief = "brief" // the Keeper briefs the team with slides on the big screen
 	PhaseEnter = "enter" // each player picks a value and an outer hex, and says why
 	PhaseTurn  = "turn"
 	PhaseGuess = "guess" // finale: guess your Secret Owl
@@ -227,6 +228,7 @@ type Game struct {
 	Shares      []*Share             `json:"shares"` // the queue; [0] is open
 	ShareSeq    int                  `json:"shareSeq"`
 	Placed      []string             `json:"placed"` // treasures on the World Tree
+	Slide       int                  `json:"slide"`  // the briefing slide every screen shows
 	Decks       map[string][]int     `json:"decks"`
 	Chain       []string             `json:"chain"`
 	ChainIdx    int                  `json:"chainIdx"`
@@ -529,6 +531,29 @@ func (g *Game) start() error {
 	for i, pi := range perm {
 		g.Players[pi].Target = g.Players[perm[(i+1)%len(perm)]].ID
 		g.Chain = append(g.Chain, g.Players[pi].ID)
+	}
+	g.Phase = PhaseBrief
+	g.Slide = 0
+	g.logf("The Keeper briefs the team: our goal, what stands in our way, our powers and the Secret Owl.")
+	return nil
+}
+
+// MaxSlides caps the briefing slide number (the Keeper screen has fewer).
+const MaxSlides = 32
+
+// slide shows briefing slide n on every screen.
+func (g *Game) slide(n int) error {
+	if g.Phase != PhaseBrief {
+		return errors.New("the briefing is over")
+	}
+	g.Slide = max(0, min(n, MaxSlides-1))
+	return nil
+}
+
+// begin ends the briefing: the players enter the forest.
+func (g *Game) begin() error {
+	if g.Phase != PhaseBrief {
+		return errors.New("not now")
 	}
 	g.Phase = PhaseEnter
 	g.TurnIdx = 0
@@ -1338,6 +1363,10 @@ func (g *Game) hostAction(a Action) error {
 	switch a.Type {
 	case "start":
 		return g.start()
+	case "slide":
+		return g.slide(a.N)
+	case "begin":
+		return g.begin()
 	case "assignPowers":
 		return g.assignPowers(a.Target, a.Types)
 	case "randomTypes":

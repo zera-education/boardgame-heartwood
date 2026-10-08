@@ -27,6 +27,7 @@
     <h3>Keeper tools</h3>
     <div class="k-row"><span class="k-lab">Timer</span>
       <button class="k-btn cream sm" data-t="60">1 min</button><button class="k-btn cream sm" data-t="90">90 s</button><button class="k-btn cream sm" data-t="240">4 min</button></div>
+    <div class="k-row" id="briefRow" hidden><span class="k-lab">Briefing</span><button class="k-btn cream sm" data-k="showBrief">Show the slides again</button></div>
     <details class="k-det"><summary>Help a player rejoin · Keeper on another device</summary><div id="hostTools"></div><div id="hostOut"></div></details>
     <details class="k-det" id="endEarly" hidden><summary>End the game early</summary><div id="endBox"></div></details>
   </section>
@@ -80,7 +81,7 @@ async function act(type, extra = {}, okMsg) {
 const actAs = (pid, type, extra, okMsg) => act(type, { as: pid, ...extra }, okMsg);
 
 // Keeper choices on this screen that aren't sent yet.
-const ui = { value: null, mode: null, bring: '', pass: false, scope: '', confirmEnd: false, hidePanel: false,
+const ui = { value: null, mode: null, bring: '', pass: false, scope: '', confirmEnd: false, hidePanel: false, brief: null, slideTo: null,
   drawer: store.get('hw-drawer', false), tip: '' };
 
 // ---------- small drawings for the HUD (ART markup, memoised) ----------
@@ -943,6 +944,7 @@ function render(v) {
   const scope = `${v.phase}|${v.current || ''}|${v.round}`;
   if (scope !== ui.scope) { ui.scope = scope; ui.value = null; ui.mode = null; ui.bring = ''; ui.pass = false; ui.info = null; if (v.phase !== 'end') ui.hidePanel = false; }
   if (v.share) { ui.mode = null; ui.pass = false; }
+  if (!['enter', 'turn'].includes(v.phase)) ui.brief = null;
   const fresh = takeEvents(v);
   const evs = plan(v, prevView, fresh);
   const moved = new Set(evs.filter(e => e.type === 'move' || e.type === 'enter').map(e => e.pid));
@@ -1157,6 +1159,7 @@ function renderHost(v) {
   el.hidden = false;
   // Ending early (Keeper only, during play, not while someone shares): a second, in-page confirm.
   const canEnd = v.phase === 'turn';
+  $('briefRow').hidden = !['enter', 'turn'].includes(v.phase);
   $('endEarly').hidden = !canEnd;
   if (!canEnd) ui.confirmEnd = false;
   HW.patch($('endBox'), !canEnd ? '' : v.share ? '<p class="k-muted">Finish the share first.</p>'
@@ -1193,7 +1196,8 @@ function renderModal(v) {
     const wait = shownModal === sk ? 0 : queueEnd - now();
     if (wait > 60) { clearTimeout(renderModal.t); renderModal.t = setTimeout(() => HW.view && renderModal(HW.view), wait + 20); }
     else { key = sk; cls = 'card'; }
-  } else if (v.phase === 'lobby') { key = 'lobby'; cls = 'lobby'; h = lobbyHTML(v); }
+  } else if (briefOn(v)) { key = 'brief|' + slideAt(v); cls = 'brief'; h = briefHTML(v); }
+  else if (v.phase === 'lobby') { key = 'lobby'; cls = 'lobby'; h = lobbyHTML(v); }
   else if (v.phase === 'enter' && ui.value == null) { key = 'enter'; cls = 'enter'; h = enterHTML(v); }
   else if (['guess', 'chain', 'end'].includes(v.phase) && shownModal !== 'fin' && queueEnd - now() > 60) {
     clearTimeout(renderModal.t); renderModal.t = setTimeout(() => HW.view && renderModal(HW.view), queueEnd - now() + 300);
@@ -1214,7 +1218,120 @@ function renderModal(v) {
       if (n && n.textContent !== String(v.share.trustCount || 0)) { n.textContent = v.share.trustCount || 0; n.parentElement.animate([{ transform: 'scale(1.5)' }, { transform: 'scale(1)' }], { duration: 420, easing: SPRING }); }
     }
   } else HW.patch(el, h);
+  // a new slide slides in from the side it comes from
+  if (cls === 'brief' && shownModal.startsWith('brief|') && key !== shownModal && !RM.matches) {
+    const dx = +key.split('|')[1] > +shownModal.split('|')[1] ? 40 : -40;
+    el.querySelector('.k-br-main')?.animate([{ opacity: 0, transform: `translateX(${dx}px)` }, { opacity: 1, transform: 'none' }], { duration: 420, easing: SPRING });
+  }
   shownModal = key;
+}
+
+// ---------- the briefing: slides after Start, before anyone enters (every screen shows the Keeper's slide) ----------
+// During play the Keeper can show them again here only (ui.brief is that slide).
+const briefLive = v => v.phase === 'brief';
+const briefOn = v => briefLive(v) || (ui.brief != null && ['enter', 'turn'].includes(v.phase));
+const slideAt = v => Math.max(0, Math.min(HW.SLIDES.length - 1, briefLive(v) ? ui.slideTo ?? v.slide ?? 0 : ui.brief ?? 0));
+// one obstacle: what it does, and how the team prevents it
+const hurdle = (art, name, does, prevent) => `<div class="k-br-c"><div class="k-br-art">${art}</div><h3>${name}</h3><p>${does}</p>
+  <p class="k-br-ok"><b>Prevent it</b>${prevent}</p></div>`;
+const SLIDE = {
+  welcome: v => ({ title: 'The forest is asleep', sub: 'Today, as one team, we wake it.', body: `
+    <div class="k-br-hero">${I.world(false, 300)}<div class="k-br-team">${v.players.map(p => `<span class="k-br-p">${medPic(p, 104, { badges: false })}<b>${esc(p.name)}</b></span>`).join('')}</div></div>
+    <div class="k-br-agenda"><div class="k-lab">In this briefing</div><ol>${[
+      ['goal', 'Our goal, together'], ['carry', 'What we have, and its limits'], ['weather', 'What stands in our way: the weather'],
+      ['tide', 'What stands in our way: dead leaves, running dry'], ['powers', 'Our powers: the nine Enneagram gifts'],
+      ['owl', 'Side quest: the Secret Owl'], ['pact', 'The Forest Pact'], ['play', 'How we play']].map(([id, t]) => `<li><button data-slide="${HW.SLIDES.findIndex(s => s[0] === id)}">${t}</button></li>`).join('')}</ol></div>` }),
+  goal: v => ({ title: 'Our goal: wake the forest, together', sub: 'One team. No points, and no winner among us: we all wake the forest, or it sleeps on.', body: `
+    <div class="k-br-row three">
+      <div class="k-br-c"><span class="k-br-n">1</span><div class="k-br-art k-br-six">${[0, 1, 2, 3, 4, 5].map(s => I.bigTree(s, 104)).join('')}</div>
+        <h3>A Big Tree in every value</h3><p>One in each of the six value sectors. It doesn't matter who grows it.</p></div>
+      <div class="k-br-c"><span class="k-br-n">2</span><div class="k-br-art">${I.fruit(84)}<i class="k-br-plus">+</i>${(v.treasures || []).map(t => I.treasure(t.id, 88)).join('')}</div>
+        <h3>Fruit from every one of us, and the three treasures</h3><p>Each of us places at least one fruit on the World Tree. The Compass, the Lantern and the Rope lie hidden in Rings 1 and 2.</p></div>
+      <div class="k-br-c"><span class="k-br-n">3</span><div class="k-br-art">${I.icon('team', 100)}${I.world(true, 140)}</div>
+        <h3>All of us on the World Tree</h3><p>We finish together, standing on the World Tree.</p></div>
+    </div>
+    <div class="k-br-bar"><span>${I.icon('goal', 42)}<span><b>The forest wakes the moment all three are true at once.</b> The board's top right shows how far we are.</span></span>
+      <span>${I.drop(34, true)}<span>We lose only if <b>every one of us</b> is out of water at the same moment.</span></span></div>` }),
+  carry: v => ({ title: 'What we have, and its limits', sub: 'Turns are short and we carry little: plan out loud, share the work, pass what you carry.', body: `
+    <div class="k-br-c k-br-wide"><div class="k-br-two"><span class="k-br-art">${I.leaf(true, 64)}${I.leaf(true, 64)}</span><div><h3>2 actions a turn</h3>
+      <p>Move, Explore, Sow, Water, Tend, Clear, Harvest, Take or Drink.</p></div></div>
+      <div class="k-br-grow"><span class="k-lab">A Big Tree takes 4 actions</span><div>${[['Sow', 1, 'Seeded'], ['Water', 2, 'Sprout'], ['Water', 3, 'Sapling'], ['Tend', 4, 'Big Tree']].map(([a, s, n]) => `<span><small>${a}</small>${pic(`stage:${s}`, 76)}<b>${n}</b></span>`).join('<i class="k-br-ar" aria-hidden="true">→</i>')}</div></div></div>
+    <div class="k-br-row four">
+      <div class="k-br-c"><div class="k-br-art">${[0, 1, 2, 3].map(() => I.drop(46)).join('')}${I.drop(46, true)}</div><h3>Water: 4 to start, 5 at most</h3><p>Watering a plant costs 1. Only a spring fills you up: Drink, back to 5. Rain doesn't.</p></div>
+      <div class="k-br-c"><div class="k-br-art">${I.fruit(58)}${I.fruit(58)}</div><h3>Carry 2 fruit</h3><p>Harvest a Big Tree for 1 fruit: once per tree each round, and not in rain.</p></div>
+      <div class="k-br-c"><div class="k-br-art">${I.treasure('compass', 64)}</div><h3>Carry 1 treasure</h3><p>Explore Rings 1 and 2 to find the three.</p></div>
+      <div class="k-br-c"><div class="k-br-art">${I.icon('pass', 70)}</div><h3>Passing is free</h3><p>On your own turn: water, fruit or a treasure to a teammate on your hex.</p></div>
+    </div>
+    <div class="k-br-bar"><span>${I.world(false, 52)}<span><b>Step onto the World Tree</b> and everything you carry is placed at once.</span></span></div>` }),
+  weather: v => ({ title: 'What stands in our way: the weather', sub: 'Each value sector has its own weather. It changes at every Forest Tide, after the last turn of each round.', body: `
+    <div class="k-br-row three">
+      ${hurdle(I.wx('sun', 112), 'Sun', 'At the Forest Tide, everyone in a sunny sector loses 1 water.', 'End your turn on a Big Tree: its shade keeps your water. Know where the springs are.')}
+      ${hurdle(I.wx('rain', 112), 'Rain', 'No harvest. Clearing leaves costs 2 actions.', 'Harvest in another sector. The good side: at the Tide, rain grows Seeded and Sprout plants one step, for free.')}
+      ${hurdle(I.wx('fog', 112), 'Fog', 'Exploring costs 2 actions. The Enthusiast can\'t take a double step.', 'Explore in a clear sector first.')}
+    </div>
+    <div class="k-br-bar"><span class="k-br-now"><span class="k-lab">Right now</span>${v.values.map((x, s) => `<span title="${esc(x.name)}: ${esc(HW.WEATHER[v.weather[s]]?.[1] || '')}">${I.val(s, 34)}${I.wx(v.weather[s], 34)}</span>`).join('')}</span>
+      <span>${I.role(5, 36)}<span>At the Tide the new weather comes first, then acts at once. <b>The Investigator</b> can look ahead.</span></span></div>` }),
+  tide: v => ({ title: 'What stands in our way: dead leaves, running dry', sub: 'At every Forest Tide the wind blows dead leaves in from the edge, toward the centre: 2 drifts at first, up to 6 later.', body: `
+    <div class="k-br-row three">
+      ${hurdle(pic('leaves:1:tile', 104), 'Leaves on a plant', 'A growing plant drops back one step. A Seeded hex loses its seed.', 'Stand on it. A Loyalist keeps the 7 hexes around them safe. Grow it to a Big Tree: Big Trees never drop. The Investigator sees where the next leaves land.')}
+      ${hurdle(pic('leaves:2:tile', 104), 'A sealed hex', 'Two layers seal a hex: nobody can walk in, sow, water, tend or harvest there.', 'Clear a layer from your hex or the one next to it (a Reformer clears 2). A Challenger can still walk in.')}
+      ${hurdle(I.drop(96, true), 'Running dry', 'At 0 water you can\'t move. If all of us are at 0 at once, the forest sleeps on.', 'Find the springs early and drink before you run low. On your turn, pass water to a teammate on your hex.')}
+    </div>` }),
+  powers: v => {
+    const roles = v.roles || [];
+    return { title: 'Our powers: the nine Enneagram gifts', sub: 'Each of us holds 1 to 3, always on. Say it when you use one: “As the Helper, I water the hex next to me.” Your phone shows yours.', body: `
+      <div class="k-br-roles">${roles.map(r => {
+        const who = v.players.filter(p => p.types.includes(r.type));
+        return `<div class="k-br-role${who.length ? '' : ' none'}"><div class="k-br-rh">${I.role(r.type, 50)}<div><b>${esc(r.name)}</b><small>${esc(r.gift || '')}</small></div></div>
+          <p>${esc(r.text)}</p><div class="k-br-who">${who.map(p => `<span>${medPic(p, 46, { badges: false })}${esc(p.name)}</span>`).join('') || '<small>No one this game</small>'}</div></div>`;
+      }).join('')}</div>` };
+  },
+  owl: v => ({ title: 'Side quest: the Secret Owl', sub: 'Next to our goal, each of us has one quiet mission of our own.', body: `
+    <div class="k-br-owl"><div class="k-br-owlart">${I.icon('owl', 250)}<p class="k-br-look">${I.icon('phone', 54)}<span>Look at your phone now, <b>secretly</b>: tap to see whose Owl you are.</span></p></div>
+      <ol class="k-br-steps">
+        <li><b>Your phone names one colleague:</b> you are their Secret Owl. Keep it to yourself. Someone is watching you too.</li>
+        <li><b>Watch them quietly all game.</b> Notice three things:<span class="k-br-three"><i>something they love</i><i>something that shaped them</i><i>something they hope for</i></span></li>
+        <li><b>Don't get caught.</b> Be curious about everyone, so your interest in one person blends in.</li>
+        <li><b>At the end,</b> guess who was your own Owl. Then each Owl honours the colleague they watched, in about a minute.</li>
+      </ol></div>` }),
+  pact: v => ({ title: 'The Forest Pact', sub: 'Six promises we make before we play. They hold for the whole game, and after it.', body: `
+    <ol class="k-br-pact">${[['worldTree:awake', "What's shared in the forest stays in the forest."], ['leaf', 'Every question is an invitation. You may always say “not this one”.'],
+      ['icon:ear', 'Listen to understand: no advice, no fixing, no debating.'], ['acorn', 'Trust is a gift, not a grade.'],
+      ['icon:team', 'One team. Plan out loud, and look after each other.'], ['icon:phoneOff', 'Phones down. Pick yours up only to give trust, to check your private looks, and to guess.']]
+      .map(([art, t]) => `<li>${pic(art, 64)}<span>${t}</span></li>`).join('')}</ol>
+    <p class="k-br-note">The Keeper may pause any story.</p>` }),
+  play: v => ({ title: 'How we play', sub: 'First, each of us chooses the value we stand for, steps onto its edge, and says why.', body: `
+    <ul class="k-br-list">
+      <li>${I.icon('talk', 68)}<span><b>Say your moves aloud.</b> The Keeper taps them on this screen. Plan together: anyone can suggest.</span></li>
+      <li>${I.icon('round', 68)}<span><b>We take turns in this order</b>, 2 actions each. After the last turn of the round comes the Forest Tide.
+        <span class="k-br-order">${(v.order || []).map(id => HW.player(id)).filter(Boolean).map(p => `<span>${medPic(p, 54, { badges: false })}${esc(p.name)}</span>`).join('')}</span></span></li>
+      <li>${I.icon('ear', 68)}<span><b>When the forest asks, we share:</b> why you stand for your value, a card as you go deeper, a story when you harvest, a Heartwood question at the World Tree. One voice at a time.</span></li>
+      <li>${I.acorn(62)}<span><b>Moved by what you heard?</b> Give the speaker a trust acorn on your phone. You have 10 for the whole game.</span></li>
+    </ul>` }),
+};
+function briefHTML(v) {
+  const k = slideAt(v), n = HW.SLIDES.length, [id] = HW.SLIDES[k], live = briefLive(v), ctrl = v.isHost, last = k === n - 1;
+  const s = SLIDE[id](v);
+  const end = live ? `<button class="k-btn big" data-k="begin">Enter the forest →</button>` : `<button class="k-btn big" data-k="closeBrief">Back to the game</button>`;
+  return `<div class="k-panel k-brief" data-s="${id}">
+    <div class="k-br-top"><span class="k-kicker">Briefing · ${k + 1} of ${n}</span>
+      ${!ctrl ? '' : live ? (last ? '' : '<button class="k-x" data-k="skipBrief" title="End the briefing and enter the forest">Skip to the game</button>') : '<button class="k-x" data-k="closeBrief" aria-label="Close the briefing">✕</button>'}</div>
+    <div class="k-br-main"><h2>${s.title}</h2>${s.sub ? `<p class="k-br-sub">${s.sub}</p>` : ''}<div class="k-br-body">${s.body}</div></div>
+    <nav class="k-br-nav">${ctrl ? `<button class="k-btn cream" data-k="slidePrev" ${k ? '' : 'disabled'}>← Back</button>` : '<span></span>'}
+      <ol class="k-br-dots">${HW.SLIDES.map(([, label], i) => `<li><button class="${i === k ? 'on' : i < k ? 'seen' : ''}" data-slide="${i}" ${ctrl ? '' : 'disabled'}><i></i><span>${esc(label)}</span></button></li>`).join('')}</ol>
+      ${!ctrl ? '<span class="k-muted">The Keeper is briefing the team.</span>' : last ? end : '<button class="k-btn" data-k="slideNext">Next →</button>'}</nav></div>`;
+}
+// a new slide: live, every screen follows the Keeper (the server keeps the number); during play, this screen only
+async function goSlide(i) {
+  const v = HW.view;
+  if (!v || !briefOn(v)) return;
+  i = Math.max(0, Math.min(HW.SLIDES.length - 1, i));
+  if (!briefLive(v)) { ui.brief = i; return renderModal(v); }
+  if (!v.isHost || busy || i === slideAt(v)) return;
+  ui.slideTo = i; renderModal(v);
+  await act('slide', { n: i });
+  ui.slideTo = null;
+  if (HW.view) renderModal(HW.view);
 }
 
 function lobbyHTML(v) {
@@ -1246,7 +1363,7 @@ function lobbyHTML(v) {
   const untyped = v.players.filter(p => !p.types.length);
   const why = n < min ? `Needs at least ${min} players (${n} joined).` : n > max ? `At most ${max} players.`
     : untyped.length ? `Give every player a type: ${untyped.map(p => esc(p.name)).join(', ')}.` : '';
-  return h + `<div class="k-start"><button class="k-btn big" data-k="start" ${why ? 'disabled' : ''}>Start: enter the forest</button>${why ? `<span class="k-muted">${why}</span>` : ''}</div></div>`;
+  return h + `<div class="k-start"><button class="k-btn big" data-k="start" ${why ? 'disabled' : ''}>Start: brief the team</button>${why ? `<span class="k-muted">${why}</span>` : ''}</div></div>`;
 }
 
 function enterHTML(v) {
@@ -1456,6 +1573,7 @@ document.addEventListener('click', async e => {
     types.sort((a, b) => a - b);
     return act('assignPowers', { target: p.id, types }, `✓ ${p.name}: ${types.map(x => HW.roleName(x)).join(', ') || 'no type'}`);
   }
+  if (d.slide != null && d.slide !== '') return goSlide(+d.slide);
   if (d.val != null && d.val !== '') { ui.value = +d.val; HW.toast(`Now tap a glowing hex on the outer ring of ${v.values[ui.value].name}`); return render(v); }
   if (d.bring) { ui.bring = ui.bring === d.bring ? '' : d.bring; return render(v); }
   const cur = v.turn ? HW.player(v.turn.player) : null;
@@ -1492,7 +1610,13 @@ document.addEventListener('click', async e => {
     return actAs(from.id, 'pass', { target: to.id, text: d.item }, `✓ ${from.name} passes ${d.item === 'treasure' ? 'the treasure' : d.item} to ${to.name}`);
   }
   switch (d.k) {
-    case 'start': return act('start', {}, '✓ The game begins: enter the forest');
+    case 'start': return act('start', {}, '✓ The game begins with the briefing');
+    case 'slidePrev': return goSlide(slideAt(v) - 1);
+    case 'slideNext': return goSlide(slideAt(v) + 1);
+    case 'skipBrief': return twice('skipBrief', 'Tap again to end the briefing and enter the forest') && act('begin', {}, '✓ Enter the forest');
+    case 'begin': return act('begin', {}, '✓ Enter the forest');
+    case 'showBrief': ui.brief = 0; return render(v);
+    case 'closeBrief': ui.brief = null; return render(v);
     case 'randomTypes': {
       const typed = v.players.filter(p => p.types.length).length;
       if (typed && !twice('randomTypes', `Tap again: everyone's types are replaced by 1 random type each`)) return;
@@ -1522,6 +1646,13 @@ document.addEventListener('click', async e => {
 });
 // Escape closes a popover or a mode
 addEventListener('keydown', e => {
+  const v = HW.view;
+  // the briefing: arrow keys and presenter clickers (Page Up / Page Down) step through the slides
+  if (v && briefOn(v) && !v.share && v.isHost && !e.target.closest?.('input, select, textarea')) {
+    const step = { ArrowRight: 1, PageDown: 1, ' ': 1, ArrowLeft: -1, PageUp: -1 }[e.key];
+    if (step) { e.preventDefault(); return goSlide(slideAt(v) + step); }
+    if (e.key === 'Escape' && !briefLive(v)) { ui.brief = null; return render(v); }
+  }
   if (e.key !== 'Escape' || !HW.view) return;
   if (ui.info) return closeInfo();
   if (ui.pass || ui.mode) { ui.pass = false; ui.mode = null; render(HW.view); }

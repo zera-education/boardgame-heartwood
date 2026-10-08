@@ -642,7 +642,7 @@ function renderGame(v) {
   const myTurn = (v.phase === 'turn' && v.turn?.player === me.id) || (v.phase === 'enter' && v.current === me.id);
   const state = myTurn && !v.share ? 'turn' : inPlay && me.pos >= 0 && me.water === 0 ? 'dry' : '';
   const owlKnown = !!(mv.target || mv.targetName);
-  const phaseName = { lobby: 'Gathering in the lobby', enter: 'Entering the forest', turn: `Round ${v.round || 1}${v.tide ? ` · after ${v.tide} Tide${v.tide > 1 ? 's' : ''}` : ''}`,
+  const phaseName = { lobby: 'Gathering in the lobby', brief: 'The briefing', enter: 'Entering the forest', turn: `Round ${v.round || 1}${v.tide ? ` · after ${v.tide} Tide${v.tide > 1 ? 's' : ''}` : ''}`,
     guess: 'Who was your Secret Owl?', chain: 'The tribute chain', end: v.result === 'won' ? 'The forest wakes!' : v.result === 'ended' ? 'Game closed by the Keeper' : 'The forest sleeps' }[v.phase] || v.phase;
   HW.patch($('head'), `<button class="medbtn" data-act="photo" aria-label="Your photo (tap to change)">${medal(me, 'head', 112, { items: true, state })}<span class="cam">${CAMERA(19)}</span></button>
     <div class="who"><div class="nm">${esc(me.name)}</div><div class="ph">${esc(phaseName)}</div></div>
@@ -662,7 +662,7 @@ function renderGame(v) {
   main.style.cssText = m.color ? `--kc:${m.color};--kd:${ART.dark(m.color, .42)}` : '';
   HW.patch(main, m.html);
   // A new moment (phase, share, whose turn) pops in; small updates don't.
-  const screen = [v.phase, v.share?.idx, v.turn?.player, v.current, v.tribute?.idx].join('|');
+  const screen = [v.phase, v.share?.idx, v.turn?.player, v.current, v.tribute?.idx, HW.slideId(v)].join('|');
   if (screen !== ui.screen) {
     const first = !ui.screen;
     ui.screen = screen; main.classList.remove('pop'); void main.offsetWidth; main.classList.add('pop');
@@ -693,6 +693,7 @@ function mainPanel(v, me, mv) {
   if (v.share && (v.phase === 'enter' || v.phase === 'turn')) return sharePanel(v, me);
   switch (v.phase) {
     case 'lobby': return { html: lobbyPanel(v, me) };
+    case 'brief': return briefPanel(v, me, mv);
     case 'enter': return enterPanel(v, me);
     case 'turn': return turnPanel(v, me);
     case 'guess': return guessPanel(v, me, mv);
@@ -713,6 +714,21 @@ function lobbyPanel(v, me) {
       <span class="rbs">${p.types.length ? p.types.map(t => A.role(t, 30)).join('') : '<small>no type yet</small>'}</span></li>`).join('')}</ul>
     ${me.photo > 0 ? '' : `<button class="tb cream block sm" data-act="photo">${CAMERA(26)} Add your photo</button>`}
     <p class="small">The Keeper gives each player 1 to 3 Enneagram types. While you wait, read <a href="howto.html" target="_blank">how to play</a>.</p>`;
+}
+
+// The Keeper's briefing on the big screen: phones down, except for your powers and your Secret Owl.
+function briefPanel(v, me, mv) {
+  const id = HW.slideId(v), label = (HW.SLIDES[v.slide || 0] || [])[1] || '';
+  if (id === 'powers') return { html: `${sign('Your powers', '#3f9e9a')}
+    <p class="lead">The big screen shows all nine. These are yours:</p>
+    ${me.types.map(t => { const r = roleOf(t); return `<div class="role">${A.role(t, 52)}<div><b>${t} · ${esc(r?.name || '')}</b><span>${esc(r?.text || '')}</span></div></div>`; }).join('')}
+    <p class="small">Always on. When you use one, say it aloud so the Keeper can tap it.</p>` };
+  if (id === 'owl' && (mv.target || mv.targetName)) return { cls: 'night', html: `${sign('Your Secret Owl', '#7a5aa8')}
+    <div class="owlrow">${A.icon('owl', 64)}<p>You are the Secret Owl of <button class="secret ${ui.owlShown ? 'shown' : ''}" data-act="owlname" aria-label="${ui.owlShown ? '' : 'Tap to show the name'}">${esc(mv.targetName || pname(mv.target))}</button>${ui.owlShown ? '' : ' <small>(tap to show)</small>'}</p></div>
+    <p class="small">Keep it to yourself. Watch them quietly all game: something they love, something that shaped them, something they hope for. The owl button at the top keeps it for later.</p>` };
+  return { html: `${sign('The briefing')}
+    <div class="spot">${A.icon('phoneOff', 72)}<div><p class="lead">Eyes on the big screen.</p>
+    <p class="small">The Keeper is briefing the team${label ? `: <b>${esc(label)}</b>` : ''}. Phones down: this screen tells you when to look.</p></div></div>` };
 }
 
 function enterPanel(v, me) {
