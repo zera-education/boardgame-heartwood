@@ -254,18 +254,26 @@ function loginHTML() {
       <input class="otp" id="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="9" placeholder="······" aria-label="Login code" autofocus>
       ${ui.err ? `<p class="err">${esc(ui.err)}</p>` : ''}
       <button class="btn big block" type="submit" ${ui.busy ? 'disabled' : ''}>${ui.busy ? 'Checking…' : 'Log in'}</button>
-      <p class="small">No code? <button class="link" type="button" data-do="send" ${ui.wait > 0 || ui.busy ? 'disabled' : ''}>${ui.wait > 0 ? `Send a new one in ${ui.wait} s` : 'Send a new one'}</button></p></form>`;
+      <p class="small">No code? <button class="link" type="button" data-do="send" ${ui.wait > 0 || ui.busy ? 'disabled' : ''}>${sendLabel()}</button></p></form>`;
   }
   return `<div class="paper login"><h2>Hello, El</h2>
     <p>The admin sends a login code to your Telegram. No password.</p>
     ${ui.err ? `<p class="err">${esc(ui.err)}</p>` : ''}
-    <button class="btn big block" data-do="send" ${ui.wait > 0 || ui.busy ? 'disabled' : ''}>${ui.busy ? 'Sending…' : ui.wait > 0 ? `Send me a code (in ${ui.wait} s)` : 'Send me a code'}</button>
+    <button class="btn big block" data-do="send" ${ui.wait > 0 || ui.busy ? 'disabled' : ''}>${sendLabel()}</button>
     <p class="small"><button class="link" data-do="haveCode">I already have a code</button></p></div>`;
 }
+const sendLabel = () => (ui.stage === 'verify' ? (ui.wait > 0 ? `Send a new one in ${ui.wait} s` : 'Send a new one')
+  : ui.busy ? 'Sending…' : ui.wait > 0 ? `Send me a code (in ${ui.wait} s)` : 'Send me a code');
+// The countdown changes only the send button: redrawing the form every second would wipe the code being typed.
 function tick() {
   clearInterval(tick.t);
   if (ui.wait <= 0) return;
-  tick.t = setInterval(() => { ui.wait = Math.max(0, ui.wait - 1); if (!ui.me?.loggedIn) render(); if (!ui.wait) clearInterval(tick.t); }, 1000);
+  tick.t = setInterval(() => {
+    ui.wait = Math.max(0, ui.wait - 1);
+    const b = document.querySelector('#app [data-do="send"]');
+    if (b && !ui.me?.loggedIn) { b.textContent = sendLabel(); b.disabled = ui.wait > 0 || ui.busy; }
+    if (!ui.wait) clearInterval(tick.t);
+  }, 1000);
 }
 async function sendCode() {
   ui.busy = true; ui.err = ''; render();
@@ -397,7 +405,14 @@ function render() {
   $('me').hidden = !me?.loggedIn;
   $('subtitle').textContent = me?.loggedIn ? 'Admin · every game on this server' : 'Admin';
   if (!me) { $('app').innerHTML = ''; return; }
-  if (!me.loggedIn) { $('app').innerHTML = loginHTML(); return; }
+  if (!me.loggedIn) {
+    const o = $('otp'), typed = o ? o.value : '', focused = o && document.activeElement === o;
+    $('app').innerHTML = loginHTML();
+    const n = $('otp');
+    if (n && typed) n.value = typed;
+    if (n && focused) n.focus();
+    return;
+  }
   const typed = $('typed')?.value || '';
   const crumb = ui.code ? `<div class="crumb"><button data-do="back">Games</button> › <b>${esc(ui.code)}</b></div>` : '<div class="crumb">Games</div>';
   $('app').innerHTML = `${crumb}<div class="md${ui.code ? ' picked' : ''}"><div id="listPane">${listHTML()}</div><div id="detailPane">${detailHTML()}</div></div>`;
