@@ -26,9 +26,10 @@
  *
  * Tiles (origin = top-face centre; the face is √3·0.965·S ≈ 1.67·S wide × 1.16·S tall, the walls hang ART.depth below)
  *   Colour deepens toward the centre in clear steps: Ring 4 fresh spring green → Ring 1 deep emerald, the World Tree
- *   hex darkest (mossy earth); face-down leaf blankets deepen the same way (ART.palette.up / .down, index = ring).
+ *   hex darkest (mossy earth) (ART.palette.up, index = ring). Each sector carries its value colour (ART.VALUE_TINT).
+ *   Face down, a mossy stone sits on the hex; face up, the stone is dug away to a patch of dirt.
  *   ART.tile({ring, sector, up, kind, world, S, q, r, outer, seed})
- *     ring 1..4 (0 or world:true = World Tree hex), sector 0..5 (value tint 15%), up = face-up,
+ *     ring 1..4 (0 or world:true = World Tree hex), sector 0..5 (value tint), up = face-up,
  *     kind 'empty'|'spring'|'treasure' (spring adds wet flowers), q/r → deterministic decoration + the Ring 4
  *     outer edges (value-colour ribbon + pennants), outer: direction indices 0..5 (DIRS order) to force the trim,
  *     seed: decoration variant when q/r are not given.
@@ -242,7 +243,11 @@
   // Colour deepens toward the centre (El, 2026-10-06): Ring 4 fresh spring green → Ring 1 deep rich emerald,
   // the World Tree hex darkest (mossy earth). Big steps on purpose, so the rings read from across the room.
   const UP = ['#3f3322', '#0b6b47', '#21944a', '#58bb3e', '#a9df48'];     // ring 0..4 face-up
-  const DOWN = ['#332c1f', '#173f30', '#2b6038', '#4d8442', '#7fa94e'];   // mossy leaf blanket, deepening inward the same way
+  const DOWN = ['#332c1f', '#173f30', '#2b6038', '#4d8442', '#7fa94e'];   // the old leaf blankets (palette only)
+  // Each sector's hexes take its value's colour (El, 2026-10-09: "slightly distinct on each value sector, similar to
+  // the slide", so a move into another value reads at a glance): a tint on the ground, and an edge of the colour
+  // round the top face. A stronger tint alone turns warm values muddy on green; the edge keeps all six apart.
+  const VALUE_TINT = .3, VALUE_EDGE = .8;
   const FACE_L = [.06, .05, .08, .1, .13];                                // light layer: deep rings stay deep
   const SOIL = ['#9c6b42', '#7a4a2c', '#4a2a17'];                         // lower-right wall, lower-left wall, outline
 
@@ -270,12 +275,59 @@
     return G({ transform: 'translate(' + N(x) + ',' + N(y) + ') scale(1,' + TILT + ')' }, stack([leaf(-L / 2 * Math.cos(ang * RAD), -L / 2 * Math.sin(ang * RAD), L, W, ang, t, { ow: 1.1 })]));
   }
 
+  // a smooth closed path through points (quadratic curves through the midpoints)
+  function smooth(pts) {
+    const m = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], n = pts.length;
+    let d = 'M' + m(pts[n - 1], pts[0]).map(N).join(',');
+    for (let i = 0; i < n; i++) d += ' Q' + pts[i].map(N).join(',') + ' ' + m(pts[i], pts[(i + 1) % n]).map(N).join(',');
+    return d + 'Z';
+  }
+  const lumpy = (R, w, h, k0, k1, dy = 0, n = 9) => Array.from({ length: n }, (_, i) => { const a = i / n * Math.PI * 2, k = k0 + R() * (k1 - k0); return [Math.cos(a) * w * k, Math.sin(a) * h * k + dy]; });
+  // Face down (El, 2026-10-09): a mossy stone sits on the hex, grey with a green cap of moss, deeper rings darker.
+  // Nothing like the dead leaves (brown, with purple brambles when sealed).
+  function mossStone(R, ring) {
+    const deep = Math.max(0, 4 - ring);
+    const st = tone(mix('#a3a196', '#6d7670', deep * .14), .5, .14, .16), mo = tone(mix('#78b443', '#2f7a44', deep * .2), .5, .12, .18);
+    const w = 16 + R() * 2.5, h = 9 + R() * 1.2, th = 5.5, top = lumpy(R, w, h, .9, 1.06, -4), base = top.map(([x, y]) => [x, y + th]);
+    const left = top.reduce((a, p) => (p[0] < a[0] ? p : a)), right = top.reduce((a, p) => (p[0] > a[0] ? p : a));
+    const band = ptsStr([left, right, [right[0], right[1] + th], [left[0], left[1] + th]]);
+    const out = [El(1, th - 1, w + 5, h + 2.5, { fill: 'url(#art-shadow)' })];
+    // outline, the side (darker), the top (lighter)
+    out.push(Pa(smooth(base), { fill: st.o, stroke: st.o, 'stroke-width': 4.4, 'stroke-linejoin': 'round' }), el('polygon', { points: band, fill: st.o, stroke: st.o, 'stroke-width': 4.4, 'stroke-linejoin': 'round' }),
+      Pa(smooth(top), { fill: st.o, stroke: st.o, 'stroke-width': 4.4, 'stroke-linejoin': 'round' }));
+    out.push(Pa(smooth(base), { fill: dark(st.c, .3) }), el('polygon', { points: band, fill: dark(st.c, .3) }), Pa(smooth(top), { fill: st.d }));
+    out.push(Pa(smooth(top.map(([x, y]) => [x * .86 - 1.2, (y + 4) * .8 - 5])), { fill: st.l }));
+    // a crack on the grey rim, and the moss cap with a lighter layer, drips over the front edge and a few speckles
+    out.push(Pa(D`M${-w * .6},${-.6} l2.4,-2 l1.8,1.3 l2.4,-1.6`, { fill: 'none', stroke: st.o, 'stroke-width': .9, 'stroke-linecap': 'round', opacity: .7 }));
+    const cap = lumpy(R, w * .72, h * .66, .82, 1.12, -5.2, 11).map(([x, y]) => [x + 1.6, y]);
+    out.push(Pa(smooth(cap), { fill: mo.o, stroke: mo.o, 'stroke-width': 2.2, 'stroke-linejoin': 'round' }), Pa(smooth(cap), { fill: mo.d }));
+    for (let i = 0; i < 2; i++) { const x = (i ? 1 : -1) * w * (.18 + R() * .2), y = -4.4 + h * .5; out.push(El(x, y, 1.5 + R() * .5, 2 + R() * .9, { fill: mo.d, stroke: mo.o, 'stroke-width': .9 })); }
+    out.push(Pa(smooth(cap.map(([x, y]) => [x * .74 - 1.2, (y + 5.2) * .66 - 6.2])), { fill: mo.l }));
+    for (let i = 0; i < 5; i++) out.push(Ci(-w * .4 + R() * w * .8, -8 + R() * 5, .6 + R() * .5, { fill: i % 2 ? mo.h : mo.o, opacity: .55 }));
+    out.push(gloss(-w * .32, -7.6, 3.2, 1.3, -8, .35));
+    return out.join('');
+  }
+  // Face up: the stone is dug away to a patch of dirt, darker where it dips at the back, with clods on the rim.
+  function dugDirt(R) {
+    const so = tone('#8d5b34', .5, .12, .14), w = 16 + R() * 2, h = 9.5 + R(), rim = lumpy(R, w, h, .92, 1.06, 0, 10);
+    const out = [Pa(smooth(rim), { fill: so.o, stroke: so.o, 'stroke-width': 2.2, 'stroke-linejoin': 'round' }), Pa(smooth(rim), { fill: so.d })];
+    out.push(Pa(smooth(rim.map(([x, y]) => [x * .8, y * .72 + 2.2])), { fill: so.l }));
+    out.push(Pa(smooth(rim.map(([x, y]) => [x * .74, y * .5 - 3.2])), { fill: dark(so.c, .32), opacity: .55 }));
+    for (let i = 0; i < 7; i++) {
+      const a = (i / 7 + R() * .05) * Math.PI * 2, x = Math.cos(a) * w * .98, y = Math.sin(a) * h * .98, r = 1.5 + R() * 1.2, t = tone(mix('#8d5b34', '#b07a4a', R()), .5, .1, .2);
+      out.push(El(x, y, r * 1.3, r * .9, { fill: t.o }) + El(x, y - .3, r * 1.05, r * .7, { fill: t.d }) + El(x - .4, y - .6, r * .6, r * .35, { fill: t.l }));
+    }
+    for (let i = 0; i < 4; i++) out.push(Ci((R() - .5) * w * 1.1, (R() - .3) * h * .9, .7 + R() * .5, { fill: so.o, opacity: .5 }));
+    if (R() < .6) out.push(pebble((R() - .5) * w * .8, (R() - .2) * h * .6, .6));
+    return out.join('');
+  }
+
   function tile(o = {}) {
     const S = o.S || ART.S, world = !!o.world || o.ring === 0, ring = world ? 0 : (o.ring ?? 4);
     const R = rng(o.seed ?? (o.q != null ? hashQR(o.q, o.r, ring + 7) : (ring * 977 + (o.sector ?? 0) * 131 + (o.up ? 7 : 3))));
     const vc = o.sector != null && o.sector >= 0 ? VAL[o.sector] : null;
-    let top = world ? UP[0] : (o.up ? UP : DOWN)[ring];
-    if (vc) top = mix(top, vc, .15);
+    let top = UP[ring];
+    if (vc) top = mix(top, vc, VALUE_TINT);
     const tt = tone(top, .5, .12, FACE_L[ring]), k = S0 * .965, Dp = depth(ring, S0);
     const c = facePts(k), down = p => [p[0], p[1] + Dp];
     const deep = Math.max(0, 4 - ring) * .05;
@@ -309,6 +361,7 @@
     out.push(el('polygon', { points: ptsStr(c), fill: tt.d, stroke: tt.o, 'stroke-width': 1.6, 'stroke-linejoin': 'round' }));
     out.push(el('polygon', { points: ptsStr(facePts(k * .9).map(p => [p[0] - 1.6, p[1] - 1.1])), fill: tt.l }));
     out.push(el('polygon', { points: ptsStr(c), fill: 'url(#art-topsheen)' }));
+    if (vc) out.push(el('polygon', { points: ptsStr(c) + ' ' + ptsStr(facePts(k * .85).reverse()), fill: light(vc, .15), 'fill-rule': 'evenodd', opacity: VALUE_EDGE }));
     const hi = facePts(k * .9);
     out.push(Pa(D`M${hi[3][0] - 1},${hi[3][1] - .6} L${hi[4][0] - 1},${hi[4][1] - .6} L${hi[5][0]},${hi[5][1] - .9}`, { fill: 'none', stroke: '#fff', 'stroke-width': 1.3, opacity: .35, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
     // surface detail
@@ -317,30 +370,25 @@
       const moss = tone('#557a3c');
       for (let i = 0; i < 5; i++) { const [x, y] = inHex(30); out.push(El(x, y, 6 + R() * 5, (3 + R() * 2.5), { fill: moss.d, opacity: .8 }) + El(x - 1, y - .8, 4 + R() * 3, 2 + R(), { fill: moss.l, opacity: .7 })); }
       for (let i = 0; i < 4; i++) { const [x, y] = inHex(30); out.push(mushroom(x, y + 2, .55, '#7fd6c8')); }
-    } else if (o.up) {
-      for (let i = 0; i < 7; i++) { const [x, y] = inHex(32); out.push(Pa(D`M${x},${y} q.8,-2.4 2.2,-3.4`, { fill: 'none', stroke: i % 2 ? tt.h : tt.o, 'stroke-width': 1, opacity: i % 2 ? .6 : .35, 'stroke-linecap': 'round' })); }
+    } else {
+      // grass on the rim, then the middle: dug dirt (explored) or a mossy stone (face down); rim things behind the
+      // middle are drawn first so the stone stands in front of them
+      for (let i = 0; i < 9; i++) { const a = R() * 360 * RAD, rr = 19 + R() * 12, x = Math.cos(a) * rr, y = Math.sin(a) * rr * TILT; out.push(Pa(D`M${x},${y} q.8,-2.4 2.2,-3.4`, { fill: 'none', stroke: i % 2 ? tt.h : tt.o, 'stroke-width': 1, opacity: i % 2 ? .6 : .35, 'stroke-linecap': 'round' })); }
       const decoN = 2 + Math.floor(R() * 3);
       const deco = [];
       for (let i = 0; i < decoN; i++) {
-        const a = R() * 360 * RAD, rr = 18 + R() * 12, x = Math.cos(a) * rr, y = Math.sin(a) * rr * TILT;
+        const a = R() * 360 * RAD, rr = 22 + R() * 8, x = Math.cos(a) * rr, y = Math.sin(a) * rr * TILT;
         const pick = R();
-        if (o.kind === 'spring' && i < 2) deco.push([y, flower(x, y, .8, '#9fd8ff', '#fff3a8')]);
+        if (o.up && o.kind === 'spring' && i < 2) deco.push([y, flower(x, y, .8, '#9fd8ff', '#fff3a8')]);
         else if (pick < .42) deco.push([y, tuft(x, y + 1, .8 + R() * .3, tone(mix(top, '#2f7a32', .45), .5, .1, .05))]);
         else if (pick < .72) deco.push([y, flower(x, y, .7 + R() * .2, R() < .5 ? '#ffffff' : (vc ? light(vc, .45) : '#fff6b0'))]);
         else if (pick < .88) deco.push([y, pebble(x, y, .8 + R() * .3)]);
         else deco.push([y, mushroom(x, y, .7)]);
       }
-      deco.sort((a, b) => a[0] - b[0]).forEach(d => out.push(d[1]));
-    } else {
-      const base = top, lts = [tone(mix(base, '#c7a24c', .3), .5, .12, .12), tone(mix(base, '#a8623a', .22), .5, .12, .12), tone(light(base, .14), .5, .12, .12), tone(dark(base, .08), .5, .12, .12)];
-      const spots = [[-14, -9], [6, -12], [20, -4], [-24, 2], [-6, 0], [13, 7], [-14, 12], [2, 13], [24, 9], [-4, -20]];
-      for (const [sx, sy2] of spots) {
-        if (R() < .12) continue;
-        const L = 9 + R() * 4;
-        out.push(flatLeaf(sx + (R() - .5) * 5, (sy2 + (R() - .5) * 4) * TILT * 1.05, L, L * .42, R() * 360, lts[Math.floor(R() * lts.length)]));
-      }
-      for (let i = 0; i < 3; i++) { const [x, y] = inHex(26), m = tone(mix(base, '#3f7a3a', .4)), r = 2.2 + R() * 1.2; out.push(El(x, y, r * 1.5, r, { fill: m.d }) + El(x - .5, y - .4, r * 1.1, r * .65, { fill: m.l }) + Ci(x - r * .5, y - r * .3, r * .22, { fill: '#fff', opacity: .35 })); }
-      if (R() < .3) { const [x, y] = inHex(24); out.push(mushroom(x, y, .6, R() < .5 ? '#c9564c' : '#d9a441')); }
+      deco.sort((a, b) => a[0] - b[0]);
+      deco.filter(d => d[0] < -4).forEach(d => out.push(d[1]));
+      out.push(o.up ? dugDirt(R) : mossStone(R, ring));
+      deco.filter(d => d[0] >= -4).forEach(d => out.push(d[1]));
     }
     // Ring 4's outer edges: a ribbon in the sector's value colour, and pennants on the front walls
     let outer = o.outer;
@@ -1283,6 +1331,7 @@
 
   const ART = {
     TILT, S: 40, VALUES: VAL, values: { Z: VAL[0], E: VAL[1], R: VAL[2], A: VAL[3], O: VAL[4], S: VAL[5] },
+    VALUE_TINT, VALUE_EDGE,
     palette: { up: UP, down: DOWN, soil: SOIL, fruit: '#e8344f', water: '#3aa6f0', gold: '#f2b32e', bramble: '#7d47a6', bark: '#8a5636', ink: '#2a1a10', cream: '#f6e6c4' },
     species: SPECIES, letters: LETTERS,
     ringOf, elev, depth, project, hexes, DIRS,
