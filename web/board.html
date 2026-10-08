@@ -194,7 +194,7 @@ function turnOptions(v, p) {
 // ==================================================================================================
 let B = null;
 const TR = (x, y) => `translate(${x.toFixed(1)},${y.toFixed(1)})`;
-const LAYERS = ['tile', 'wx', 'obj', 'air', 'hit', 'med', 'fx'];
+const LAYERS = ['tile', 'wx', 'obj', 'air', 'hit', 'med', 'num', 'fx'];
 // Animations hold back parts of the new state until their moment (a flipped tile, a plant that pops).
 const hold = { tile: new Map(), obj: new Map() };
 const ovr = {};          // pid → {water, fruit, treasure}: what a medallion shows until an animation lands
@@ -512,7 +512,8 @@ function patchDusk(v, animated) {
   B.awake = awake; B.won = won; B.deep = deep;
 }
 
-// Legal targets glow: a pulsing rim on the top face; the whole tile (face + wall) takes the tap.
+// Legal targets glow: a pulsing rim on the top face; the whole tile (face + wall) takes the tap. Each carries a
+// number (1, 2, 3… in reading order on the screen), so the team can say "move to 3" and the Keeper can press 3.
 function patchHighlights(v) {
   const { hl, hl2, color } = highlights(v);
   for (let i = 0; i < B.n; i++) {
@@ -522,6 +523,12 @@ function patchHighlights(v) {
     if (on && color) g.style.setProperty('--rc', color); else g.style.removeProperty('--rc');
   }
   B.L.hit.classList.toggle('any', hl.size + hl2.size > 0);
+  const row = i => Math.round(B.xy[i][1] / (S * .45));
+  B.nums = [...hl, ...hl2].sort((a, b) => row(a) - row(b) || B.xy[a][0] - B.xy[b][0]);
+  const key = B.nums.join(',') + '|' + [...hl2].join(',');
+  if (key === B.numKey) return;
+  B.numKey = key;
+  B.L.num.innerHTML = B.nums.map((i, k) => `<g class="k-num${hl2.has(i) ? ' two' : ''}" transform="${TR(B.xy[i][0], B.xy[i][1] + 9)}"><circle r="12.5"/><text y="6">${k + 1}</text></g>`).join('');
 }
 function highlights(v) {
   const hl = new Set(), hl2 = new Set();
@@ -531,10 +538,11 @@ function highlights(v) {
     v.hexes.forEach((h, i) => { if (h.ring === 4 && h.sector === ui.value) hl.add(i); });
     color = v.values[ui.value]?.color || '';
   }
-  if (v.phase === 'turn' && v.turn && !ui.pass) {
+  // in play nothing glows until the Keeper picks an action: a tap on a hex only shows what is there
+  if (v.phase === 'turn' && v.turn && !ui.pass && ui.mode) {
     const p = HW.player(v.turn.player);
-    if (ui.mode) { targetsFor(v, p, ui.mode).forEach(i => hl.add(i)); color = { water: '#7fd0ff', tend: '#a6f07a', clear: '#ffb36a' }[ui.mode]; }
-    else { const m = moveTargets(v, p); m.one.forEach(i => hl.add(i)); m.two.forEach(i => hl2.add(i)); }
+    if (ui.mode === 'move') { const m = moveTargets(v, p); m.one.forEach(i => hl.add(i)); m.two.forEach(i => hl2.add(i)); }
+    else { targetsFor(v, p, ui.mode).forEach(i => hl.add(i)); color = { water: '#7fd0ff', tend: '#a6f07a', clear: '#ffb36a' }[ui.mode]; }
   }
   return { hl, hl2, color };
 }
@@ -1092,7 +1100,7 @@ function renderTray(v) {
 }
 function packets(v, p) {
   const t = v.turn, o = turnOptions(v, p), m = moveTargets(v, p), canMove = m.one.length + m.two.length > 0;
-  const mv = { ok: canMove, sel: !ui.mode && !ui.pass && canMove, why: p.water <= 0 ? 'no water: a teammate on this hex passes 1 on their turn' : !t.actions ? 'no actions left' : 'nowhere to go', cost: 1 };
+  const mv = { ok: canMove, sel: ui.mode === 'move', why: p.water <= 0 ? 'no water: a teammate on this hex passes 1 on their turn' : !t.actions ? 'no actions left' : 'nowhere to go', cost: 1 };
   const holds = p.water > 0 || p.fruit > 0 || !!p.treasure, mates = v.players.some(r => canPass(v, p, r));
   let h = packet('move', mv);
   for (const k of ['explore', 'sow', 'water', 'tend', 'clear', 'harvest', 'take', 'drink']) h += packet(k, Object.assign({}, o[k], { sel: ui.mode === k, cost: o[k].cost || 1 }));
@@ -1105,10 +1113,10 @@ function packets(v, p) {
 function turnHint(v, p) {
   const mates = has(p, 8) && v.turn.actions && p.water > 0 ? v.players.filter(q => q.id !== p.id && q.pos === p.pos) : [];
   const hint = ui.pass ? `Pick what ${esc(p.name)} passes to whom`
-    : ui.mode ? `Tap a glowing hex to <b>${ui.mode}</b> · tap ${PK[ui.mode]} again to cancel`
+    : ui.mode ? `Tap a numbered hex to <b>${ui.mode}</b>${ui.mode === 'move' && moveTargets(v, p).two.length ? ' (dashed: the double step)' : ''} · tap ${PK[ui.mode]} again to cancel`
       : p.water <= 0 ? 'No water: a teammate here must pass 1 on their turn'
         : !v.turn.actions ? 'No actions left: pass things, or end the turn'
-          : moveTargets(v, p).two.length ? 'Tap a glowing hex to move (dashed: the double step)' : 'Tap a glowing hex to move, or pick a packet';
+          : 'Pick an action below · tap any hex to see what is there';
   // many mates (a crowd on the World Tree): just their medallions, the name shows on hover
   const few = mates.length <= 3;
   return { hint, bring: mates.length && !ui.pass ? `<div class="k-bring"><span>${I.role(8, 22)} Bring:</span>${mates.map(q => `<button class="k-mate${few ? '' : ' pic'}${ui.bring === q.id ? ' sel' : ''}" data-bring="${esc(q.id)}" title="Bring ${esc(q.name)}">${few ? chip(q, 26) : medPic(q, 30, { badges: false })}</button>`).join('')}</div>` : '' };
@@ -1492,23 +1500,30 @@ async function onHex(i) {
   if (!v.turn) return info();
   const p = HW.player(v.turn.player);
   if (ui.pass) { ui.pass = false; return render(v); }
-  if (ui.mode) {
-    if (!hl.has(i)) return info(`To ${ui.mode}: tap a glowing hex, or tap ${PK[ui.mode]} again to cancel.`);
-    closeInfo();
-    const mode = ui.mode;
-    ui.mode = null;
-    await actAs(p.id, mode, { hex: i }, `✓ ${p.name} ${VERB[mode]}`);
-    return render(HW.view);
+  // no action picked: a tap only shows the hex (its card offers Move when they can go there)
+  if (!ui.mode) return info();
+  if (ui.mode === 'move') {
+    if (!hl.has(i) && !hl2.has(i)) {
+      // next to them but no move: say why
+      const near = B.adj[p.pos]?.includes(i);
+      return info(!near ? 'To move: tap a numbered hex, or tap Move again to cancel.' : p.water <= 0 ? `${esc(p.name)} has no water: a teammate on this hex passes 1 on their turn.`
+        : !v.turn.actions ? 'No actions left: end the turn.' : sealed(v, i) ? 'Sealed: clear it first (a Challenger may walk in).' : '');
+    }
+    return moveTo(v, p, i);
   }
-  if (!hl.has(i) && !hl2.has(i)) {
-    // next to them but no move: say why; anywhere else it is just a look
-    const near = B.adj[p.pos]?.includes(i);
-    return info(!near ? '' : p.water <= 0 ? `${esc(p.name)} has no water: a teammate on this hex passes 1 on their turn.`
-      : !v.turn.actions ? 'No actions left: end the turn.' : sealed(v, i) ? 'Sealed: clear it first (a Challenger may walk in).' : '');
-  }
+  if (!hl.has(i)) return info(`To ${ui.mode}: tap a numbered hex, or tap ${PK[ui.mode]} again to cancel.`);
   closeInfo();
+  const mode = ui.mode;
+  ui.mode = null;
+  await actAs(p.id, mode, { hex: i }, `✓ ${p.name} ${VERB[mode]}`);
+  return render(HW.view);
+}
+async function moveTo(v, p, i) {
+  closeInfo();
+  ui.mode = null;
   const bring = ui.bring && HW.player(ui.bring)?.pos === p.pos ? ui.bring : '';
   if (await actAs(p.id, 'move', { hex: i, target: bring }, bring ? `✓ ${p.name} moves with ${HW.name(bring)}` : '')) ui.bring = '';
+  else render(HW.view);
 }
 
 // ---------- the hex card: value, ring, weather, what lies there, leaves, who stands there, safe at the Tide ----------
@@ -1550,6 +1565,8 @@ function infoHTML(v, i, why) {
     }
   }
   if (here.length && v.phase !== 'lobby') rows += `<div class="k-inf-who">${here.map(p => chip(p, 30)).join('')}</div>`;
+  const cur = v.isHost && v.phase === 'turn' && v.turn && !v.share && !ui.mode ? HW.player(v.turn.player) : null, mt = cur && moveTargets(v, cur);
+  if (mt && (mt.one.includes(i) || mt.two.includes(i))) rows += `<div class="k-inf-act"><button class="k-btn sm" data-movehere="${i}">${I.icon('move', 24)}<span>Move ${esc(cur.name)} here</span></button></div>`;
   return `<div class="k-inf-h">${head}<button class="k-x" data-k="closeInfo" aria-label="Close">✕</button></div>${rows}${why ? `<div class="k-inf-why">${why}</div>` : ''}`;
 }
 function showInfo(i, why = '') { ui.info = { i, why }; renderInfo(HW.view); }
@@ -1604,6 +1621,7 @@ document.addEventListener('click', async e => {
   if (d.slide != null && d.slide !== '') return goSlide(+d.slide);
   if (d.val != null && d.val !== '') { ui.value = +d.val; HW.toast(`Now tap a glowing hex on the outer ring of ${v.values[ui.value].name}`); return render(v); }
   if (d.bring) { ui.bring = ui.bring === d.bring ? '' : d.bring; return render(v); }
+  if (d.movehere && v.turn) return moveTo(v, HW.player(v.turn.player), +d.movehere);
   const cur = v.turn ? HW.player(v.turn.player) : null;
   if (d.do && cur) {
     if (b.getAttribute('aria-disabled') === 'true') {
@@ -1612,7 +1630,7 @@ document.addEventListener('click', async e => {
       clearTimeout(ui.tipT); ui.tipT = setTimeout(() => { ui.tip = ''; HW.view && renderTray(HW.view); }, 2600);
       return;
     }
-    if (d.do === 'move') { ui.mode = null; ui.pass = false; render(v); return HW.toast('Tap a glowing hex to move'); }
+    if (d.do === 'move') { ui.mode = ui.mode === 'move' ? null : 'move'; ui.pass = false; closeInfo(); return render(v); }
     if (d.do === 'pass') { ui.pass = !ui.pass; ui.mode = null; return render(v); }
     if (d.do === 'end') {
       // ask twice only when there is still something they could do (not when, say, they have no water left)
@@ -1627,7 +1645,7 @@ document.addEventListener('click', async e => {
     // Water, Tend and Clear pick a hex when more than one is possible.
     if (['water', 'tend', 'clear'].includes(d.do)) {
       if (ui.mode === d.do) { ui.mode = null; return render(v); }
-      if (o.targets.length > 1) { ui.mode = d.do; HW.toast(`Tap the glowing hex to ${d.do}.`); return render(v); }
+      if (o.targets.length > 1) { ui.mode = d.do; closeInfo(); return render(v); }
       return actAs(cur.id, d.do, { hex: o.targets[0] }, `✓ ${cur.name} ${VERB[d.do]}`);
     }
     return actAs(cur.id, d.do, {}, `✓ ${cur.name} ${VERB[d.do]}`);
@@ -1680,6 +1698,11 @@ addEventListener('keydown', e => {
     const step = { ArrowRight: 1, PageDown: 1, ' ': 1, ArrowLeft: -1, PageUp: -1 }[e.key];
     if (step) { e.preventDefault(); return goSlide(slideAt(v) + step); }
     if (e.key === 'Escape' && !briefLive(v)) { ui.brief = null; return render(v); }
+  }
+  // 1…9: the numbered hex (the team says "move to 3")
+  if (v && v.isHost && /^[1-9]$/.test(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey && $('k-modal').hidden && !e.target.closest?.('input, select, textarea')) {
+    const i = B?.nums?.[+e.key - 1];
+    if (i != null) { e.preventDefault(); return onHex(i); }
   }
   if (e.key !== 'Escape' || !HW.view) return;
   if (ui.info) return closeInfo();
