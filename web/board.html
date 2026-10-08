@@ -39,6 +39,7 @@
 <script src="common.js"></script>
 <script src="art.js"></script>
 <script src="recorder.js"></script>
+<script src="find.js"></script>
 <script>
 'use strict';
 const $ = id => document.getElementById(id);
@@ -1060,6 +1061,8 @@ function render(v) {
   if (!B.wakePending && !B.dryPending) patchDusk(v, true);
   patchHighlights(v);
   run(v, evs);
+  // a sealed find (web/find.js) waits for the tile to flip
+  window.HWFind?.view(v, queueEnd - now());
   // the HUD
   renderTopLeft(v);
   renderGoals(v);

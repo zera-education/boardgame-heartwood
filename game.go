@@ -247,6 +247,8 @@ type Game struct {
 	// The Keeper's taps this turn, newest last, to take back a slip (undo.go).
 	Undo   []UndoPoint `json:"undo,omitempty"`
 	logged int         // trail log lines written since the server loaded the game
+	// A sealed find turned up in this game (find.go).
+	Found *Found `json:"found,omitempty"`
 }
 
 type RejoinPin struct {
@@ -854,7 +856,9 @@ func (g *Game) explore(me *Player, peekHex int) error {
 	case "spring":
 		g.logf("%s explores and finds a spring 💧.", me.Name)
 	default:
-		g.logf("%s explores and finds nothing here.", me.Name)
+		if !g.turnUp(me) {
+			g.logf("%s explores and finds nothing here.", me.Name)
+		}
 	}
 	if me.has(Individualist) {
 		var hidden []int
@@ -1443,6 +1447,10 @@ func (g *Game) hostAction(a Action) error {
 		g.setTimer(a.N, "Timer")
 	case "undo":
 		return g.undo()
+	case "foundCheer":
+		return g.foundStage("cheer")
+	case "foundClose":
+		return g.foundStage("done")
 	default:
 		if ok, err := g.recordAction(a); ok { // record, recordHere
 			return err

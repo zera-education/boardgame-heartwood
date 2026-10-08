@@ -377,6 +377,7 @@ body.sheet-open { overflow: hidden; }
 
 <script src="common.js"></script>
 <script src="art.js"></script>
+<script src="find.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => HW.esc(s);
@@ -584,6 +585,7 @@ function draw() { if (V()) render(V()); }
 
 function render(v) {
   normalise(v);
+  window.HWFind?.view(v);   // a sealed find covers every screen (find.js)
   if (creds && !v.me) {
     // Our seat is gone (removed in the lobby) or this view isn't ours yet.
     if (v.players.every(p => p.id !== creds.pid)) {

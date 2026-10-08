@@ -144,6 +144,22 @@ don't hard-code them; `/api/cards` has the same as `stages` and `ringDeckNames`.
 - **Stories page** `stories.html?g=CODE` (Keeper only): every clip by round, with the question, the player, an
   audio player and the transcript; downloads as CSV and JSON.
 
+## Sealed find (one-off surprises)
+
+A private picture the forest turns up for one named player (a team surprise). What it is and whom it waits for never
+enter this public repo: the server keeps them in `sealed-find.json` beside its database, and the Mini puts it there
+or takes it away with the transcription worker's token: `PUT /api/found` `{name, question, cheer, image (base64)}`,
+`DELETE /api/found`. The Mini's copy is `~/.config/heartwood/sealed-find.json`:
+
+    curl -fsS -X PUT https://heartwood.zera.edu.my/api/found -H "Authorization: Bearer $(cat ~/.config/heartwood/transcribe-token)" \
+      -H 'Content-Type: application/json' --data-binary @$HOME/.config/heartwood/sealed-find.json
+
+When that player (first name, any case) explores an empty hex, once per game, the hex holds the find instead of
+nothing (`Found` in the game; Undo takes it back with the explore). Every screen covers over with it (`web/find.js`,
+`found` in every view; the picture at `GET /api/games/{code}/found`, only for a game that turned it up): the shock and
+the forest's question to them, then the Keeper's **Celebrate** (`foundCheer`) and **Close** (`foundClose`). The
+Keeper's screen plays the sound; phones buzz. Without the file, explore is as it always was.
+
 ## Admin
 
 - **`/admin`**: El's page for every game on this server (Live / Ended / All, newest activity first). A game's page shows
@@ -188,6 +204,7 @@ The Keeper gives each player 1 to 3 types in the lobby; several players may hold
 - `admin.go`: the admin page's API (Telegram login code, sessions, games list and actions); `web/admin.html`: the page
 - `recording.go`: story recordings, the Keeper's and the transcription worker's API, the audio sweep;
   `ops/transcribe/`: the worker on the Mac mini, its lanes seed and install script
+- `find.go`: the sealed find (its file, its API, turning it up); `web/find.js`: how every screen shows it
 - `game_test.go`, `photo_test.go`, `sim_test.go`: rules tests, photo tests and the bot balance simulation
 - `web/`: `board.html` (Keeper screen), `play.html` (phone), `index.html` (create a game), `howto.html` (rules for
   players), `wiki.html` (one page per term, all content in its script; link with `[[id]]`; card pages filled from

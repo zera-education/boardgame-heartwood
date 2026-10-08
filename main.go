@@ -45,6 +45,8 @@ type Server struct {
 	db    *sql.DB
 	games map[string]*Game
 	subs  map[string]map[chan struct{}]bool
+	// findPath is the sealed find's file (find.go).
+	findPath string
 }
 
 // lanURLs lists this computer's Wi-Fi/LAN addresses, so the board can show
@@ -498,6 +500,9 @@ func buildView(g *Game, pid, secret, host string) map[string]any {
 	if isHost && len(g.Undo) > 0 {
 		v["undo"] = g.Undo[len(g.Undo)-1].Label // the Keeper's last tap this turn, which Undo takes back
 	}
+	if f := foundView(g); f != nil {
+		v["found"] = f // a sealed find on every screen (find.go)
+	}
 	events := g.Events
 	if n := len(events); n > 80 {
 		events = events[n-80:]
@@ -573,9 +578,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	s := &Server{db: db, games: map[string]*Game{}, subs: map[string]map[chan struct{}]bool{}}
+	s := &Server{db: db, games: map[string]*Game{}, subs: map[string]map[chan struct{}]bool{}, findPath: findPath(*dbPath)}
 	if err := s.load(); err != nil {
 		log.Fatal(err)
+	}
+	if err := loadFind(s.findPath); err != nil {
+		log.Printf("sealed find: %v", err)
 	}
 	lan = lanURLs(*addr)
 	s.sweepPhotos(time.Now())
@@ -618,6 +626,7 @@ func (s *Server) routes() *http.ServeMux {
 	mux.HandleFunc("GET /api/games/{code}/state", s.state)
 	s.recordingRoutes(mux) // story recordings and their transcripts (recording.go)
 	s.adminRoutes(mux)     // the admin page and its API (admin.go)
+	s.findRoutes(mux)      // a sealed find's picture, and its file over the worker's token (find.go)
 	mux.HandleFunc("GET /api/games/{code}/live", s.live)
 	mux.HandleFunc("GET /api/qr", qrCode)
 	mux.HandleFunc("GET /api/cards", cards)
