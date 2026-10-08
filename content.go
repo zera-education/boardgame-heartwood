@@ -108,7 +108,7 @@ var HeartwoodCards = []string{
 	"Who at this table has helped you grow, and how?",
 	"What legacy do you want to leave in ZERA's forest?",
 	"What would you want a student to say about you in 2035?",
-	"What did today show you about this team?",
+	"What have you noticed about this team today?",
 	"What promise would you make to this team for the year ahead?",
 	"What has this team given you that you didn't expect?",
 	"Which value do you want this team to grow in most this year, and why?",
