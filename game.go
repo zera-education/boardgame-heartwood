@@ -298,7 +298,7 @@ func NewGame(code, hostSecret string) *Game {
 }
 
 // lay deals the 60 face-down tiles: the three treasures on random hexes of
-// Rings 1 and 2, four springs anywhere else, the rest empty.
+// Rings 1 and 2, four springs scattered over the rest (springs), the rest empty.
 func (g *Game) lay() {
 	g.Tiles = make([]*Tile, len(Board))
 	for i := 1; i < len(Board); i++ {
@@ -323,10 +323,55 @@ func (g *Game) lay() {
 			rest = append(rest, i)
 		}
 	}
-	rand.Shuffle(len(rest), func(i, j int) { rest[i], rest[j] = rest[j], rest[i] })
-	for _, i := range rest[:SpringCount] {
+	for _, i := range springs(rest) {
 		g.Tiles[i].Kind = "spring"
 	}
+}
+
+// SpringGap is how far apart springs lie at the least: never side by side,
+// never sharing a neighbour (El, 2026-10-09: scattered, not together).
+const SpringGap = 3
+
+// springs picks SpringCount hexes from free, scattered: each in a different
+// value sector and at least SpringGap hexes from the others. Should a deal get
+// stuck it starts again, and after many tries it lets the gap shrink.
+func springs(free []int) []int {
+	for try := 0; ; try++ {
+		gap := SpringGap
+		if try > 200 {
+			gap = 2
+		}
+		order := append([]int(nil), free...)
+		rand.Shuffle(len(order), func(i, j int) { order[i], order[j] = order[j], order[i] })
+		var got []int
+		for _, i := range order {
+			ok := true
+			for _, j := range got {
+				if Board[i].Sector == Board[j].Sector || hexDist(i, j) < gap {
+					ok = false
+					break
+				}
+			}
+			if ok {
+				if got = append(got, i); len(got) == SpringCount {
+					return got
+				}
+			}
+		}
+	}
+}
+
+// hexDist is how many steps apart two hexes are.
+func hexDist(a, b int) int {
+	dq, dr := Board[a].Q-Board[b].Q, Board[a].R-Board[b].R
+	return (abs(dq) + abs(dr) + abs(dq+dr)) / 2
+}
+
+func abs(n int) int {
+	if n < 0 {
+		return -n
+	}
+	return n
 }
 
 func drawWeather() string { return WeatherKinds[rand.Intn(3)] }

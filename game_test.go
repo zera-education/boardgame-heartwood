@@ -1699,3 +1699,31 @@ func TestAnotherCard(t *testing.T) {
 	g.share("treasure", p, Treasures[0].Question, "compass", 0)
 	x.fails(x.host("another", Action{}), "swapping a treasure question")
 }
+
+// Springs lie scattered: four, each in its own value sector, never closer than
+// SpringGap hexes to another, never on a treasure.
+func TestSpringsScattered(t *testing.T) {
+	for range 300 {
+		g := NewGame("TEST", "host")
+		g.lay()
+		var sp []int
+		for i, tl := range g.Tiles {
+			if tl != nil && tl.Kind == "spring" {
+				sp = append(sp, i)
+			}
+		}
+		if len(sp) != SpringCount {
+			t.Fatalf("%d springs", len(sp))
+		}
+		for a := range sp {
+			for b := a + 1; b < len(sp); b++ {
+				if Board[sp[a]].Sector == Board[sp[b]].Sector || hexDist(sp[a], sp[b]) < SpringGap {
+					t.Fatalf("springs %d and %d: sectors %d %d, %d apart", sp[a], sp[b], Board[sp[a]].Sector, Board[sp[b]].Sector, hexDist(sp[a], sp[b]))
+				}
+			}
+		}
+	}
+	if hexDist(0, ringHexes(4, 0)[0]) != 4 || !neighbours(1, 0) || hexDist(1, 0) != 1 {
+		t.Fatal("hexDist")
+	}
+}

@@ -21,7 +21,7 @@ Keep the house style: plain HTML/JS/CSS, no build step, no frameworks, dark fore
   the top). Sector = value index 0..5 (Zealous, Excellence, Resilience, Authenticity, Open-mindedness,
   Sustainability). 10 hexes per sector.
 - **Tiles (60, face down at start):** 3 treasures hidden on random hexes in **Rings 1–2 only**; 4 springs on
-  random other hexes (any ring 1–4); 53 empty. Each tile: `up`, `kind` (empty|spring|treasure),
+  other hexes (any ring 1–4), scattered (El, 2026-10-09): each in a different sector, at least 3 hexes apart; 53 empty. Each tile: `up`, `kind` (empty|spring|treasure),
   `treasure` (which treasure still lies there, "" once taken), `stage` 0..4 (0 none, 1 Seeded, 2 Grass,
   3 Shrub, 4 Big Tree), `leaves` 0..2 (2 = sealed), `harvested` (since the last Tide).
 - **The three treasures** (shuffled onto the 3 treasure hexes), each with a meaning and a group moment shown

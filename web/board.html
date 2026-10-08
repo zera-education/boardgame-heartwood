@@ -1146,7 +1146,7 @@ function renderTopLeft(v) {
   if (v.phase === 'turn') h += `<div class="k-breath" title="Dead leaves the next Forest Tide blows onto the forest"><span class="k-lab">Forest Breath</span>
     <span class="k-gusts">${[0, 1, 2, 3, 4, 5].map(k => I.dead(20, k + 1, k >= breath)).join('')}</span><b>${breath}</b></div>`;
   // the map seen from another side (this screen only)
-  if (['enter', 'turn'].includes(v.phase)) h += `<div class="k-view"><span class="k-lab">Turn the map</span>${[-1, 1].map(d => `<button data-turn="${d}" title="Turn the map to the ${d < 0 ? 'left' : 'right'}" aria-label="Turn the map to the ${d < 0 ? 'left' : 'right'}">${turnIcon(d)}</button>`).join('')}</div>`;
+  if (['enter', 'turn'].includes(v.phase)) h += `<div class="k-view"><span class="k-lab">Turn the map</span>${[-1, 1].map(d => `<button data-turn="${d}" title="Turn the map to the ${d < 0 ? 'left (,)' : 'right (.)'}" aria-label="Turn the map to the ${d < 0 ? 'left' : 'right'}">${turnIcon(d)}</button>`).join('')}</div>`;
   h += `<div class="timer k-timer" data-timer></div>`;
   HW.patch($('k-tl'), h);
   $('k-tl').hidden = v.phase === 'lobby';
@@ -1910,6 +1910,12 @@ addEventListener('keydown', e => {
   if (v && v.isHost && v.share && e.key === 'Enter' && !e.metaKey && !e.ctrlKey && !e.altKey && !e.target.closest?.('input, select, textarea')) {
     const b = document.querySelector('#k-modal [data-k="doneShare"]');
     if (b) { e.preventDefault(); if (e.repeat || Date.now() - (ui.enterAt || 0) < 700) return; ui.enterAt = Date.now(); return b.click(); }
+  }
+  // , and . (or < and >) turn the map left and right, as the buttons in the top-left sign do
+  if (v && ['enter', 'turn'].includes(v.phase) && [',', '.', '<', '>'].includes(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey
+    && !e.target.closest?.('input, select, textarea')) {
+    e.preventDefault();
+    return turnMap(e.key === ',' || e.key === '<' ? -1 : 1);
   }
   // M Move, E Explore, Enter End turn: the same as tapping that button in the tray
   if (v && v.isHost && v.phase === 'turn' && v.turn && !v.share && !e.metaKey && !e.ctrlKey && !e.altKey && !e.repeat

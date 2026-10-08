@@ -55,7 +55,7 @@ Locally, the server prints the address phones on the same Wi-Fi should use, and 
   M, 3, E, Enter. While someone is sharing, **Enter** is Done sharing (one share per press).
   The drawer (**Tools · log**: Keeper tools and the trail log) opens over the map without moving it. **Undo** at the
   top of the trail log (or Ctrl+Z) takes back the Keeper's last tap for a player, newest first, until the turn ends.
-  **Turn the map** (in the top-left sign) shows the forest from any of its six sides: the ground turns like a table,
+  **Turn the map** (in the top-left sign, or the `,` and `.` keys) shows the forest from any of its six sides: the ground turns like a table,
   trees and medallions ride on it upright, the value signs travel with their sectors. It is this screen's view only,
   kept per game.
 - **Players say it, the Keeper taps it. Phones down.** Every public action (enter, move, explore, sow, water, tend,
