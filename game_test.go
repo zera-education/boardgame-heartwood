@@ -1423,7 +1423,7 @@ func TestViewShape(t *testing.T) {
 	}
 	rd := c["ringDecks"].(map[string]any)
 	for _, r := range []string{"1", "2", "3"} {
-		if len(rd[r].([]any)) != 30 {
+		if len(rd[r].([]any)) < MaxPlayers {
 			t.Fatalf("ring deck %s has %d", r, len(rd[r].([]any)))
 		}
 	}
@@ -1533,5 +1533,23 @@ func TestRecognitionDeeds(t *testing.T) {
 	x.must(x.host("undo", Action{}))
 	if p.Harvested != 0 {
 		t.Fatal("harvest not taken back")
+	}
+}
+
+// A game shuffled its decks before the cards changed: numbers past the end are skipped.
+func TestDrawSkipsCardsThatAreGone(t *testing.T) {
+	g := NewGame("TEST", "host")
+	g.Decks["ring3"] = []int{25, 40, 3}
+	if c := g.draw("ring3"); c != RingDecks[3][3] {
+		t.Fatalf("drew %q", c)
+	}
+	g.Decks["ring2"] = []int{99}
+	if c := g.draw("ring2"); !slices.Contains(RingDecks[2], c) || len(g.Decks["ring2"]) != len(RingDecks[2])-1 {
+		t.Fatalf("drew %q, %d left", c, len(g.Decks["ring2"]))
+	}
+	for r := 1; r <= 3; r++ {
+		if len(RingDecks[r]) < MaxPlayers {
+			t.Fatalf("ring %d deck has %d cards for up to %d players", r, len(RingDecks[r]), MaxPlayers)
+		}
 	}
 }

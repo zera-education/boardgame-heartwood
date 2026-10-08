@@ -1,8 +1,7 @@
 package main
 
 // Card text, treasures and roles. The six values on the map are ZERA's core
-// values, ZERAOS; each value has five cards with a Light, a Story and a Deep
-// prompt, pooled into one deck per ring.
+// values, ZERAOS. Each ring has its own deck of questions, from light to deep.
 
 // Value is one of ZERA's core values. The map's wedges follow them clockwise,
 // so the forest spells Z-E-R-A-O-S. Each player stands for one.
@@ -24,83 +23,58 @@ var Values = [6]Value{
 	{"S", "Sustainability", "Start with the end in mind.", "Long-term thinking built into everything: creating lasting impact and building systems that outlast any single leader or cohort.", "🌍", "#3f9e9a"},
 }
 
-// valueCards is each value's five cards, each with a Light, a Story and a Deep
-// prompt. The ring decks are built from it.
-var valueCards = [6][][3]string{
-	{ // Zealous
-		{"What could you do for hours without noticing the time?", "Tell us about a time you got other people excited about something you love.", "What makes you care so much about your work?"},                                   // What lights you up
-		{"Whose good news made you really happy this year?", "Tell us about a time someone else's success made you want to try harder.", "If you stopped comparing yourself with others, what would you do differently?"},           // Cheering, not comparing
-		{"When someone asks for a volunteer, are you the first to raise your hand, or the last?", "Tell us about a time you helped before anyone asked you to.", "What have you been wanting to start, but haven't yet?"},           // Stepping up first
-		{"What's the best thing a child or student has ever said to you?", "Tell us about a time you did something extra for a young person who needed it.", "Which students do you think are easiest to miss? (No names needed.)"}, // In young people's corner
-		{"What will you always say yes to, even when you're tired?", "Tell us about the last time you tried something new. How did it go?", "What makes you hesitate to join in?"},                                                  // Joining in wholeheartedly
-	},
-	{ // Excellence
-		{"What's the best service you've ever had in a shop, café or restaurant?", "Tell us about someone who did far more than you expected of them.", "What would you like to do much better this year?"},                              // Beyond what was asked
-		{"What do you do that nobody notices when it's done well?", "Tell us about a time you did something properly even though no one would check. Why did you?", "What rule do you keep for yourself that nobody asked you to keep?"}, // Doing it right when no one's looking
-		{"Who was the strictest but kindest teacher or boss you've had?", "Tell us about a time you chose to be kind instead of getting it perfect.", "How do you push for high standards and still stay kind?"},                         // Heart comes first
-		{"What's the best team you've ever been part of?", "Tell us about a time your team did better than anyone expected.", "What do you wish your team could do really well together?"},                                               // Raising the bar together
-		{"Name something you're much better at now than five years ago.", "Tell us how you got good at something that once felt impossible.", "How do you know when something is good enough?"},                                          // Getting better, kindly
-	},
-	{ // Resilience
-		{"What's the funniest story behind a scar, or something of yours that's broken?", "Tell us about a hard time, big or small, that made you stronger.", "What did a hard time teach you that you're now glad to know?"},        // Stronger because of it
-		{"What's the best thing that happened to you because a plan went wrong?", "Tell us about a time something went wrong and you found a better way.", "When your plans go wrong, how do you usually react?"},                    // When plans go wrong
-		{"What advice did you ignore at first, but later realised was right?", "Tell us about some hard feedback that ended up helping you.", "What kind of feedback is still hard for you to hear?"},                                // Hard words that helped
-		{"What's your secret trick for keeping calm when everything happens at once?", "Tell us about a time you stayed calm because others needed you to.", "What helps you stay strong for others when you're struggling inside?"}, // Steady for others
-		{"What always cheers you up on a bad day?", "Tell us about someone who helped you keep going when you wanted to give up.", "Is it easy or hard for you to ask for help? Why?"},                                               // Not going it alone
-	},
-	{ // Authenticity
-		{"Where do you feel most relaxed?", "Tell us about a time you felt left out, and what helped you feel welcome.", "What makes you feel you truly belong somewhere?"},                                                                                               // Belonging, not just fitting in
-		{"What did you once pretend to like, just to fit in?", "Tell us about a time you were honest about who you are, and it went better than you expected.", "When do you feel most like yourself?"},                                                                   // Dropping the act
-		{"What does everyone assume you can do, but you can't?", "Tell us about a time saying “I don't know” helped.", "When do you feel you have to pretend you know all the answers?"},                                                                                  // Not having all the answers
-		{"What's a word or food from home that you always have to explain?", "Tell us about a time sharing where you come from brought you closer to someone.", "Which part of where you come from do you most want to bring into your work here?"},                       // Where you come from
-		{"How do you learn a new gadget: read the manual, watch a video, or just try?", "Tell us about someone who explained something hard in a way you finally understood.", "What have you learned from someone who sees or learns things very differently from you?"}, // Many ways to learn
-	},
-	{ // Open-mindedness
-		{"What did you believe as a child that turned out to be completely untrue?", "Tell us about a time someone changed your mind about something that mattered.", "What's something you find very hard to change your mind about?"},                // Changing your mind
-		{"What's something you're bad at, and don't mind?", "Tell us about a mistake that taught you a lot.", "What has failure taught you that success never could?"},                                                                                 // Learning from mistakes
-		{"Name a food you were sure you'd hate, until you tried it.", "Tell us about a time your first impression of someone was completely wrong. (No names needed.)", "When are you most likely to judge too quickly?"},                              // First impressions
-		{"What silly debate could you argue about forever?", "Tell us about a time a disagreement led to a better decision.", "How do you react when someone disagrees with you?"},                                                                     // Disagreeing well
-		{"What's one thing from another culture that's now part of your everyday life?", "Tell us about someone very different from you who taught you something you still use.", "How do you feel when someone sees life very differently from you?"}, // Learning across differences
-	},
-	{ // Sustainability
-		{"What small habit have you kept for years?", "Tell us about a habit that changed your life.", "What habit are you trying to build right now?"},                                                                                                     // Habits that last
-		{"What simple trick makes your daily life easier?", "Tell us about something you set up that still worked well when you weren't there.", "What part of your work would be hardest to hand over to someone else?"},                                   // Things that run without you
-		{"If you could plant one tree anywhere in the world, where would it go?", "Tell us about something someone started long ago that you're grateful for today.", "What would you gladly start, even if someone else got the credit for finishing it?"}, // Planting for others
-		{"What's the longest you've ever waited for something, and was it worth it?", "Tell us about something you worked on for years before you saw the results.", "When are you tempted to take a shortcut?"},                                            // The long game
-		{"What would you put in a time capsule to open in 2050?", "Tell us about a big goal you planned step by step. How did it go?", "Ten years from now, what do you hope you'll thank yourself for doing this year?"},                                   // Starting with the end in mind
-	},
-}
-
-// RegionThreads names each value card's theme (shown in the wiki): ringDecks[r][v*5+k]
-// comes from value v's card k, whose theme is RegionThreads[v][k].
-var RegionThreads = [6][]string{
-	{"What lights you up", "Cheering, not comparing", "Stepping up first", "In young people's corner", "Joining in wholeheartedly"},
-	{"Beyond what was asked", "Doing it right when no one's looking", "Heart comes first", "Raising the bar together", "Getting better, kindly"},
-	{"Stronger because of it", "When plans go wrong", "Hard words that helped", "Steady for others", "Not going it alone"},
-	{"Belonging, not just fitting in", "Dropping the act", "Not having all the answers", "Where you come from", "Many ways to learn"},
-	{"Changing your mind", "Learning from mistakes", "First impressions", "Disagreeing well", "Learning across differences"},
-	{"Habits that last", "Things that run without you", "Planting for others", "The long game", "Starting with the end in mind"},
-}
-
 // RingDecks holds the card a player draws the first time they reach a ring
-// (index 1..3; 0 is unused): Ring 3 the Light deck, Ring 2 the Story deck,
-// Ring 1 the Deep deck, pooled across the six values (30 each).
-var RingDecks = buildRingDecks()
+// (index 1..3; 0 is unused). Questions to get to know each other, from light
+// at the edge to deep near the World Tree: Ring 3 the Light deck, Ring 2 the
+// Story deck, Ring 1 the Deep deck. Twelve each, one per player in the
+// biggest game, so nobody hears the same card twice.
+var RingDecks = [4][]string{
+	1: {
+		"What makes you feel most like yourself?",
+		"What are you most grateful for right now?",
+		"Who has shaped the person you are today?",
+		"What is something you're still learning about yourself?",
+		"What keeps you going when work gets hard?",
+		"What has life taught you that school never did?",
+		"What is one thing you will never compromise on?",
+		"What would you try if you knew you couldn't fail?",
+		"What is a dream you still carry?",
+		"When do you feel you truly belong?",
+		"What would you tell your younger self?",
+		"What kind of support helps you most when you're struggling?",
+	},
+	2: {
+		"Tell us about a teacher who made a difference to you.",
+		"Tell us about the place where you grew up.",
+		"Tell us how you ended up working at ZERA.",
+		"Tell us about a time you tried something new and it went well.",
+		"Tell us about a mistake that taught you a lot.",
+		"Tell us about someone who helped you when you needed it.",
+		"Tell us about a moment you felt really proud of yourself.",
+		"Tell us about a time a plan went wrong, and what happened next.",
+		"Tell us about a tradition in your family.",
+		"Tell us about a student who taught you something. (No names needed.)",
+		"Tell us about your first week in a new job.",
+		"Tell us about a challenge that made you stronger.",
+	},
+	3: {
+		"What's your favourite food from your childhood?",
+		"What was your first job?",
+		"What's a small thing that always makes your day better?",
+		"Where is your favourite place to relax?",
+		"What did you want to be when you were a child?",
+		"What's a hobby most of us don't know you have?",
+		"What's the best trip you've ever taken?",
+		"What song always puts you in a good mood?",
+		"Are you a morning person or a night person?",
+		"What's something you're surprisingly good at?",
+		"What's the last thing that made you laugh out loud?",
+		"If you had a free day tomorrow, how would you spend it?",
+	},
+}
 
 // RingDeckNames names each ring's deck, by ring (0 is unused).
 var RingDeckNames = [4]string{"", "Deep", "Story", "Light"}
-
-func buildRingDecks() [4][]string {
-	var d [4][]string
-	for _, cards := range valueCards {
-		for _, c := range cards {
-			d[3] = append(d[3], c[0])
-			d[2] = append(d[2], c[1])
-			d[1] = append(d[1], c[2])
-		}
-	}
-	return d
-}
 
 // HeartwoodCards: one is asked each time a player places fruit on the World Tree.
 var HeartwoodCards = []string{

@@ -436,7 +436,6 @@ func cards(w http.ResponseWriter, r *http.Request) {
 		"stages":        StageNames,    // by stage number: "", Seeded, Sprout, Sapling, Big Tree
 		"ringDeckNames": RingDeckNames, // by ring: "", Deep, Story, Light
 		"ringDecks":     map[string][]string{"1": RingDecks[1], "2": RingDecks[2], "3": RingDecks[3]},
-		"threads":       RegionThreads, // ringDecks[r][v*5+k] is value v's card k, theme threads[v][k]
 		"heartwood":     HeartwoodCards,
 		"harvest":       HarvestPrompt,
 		"treasures":     Treasures,

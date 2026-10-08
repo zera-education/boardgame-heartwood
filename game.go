@@ -416,12 +416,17 @@ func (g *Game) draw(deck string) string {
 	case "ring3":
 		cards = RingDecks[3]
 	}
-	if len(g.Decks[deck]) == 0 {
-		g.Decks[deck] = rand.Perm(len(cards))
+	for {
+		if len(g.Decks[deck]) == 0 {
+			g.Decks[deck] = rand.Perm(len(cards))
+		}
+		c := g.Decks[deck][0]
+		g.Decks[deck] = g.Decks[deck][1:]
+		// a deck shuffled before the cards changed can hold numbers past the end: skip them
+		if c < len(cards) {
+			return cards[c]
+		}
 	}
-	c := g.Decks[deck][0]
-	g.Decks[deck] = g.Decks[deck][1:]
-	return cards[c]
 }
 
 // wx is the weather on a hex ("" on the World Tree).
