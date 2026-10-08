@@ -168,8 +168,13 @@ type Player struct {
 	Target    string         `json:"target"`
 	Guess     string         `json:"guess"`
 	Peeks     []Peek         `json:"peeks"`
-	Photo     int            `json:"photo"`           // 0 = no photo; a new number on every change (the photo is in the photos table)
-	Found     []string       `json:"found,omitempty"` // the treasures they turned up exploring, for the recognition
+	Photo     int            `json:"photo"` // 0 = no photo; a new number on every change (the photo is in the photos table)
+	// What they did, for the recognition: treasures turned up exploring and
+	// picked up, fruit harvested, springs found.
+	Found     []string `json:"found,omitempty"`
+	Took      []string `json:"took,omitempty"`
+	Harvested int      `json:"harvested,omitempty"`
+	Springs   int      `json:"springs,omitempty"`
 }
 
 func (p *Player) has(t int) bool {
@@ -858,6 +863,7 @@ func (g *Game) explore(me *Player, peekHex int) error {
 			}
 		}
 	case "spring":
+		me.Springs++
 		g.logf("%s explores and finds a spring 💧.", me.Name)
 	default:
 		if !found {
@@ -1008,6 +1014,7 @@ func (g *Game) harvest(me *Player) error {
 	}
 	t.Harvested = true
 	me.Fruit++
+	me.Harvested++
 	v := Values[Board[me.Pos].Sector]
 	g.share("harvest", me, strings.ReplaceAll(HarvestPrompt, "{value}", v.Name), v.Tagline, 0)
 	g.event("harvest", Event{"hex": me.Pos, "pid": me.ID})
@@ -1027,6 +1034,7 @@ func (g *Game) take(me *Player) error {
 		return err
 	}
 	me.Treasure, t.Treasure = t.Treasure, ""
+	me.Took = append(me.Took, me.Treasure)
 	g.event("take", Event{"hex": me.Pos, "pid": me.ID, "treasure": me.Treasure})
 	g.logf("%s takes %s.", me.Name, treasureByID(me.Treasure).Name)
 	return nil
@@ -1293,14 +1301,17 @@ type Recognition struct {
 	ID           string   `json:"id"`
 	Name         string   `json:"name"`
 	Color        string   `json:"color"`
-	Trust        int      `json:"trust"`              // trust acorns received
-	Givers       int      `json:"givers"`             // from how many people
-	OwlName      string   `json:"owlName"`            // who was their Secret Owl
-	GuessedRight bool     `json:"guessedRight"`       // they spotted their Owl
-	OwlHidden    bool     `json:"owlHidden"`          // as an Owl, they stayed hidden from the one they watched
-	TargetName   string   `json:"targetName"`         // the one they watched
-	Found        []string `json:"found"`              // treasures they turned up exploring
-	Surprise     string   `json:"surprise,omitempty"` // the sealed find's picture, if they turned it up (find.go)
+	Trust        int      `json:"trust"`        // trust acorns received
+	Givers       int      `json:"givers"`       // from how many people
+	OwlName      string   `json:"owlName"`      // who was their Secret Owl
+	GuessedRight bool     `json:"guessedRight"` // they spotted their Owl
+	OwlHidden    bool     `json:"owlHidden"`    // as an Owl, they stayed hidden from the one they watched
+	TargetName   string   `json:"targetName"`   // the one they watched
+	Value        int      `json:"value"`        // the value they stood for (-1: never entered)
+	Found        []string `json:"found"`        // treasures they turned up exploring
+	Took         []string `json:"took"`         // treasures they picked up
+	Harvested    int      `json:"harvested"`    // fruit they harvested
+	Springs      int      `json:"springs"`      // springs they found exploring
 }
 
 func (g *Game) owlOf(id string) *Player {
@@ -1315,8 +1326,8 @@ func (g *Game) owlOf(id string) *Player {
 func (g *Game) Recognition() []Recognition {
 	out := []Recognition{}
 	for _, p := range g.Players {
-		r := Recognition{ID: p.ID, Name: p.Name, Color: p.Color, Found: append([]string{}, p.Found...)}
-		r.Surprise = g.foundBy(p.ID)
+		r := Recognition{ID: p.ID, Name: p.Name, Color: p.Color, Value: p.Value, Found: append([]string{}, p.Found...),
+			Took: append([]string{}, p.Took...), Harvested: p.Harvested, Springs: p.Springs}
 		for _, c := range p.Pot {
 			if c > 0 {
 				r.Trust += c

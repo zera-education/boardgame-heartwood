@@ -1493,3 +1493,45 @@ func TestEndGameEarly(t *testing.T) {
 		t.Fatal("finale after closing early")
 	}
 }
+
+func TestRecognitionDeeds(t *testing.T) {
+	x := newTable(t, 6, nil)
+	x.play()
+	g, p := x.g, x.ps[0]
+	closeShares := func() {
+		for len(g.Shares) > 0 {
+			x.must(x.host("doneShare", Action{}))
+		}
+	}
+	// a spring, a treasure found and picked up, a fruit harvested
+	x.turnOf(p)
+	g.Tiles[p.Pos] = &Tile{Kind: "spring"}
+	x.must(x.as(p, "explore", own))
+	tr := ringHexes(1, 0)[0]
+	p.Pos = tr
+	g.Tiles[tr] = &Tile{Kind: "treasure", Treasure: "rope"}
+	x.turnOf(p)
+	x.must(x.as(p, "explore", own))
+	closeShares()
+	x.must(x.as(p, "take", own))
+	tree := ringHexes(2, 0)[0]
+	p.Pos = tree
+	g.Tiles[tree] = &Tile{Up: true, Kind: "empty", Stage: 4}
+	x.turnOf(p)
+	x.must(x.as(p, "harvest", own))
+	closeShares()
+	for _, r := range g.Recognition() {
+		if r.ID == p.ID {
+			if r.Value != p.Value || r.Springs != 1 || r.Harvested != 1 || !slices.Equal(r.Found, []string{"rope"}) || !slices.Equal(r.Took, []string{"rope"}) {
+				t.Fatalf("recognition %+v", r)
+			}
+		} else if r.Springs != 0 || r.Harvested != 0 || r.Found == nil || len(r.Found) != 0 || r.Took == nil || len(r.Took) != 0 {
+			t.Fatalf("%s did nothing: %+v", r.Name, r)
+		}
+	}
+	// Undo takes a deed back with its tap
+	x.must(x.host("undo", Action{}))
+	if p.Harvested != 0 {
+		t.Fatal("harvest not taken back")
+	}
+}

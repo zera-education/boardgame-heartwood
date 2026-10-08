@@ -942,12 +942,17 @@ function endPanel(v, me, mv) {
     : `${sign('The forest sleeps', '#7a5aa8')}${scene}<h2 class="result">The forest sleeps</h2><p class="center small">The team ran dry this time. No one plays alone: the forest asks for each other's water.</p>`;
   if (!r) return { html: h + `<p class="small center">Your recognition is on its way…</p>` };
   const watched = r.targetName || mv.targetName;
+  const val = r.value >= 0 ? valueOf(r.value) : null;
   h += `<h3 style="margin-top:16px">Your recognition</h3>
     <div class="recs">
+      ${val ? `<div class="rec">${A.value(r.value, 46)}<div>You stood for <b>${esc(val.name)}</b>. ${esc(val.tagline)}</div></div>` : ''}
       <div class="rec">${A.acorn(46)}<div><span class="num">${r.trust ?? 0}</span>trust acorn${r.trust === 1 ? '' : 's'} received${r.givers ? `, from ${r.givers} ${r.givers === 1 ? 'person' : 'people'}` : ''}</div></div>
       <div class="rec">${A.icon('owl', 46)}<div>Your Secret Owl was <b>${esc(r.owlName || '?')}</b>. ${r.guessedRight ? '<span class="yes">You guessed right!</span>' : "You didn't guess them."}</div></div>
       <div class="rec">${A.icon('explore', 46)}<div>${watched ? `You watched <b>${esc(watched)}</b>: ` : ''}${r.owlHidden ? '<span class="yes">you stayed hidden.</span>' : 'they spotted you.'}</div></div>
-      ${(r.found || []).map(treasureOf).filter(Boolean).map(t => `<div class="rec">${A.treasure(t.id, 46)}<div>You found <b>${esc(t.name)}</b>. ${esc(t.meaning)}</div></div>`).join('')}
+      ${[...new Set([...(r.found || []), ...(r.took || [])])].map(treasureOf).filter(Boolean).map(t => { const f = (r.found || []).includes(t.id), k = (r.took || []).includes(t.id);
+        return `<div class="rec">${A.treasure(t.id, 46)}<div>You ${f && k ? 'found and picked up' : f ? 'found' : 'picked up'} <b>${esc(t.name)}</b>. ${esc(t.meaning)}</div></div>`; }).join('')}
+      ${r.harvested ? `<div class="rec">${A.fruit(46)}<div>You harvested <span class="num">${r.harvested}</span>fruit.</div></div>` : ''}
+      ${r.springs ? `<div class="rec">${A.drop(46)}<div>You found <span class="num">${r.springs}</span>spring${r.springs > 1 ? 's' : ''}.</div></div>` : ''}
     </div>`;
   if (me.photo > 0) h += `<p class="privacy">${LOCK(18)}<span>Your photo is deleted from the server soon after the game ends. <button class="linkbtn" data-act="photo">Remove it now</button></span></p>`;
   return { cls: won ? 'gold' : '', html: h };

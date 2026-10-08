@@ -94,15 +94,6 @@ func foundURL(g *Game) string {
 	return fmt.Sprintf("/api/games/%s/found?v=%d", g.Code, sealedVer.Load())
 }
 
-// foundBy is the picture's URL if this player turned the find up (the
-// recognition shows it), or "".
-func (g *Game) foundBy(pid string) string {
-	if g.Found == nil || g.Found.Player != pid || sealed.Load() == nil {
-		return ""
-	}
-	return foundURL(g)
-}
-
 // foundView is what every screen gets while the find is showing.
 func foundView(g *Game) map[string]any {
 	f := sealed.Load()

@@ -92,8 +92,8 @@ weather per sector, rain grows Seeded/Sprout, sun dries players not on a Big Tre
 ring inward, and from beyond the edge onto Ring 4; a plant someone stands on keeps its stage) → the game ends the moment the forest **wakes** (a Big Tree in every sector, every player has placed a
 fruit, all 3 treasures placed, everyone on the World Tree) or every player is at 0 water → **guess** (Secret Owl, on
 the phones) → **chain** (tribute chain around the Secret Owl loop) → **end** (result and recognition: trust received
-and from how many people, the Secret Owl, guessed right, stayed hidden, the treasures each one found; the Keeper taps a card
-to spotlight that person).
+and from how many people, the Secret Owl, guessed right, stayed hidden, the value each one stood for, fruit harvested, springs
+found, treasures found and picked up; the Keeper taps a card to spotlight that person).
 
 Shares queue up and pause play until the Keeper taps Done sharing: *why* (entering), *ring* cards (the first time a
 player reaches Ring 3, 2 and 1: the Light, Story and Deep decks), *harvest* stories (about the value of the tree's sector),

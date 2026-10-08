@@ -1578,12 +1578,19 @@ function finaleHTML(v) {
     // each person's card; the Keeper taps one to put them in the spotlight while the team talks about them
     h += `<div class="k-fin-h"><div><h2>Recognition</h2><p>The team ${won ? 'woke the forest' : 'played'} together. Here is what each of you received: tap a name to shine a light on them.</p></div></div>
       <div class="k-recog">${(v.recognition || []).map((r, k) => {
-        const p = HW.player(r.id) || r, found = (r.found || []).map(id => HW.treasure(id)).filter(Boolean);
-        const finds = found.map(t => `<span class="k-rc-tr">${I.treasure(t.id, 44)}<span><b>Found ${esc(t.name)}</b><small>${esc(t.meaning)}</small></span></span>`).join('')
-          + (r.surprise ? `<span class="k-rc-tr"><img src="${esc(r.surprise)}" alt=""><span><b>Found the surprise</b></span></span>` : '');
-        return `<button class="k-rc" data-k="spot" data-id="${esc(r.id)}" style="--d:${k * 120}ms">${medPic(p, 104, { badges: false })}<span class="k-rc-t"><b class="k-rc-n">${esc(r.name)}</b>
+        const p = HW.player(r.id) || r, val = r.value >= 0 ? v.values[r.value] : null, found = r.found || [], took = r.took || [];
+        // each treasure once: found it, picked it up, or both
+        const finds = [...new Set([...found, ...took])].map(id => { const t = HW.treasure(id); if (!t) return '';
+          const verb = found.includes(id) && took.includes(id) ? 'Found and picked up' : found.includes(id) ? 'Found' : 'Picked up';
+          return `<span class="k-rc-tr">${I.treasure(id, 44)}<span><b>${verb} ${esc(t.name)}</b><small>${esc(t.meaning)}</small></span></span>`; }).join('');
+        const deeds = (r.harvested ? `<span class="k-rc-d">${I.fruit(30)}<b>${r.harvested}</b>fruit harvested</span>` : '')
+          + (r.springs ? `<span class="k-rc-d">${I.drop(28)}<b>${r.springs}</b>spring${r.springs > 1 ? 's' : ''} found</span>` : '');
+        return `<button class="k-rc" data-k="spot" data-id="${esc(r.id)}" style="--d:${k * 120}ms;--vc:${esc(val?.color || '#b89a6e')}">
+        <span class="k-rc-pic">${medPic(p, 104, { badges: false })}${val ? `<span class="k-rc-vb" title="${esc(val.name)}">${I.val(r.value, 56)}</span>` : ''}</span>
+        <span class="k-rc-t"><span class="k-rc-hd"><b class="k-rc-n">${esc(r.name)}</b>${val ? `<span class="k-rc-val">Stands for ${esc(val.name)}</span>` : ''}</span>
         <span class="k-rc-a">${I.acorn(36)}<b>${r.trust}</b><small>trust acorn${r.trust === 1 ? '' : 's'}${r.givers ? ` from ${r.givers} ${r.givers === 1 ? 'person' : 'people'}` : ''}</small></span>
         <span class="k-rc-o">${I.icon('owl', 32)}<small>Their Secret Owl: <b>${esc(r.owlName || '?')}</b></small></span>
+        ${deeds ? `<span class="k-rc-ds">${deeds}</span>` : ''}
         ${finds ? `<span class="k-rc-f">${finds}</span>` : ''}
         <span class="k-rc-tags">${r.guessedRight ? '<i class="good">spotted their Owl</i>' : '<i>missed their Owl</i>'}${r.owlHidden ? '<i class="good">stayed hidden</i>' : '<i>was spotted</i>'}</span></span></button>`; }).join('')}</div>`;
   }
