@@ -157,7 +157,7 @@ or takes it away with the transcription worker's token: `PUT /api/found` `{name,
 When that player (first name, any case) explores an empty hex, once per game, the hex holds the find instead of
 nothing (`Found` in the game; Undo takes it back with the explore). Every screen covers over with it (`web/find.js`,
 `found` in every view; the picture at `GET /api/games/{code}/found`, only for a game that turned it up): a cute surprise and
-the forest's question to them, then the Keeper's **Celebrate** (`foundCheer`) and **Close** (`foundClose`). The
+the forest's question to them, then the Keeper's **Explained** (`foundCheer`, to the celebration) and **Close** (`foundClose`). The
 Keeper's screen plays the sound; phones buzz. Without the file, explore is as it always was.
 
 ## Admin
