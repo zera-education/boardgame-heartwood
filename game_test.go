@@ -1423,11 +1423,11 @@ func TestViewShape(t *testing.T) {
 	}
 	rd := c["ringDecks"].(map[string]any)
 	for _, r := range []string{"1", "2", "3"} {
-		if len(rd[r].([]any)) < MaxPlayers {
+		if len(rd[r].([]any)) == 0 {
 			t.Fatalf("ring deck %s has %d", r, len(rd[r].([]any)))
 		}
 	}
-	if len(c["heartwood"].([]any)) < 14 || !strings.Contains(c["harvest"].(string), "{value}") ||
+	if len(c["heartwood"].([]any)) != len(HeartwoodCards) || !strings.Contains(c["harvest"].(string), "{value}") ||
 		len(c["treasures"].([]any)) != 3 || len(c["roles"].([]any)) != 9 {
 		t.Fatal("cards")
 	}
@@ -1547,9 +1547,11 @@ func TestDrawSkipsCardsThatAreGone(t *testing.T) {
 	if c := g.draw("ring2"); !slices.Contains(RingDecks[2], c) || len(g.Decks["ring2"]) != len(RingDecks[2])-1 {
 		t.Fatalf("drew %q, %d left", c, len(g.Decks["ring2"]))
 	}
-	for r := 1; r <= 3; r++ {
-		if len(RingDecks[r]) < MaxPlayers {
-			t.Fatalf("ring %d deck has %d cards for up to %d players", r, len(RingDecks[r]), MaxPlayers)
+	// a deck that runs out is shuffled again
+	g.Decks["ring1"] = nil
+	for range len(RingDecks[1]) + 1 {
+		if c := g.draw("ring1"); !slices.Contains(RingDecks[1], c) {
+			t.Fatalf("drew %q", c)
 		}
 	}
 }

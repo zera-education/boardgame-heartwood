@@ -49,8 +49,8 @@ Keep the house style: plain HTML/JS/CSS, no build step, no frameworks, dark fore
     Enthusiast: once per turn a move may go 2 hexes (both steps unsealed, neither hex in fog, own hex not in
     fog). Challenger may bring one teammate standing on the same hex (`target`).
     **Ring card:** the first time a player enters Ring 3, Ring 2 or Ring 1 (moving inward), they draw a card
-    from that ring's deck (share kind `ring`): Ring 3 = Light, Ring 2 = Story, Ring 1 = Deep, 12 get-to-know-you
-    questions each (El, 2026-10-08: no longer tied to the values). Applies to the brought teammate too.
+    from that ring's deck (share kind `ring`): Ring 3 = Light, Ring 2 = Story, Ring 1 = Deep: get-to-know-you
+    questions chosen by El (2026-10-08), no longer tied to the values; a deck that runs out is shuffled again. Applies to the brought teammate too.
   - **Explore** the face-down hex you stand on (2 actions in fog). Individualist also privately peeks at one
     face-down neighbour (goes to their phone). Revealing a treasure triggers that treasure's group moment.
   - **Sow** on an explored empty hex with no plant, no treasure lying there, not sealed → Seeded (Achiever →

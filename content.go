@@ -26,36 +26,30 @@ var Values = [6]Value{
 // RingDecks holds the card a player draws the first time they reach a ring
 // (index 1..3; 0 is unused). Questions to get to know each other, from light
 // at the edge to deep near the World Tree: Ring 3 the Light deck, Ring 2 the
-// Story deck, Ring 1 the Deep deck. Twelve each, one per player in the
-// biggest game, so nobody hears the same card twice.
+// Story deck, Ring 1 the Deep deck (chosen by El, 2026-10-08). When a deck
+// runs out in a big game, it is shuffled again.
 var RingDecks = [4][]string{
 	1: {
-		"What makes you feel most like yourself?",
-		"What are you most grateful for right now?",
-		"Who has shaped the person you are today?",
-		"What is something you're still learning about yourself?",
-		"What keeps you going when work gets hard?",
-		"What has life taught you that school never did?",
-		"What is one thing you will never compromise on?",
+		"What is one value you will never compromise on?",
 		"What would you try if you knew you couldn't fail?",
 		"What is a dream you still carry?",
 		"When do you feel you truly belong?",
 		"What would you tell your younger self?",
-		"What kind of support helps you most when you're struggling?",
+		"What is something you're still learning about yourself?",
+		"What keeps you going when work gets hard?",
 	},
 	2: {
 		"Tell us about a teacher who made a difference to you.",
-		"Tell us about the place where you grew up.",
+		"Tell us about an event from your childhood that you'll never forget.",
 		"Tell us how you ended up working at ZERA.",
 		"Tell us about a time you tried something new and it went well.",
 		"Tell us about a mistake that taught you a lot.",
 		"Tell us about someone who helped you when you needed it.",
 		"Tell us about a moment you felt really proud of yourself.",
-		"Tell us about a time a plan went wrong, and what happened next.",
-		"Tell us about a tradition in your family.",
-		"Tell us about a student who taught you something. (No names needed.)",
-		"Tell us about your first week in a new job.",
-		"Tell us about a challenge that made you stronger.",
+		"Tell us about a student who taught you something.",
+		"Tell us about a challenge that made you better.",
+		"What kind of support helps you most when you're struggling?",
+		"What are you most grateful for right now?",
 	},
 	3: {
 		"What's your favourite food from your childhood?",
@@ -68,7 +62,6 @@ var RingDecks = [4][]string{
 		"What song always puts you in a good mood?",
 		"Are you a morning person or a night person?",
 		"What's something you're surprisingly good at?",
-		"What's the last thing that made you laugh out loud?",
 		"If you had a free day tomorrow, how would you spend it?",
 	},
 }
@@ -82,16 +75,9 @@ var HeartwoodCards = []string{
 	"Who at this table has helped you grow, and how?",
 	"What legacy do you want to leave in ZERA's forest?",
 	"What would you want a student to say about you in 2035?",
-	"What have you noticed about this team today?",
 	"What promise would you make to this team for the year ahead?",
 	"What has this team given you that you didn't expect?",
 	"Which value do you want this team to grow in most this year, and why?",
-	"What will you do differently after today?",
-	"Who here would you like to know better, and what would you ask them?",
-	"What makes you proud to work at ZERA?",
-	"Who at this table do you want to thank, and for what?",
-	"What would a 'woken forest' look like at our school?",
-	"When did you last see this team at its best?",
 }
 
 // HarvestPrompt is the share after a Harvest; {value} is the tree's value.
