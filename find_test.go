@@ -20,13 +20,17 @@ func TestSealedFind(t *testing.T) {
 	x.play()
 	g, mira, mate := x.g, x.ps[0], x.ps[1]
 	mira.Name = "mira Tan"
-	// step moves p one ring inward and closes the ring card that opens
-	step := func(p *Player) {
+	// explore puts p on a fresh face-down hex of this kind and explores it
+	var fresh []int
+	for s := range 6 {
+		fresh = append(fresh, ringHexes(3, s)...)
+	}
+	explore := func(p *Player, kind string) {
 		t.Helper()
-		x.must(x.as(p, "move", Action{Hex: inwardOf(p.Pos)}))
-		for len(g.Shares) > 0 {
-			x.must(x.host("doneShare", Action{}))
-		}
+		x.turnOf(p)
+		p.Pos, fresh = fresh[0], fresh[1:]
+		g.Tiles[p.Pos] = &Tile{Kind: kind}
+		x.must(x.as(p, "explore", own))
 	}
 
 	// no sealed find on this server: explore is as it always was
@@ -37,21 +41,22 @@ func TestSealedFind(t *testing.T) {
 	}
 
 	sealed.Store(&SealedFind{Name: "Mira", Cheer: "Hooray", Image: fakeJPEG})
-	// someone else finds nothing; Mira on a spring finds the spring
-	x.turnOf(mate)
-	step(mate)
-	x.must(x.as(mate, "explore", own))
-	x.turnOf(mira)
-	step(mira)
-	g.Tiles[mira.Pos].Kind = "spring"
-	x.must(x.as(mira, "explore", own))
-	if g.Found != nil {
-		t.Fatal("found on someone else's hex or a spring")
+	// someone else's explores don't count; Mira's first two find what is there
+	for range FoundAfter {
+		explore(mate, "empty")
+	}
+	explore(mira, "spring")
+	explore(mira, "empty")
+	if g.Found != nil || g.FoundTries != 2 || !strings.HasSuffix(g.Log[len(g.Log)-1], "mira Tan explores and finds nothing here.") {
+		t.Fatalf("found %v after %d explores, log %q", g.Found, g.FoundTries, g.Log[len(g.Log)-1])
+	}
+	// her third is a spring: it waits for her next empty hex
+	explore(mira, "spring")
+	if g.Found != nil || !strings.HasSuffix(g.Log[len(g.Log)-1], "finds a spring 💧.") {
+		t.Fatal("found on a spring")
 	}
 	// Mira on an empty hex turns it up, and every screen shows it
-	x.turnOf(mira)
-	step(mira)
-	x.must(x.as(mira, "explore", own))
+	explore(mira, "empty")
 	if g.Found == nil || g.Found.Player != mira.ID || g.Found.Hex != mira.Pos || g.Found.Stage != "ask" {
 		t.Fatalf("found %+v", g.Found)
 	}
@@ -66,9 +71,7 @@ func TestSealedFind(t *testing.T) {
 		}
 	}
 	// once a game
-	x.turnOf(mira)
-	step(mira)
-	x.must(x.as(mira, "explore", own))
+	explore(mira, "empty")
 	if g.Found.Hex == mira.Pos {
 		t.Fatal("found twice")
 	}
@@ -164,6 +167,7 @@ func TestSealedFindAPI(t *testing.T) {
 		t.Fatalf("picture before it is found: %d", c)
 	}
 	x.ps[0].Name = "Mira"
+	g.FoundTries = FoundAfter - 1 // her third explore
 	x.turnOf(x.ps[0])
 	x.must(x.as(x.ps[0], "explore", own))
 	if c, _, rec := ps.req("GET", "/api/games/FIND/found", nil, nil); c != 200 || !bytes.Equal(rec.Body.Bytes(), fakeJPEG) || rec.Header().Get("Content-Type") != "image/jpeg" {

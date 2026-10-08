@@ -60,10 +60,19 @@ type Found struct {
 	Stage  string `json:"stage"`
 }
 
-// turnUp is explore on an empty hex: the sealed find, if this is its player
-// and it hasn't been found in this game yet.
-func (g *Game) turnUp(me *Player) bool {
+// FoundAfter is the explore of that player that turns the find up: not their
+// first, their third (El, 2026-10-08), or the next empty hex after it.
+const FoundAfter = 3
+
+// turnUp is a player exploring a hex of this kind: the sealed find, if this is
+// its player, it hasn't been found in this game yet, this is their third
+// explore or later, and the hex is empty.
+func (g *Game) turnUp(me *Player, kind string) bool {
 	if g.Found != nil || !sealed.Load().calls(me.Name) {
+		return false
+	}
+	g.FoundTries++
+	if g.FoundTries < FoundAfter || kind != "empty" {
 		return false
 	}
 	g.Found = &Found{Player: me.ID, Hex: me.Pos, Stage: "ask"}

@@ -248,7 +248,8 @@ type Game struct {
 	Undo   []UndoPoint `json:"undo,omitempty"`
 	logged int         // trail log lines written since the server loaded the game
 	// A sealed find turned up in this game (find.go).
-	Found *Found `json:"found,omitempty"`
+	Found      *Found `json:"found,omitempty"`
+	FoundTries int    `json:"foundTries,omitempty"` // explores by its player so far
 }
 
 type RejoinPin struct {
@@ -834,6 +835,7 @@ func (g *Game) explore(me *Player, peekHex int) error {
 	}
 	t.Up = true
 	g.event("flip", Event{"hex": me.Pos})
+	found := g.turnUp(me, t.Kind) // a sealed find (find.go)
 	switch t.Kind {
 	case "treasure":
 		tr := treasureByID(t.Treasure)
@@ -856,7 +858,7 @@ func (g *Game) explore(me *Player, peekHex int) error {
 	case "spring":
 		g.logf("%s explores and finds a spring 💧.", me.Name)
 	default:
-		if !g.turnUp(me) {
+		if !found {
 			g.logf("%s explores and finds nothing here.", me.Name)
 		}
 	}

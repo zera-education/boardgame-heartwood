@@ -154,8 +154,9 @@ or takes it away with the transcription worker's token: `PUT /api/found` `{name,
     curl -fsS -X PUT https://heartwood.zera.edu.my/api/found -H "Authorization: Bearer $(cat ~/.config/heartwood/transcribe-token)" \
       -H 'Content-Type: application/json' --data-binary @$HOME/.config/heartwood/sealed-find.json
 
-When that player (first name, any case) explores an empty hex, once per game, the hex holds the find instead of
-nothing (`Found` in the game; Undo takes it back with the explore). Every screen covers over with it (`web/find.js`,
+When that player (first name, any case) explores for the third time, once per game, the hex holds the find instead
+of nothing (their first two explores find what is there; if the third is a spring or a treasure, their next empty hex
+does). `Found` and `FoundTries` are in the game, so Undo takes it back with the explore. Every screen covers over with it (`web/find.js`,
 `found` in every view; the picture at `GET /api/games/{code}/found`, only for a game that turned it up): a cute surprise and
 the forest's question to them, then the Keeper's **Explained** (`foundCheer`, to the celebration) and **Close** (`foundClose`). The
 Keeper's screen plays the sound; phones buzz. Without the file, explore is as it always was.
