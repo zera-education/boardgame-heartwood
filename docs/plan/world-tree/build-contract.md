@@ -127,7 +127,9 @@ mechanics: versioned views, pushes after every change, Keeper secret, rejoin pin
 teammate id or ""), `explore`, `sow`, `water` (hex), `tend` (hex), `clear` (hex), `harvest`, `take`, `drink`,
 `pass` (target=receiver id, text=water|fruit|treasure), `endTurn`.
 **Keeper only:** `start`, `slide` (n), `begin`, `assignPowers` (target, types), `kick`, `doneShare`, `startChain`, `nextTribute`,
-`timer` (n seconds).
+`timer` (n seconds), `undo` (takes back the Keeper's last tap for a player this turn: the server keeps a copy of
+the game before each one, up to 6, until the turn ends or the phase changes; End turn is not taken back; view `undo`,
+Keeper only, is the trail log line of the tap it takes back).
 **Phone only (own pid+secret):** `trust`, `investigate` (n=sector), `guess` (target).
 Errors are plain sentences shown to the user.
 

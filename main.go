@@ -495,6 +495,9 @@ func buildView(g *Game, pid, secret, host string) map[string]any {
 		"tribute": nil, "recognition": nil, "me": nil,
 	}
 	recordingView(g, isHost, v)
+	if isHost && len(g.Undo) > 0 {
+		v["undo"] = g.Undo[len(g.Undo)-1].Label // the Keeper's last tap this turn, which Undo takes back
+	}
 	events := g.Events
 	if n := len(events); n > 80 {
 		events = events[n-80:]

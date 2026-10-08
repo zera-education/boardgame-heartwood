@@ -78,6 +78,13 @@ async function act(type, extra = {}, okMsg) {
   } finally { busy = false; document.body.classList.remove('busy'); }
 }
 const actAs = (pid, type, extra, okMsg) => act(type, { as: pid, ...extra }, okMsg);
+// takes back the Keeper's last tap this turn (the server keeps a copy of the game before each one)
+function undo() {
+  const v = HW.view;
+  if (!v?.isHost || !v.undo) return;
+  ui.mode = null; ui.pass = false; ui.value = null; closeInfo();
+  return act('undo', {}, `↶ Taken back: ${v.undo}`);
+}
 
 // Keeper choices on this screen that aren't sent yet.
 const ui = { value: null, mode: null, bring: '', pass: false, scope: '', confirmEnd: false, hidePanel: false, brief: null, slideTo: null,
@@ -1147,7 +1154,9 @@ function renderDrawer(v) {
   document.body.classList.toggle('k-drawer-open', !!ui.drawer);
   HW.patch($('k-tab'), `<b class="k-burger"><i></i><i></i><i></i></b><span>${ui.drawer ? 'Hide' : 'Tools · log'}</span>`);
   renderHost(v);
-  HW.patch($('log'), v.log.slice().reverse().map(l => `<div>${esc(l)}</div>`).join(''));
+  // the Keeper's last tap this turn can be taken back (a slip: the wrong hex, the wrong move)
+  const undo = v.isHost && v.undo ? `<div class="k-undo"><button class="k-btn cream sm" data-k="undo" title="Take back the last tap (Ctrl+Z)">↶ Undo</button><span>${esc(v.undo)}</span></div>` : '';
+  HW.patch($('log'), undo + v.log.slice().reverse().map(l => `<div>${esc(l)}</div>`).join(''));
 }
 // Phones can't reach "localhost": when the board was opened that way, show the server's Wi-Fi address instead.
 function phoneOrigin(v) {
@@ -1669,6 +1678,7 @@ document.addEventListener('click', async e => {
       return act('randomTypes', {}, '✓ One random type each: tap a number to change one');
     }
     case 'closeInfo': return closeInfo();
+    case 'undo': return undo();
     case 'doneShare': return act('doneShare', {}, '✓ Thank you');
     case 'pickAgain': ui.value = null; return render(v);
     case 'closePass': ui.pass = false; return render(v);
@@ -1698,6 +1708,11 @@ addEventListener('keydown', e => {
     const step = { ArrowRight: 1, PageDown: 1, ' ': 1, ArrowLeft: -1, PageUp: -1 }[e.key];
     if (step) { e.preventDefault(); return goSlide(slideAt(v) + step); }
     if (e.key === 'Escape' && !briefLive(v)) { ui.brief = null; return render(v); }
+  }
+  // Ctrl+Z / ⌘Z: take back the last tap
+  if (v && v.isHost && e.key.toLowerCase() === 'z' && (e.metaKey || e.ctrlKey) && !e.shiftKey && !e.target.closest?.('input, select, textarea')) {
+    e.preventDefault();
+    return undo();
   }
   // 1…9: the numbered hex (the team says "move to 3")
   if (v && v.isHost && /^[1-9]$/.test(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey && $('k-modal').hidden && !e.target.closest?.('input, select, textarea')) {

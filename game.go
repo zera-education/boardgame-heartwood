@@ -244,6 +244,9 @@ type Game struct {
 	// Keeper device records.
 	NoRecord  bool   `json:"noRecord,omitempty"`
 	RecDevice string `json:"recDevice,omitempty"`
+	// The Keeper's taps this turn, newest last, to take back a slip (undo.go).
+	Undo   []UndoPoint `json:"undo,omitempty"`
+	logged int         // trail log lines written since the server loaded the game
 }
 
 type RejoinPin struct {
@@ -362,6 +365,7 @@ func (g *Game) player(id string) *Player {
 }
 
 func (g *Game) logf(format string, a ...any) {
+	g.logged++
 	g.Log = append(g.Log, fmt.Sprintf(format, a...))
 	if len(g.Log) > 200 {
 		g.Log = g.Log[len(g.Log)-200:]
@@ -677,6 +681,7 @@ func (g *Game) enter(me *Player, value, hex int) error {
 
 func (g *Game) newTurn() {
 	g.Turn = &TurnState{Player: g.Order[g.TurnIdx], Actions: ActionsPerTurn}
+	g.Undo = nil
 	g.TimerEnd, g.TimerLabel = 0, ""
 }
 
@@ -1267,6 +1272,7 @@ func (g *Game) end(result string) {
 func (g *Game) toGuess() {
 	g.Phase = PhaseGuess
 	g.Turn = nil
+	g.Undo = nil
 	g.TimerEnd, g.TimerLabel = 0, ""
 	g.logf("Everyone: guess who was your Secret Owl.")
 }
@@ -1341,7 +1347,7 @@ func (g *Game) Apply(a Action) error {
 		if p == nil {
 			return errors.New("no such player")
 		}
-		return g.playerAction(p, a)
+		return g.keeperTap(p, a)
 	}
 	if isHost {
 		return g.hostAction(a)
@@ -1435,6 +1441,8 @@ func (g *Game) hostAction(a Action) error {
 		p.Photo = 0
 	case "timer":
 		g.setTimer(a.N, "Timer")
+	case "undo":
+		return g.undo()
 	default:
 		if ok, err := g.recordAction(a); ok { // record, recordHere
 			return err

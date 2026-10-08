@@ -340,6 +340,9 @@ body.k-drawer-open .k-tab { right: calc(var(--dw) + 14px); }
   box-shadow: inset 0 0 0 3px #fffaf0, inset 0 0 0 5px var(--paper-line), 0 6px 0 var(--wood-ink), 0 16px 34px rgba(0, 0, 0, .45); -webkit-user-select: text; user-select: text; }
 body.k-drawer-open #k-drawer { transform: none; }
 .k-dsec + .k-dsec { border-top: 3px dashed var(--paper-line); margin-top: 10px; padding-top: 8px; }
+.k-log .k-undo { display: flex; align-items: center; gap: 8px; padding: 6px 8px; margin-bottom: 4px; border-radius: 12px; background: #fff3c4; box-shadow: inset 0 0 0 2px #f2b32e; }
+.k-log .k-undo span { font: 800 13px/1.25 var(--read); color: var(--ink2); }
+.k-log .k-undo .k-btn { flex: none; }
 .k-dsec h3 { font: 22px var(--toon); color: var(--wood-d); margin: 0 0 6px; font-weight: 400; }
 .k-det { margin-top: 8px; }
 .k-det summary { cursor: pointer; font-weight: 800; color: #8a5418; }

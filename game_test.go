@@ -1192,6 +1192,79 @@ func TestRingCards(t *testing.T) {
 	}
 }
 
+func TestUndo(t *testing.T) {
+	x := newTable(t, 6, func(i int) []int { return []int{1} })
+	x.play()
+	g, p, mate := x.g, x.ps[0], x.ps[1]
+	x.turnOf(p)
+	x.fails(x.host("undo", Action{}), "undo with nothing to undo")
+	// a slip: a move into Ring 3 opens its card, a teammate gives trust, someone changes their photo
+	r4 := p.Pos
+	r3 := inwardOf(r4)
+	x.must(x.as(p, "move", Action{Hex: r3}))
+	if g.openShare() == nil || !p.Reached[2] {
+		t.Fatal("no Ring 3 card")
+	}
+	if u, _ := buildView(g, "", "", "host")["undo"].(string); u != "P0 moves." {
+		t.Fatalf("view undo %q", u)
+	}
+	if _, ok := buildView(g, mate.ID, mate.Secret, "")["undo"]; ok {
+		t.Fatal("a phone sees the Keeper's undo")
+	}
+	x.must(x.phone(mate, "trust", own))
+	x.ps[2].Photo = 7
+	x.fails(x.phone(p, "undo", own), "undo from a phone")
+	seq, shares := g.EventSeq, g.ShareSeq
+	x.must(x.host("undo", Action{}))
+	if g.player(p.ID) != p || g.player(mate.ID) != mate {
+		t.Fatal("undo replaced the Player values")
+	}
+	if p.Pos != r4 || g.Turn.Actions != ActionsPerTurn || p.Reached[2] || len(g.Shares) != 0 || mate.TrustLeft != StartTrust {
+		t.Fatalf("not undone: pos %d actions %d reached %v shares %d trust %d", p.Pos, g.Turn.Actions, p.Reached, len(g.Shares), mate.TrustLeft)
+	}
+	if x.ps[2].Photo != 7 || g.ShareSeq != shares || g.EventSeq <= seq {
+		t.Fatalf("photo %d shareSeq %d/%d eventSeq %d/%d", x.ps[2].Photo, g.ShareSeq, shares, g.EventSeq, seq)
+	}
+	if e := x.lastEvent("move"); e["pid"] != p.ID || e["from"] != r3 || e["to"] != r4 || e["undo"] != true {
+		t.Fatalf("hop back %v", e)
+	}
+	if l := g.Log[len(g.Log)-1]; l != "The Keeper took back: P0 moves." {
+		t.Fatalf("log %q", l)
+	}
+	x.fails(x.host("undo", Action{}), "a second undo")
+	// two taps, taken back newest first
+	x.must(x.as(p, "explore", own))
+	x.must(x.as(p, "move", Action{Hex: r3}))
+	x.must(x.host("doneShare", Action{}))
+	x.must(x.host("undo", Action{}))
+	if p.Pos != r4 || !g.Tiles[r4].Up || g.Turn.Actions != 1 {
+		t.Fatalf("first undo: pos %d up %v actions %d", p.Pos, g.Tiles[r4].Up, g.Turn.Actions)
+	}
+	x.must(x.host("undo", Action{}))
+	if g.Tiles[r4].Up || g.Turn.Actions != 2 {
+		t.Fatal("explore not undone")
+	}
+	// the turn's end closes it
+	x.must(x.as(p, "explore", own))
+	x.must(x.host("endTurn", Action{}))
+	x.fails(x.host("undo", Action{}), "undo after the turn ended")
+	// entering is a tap too
+	y := newTable(t, 6, nil)
+	x.must(y.host("start", Action{}))
+	x.must(y.host("begin", Action{}))
+	x.must(y.as(y.ps[0], "enter", Action{N: 2, Hex: ringHexes(4, 2)[0]}))
+	x.must(y.host("undo", Action{}))
+	if y.ps[0].Pos != -1 || y.g.current() != y.ps[0] || len(y.g.Shares) != 0 {
+		t.Fatalf("enter not undone: pos %d", y.ps[0].Pos)
+	}
+	// the last player entering starts play: that is not taken back
+	y.play2()
+	if y.g.Phase != PhaseTurn {
+		t.Fatal("not playing")
+	}
+	x.fails(y.host("undo", Action{}), "undo of the entering before play")
+}
+
 func TestLoseWhenEveryoneIsDry(t *testing.T) {
 	x := newTable(t, 6, func(i int) []int { return []int{1} })
 	x.play()

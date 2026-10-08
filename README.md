@@ -49,7 +49,8 @@ Locally, the server prints the address phones on the same Wi-Fi should use, and 
   and whether its plant is safe at the next Forest Tide (and **Move here** when the current player can go there).
   Nothing moves on a plain tap: the Keeper picks the action first (**Move**, Water, Tend, Clear), then the hexes it can
   reach glow with numbers 1, 2, 3… in reading order, so the team can say "move to 3"; the number keys pick them too.
-  The drawer (**Tools · log**: Keeper tools and the trail log) opens over the map without moving it.
+  The drawer (**Tools · log**: Keeper tools and the trail log) opens over the map without moving it. **Undo** at the
+  top of the trail log (or Ctrl+Z) takes back the Keeper's last tap for a player, newest first, until the turn ends.
 - **Players say it, the Keeper taps it. Phones down.** Every public action (enter, move, explore, sow, water, tend,
   clear, harvest, take, drink, pass, end turn) is tapped by the Keeper, acting for that player (`host` + `as`). The
   server refuses `trust`, `investigate` and `guess` from the Keeper. The phone keeps only private things: the Secret
