@@ -303,7 +303,7 @@ async function start() {
   $('back').href = `board.html?g=${encodeURIComponent(CODE)}`;
   if (!CODE || !HOST) {
     $('list').innerHTML = `<div class="panel">${art('icon:keeper', '3.2em')}<h2>Only the Keeper can open the stories</h2>
-      <p>Open this page from the Keeper screen: <b>Players · tools · log</b>, then <b>Stories and transcripts</b>.</p></div>`;
+      <p>Open this page from the Keeper screen: <b>Tools · log</b>, then <b>Stories and transcripts</b>.</p></div>`;
     $('back').hidden = !CODE;
     return;
   }

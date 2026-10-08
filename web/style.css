@@ -212,7 +212,6 @@ body.k-lost .k-night { filter: brightness(.55) saturate(.7); }
 /* ---- bottom: whose turn + the action tray of seed packets ---- */
 #k-tray { position: fixed; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 7; display: none; align-items: flex-end; gap: 10px; max-width: calc(100vw - 16px); transition: left .3s var(--spring); }
 #k-tray.on { display: flex; }
-body.k-drawer-open #k-tray { left: calc(50% - var(--dw) * var(--hud, 1) / 2 - 7px); max-width: calc(100vw - var(--dw) * var(--hud, 1) - 34px); }
 .k-who { display: flex; align-items: center; gap: 8px; padding: 6px 14px 7px 6px; min-width: 250px; max-width: 500px; align-self: stretch; }
 .k-who > .k-medpic { margin: -14px 0 -6px -2px; flex: none; filter: drop-shadow(0 4px 0 rgba(0, 0, 0, .3)); }
 .k-who-t { min-width: 0; }
@@ -221,9 +220,7 @@ body.k-drawer-open #k-tray { left: calc(50% - var(--dw) * var(--hud, 1) / 2 - 7p
 .k-where { display: flex; align-items: center; gap: 4px; font-weight: 800; font-size: 14px; color: #ffe9c4; margin-top: 4px; white-space: nowrap; overflow: hidden; }
 .k-where svg { flex: none; }
 .k-car { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
-.k-drops, .k-carry, .k-roles { display: inline-flex; align-items: center; gap: 0; }
-.k-carry b { font: 15px var(--toon); color: #fff3dc; }
-.k-roles { gap: 2px; margin-left: 2px; }
+.k-roles { display: inline-flex; align-items: center; gap: 2px; margin-left: 2px; }
 .k-hint { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-weight: 800; font-size: 17px; color: #fff3dc; }
 .k-hint .k-btn { margin-left: 6px; }
 .k-wait { display: flex; flex-direction: column; justify-content: center; padding: 10px 22px; font: 22px/1.15 var(--toon); }
@@ -307,7 +304,6 @@ body.k-drawer-open #k-tray { left: calc(50% - var(--dw) * var(--hud, 1) / 2 - 7p
   animation: k-found 2.6s ease-out both; }
 .k-found.spring { color: #1d5f8f; border-color: #1d5f8f; box-shadow: 0 4px 0 #0f3554, 0 8px 16px rgba(0, 0, 0, .3); }
 @keyframes k-found { 0% { opacity: 0; margin-top: 14px; scale: .6; } 12% { opacity: 1; margin-top: 0; scale: 1.08; } 20% { scale: 1; } 78% { opacity: 1; margin-top: -10px; } 100% { opacity: 0; margin-top: -22px; } }
-body.k-drawer-open #k-pop { right: calc(var(--dw) + 20px); }
 .k-bubble { background: #fff6df; border: 3px solid #5a3418; border-radius: 16px; padding: 6px 14px; font: 800 16px/1.25 var(--read); color: var(--ink); box-shadow: 0 4px 0 #2e1709, 0 8px 16px rgba(0, 0, 0, .3); text-align: center; }
 .k-passp { padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 8px; animation: k-in .35s var(--spring); }
 .k-bring { display: flex; align-items: center; gap: 6px; margin-top: 5px; font: 700 14px var(--read); color: #ffe9c4; flex-wrap: wrap; }
@@ -325,26 +321,18 @@ body.k-drawer-open #k-pop { right: calc(var(--dw) + 20px); }
 .k-item:active { transform: translateY(3px); box-shadow: 0 1px 0 #8a5a2c; }
 .k-item.no, .k-item:disabled { opacity: .35; filter: grayscale(1); cursor: not-allowed; }
 
-/* ---- the drawer: players, Keeper tools, trail log ---- */
+/* ---- the drawer: Keeper tools and the trail log, over the map (opening it moves nothing) ---- */
 .k-tab { position: fixed; right: 0; top: 50%; transform: translateY(-50%); z-index: 15; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 8px 14px 10px;
   background: linear-gradient(90deg, #a96b3b, #7a4622); color: #fff3dc; border: 4px solid var(--wood-ink); border-right: 0; border-radius: 18px 0 0 18px; cursor: pointer;
   box-shadow: -4px 5px 0 var(--wood-ink), -6px 10px 20px rgba(0, 0, 0, .4); transition: right .3s var(--spring); }
 .k-tab span { writing-mode: vertical-rl; transform: rotate(180deg); font: 17px var(--toon); letter-spacing: .04em; text-shadow: 0 2px 0 var(--wood-ink); }
 body.k-drawer-open .k-tab { right: calc(var(--dw) + 14px); }
-#k-drawer { position: fixed; top: calc(var(--trh, 0px) / var(--hud, 1) + 24px); right: 10px; bottom: 10px; width: var(--dw); z-index: 14; transform: translateX(calc(100% + 40px)); transition: transform .32s var(--spring);
+#k-drawer { position: fixed; top: calc(var(--trh, 0px) / var(--hud, 1) + 24px); right: 10px; bottom: calc(var(--trayh, 0px) / var(--hud, 1) + 10px); width: var(--dw); z-index: 14; transform: translateX(calc(100% + 40px)); transition: transform .32s var(--spring);
   overflow-y: auto; padding: 12px 14px; background: linear-gradient(180deg, var(--paper), var(--paper2)); border: 4px solid var(--wood-d); border-radius: 22px;
   box-shadow: inset 0 0 0 3px #fffaf0, inset 0 0 0 5px var(--paper-line), 0 6px 0 var(--wood-ink), 0 16px 34px rgba(0, 0, 0, .45); -webkit-user-select: text; user-select: text; }
 body.k-drawer-open #k-drawer { transform: none; }
 .k-dsec + .k-dsec { border-top: 3px dashed var(--paper-line); margin-top: 10px; padding-top: 8px; }
 .k-dsec h3 { font: 22px var(--toon); color: var(--wood-d); margin: 0 0 6px; font-weight: 400; }
-.k-pl { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 14px; }
-.k-pl.cur { background: #fff3c4; box-shadow: inset 0 0 0 2px #f2b32e; }
-.k-pl-t { min-width: 0; flex: 1; }
-.k-pl-n { display: flex; align-items: center; gap: 4px; font: 18px/1.1 var(--toon); color: var(--ink); }
-.k-placed { display: inline-flex; align-items: center; font: 800 12px var(--read); color: #2c6a1f; }
-.k-pl-s { display: flex; align-items: center; gap: 6px; }
-.k-pl-r { display: flex; flex-wrap: wrap; gap: 2px 8px; font-size: 12px; font-weight: 700; color: var(--ink2); }
-.k-pl-r span { display: inline-flex; align-items: center; gap: 2px; }
 .k-det { margin-top: 8px; }
 .k-det summary { cursor: pointer; font-weight: 800; color: #8a5418; }
 .k-det label { display: block; margin: 8px 0 4px; font-weight: 700; color: var(--ink2); font-size: 14px; }

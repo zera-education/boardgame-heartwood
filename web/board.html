@@ -22,7 +22,6 @@
 <div id="k-tray"></div>
 <button id="k-tab" class="k-tab" aria-controls="k-drawer"></button>
 <aside id="k-drawer" class="k-still">
-  <section class="k-dsec"><h3>Players</h3><div id="k-players"></div></section>
   <section class="k-dsec" id="k-host" hidden>
     <h3>Keeper tools</h3>
     <div class="k-row"><span class="k-lab">Timer</span>
@@ -284,7 +283,7 @@ function signMarkup(v, s) {
   return plaqueMarkup(v, s) + `<g transform="translate(0,-21)"><g class="k-wb" data-w="${w}">${ART.weatherBadge(w, { size: 38 })}</g></g>`;
 }
 
-// Fits the board's extent into the screen minus the HUD (the tray at the bottom, the drawer when open).
+// Fits the board's extent into the screen minus the HUD (the tray at the bottom). The drawer opens over the map.
 // The tray's height is measured; within a phase the reserve only grows, so the board doesn't jump on every share.
 let trayMax = { phase: '', h: 0 };
 function trayReserve(v) { return v && ['enter', 'turn'].includes(v.phase) ? Math.max(trayMax.phase === v.phase ? trayMax.h : 0, Math.min(110, innerHeight * .11)) : 18; }
@@ -299,8 +298,7 @@ function fit() {
   if (!B) return;
   if (queueEnd - now() > 60) { clearTimeout(fit.q); fit.q = setTimeout(fit, queueEnd - now() + 50); return; }
   const W = innerWidth, H = innerHeight, v = HW.view;
-  const drawer = ui.drawer && W >= 900 ? $('k-drawer').getBoundingClientRect().width + 14 : 0;
-  let left = 10, right = 10 + drawer;
+  let left = 10, right = 10;
   // in the lobby the map sits between the join panel and the team panel
   const lobL = v?.phase === 'lobby' && document.querySelector('#k-modal .k-lob-l'), lobR = lobL && document.querySelector('#k-modal .k-lob-r');
   // (the value signs stick out past the hexes: keep them clear of the panels too)
@@ -323,7 +321,7 @@ function fit() {
   const { k, vx, vy } = f;
   const vb = `${vx.toFixed(2)} ${vy.toFixed(2)} ${(W / k).toFixed(2)} ${(H / k).toFixed(2)}`;
   if (vb === B.vb) return;
-  B.vb = vb; B.k = k; B.vx = vx; B.vy = vy; B.fitKey = `${W}|${H}|${drawer}|${bottom}|${left}|${right}`;
+  B.vb = vb; B.k = k; B.vx = vx; B.vy = vy; B.fitKey = `${W}|${H}|${bottom}|${left}|${right}`;
   for (const n of LAYERS) B.L[n].setAttribute('viewBox', vb);
   placeInfo();
 }
@@ -1059,11 +1057,6 @@ function whereLine(v, p) {
   const what = !t.up ? 'face down' : t.stage ? stageName(v, t.stage) + (t.stage === 4 && t.harvested ? ' (picked)' : '') : t.kind === 'spring' ? 'a spring' : tr ? esc(tr.name) : 'empty';
   return `${I.val(h.sector, 22)}<span>${esc(v.values[h.sector]?.name)} · Ring ${h.ring}</span>${I.wx(w, 22)}<span>${esc(HW.weatherName(w).replace(/^\S+\s/, ''))} · ${what}${t.leaves ? ` · ${t.leaves >= 2 ? 'sealed' : 'leaves'}` : ''}</span>`;
 }
-function carrying(p) {
-  return `<span class="k-drops">${[0, 1, 2, 3, 4].map(k => I.drop(15, k >= p.water)).join('')}</span>`
-    + (p.fruit ? `<span class="k-carry">${I.fruit(18)}${p.fruit > 1 ? '<b>×2</b>' : ''}</span>` : '')
-    + (p.treasure ? `<span class="k-carry">${I.treasure(p.treasure, 22)}</span>` : '');
-}
 function whoBlock(v, p, extra = '') {
   const t = v.turn, max = v.actionsPerTurn || 2, left = t ? t.actions : 0;
   return `<div class="k-who k-wood">${medPic(p, 70, { state: 'turn' })}<div class="k-who-t">
@@ -1141,15 +1134,10 @@ function passHTML(v, a) {
       ${a.treasure ? item(r, 'treasure', I.treasure(a.treasure, 30), !r.treasure, `${r.name} carries a treasure`) : ''}</span>`).join('') || '<span class="k-muted">nobody in reach</span>'}</div></div>`;
 }
 
-// ---------- the drawer: players, Keeper tools, trail log ----------
+// ---------- the drawer: Keeper tools and the trail log (the players are in the turn queue on the left) ----------
 function renderDrawer(v) {
   document.body.classList.toggle('k-drawer-open', !!ui.drawer);
-  HW.patch($('k-tab'), `<b class="k-burger"><i></i><i></i><i></i></b><span>${ui.drawer ? 'Hide' : 'Players · tools · log'}</span>`);
-  const playing = v.phase === 'enter' || v.phase === 'turn';
-  HW.patch($('k-players'), v.players.map(p => `<div class="k-pl${playing && v.current === p.id ? ' cur' : ''}">${medPic(p, 52, { badges: false, state: p.water <= 0 && v.phase === 'turn' ? 'dry' : '' })}
-    <div class="k-pl-t"><div class="k-pl-n">${esc(p.name)}${p.value >= 0 ? I.val(p.value, 20) : ''}${p.placed ? `<span class="k-placed" title="placed ${p.placed} fruit">${I.fruit(16)}✓</span>` : ''}</div>
-    ${v.phase === 'lobby' ? '' : `<div class="k-pl-s">${carrying(p)}</div>`}
-    <div class="k-pl-r">${p.types.map(t => `<span title="${esc(HW.roleText(t))}">${I.role(t, 20)}<small>${esc(HW.roleName(t))}</small></span>`).join('') || '<small class="k-muted">no type yet</small>'}</div></div></div>`).join('') || '<p class="k-muted">No one has joined yet.</p>');
+  HW.patch($('k-tab'), `<b class="k-burger"><i></i><i></i><i></i></b><span>${ui.drawer ? 'Hide' : 'Tools · log'}</span>`);
   renderHost(v);
   HW.patch($('log'), v.log.slice().reverse().map(l => `<div>${esc(l)}</div>`).join(''));
 }
@@ -1589,7 +1577,7 @@ function placeInfo() {
 }
 
 $('k-map').addEventListener('click', e => { if (!e.target.closest('.k-h, .k-med')) closeInfo(); });
-$('k-tab').onclick = () => { ui.drawer = !ui.drawer; store.set('hw-drawer', ui.drawer); if (HW.view) renderDrawer(HW.view); setTimeout(fit, 260); };
+$('k-tab').onclick = () => { ui.drawer = !ui.drawer; store.set('hw-drawer', ui.drawer); if (HW.view) renderDrawer(HW.view); };
 document.addEventListener('click', async e => {
   const b = e.target.closest('button');
   if (!b || b.disabled || !b.closest('#k-tray, #k-pop, #k-modal, #k-drawer, #k-info')) return;
