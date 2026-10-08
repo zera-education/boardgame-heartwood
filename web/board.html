@@ -97,6 +97,8 @@ const I = {
   drop: (s = 18, empty) => M(`dr${s}${empty}`, () => svgI(empty ? '<g opacity=".28" style="filter:url(#art-grey)">' + ART.drop() + '</g>' : ART.drop(), '-13 -13 26 26', s)),
   acorn: (s = 22) => M(`ac${s}`, () => svgI(ART.acorn(), '-13 -13 26 26', s)),
   treasure: (id, s = 30) => M(`tr${id}${s}`, () => svgI(ART.treasure(id), '-19 -19 38 38', s)),
+  // a treasure nobody has found yet: a face-down hex with a question mark (the briefing doesn't say which three)
+  mystery: (h = 60) => M(`my${h}`, () => svgI(ART.tile({ ring: 2, seed: 5 }) + '<text y="14" text-anchor="middle" font-family="Lilita One, Nunito, sans-serif" font-size="44" fill="#ffe6a6" stroke="#2e1709" stroke-width="6" paint-order="stroke" stroke-linejoin="round">?</text>', '-38 -28 76 86', h * 76 / 86, h)),
   ghost: (s = 30) => M(`gh${s}`, () => svgI('<circle r="13" fill="rgba(80,50,20,.18)" stroke="#9a7a52" stroke-width="2.2" stroke-dasharray="4 3"/>', '-19 -19 38 38', s)),
   leaf: (on, s = 26) => M(`lf${on}${s}`, () => svgI(ART.leaf({ empty: !on }), '-13 -13 26 26', s)),
   dead: (s = 18, seed = 1, dim) => M(`dl${s}${seed}${dim}`, () => svgI(dim ? '<g opacity=".25">' + ART.deadLeaf({ seed }) + '</g>' : ART.deadLeaf({ seed }), '-10 -10 20 20', s)),
@@ -270,13 +272,16 @@ function buildBoard(v) {
 // from the top). Z and A slide sideways so the World Tree's crown and the action tray stay clear.
 const SIGN = [[200, -176], [282, -64], [246, 112], [-206, 178], [-282, 64], [-246, -112]];
 const SIGN_UP = [118, -206];
-function signMarkup(v, s) {
-  const x = v.values[s] || {}, w = v.weather[s] || 'sun', name = esc(x.name || ''), wd = Math.max(70, (x.name || '').length * 7.2 + 34);
+function plaqueMarkup(v, s) {
+  const x = v.values[s] || {}, name = esc(x.name || ''), wd = Math.max(70, (x.name || '').length * 7.2 + 34);
   return `<g class="k-plaque"><rect x="${-wd / 2}" y="-1" width="${wd}" height="21" rx="10" fill="#6b3f1d" stroke="#2e1709" stroke-width="2.4"/>
     <rect x="${-wd / 2 + 2.5}" y="1.5" width="${wd - 5}" height="7" rx="3.5" fill="#8a5530"/>
     <g transform="translate(${-wd / 2 + 4},9.5) scale(.5)">${ART.valueBadge(s)}</g>
-    <text x="${10}" y="15" text-anchor="middle" font-family="Lilita One, Nunito, sans-serif" font-size="12.5" fill="#fff6e0" stroke="#2e1709" stroke-width="3" paint-order="stroke" stroke-linejoin="round">${name}</text></g>
-    <g transform="translate(0,-21)"><g class="k-wb" data-w="${w}">${ART.weatherBadge(w, { size: 38 })}</g></g>`;
+    <text x="${10}" y="15" text-anchor="middle" font-family="Lilita One, Nunito, sans-serif" font-size="12.5" fill="#fff6e0" stroke="#2e1709" stroke-width="3" paint-order="stroke" stroke-linejoin="round">${name}</text></g>`;
+}
+function signMarkup(v, s) {
+  const w = v.weather[s] || 'sun';
+  return plaqueMarkup(v, s) + `<g transform="translate(0,-21)"><g class="k-wb" data-w="${w}">${ART.weatherBadge(w, { size: 38 })}</g></g>`;
 }
 
 // Fits the board's extent into the screen minus the HUD (the tray at the bottom, the drawer when open).
@@ -1234,24 +1239,55 @@ const slideAt = v => Math.max(0, Math.min(HW.SLIDES.length - 1, briefLive(v) ? u
 // one obstacle: what it does, and how the team prevents it
 const hurdle = (art, name, does, prevent) => `<div class="k-br-c k-br-hurdle"><div class="k-br-art">${art}</div><h3>${name}</h3><p>${does}</p>
   <p class="k-br-ok"><b>Prevent it</b>${prevent}</p></div>`;
+// The forest as it starts, each value's sector washed in its colour, the World Tree asleep in the centre.
+// names: each value's plaque where the board puts its sign; trees: a Big Tree in every sector (the first goal).
+function briefMap(v, h, o = {}) {
+  return M(`bm|${h}|${o.names ? 1 : 0}|${o.trees ? 1 : 0}|${v.values.map(x => x.name).join()}`, () => {
+    const hx = v.hexes, xy = hx.map(t => ART.project(t.q, t.r)), face = ART.facePoints(S, .965);
+    const order = hx.map((_, i) => i).sort((a, b) => xy[a][1] - xy[b][1] || xy[a][0] - xy[b][0]);
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    const span = (x, y, w, up, down) => { x0 = Math.min(x0, x - w); x1 = Math.max(x1, x + w); y0 = Math.min(y0, y - up); y1 = Math.max(y1, y + down); };
+    let g = order.map(i => {
+      const t = hx[i];
+      span(...xy[i], 36, 30, 24 + ART.depth(t.ring) + 7);
+      return `<g transform="${TR(...xy[i])}">${i ? ART.tile({ ring: t.ring, sector: t.sector, q: t.q, r: t.r }) + `<polygon points="${face}" fill="${v.values[t.sector]?.color || '#888'}" opacity=".55"/>` : ART.tile({ world: true, q: 0, r: 0 })}</g>`;
+    }).join('');
+    const obj = [[0, ART.worldTree({ awake: false, seed: 31 })]];
+    span(...xy[0], 70, 4.75 * S, 0);
+    // on Ring 3, mid-sector (Zealous's middle hex hides behind the World Tree's crown, so its tree stands one over)
+    if (o.trees) for (let s = 0; s < 6; s++) {
+      const ring3 = hx.map((t, i) => [t, i]).filter(([t]) => t.sector === s && t.ring === 3).map(([, i]) => i), i = ring3[s ? 1 : 0];
+      obj.push([i, `<g transform="scale(1.35)">${ART.plant(4, s, { seed: i * 7 + 3 })}</g>`]);
+      span(...xy[i], 1.1 * S * 1.35, 2.2 * S * 1.35, 0);
+    }
+    g += obj.sort((a, b) => xy[a[0]][1] - xy[b[0]][1]).map(([i, m]) => `<g transform="${TR(...xy[i])}">${m}</g>`).join('');
+    if (o.names) g += SIGN.map(([x, y], s) => {
+      const w = (Math.max(70, (v.values[s]?.name || '').length * 7.2 + 34) / 2 + 10) * 1.4;   // the badge pokes out on the left
+      span(x, y, w, 20, 18);
+      return `<g transform="${TR(x, y)} scale(1.4) translate(0,-10)">${plaqueMarkup(v, s)}</g>`;
+    }).join('');
+    return svgI(g, `${x0.toFixed(1)} ${y0.toFixed(1)} ${(x1 - x0).toFixed(1)} ${(y1 - y0).toFixed(1)}`, h * (x1 - x0) / (y1 - y0), h, 'k-br-map');
+  });
+}
 const SLIDE = {
   welcome: v => ({ title: 'The forest is asleep', sub: 'Today, as one team, we wake it.', body: `
-    <div class="k-br-hero">${I.world(false, 300)}<div class="k-br-team">${v.players.map(p => `<span class="k-br-p">${medPic(p, 104, { badges: false })}<b>${esc(p.name)}</b></span>`).join('')}</div></div>
-    <div class="k-br-agenda"><div class="k-lab">In this briefing</div><ol>${[
-      ['goal', 'Our goal, together'], ['carry', 'What we have, and its limits'], ['weather', 'What stands in our way: the weather'],
-      ['tide', 'What stands in our way: dead leaves, running dry'], ['powers', 'Our powers: the nine Enneagram gifts'],
-      ['owl', 'Side quest: the Secret Owl'], ['pact', 'The Forest Pact'], ['play', 'How we play']].map(([id, t]) => `<li><button data-slide="${HW.SLIDES.findIndex(s => s[0] === id)}">${t}</button></li>`).join('')}</ol></div>` }),
-  goal: v => ({ title: 'Our goal: wake the forest, together', sub: 'One team. No points, and no winner among us: we all wake the forest, or it sleeps on.', body: `
+    <div class="k-br-mapbox">${briefMap(v, 560, { names: true })}</div>
+    <div class="k-br-side">
+      <h3>Six values, six sectors</h3>
+      <p>The forest is split into six sectors, one for each of our values. Each of you will choose the value you stand for.</p>
+      <ul class="k-br-vals">${v.values.map((x, s) => `<li>${I.val(s, 50)}<span><b>${esc(x.name)}</b><small>${esc(x.tagline)}</small></span></li>`).join('')}</ul>
+      <div class="k-br-team">${v.players.map(p => `<span class="k-br-p">${medPic(p, 70, { badges: false })}<b>${esc(p.name)}</b></span>`).join('')}</div>
+    </div>` }),
+  goal: v => ({ title: 'Our goal: wake the forest together', sub: 'The forest wakes the moment all three of these are true.', body: `
     <div class="k-br-row three">
-      <div class="k-br-c k-br-goal"><span class="k-br-n">1</span><div class="k-br-art k-br-six">${[0, 1, 2, 3, 4, 5].map(s => I.bigTree(s, 104)).join('')}</div>
-        <h3>A Big Tree in every value</h3><p>One in each of the six value sectors. It doesn't matter who grows it.</p></div>
-      <div class="k-br-c k-br-goal"><span class="k-br-n">2</span><div class="k-br-art">${I.fruit(88)}<i class="k-br-plus">+</i>${(v.treasures || []).map(t => I.treasure(t.id, 86)).join('')}</div>
-        <h3>Fruit from every one of us, and the three treasures</h3><p>Each of us places at least one fruit on the World Tree. The Compass, the Lantern and the Rope lie hidden in Rings 1 and 2.</p></div>
-      <div class="k-br-c k-br-goal"><span class="k-br-n">3</span><div class="k-br-art">${I.icon('team', 110)}${I.world(true, 210)}</div>
-        <h3>All of us on the World Tree</h3><p>We finish together, standing on the World Tree.</p></div>
+      <div class="k-br-c k-br-goal"><span class="k-br-n">1</span><div class="k-br-art">${briefMap(v, 280, { trees: true })}</div>
+        <h3>A Big Tree in every value</h3><p>Grow one Big Tree in each of the six sectors. Anyone can grow it.</p></div>
+      <div class="k-br-c k-br-goal"><span class="k-br-n">2</span><div class="k-br-art">${I.fruit(96)}<i class="k-br-plus">+</i>${[0, 1, 2].map(() => I.mystery(104)).join('')}</div>
+        <h3>Fruit and three treasures</h3><p>Each of us brings at least one fruit to the World Tree. Three treasures are hidden near the centre: find them and bring them there too.</p></div>
+      <div class="k-br-c k-br-goal"><span class="k-br-n">3</span><div class="k-br-art">${I.icon('team', 120)}${I.world(true, 270)}</div>
+        <h3>All of us on the World Tree</h3><p>We finish together, every one of us standing on the World Tree.</p></div>
     </div>
-    <div class="k-br-bar"><span>${I.icon('goal', 42)}<span><b>The forest wakes the moment all three are true at once.</b> The board's top right shows how far we are.</span></span>
-      <span>${I.drop(34, true)}<span>We lose only if <b>every one of us</b> is out of water at the same moment.</span></span></div>` }),
+    <div class="k-br-bar"><span>${I.icon('goal', 42)}<span>The top right of the board shows how far we are.</span></span></div>` }),
   carry: v => ({ title: 'What we have, and its limits', sub: 'Turns are short and we carry little: plan out loud, share the work, pass what you carry.', body: `
     <div class="k-br-c k-br-wide"><div class="k-br-two"><span class="k-br-art">${I.leaf(true, 64)}${I.leaf(true, 64)}</span><div><h3>2 actions a turn</h3>
       <p>Move, Explore, Sow, Water, Tend, Clear, Harvest, Take or Drink.</p></div></div>
@@ -1259,7 +1295,7 @@ const SLIDE = {
     <div class="k-br-row four">
       <div class="k-br-c"><div class="k-br-art">${[0, 1, 2, 3].map(() => I.drop(46)).join('')}${I.drop(46, true)}</div><h3>Water: 4 to start, 5 at most</h3><p>Watering a plant costs 1. Only a spring fills you up: Drink, back to 5. Rain doesn't.</p></div>
       <div class="k-br-c"><div class="k-br-art">${I.fruit(58)}${I.fruit(58)}</div><h3>Carry 2 fruit</h3><p>Harvest a Big Tree for 1 fruit: once per tree each round, and not in rain.</p></div>
-      <div class="k-br-c"><div class="k-br-art">${I.treasure('compass', 64)}</div><h3>Carry 1 treasure</h3><p>Explore Rings 1 and 2 to find the three.</p></div>
+      <div class="k-br-c"><div class="k-br-art">${I.mystery(76)}</div><h3>Carry 1 treasure</h3><p>Explore Rings 1 and 2 to find the three.</p></div>
       <div class="k-br-c"><div class="k-br-art">${I.icon('pass', 70)}</div><h3>Passing is free</h3><p>On your own turn: water, fruit or a treasure to a teammate on your hex.</p></div>
     </div>
     <div class="k-br-bar"><span>${I.world(false, 52)}<span><b>Step onto the World Tree</b> and everything you carry is placed at once.</span></span></div>` }),
@@ -1275,7 +1311,7 @@ const SLIDE = {
     <div class="k-br-row three">
       ${hurdle(pic('leaves:1:tile', 104), 'Leaves on a plant', 'A growing plant drops back one step. A Seeded hex loses its seed.', 'Stand on it. A Loyalist keeps the 7 hexes around them safe. Grow it to a Big Tree: Big Trees never drop. The Investigator sees where the next leaves land.')}
       ${hurdle(pic('leaves:2:tile', 104), 'A sealed hex', 'Two layers seal a hex: nobody can walk in, sow, water, tend or harvest there.', 'Clear a layer from your hex or the one next to it (a Reformer clears 2). A Challenger can still walk in.')}
-      ${hurdle(I.drop(96, true), 'Running dry', 'At 0 water you can\'t move. If all of us are at 0 at once, the forest sleeps on.', 'Find the springs early and drink before you run low. On your turn, pass water to a teammate on your hex.')}
+      ${hurdle(I.drop(96, true), 'Running dry', 'At 0 water you can\'t move. If all of us run dry at the same time, the game is over.', 'Find the springs early and drink before you run low. On your turn, pass water to a teammate on your hex.')}
     </div>` }),
   powers: v => {
     const roles = v.roles || [];
@@ -1286,14 +1322,18 @@ const SLIDE = {
           <p>${esc(r.text)}</p><div class="k-br-who">${who.map(p => `<span>${medPic(p, 46, { badges: false })}${esc(p.name)}</span>`).join('') || '<small>No one this game</small>'}</div></div>`;
       }).join('')}</div>` };
   },
-  owl: v => ({ title: 'Side quest: the Secret Owl', sub: 'Next to our goal, each of us has one quiet mission of our own.', body: `
+  owl: v => ({ title: 'Side quest: the Secret Owl', sub: 'Alongside our team goal, each of us has a quiet mission of our own.', body: `
     <div class="k-br-owl"><div class="k-br-owlart">${I.icon('owl', 250)}<p class="k-br-look">${I.icon('phone', 54)}<span>Look at your phone now, <b>secretly</b>: tap to see whose Owl you are.</span></p></div>
-      <ol class="k-br-steps">
+      <div class="k-br-owlr"><ol class="k-br-steps">
         <li><b>Your phone names one colleague:</b> you are their Secret Owl. Keep it to yourself. Someone is watching you too.</li>
-        <li><b>Watch them quietly all game.</b> Notice three things:<span class="k-br-three"><i>something they love</i><i>something that shaped them</i><i>something they hope for</i></span></li>
-        <li><b>Don't get caught.</b> Be curious about everyone, so your interest in one person blends in.</li>
-        <li><b>At the end,</b> guess who was your own Owl. Then each Owl honours the colleague they watched, in about a minute.</li>
-      </ol></div>` }),
+        <li><b>Watch them quietly all game</b> and notice three things:<span class="k-br-three"><i>something they love</i><i>something that shaped them</i><i>something they hope for</i></span></li>
+        <li><b>Stay hidden.</b> Be curious about everyone, so nobody can tell who you are watching.</li>
+      </ol>
+      <div class="k-br-tell"><span class="k-lab">At the end of the game</span>
+        <p>Everyone first guesses who their own Owl was. Then, one at a time, each Owl tells the colleague they watched:</p>
+        <q>Three things I discovered about you today, and one thing I appreciate.</q>
+        <p class="k-br-tsmall">About a minute each. They say how many of the three were true, then speak to the colleague they watched.</p></div></div>
+    </div>` }),
   pact: v => ({ title: 'The Forest Pact', sub: 'Six promises we make before we play. They hold for the whole game, and after it.', body: `
     <ol class="k-br-pact">${[['worldTree:awake', "What's shared in the forest stays in the forest."], ['leaf', 'Every question is an invitation. You may always say “not this one”.'],
       ['icon:ear', 'Listen to understand: no advice, no fixing, no debating.'], ['acorn', 'Trust is a gift, not a grade.'],
