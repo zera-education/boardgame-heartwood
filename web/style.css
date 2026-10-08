@@ -184,6 +184,13 @@ body.k-lost .k-night { filter: brightness(.55) saturate(.7); }
 .k-vo { color: #b3261e; }
 .k-phase { font: 22px/1.1 var(--toon); color: var(--wood-d); margin-top: 6px; }
 .k-phase small { font-size: 17px; color: #8a6a4e; }
+.k-view { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+.k-view .k-lab { margin-right: 2px; }
+.k-view button { display: grid; place-items: center; width: 38px; height: 34px; padding: 0; border-radius: 12px; cursor: pointer; color: #fff3dc;
+  background: linear-gradient(#a96b3b, #7a4622); border: 3px solid var(--wood-ink); box-shadow: 0 3px 0 var(--wood-ink); }
+.k-view button:hover { filter: brightness(1.1); }
+.k-view button:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--wood-ink); }
+body.k-turning #k-map, body.k-turning .k-view button { pointer-events: none; }
 .k-breath { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
 .k-breath b { font: 20px var(--toon); color: #8a4a1a; }
 .k-gusts { display: inline-flex; gap: 0; }

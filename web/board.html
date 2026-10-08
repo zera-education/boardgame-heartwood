@@ -207,10 +207,18 @@ const hold = { tile: new Map(), obj: new Map() };
 const ovr = {};          // pid → {water, fruit, treasure}: what a medallion shows until an animation lands
 let queueEnd = 0;        // when the animations already scheduled are done (the share card waits for it)
 
+// The map can be seen from any of its six sides (this screen only, kept per game): rot is how many sixths of a
+// turn it has turned clockwise. A hex's place on the screen comes from its turned coordinates; it keeps its own
+// look (the decoration follows the hex, the ribbon follows the forest's edge).
+let rot = store.get('hw-rot-' + HW.code, 0);
+const turnQR = (q, r, k) => { for (let n = 0; n < k; n++) [q, r] = [-r, q + r]; return [q, r]; };
+const placeOf = (h, k = rot) => ART.project(...turnQR(h.q, h.r, k));
+// sector s's sign stands in the slot of the sector it has turned to; the slot at the top right is SIGN[0]
+const signSlot = s => (s + rot) % 6, topSign = () => (6 - rot) % 6;
 function buildBoard(v) {
   const map = $('k-map');
   map.innerHTML = '';
-  const hx = v.hexes, xy = hx.map(h => ART.project(h.q, h.r));
+  const hx = v.hexes, xy = hx.map(h => placeOf(h));
   const at = {};
   hx.forEach((h, i) => (at[h.q + ',' + h.r] = i));
   const adj = hx.map(h => ART.DIRS.map(([dq, dr]) => at[(h.q + dq) + ',' + (h.r + dr)]).filter(i => i !== undefined));
@@ -245,7 +253,7 @@ function buildBoard(v) {
     air += `<g class="k-mist" data-s="${s}">${ART.mist(sc[s], { seed: 70 + s, n: 2 })}${ff}</g>`;
   }
   air += `<g class="k-mist k-mist0" data-s="-1">${ART.mist([[0, -30]], { seed: 77, n: 1 })}</g>`;
-  air += SIGN.map((p, s) => `<g class="k-sign-g" data-s="${s}" transform="${TR(p[0], p[1])} scale(.72)">${signMarkup(v, s)}</g>`).join('');
+  air += [0, 1, 2, 3, 4, 5].map(s => `<g class="k-sign-g" data-s="${s}" transform="${TR(...SIGN[signSlot(s)])} scale(.72)">${signMarkup(v, s)}</g>`).join('');
   L.air.innerHTML = air;
   // highlight rims + hit areas (front tiles last, so they win where a back tile's wall hides behind them)
   const face = ART.facePoints(S, .9);
@@ -274,8 +282,9 @@ function buildBoard(v) {
   fit();
 }
 
-// Sector signs: weather badge + value badge + name, just outside each sector's outer edge (ZERAOS clockwise
-// from the top). Z and A slide sideways so the World Tree's crown and the action tray stay clear.
+// Sector signs: weather badge + value badge + name, just outside each sector's outer edge. These are the six slots,
+// clockwise from the top (ZERAOS when the map isn't turned). The top and bottom ones slide sideways so the World
+// Tree's crown and the action tray stay clear.
 const SIGN = [[200, -176], [282, -64], [246, 112], [-206, 178], [-282, 64], [-246, -112]];
 const SIGN_UP = [118, -206];
 function plaqueMarkup(v, s) {
@@ -324,7 +333,7 @@ function fit() {
     const r = tr.getBoundingClientRect();
     if ((z[1] - 32 - f.vy) * f.k < r.bottom && (z[0] + 31 - f.vx) * f.k > r.left - 8) { z = SIGN_UP; f = place(B.bboxUp); }
   }
-  if (z !== B.signZ) { B.signZ = z; B.L.air.querySelector('.k-sign-g[data-s="0"]').setAttribute('transform', `${TR(...z)} scale(.72)`); }
+  if (z !== B.signZ) { B.signZ = z; B.L.air.querySelector(`.k-sign-g[data-s="${topSign()}"]`).setAttribute('transform', `${TR(...z)} scale(.72)`); }
   const { k, vx, vy } = f;
   const vb = `${vx.toFixed(2)} ${vy.toFixed(2)} ${(W / k).toFixed(2)} ${(H / k).toFixed(2)}`;
   if (vb === B.vb) return;
@@ -334,6 +343,74 @@ function fit() {
 }
 addEventListener('resize', () => { clearTimeout(fit.t); fit.t = setTimeout(() => { hudScale(); trayMax.h = 0; if (HW.view) { renderTray(HW.view); renderQueue(HW.view); } fit(); placeInfo(); }, 80); });
 
+// ---------- turning the map: the ground turns like a table, trees and medallions ride on it upright ----------
+let turning = false;
+async function turnMap(dir) {
+  const v = HW.view;
+  if (!v || !B || turning || queueEnd - now() > 60) return;
+  const k0 = rot, k1 = (rot + dir + 6) % 6, hx = B.hx;
+  closeInfo();
+  if (RM.matches) { rot = k1; store.set('hw-rot-' + v.code, rot); B = null; return render(v); }
+  turning = true;
+  document.body.classList.add('k-turning');
+  // the tiles as they will look from the new side (their edge ribbons move), swapped in halfway
+  const next = hx.map((h, i) => (i ? ART.tile({ ring: h.ring, sector: h.sector, up: !!v.tiles[i]?.up, kind: v.tiles[i]?.kind || 'empty', q: h.q, r: h.r, outer: edgeOf(h, k1) }) : null));
+  const ground = hx.map(h => { const x = S * Math.sqrt(3) * (h.q + h.r / 2), y = S * 1.5 * h.r; return [x, y, ART.elev(h.ring)]; });
+  const a0 = k0 * Math.PI / 3, span = dir * Math.PI / 3;
+  const at = (i, a) => { const [x, y, e] = ground[i], c = Math.cos(a), s = Math.sin(a); return [x * c - y * s, (x * s + y * c) * TILT - e]; };
+  const flat = d => `matrix(${Math.cos(d).toFixed(4)},${(TILT * Math.sin(d)).toFixed(4)},${(-Math.sin(d) / TILT).toFixed(4)},${Math.cos(d).toFixed(4)},0,0)`;
+  const wrapT = hx.map((_, i) => B.tw[i].parentNode), wrapO = hx.map((_, i) => B.ow[i].parentNode), dusk = B.dusk[0].parentNode;
+  const meds = Object.entries(B.meds).map(([id, m]) => { const [x, y, sc] = B.medPos[id], [hx0, hy0] = B.xy[m.hex]; return { m, i: m.hex, dx: x - hx0, dy: y - hy0, sc }; });
+  meds.forEach(o => (o.m.g.style.transition = 'none'));
+  // the signs travel with their sectors, round the centre, to their new slots
+  const polar = ([x, y]) => [Math.hypot(x, y / TILT), Math.atan2(y / TILT, x)];
+  const signs = [0, 1, 2, 3, 4, 5].map(s => {
+    const g = B.L.air.querySelector(`.k-sign-g[data-s="${s}"]`), from = polar(s === topSign() && B.signZ ? B.signZ : SIGN[signSlot(s)]), to = polar(SIGN[(s + k1) % 6]);
+    let d = to[1] - from[1];
+    while (dir > 0 && d < 0) d += 2 * Math.PI;
+    while (dir < 0 && d > 0) d -= 2 * Math.PI;
+    return { g, r0: from[0], r1: to[0], f0: from[1], d };
+  });
+  // what can't ride along fades out, and comes back with the new side
+  for (const L of [B.L.wx, B.L.hit, B.L.num, B.L.fx]) L.style.opacity = 0;
+  B.L.air.querySelectorAll('.k-mist').forEach(m => (m.style.opacity = 0));
+  let swapped = false, order = B.order.slice();
+  const ease = t => (t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+  const t0 = now(), DURN = 950;
+  await new Promise(done => {
+    const frame = () => {
+      const t = Math.min(1, (now() - t0) / DURN), e = ease(t), a = a0 + span * e;
+      if (!swapped && e >= .5) { swapped = true; next.forEach((m, i) => { if (m) B.tw[i].innerHTML = m; }); }
+      // the old tiles turn up to halfway; then the new ones finish the turn (their faces match at every sixth)
+      const d = swapped ? span * (e - 1) : span * e, tf = flat(d);
+      const pos = hx.map((_, i) => at(i, a));
+      for (let i = 0; i < hx.length; i++) {
+        const p = TR(...pos[i]);
+        wrapT[i].setAttribute('transform', `${p} ${tf}`);
+        B.dusk[i].setAttribute('transform', `${p} ${tf}`);
+        wrapO[i].setAttribute('transform', p);
+      }
+      for (const o of meds) { const [x, y] = pos[o.i]; o.m.g.style.transform = `translate(${(x + o.dx).toFixed(1)}px,${(y + o.dy).toFixed(1)}px) scale(${o.sc})`; }
+      for (const o of signs) { const r = o.r0 + (o.r1 - o.r0) * e, f = o.f0 + o.d * e; o.g.setAttribute('transform', `${TR(r * Math.cos(f), r * Math.sin(f) * TILT)} scale(.72)`); }
+      // back to front, as they stand now
+      const want = order.slice().sort((p, q) => pos[p][1] - pos[q][1] || pos[p][0] - pos[q][0]);
+      if (want.some((i, k) => i !== order[k])) {
+        order = want;
+        for (const i of order) { B.L.tile.insertBefore(wrapT[i], dusk); B.L.obj.appendChild(wrapO[i]); B.L.med.appendChild(B.mg[i]); }
+      }
+      if (t < 1) requestAnimationFrame(frame); else done();
+    };
+    requestAnimationFrame(frame);
+  });
+  rot = k1;
+  store.set('hw-rot-' + v.code, rot);
+  turning = false;
+  document.body.classList.remove('k-turning');
+  B = null;
+  render(HW.view);
+  for (const L of [B.L.wx, B.L.air]) L.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 420, easing: 'ease-out' });
+}
+
 // ---------- patching the board from a view ----------
 const isSealed = t => t && t.leaves >= 2;
 const fruitPlaced = v => v.players.reduce((n, p) => n + (p.placed || 0), 0);
@@ -341,7 +418,13 @@ function tileKey(v, i) { if (!i) return 'W'; const t = v.tiles[i] || {}; return 
 function tileMarkup(v, i) {
   if (!i) return ART.tile({ world: true, q: 0, r: 0 });
   const h = B.hx[i], t = v.tiles[i] || {};
-  return ART.tile({ ring: h.ring, sector: h.sector, up: !!t.up, kind: t.kind || 'empty', q: h.q, r: h.r });
+  return ART.tile({ ring: h.ring, sector: h.sector, up: !!t.up, kind: t.kind || 'empty', q: h.q, r: h.r, outer: edgeOf(h) });
+}
+// Ring 4's sides on the forest's edge, as the map is turned now (they carry the ribbon and the pennants)
+function edgeOf(h, k = rot) {
+  if (h.ring !== 4) return undefined;
+  const [q, r] = turnQR(h.q, h.r, k);
+  return ART.DIRS.map(([dq, dr], d) => (ART.ringOf(q + dq, r + dr) > 4 ? d : -1)).filter(d => d >= 0);
 }
 function objKey(v, i) {
   if (!i) return `W|${v.result === 'won' ? 1 : 0}|${(v.goals.treasures || []).join(',')}|${fruitPlaced(v)}`;
@@ -483,7 +566,7 @@ function setSign(s, w, animated, delay = 0) {
   a.onfinish = () => {
     wb.innerHTML = ART.weatherBadge(w, { size: 38 });
     wb.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1.18)', offset: .7 }, { transform: 'scaleX(1)' }], { duration: 340, easing: 'ease-out', fill: 'forwards' });
-    const at = (s === 0 && B.signZ) || SIGN[s];
+    const at = (s === topSign() && B.signZ) || SIGN[signSlot(s)];
     if (!RM.matches) burst(at[0], at[1] - 21, '#fff3b0', 22, 420);
   };
 }
@@ -957,6 +1040,7 @@ function moment(tr, id) {
 let prevView = null;
 function render(v) {
   if (!v.hexes?.length) return;
+  if (turning) return;   // the map is turning: the newest view is drawn when it stops
   if (!B || B.code !== v.code || B.n !== v.hexes.length) buildBoard(v);
   // A new turn or phase drops half-made choices (a picked value, a Water target…).
   const scope = `${v.phase}|${v.current || ''}|${v.round}`;
@@ -992,7 +1076,8 @@ function render(v) {
   prevView = v;
 }
 
-// ---------- HUD: title, round, Forest Breath ----------
+// ---------- HUD: title, round, Forest Breath, turning the map ----------
+const turnIcon = dir => `<svg viewBox="-12 -12 24 24" width="22" height="22" aria-hidden="true"><path d="M${dir * -7},3 A8,8 0 1,${dir > 0 ? 1 : 0} ${dir * 6},-6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M${dir * 2},-9 L${dir * 8},-6 L${dir * 4},-1" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 function renderTopLeft(v) {
   const playing = ['turn', 'guess', 'chain', 'end'].includes(v.phase) && v.round;
   const breath = v.breathCount || 0;
@@ -1001,6 +1086,8 @@ function renderTopLeft(v) {
     <div class="k-phase">${esc(HW.phaseTitle(v))}${playing && v.phase === 'turn' ? `<small> · Tide ${v.tide || 0}</small>` : ''}</div>`;
   if (v.phase === 'turn') h += `<div class="k-breath" title="Dead leaves the next Forest Tide blows onto the forest"><span class="k-lab">Forest Breath</span>
     <span class="k-gusts">${[0, 1, 2, 3, 4, 5].map(k => I.dead(20, k + 1, k >= breath)).join('')}</span><b>${breath}</b></div>`;
+  // the map seen from another side (this screen only)
+  if (['enter', 'turn'].includes(v.phase)) h += `<div class="k-view"><span class="k-lab">Turn the map</span>${[-1, 1].map(d => `<button data-turn="${d}" title="Turn the map to the ${d < 0 ? 'left' : 'right'}" aria-label="Turn the map to the ${d < 0 ? 'left' : 'right'}">${turnIcon(d)}</button>`).join('')}</div>`;
   h += `<div class="timer k-timer" data-timer></div>`;
   HW.patch($('k-tl'), h);
   $('k-tl').hidden = v.phase === 'lobby';
@@ -1247,15 +1334,15 @@ const hurdle = (art, name, does, prevent) => `<div class="k-br-c k-br-hurdle"><d
 // The forest as it starts, each value's sector washed in its colour, the World Tree asleep in the centre.
 // names: each value's plaque where the board puts its sign; trees: a Big Tree in every sector (the first goal).
 function briefMap(v, h, o = {}) {
-  return M(`bm|${h}|${o.names ? 1 : 0}|${o.trees ? 1 : 0}|${v.values.map(x => x.name).join()}`, () => {
-    const hx = v.hexes, xy = hx.map(t => ART.project(t.q, t.r)), face = ART.facePoints(S, .965);
+  return M(`bm|${h}|${o.names ? 1 : 0}|${o.trees ? 1 : 0}|${rot}|${v.values.map(x => x.name).join()}`, () => {
+    const hx = v.hexes, xy = hx.map(t => placeOf(t)), face = ART.facePoints(S, .965);
     const order = hx.map((_, i) => i).sort((a, b) => xy[a][1] - xy[b][1] || xy[a][0] - xy[b][0]);
     let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
     const span = (x, y, w, up, down) => { x0 = Math.min(x0, x - w); x1 = Math.max(x1, x + w); y0 = Math.min(y0, y - up); y1 = Math.max(y1, y + down); };
     let g = order.map(i => {
       const t = hx[i];
       span(...xy[i], 36, 30, 24 + ART.depth(t.ring) + 7);
-      return `<g transform="${TR(...xy[i])}">${i ? ART.tile({ ring: t.ring, sector: t.sector, q: t.q, r: t.r }) + `<polygon points="${face}" fill="${v.values[t.sector]?.color || '#888'}" opacity=".55"/>` : ART.tile({ world: true, q: 0, r: 0 })}</g>`;
+      return `<g transform="${TR(...xy[i])}">${i ? ART.tile({ ring: t.ring, sector: t.sector, q: t.q, r: t.r, outer: edgeOf(t) }) + `<polygon points="${face}" fill="${v.values[t.sector]?.color || '#888'}" opacity=".55"/>` : ART.tile({ world: true, q: 0, r: 0 })}</g>`;
     }).join('');
     const obj = [[0, ART.worldTree({ awake: false, seed: 31 })]];
     span(...xy[0], 70, 4.75 * S, 0);
@@ -1266,8 +1353,8 @@ function briefMap(v, h, o = {}) {
       span(...xy[i], 1.1 * S * 1.35, 2.2 * S * 1.35, 0);
     }
     g += obj.sort((a, b) => xy[a[0]][1] - xy[b[0]][1]).map(([i, m]) => `<g transform="${TR(...xy[i])}">${m}</g>`).join('');
-    if (o.names) g += SIGN.map(([x, y], s) => {
-      const w = (Math.max(70, (v.values[s]?.name || '').length * 7.2 + 34) / 2 + 10) * 1.4;   // the badge pokes out on the left
+    if (o.names) g += [0, 1, 2, 3, 4, 5].map(s => {
+      const [x, y] = SIGN[signSlot(s)], w = (Math.max(70, (v.values[s]?.name || '').length * 7.2 + 34) / 2 + 10) * 1.4;   // the badge pokes out on the left
       span(x, y, w, 20, 18);
       return `<g transform="${TR(x, y)} scale(1.4) translate(0,-10)">${plaqueMarkup(v, s)}</g>`;
     }).join('');
@@ -1603,6 +1690,7 @@ function placeInfo() {
 }
 
 $('k-map').addEventListener('click', e => { if (!e.target.closest('.k-h, .k-med')) closeInfo(); });
+$('k-tl').addEventListener('click', e => { const b = e.target.closest('[data-turn]'); if (b) turnMap(+b.dataset.turn); });
 $('k-tab').onclick = () => { ui.drawer = !ui.drawer; store.set('hw-drawer', ui.drawer); if (HW.view) renderDrawer(HW.view); };
 document.addEventListener('click', async e => {
   const b = e.target.closest('button');
