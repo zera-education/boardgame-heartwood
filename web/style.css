@@ -148,6 +148,9 @@ body.k-lost .k-night { filter: brightness(.55) saturate(.7); }
 .k-hitp { cursor: pointer; }
 .k-h.inf:not(.on) .k-rim { stroke: #ffe27a; fill: #ffe27a; fill-opacity: .18; stroke-width: 3.2; stroke-linejoin: round; }
 .k-foot { pointer-events: none; }
+.k-foot-pulse { transform-box: fill-box; transform-origin: center; animation: k-footpulse 1.6s ease-out infinite; }
+@keyframes k-footpulse { 0% { transform: scale(.95); opacity: 1; } 100% { transform: scale(1.6); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .k-foot-pulse { animation: none; opacity: 0; } }
 .k-hitp { fill: transparent; pointer-events: all; }
 .k-h.on .k-hitp { cursor: pointer; }
 @keyframes k-rim { 0%, 100% { stroke-opacity: 1; fill-opacity: .1; } 50% { stroke-opacity: .5; fill-opacity: .3; } }
