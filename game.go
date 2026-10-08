@@ -129,7 +129,8 @@ type Tile struct {
 	Harvested bool   `json:"harvested"` // since the last Forest Tide
 }
 
-// Drift is one gust of the Forest Breath: dead leaves picked up at From land on To.
+// Drift is one gust of the Forest Breath: dead leaves picked up at From land on
+// To. From is -1 for a gust from beyond the forest edge (onto Ring 4).
 type Drift struct {
 	From int `json:"from"`
 	To   int `json:"to"`
@@ -308,15 +309,31 @@ func (g *Game) lay() {
 
 func drawWeather() string { return WeatherKinds[rand.Intn(3)] }
 
+// edgeSpots is where the wind can also start outside the forest: one for each
+// hex of the ring beyond Ring 4. Gusts from there (From -1) land on Ring 4
+// (El, 2026-10-08: the outer ring gets dead leaves too).
+const edgeSpots = 6 * (Rings + 1)
+
 // rollBreath decides the next Forest Breath ahead, so the Investigator can see
-// it: each gust picks a hex, and its dead leaves land one step toward the
-// centre (a Ring 1 hex keeps them; the World Tree never gets any). It grows by
-// one every two Tides, up to 6.
+// it: each gust picks a hex or a spot beyond the forest edge, and its dead
+// leaves land one step toward the centre (a Ring 1 hex keeps them; the World
+// Tree never gets any). It grows by one every two Tides, up to 6.
 func (g *Game) rollBreath() []Drift {
 	n := min(MaxBreath, 2+g.Tide/2)
 	out := []Drift{}
+	var outer []int
+	for i, h := range Board {
+		if h.Ring == Rings {
+			outer = append(outer, i)
+		}
+	}
 	for range n {
-		from := 1 + rand.Intn(len(Board)-1)
+		k := rand.Intn(len(Board) - 1 + edgeSpots)
+		if k >= len(Board)-1 {
+			out = append(out, Drift{From: -1, To: outer[rand.Intn(len(outer))]})
+			continue
+		}
+		from := 1 + k
 		var inward []int
 		for _, j := range Adj[from] {
 			if j != 0 && Board[j].Ring == Board[from].Ring-1 {
@@ -458,6 +475,28 @@ func (g *Game) assignPowers(pid string, types []int) error {
 		seen[t] = true
 	}
 	p.Types = append([]int(nil), types...)
+	return nil
+}
+
+// randomTypes is the Keeper dealing every player exactly one Enneagram type at
+// random, spread evenly: all different up to 9 players, and no type a second
+// time before every type has been dealt once. It replaces the types they had.
+func (g *Game) randomTypes() error {
+	if g.Phase != PhaseLobby {
+		return errors.New("types are assigned in the lobby")
+	}
+	if len(g.Players) == 0 {
+		return errors.New("no one has joined yet")
+	}
+	var bag []int
+	for _, p := range g.Players {
+		if len(bag) == 0 {
+			bag = rand.Perm(9)
+		}
+		p.Types = []int{bag[0] + 1}
+		bag = bag[1:]
+	}
+	g.logf("The Keeper dealt one Enneagram type to each player at random.")
 	return nil
 }
 
@@ -784,7 +823,7 @@ func (g *Game) explore(me *Player, peekHex int) error {
 	case "spring":
 		g.logf("%s explores and finds a spring 💧.", me.Name)
 	default:
-		g.logf("%s explores an empty clearing.", me.Name)
+		g.logf("%s explores and finds nothing here.", me.Name)
 	}
 	if me.has(Individualist) {
 		var hidden []int
@@ -1093,8 +1132,13 @@ func (g *Game) forestTide() {
 			dry = append(dry, p.ID)
 		}
 	}
+	// A plant is safe while someone stands on it (El, 2026-10-08); a Loyalist
+	// also keeps the 6 hexes around them safe.
 	safe := map[int]bool{}
 	for _, p := range g.Players {
+		if p.Pos > 0 {
+			safe[p.Pos] = true
+		}
 		if p.has(Loyalist) && p.Pos >= 0 {
 			safe[p.Pos] = true
 			for _, j := range Adj[p.Pos] {
@@ -1295,6 +1339,8 @@ func (g *Game) hostAction(a Action) error {
 		return g.start()
 	case "assignPowers":
 		return g.assignPowers(a.Target, a.Types)
+	case "randomTypes":
+		return g.randomTypes()
 	case "kick":
 		if g.Phase != PhaseLobby {
 			return errors.New("only in the lobby")

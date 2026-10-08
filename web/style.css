@@ -144,6 +144,9 @@ body.k-lost .k-night { filter: brightness(.55) saturate(.7); }
 /* the hex under the pointer (or under the medallion you point at) shows itself, target or not */
 .k-h:not(.on):hover .k-rim, .k-h:not(.on).hov .k-rim { stroke: rgba(255, 255, 255, .75); fill: #fff; fill-opacity: .1; stroke-width: 2.4; }
 .k-Lmed .k-med { pointer-events: visiblePainted; cursor: pointer; }
+/* every hex takes a tap: a target acts, any other hex shows its card (and keeps a gold rim while it is open) */
+.k-hitp { cursor: pointer; }
+.k-h.inf:not(.on) .k-rim { stroke: #ffe27a; fill: #ffe27a; fill-opacity: .18; stroke-width: 3.2; stroke-linejoin: round; }
 .k-foot { pointer-events: none; }
 .k-hitp { fill: transparent; pointer-events: all; }
 .k-h.on .k-hitp { cursor: pointer; }
@@ -282,6 +285,28 @@ body.k-drawer-open #k-tray { left: calc(50% - var(--dw) * var(--hud, 1) / 2 - 7p
 /* popovers over the tray */
 #k-pop { position: fixed; left: 0; right: 0; margin: 0 auto; width: fit-content; bottom: calc(var(--trayh, 150px) / var(--hud, 1) + 22px); z-index: 8; display: none; flex-direction: column; align-items: center; gap: 8px; max-width: calc(100vw - 30px); }
 #k-pop.on { display: flex; }
+/* the hex card: beside the tapped hex, above the HUD signs, under the share card */
+#k-info { position: fixed; left: 10px; top: 10px; z-index: 10; width: min(350px, calc(100vw - 20px)); }
+#k-info[hidden] { display: none; }
+.k-inf { padding: 10px 12px 12px; animation: k-in .3s var(--spring); }
+.k-inf-h { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.k-inf-h .k-x { margin-left: auto; align-self: flex-start; }
+.k-inf-t b { display: block; font: 24px/1.05 var(--toon); color: var(--wood-d); font-weight: 400; }
+.k-inf-t small { font: 800 12px/1.2 var(--read); letter-spacing: .06em; text-transform: uppercase; color: #8a6a4e; }
+.k-inf-r { display: flex; align-items: center; gap: 10px; padding: 6px 2px; border-top: 2px dotted #e2c99a; font: 600 15px/1.3 var(--read); color: var(--ink); }
+.k-inf-r b { font-weight: 900; }
+.k-inf-r.safe b { color: #2f7a1f; }
+.k-inf-r.risk b { color: #b0441c; }
+.k-inf-i { flex: none; width: 34px; height: 34px; display: grid; place-items: center; }
+.k-inf-i svg { max-width: 34px; max-height: 34px; }
+.k-inf-who { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 8px; border-top: 2px dotted #e2c99a; }
+.k-inf-why { margin-top: 8px; padding: 7px 10px; border-radius: 12px; background: #fde3cf; border: 2px solid #d9895a; font: 800 14px/1.3 var(--read); color: #7a2f12; }
+/* what an Explore found, floating up from the hex for a moment */
+.k-found { position: fixed; z-index: 9; pointer-events: none; transform: translate(-50%, -100%); padding: 6px 14px 7px; border-radius: 16px; white-space: nowrap;
+  background: #fff6df; border: 3px solid #5a3418; box-shadow: 0 4px 0 #2e1709, 0 8px 16px rgba(0, 0, 0, .3); font: 22px/1 var(--toon); color: var(--wood-d);
+  animation: k-found 2.6s ease-out both; }
+.k-found.spring { color: #1d5f8f; border-color: #1d5f8f; box-shadow: 0 4px 0 #0f3554, 0 8px 16px rgba(0, 0, 0, .3); }
+@keyframes k-found { 0% { opacity: 0; margin-top: 14px; scale: .6; } 12% { opacity: 1; margin-top: 0; scale: 1.08; } 20% { scale: 1; } 78% { opacity: 1; margin-top: -10px; } 100% { opacity: 0; margin-top: -22px; } }
 body.k-drawer-open #k-pop { right: calc(var(--dw) + 20px); }
 .k-bubble { background: #fff6df; border: 3px solid #5a3418; border-radius: 16px; padding: 6px 14px; font: 800 16px/1.25 var(--read); color: var(--ink); box-shadow: 0 4px 0 #2e1709, 0 8px 16px rgba(0, 0, 0, .3); text-align: center; }
 .k-passp { padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 8px; animation: k-in .35s var(--spring); }
@@ -497,7 +522,7 @@ body.k-drawer-open #k-drawer { transform: none; }
 @keyframes k-ribbon { from { transform: scaleX(0); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes k-banner { 0% { opacity: 0; transform: scale(.4) translateY(40px); } 14% { opacity: 1; transform: scale(1.08); } 24% { transform: scale(1); } 80% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(-30px); } }
 @media (prefers-reduced-motion: reduce) {
-  #k-modal > *, .k-lp, .k-bring, .k-passp, #k-dim, #k-moment, .k-mo-art, .k-mo-ribbon, .k-mo-meaning, .k-mo-rays, .k-cardrays { animation: none !important; }
+  #k-modal > *, .k-lp, .k-bring, .k-passp, .k-inf, .k-found, #k-dim, #k-moment, .k-mo-art, .k-mo-ribbon, .k-mo-meaning, .k-mo-rays, .k-cardrays { animation: none !important; }
   #k-banner.show { animation: k-fade .01s both; }
 }
 /* the HUD panels scale with the screen (--hud is set from the window size: 1 at 1920×1080) */

@@ -166,7 +166,7 @@ var Roles = []Role{
 	{3, "Achiever", "After you Sow, the hex grows straight to Sprout."},
 	{4, "Individualist", "When you Explore, also peek at one unexplored hex next to you."},
 	{5, "Investigator", "See which hexes the next Forest Breath will hit; once a round, see one sector's next weather."},
-	{6, "Loyalist", "Plants on your hex and next to you are safe from dead leaves."},
+	{6, "Loyalist", "Plants on your hex and the 6 hexes around you (7 in all) are safe from dead leaves."},
 	{7, "Enthusiast", "One Move a turn may be 2 hexes (not in fog, not through sealed hexes)."},
 	{8, "Challenger", "You may enter sealed hexes, and bring one teammate from your hex when you Move."},
 	{9, "Peacemaker", "You and a teammate on a hex next to yours can pass things to each other."},

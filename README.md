@@ -38,12 +38,15 @@ Locally, the server prints the address phones on the same Wi-Fi should use, and 
 
 - **`/` → Create a new game**: opens the **Keeper screen** (`board.html?g=CODE`) for the projector. Whoever creates
   the game is the Keeper; the Keeper controls (Enneagram types, start, acting for players, Done sharing, End turn,
-  timers, the tribute chain) appear only on that browser. Under **Help a player rejoin · Keeper on another device** the
+  timers, the tribute chain) appear only on that browser. In the lobby, **Deal 1 random type each** gives every
+  player one Enneagram type, all different up to 9 players (the Keeper can still change any of them). Under **Help a player rejoin · Keeper on another device** the
   Keeper can issue a 4-digit rejoin code (one use, 10 minutes) or get a link that moves the Keeper controls to another
   device.
 - **The Keeper screen is animated.** It shows the forest (61 hexes, weather tint per sector, plants, dead leaves,
   each player's photo medallion), the three goals, each player's water, fruit and treasure, the open share card and the trail log. Everything
-  that happens is played as animation from the view's `events`.
+  that happens is played as animation from the view's `events`. An Explore always says what it found on the hex,
+  "Nothing here" too. **Tap a hex** (one that isn't a move or action target) for its card: value, ring, weather, what
+  lies there, dead leaves, who stands there and whether its plant is safe at the next Forest Tide.
 - **Players say it, the Keeper taps it. Phones down.** Every public action (enter, move, explore, sow, water, tend,
   clear, harvest, take, drink, pass, end turn) is tapped by the Keeper, acting for that player (`host` + `as`). The
   server refuses `trust`, `investigate` and `guess` from the Keeper. The phone keeps only private things: the Secret
@@ -77,7 +80,7 @@ player tabs on one computer froze every other request. WebSockets don't share th
 Lobby → **enter** (in turn order, each player chooses the value they stand for and a Ring 4 hex of its sector, and
 says why) → **turns** (clockwise, up to 2 actions each; after the last player the **Forest Tide** runs by itself: new
 weather per sector, rain grows Seeded/Sprout, sun dries players not on a Big Tree, Forest Breath drifts dead leaves one
-ring inward) → the game ends the moment the forest **wakes** (a Big Tree in every sector, every player has placed a
+ring inward, and from beyond the edge onto Ring 4; a plant someone stands on keeps its stage) → the game ends the moment the forest **wakes** (a Big Tree in every sector, every player has placed a
 fruit, all 3 treasures placed, everyone on the World Tree) or every player is at 0 water → **guess** (Secret Owl, on
 the phones) → **chain** (tribute chain around the Secret Owl loop) → **end** (result and recognition: trust received
 and from how many people, the Secret Owl, guessed right, stayed hidden).
@@ -144,7 +147,7 @@ The Keeper gives each player 1 to 3 types in the lobby; several players may hold
 | 3 | Achiever | After you Sow, the hex grows straight to Sprout |
 | 4 | Individualist | When you Explore, also peek at one face-down hex next to you (phone only) |
 | 5 | Investigator | Always sees the next Forest Breath; once a round, on their turn, sees one sector's next weather |
-| 6 | Loyalist | Plants on your hex and next to you don't lose a stage to dead leaves |
+| 6 | Loyalist | Plants on your hex and the 6 hexes around you (7 in all) don't lose a stage to dead leaves |
 | 7 | Enthusiast | Once a turn, one Move may go 2 hexes (no fog, no sealed hexes) |
 | 8 | Challenger | May enter sealed hexes, and bring one teammate from the same hex when moving |
 | 9 | Peacemaker | You and a teammate on a hex next to yours can pass things to each other |

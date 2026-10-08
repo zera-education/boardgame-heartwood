@@ -456,7 +456,7 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
   </div>
   <ul>
     <li><b>Rain helps.</b> At the Forest Tide, every Seeded and Sprout hex in a rainy sector grows one step by itself. (A Sapling still needs Tend.)</li>
-    <li><b>Dead leaves hurt.</b> When dead leaves land on a growing plant, it drops back one step. A Seeded hex loses its seed. A Big Tree keeps its stage. See <a href="#tide">the Forest Tide</a>.</li>
+    <li><b>Dead leaves hurt.</b> When dead leaves land on a growing plant, it drops back one step. A Seeded hex loses its seed. A Big Tree keeps its stage. <b>Stand on your plant</b> and it is safe. See <a href="#tide">the Forest Tide</a>.</li>
     <li><b>A Big Tree gives shade.</b> If you stand on a Big Tree, the sun does not dry you.</li>
     <li>A Big Tree counts for the sector it stands in, whoever grew it.</li>
   </ul>
@@ -583,10 +583,10 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
   <ol class="timeline">
     <li><span class="ic" aria-hidden="true"><i class="art-i" data-art="weather"></i></span><div class="box"><b class="t">1 · New weather</b>Each sector turns to its new weather. Every tree can be harvested again.</div></li>
     <li><span class="ic" aria-hidden="true"><i class="art-i" data-art="weather:rain"></i></span><div class="box"><b class="t">2 · Rain grows, sun dries</b>In rainy sectors, Seeded and Sprout grow one step. In sunny sectors, every player who is not on a Big Tree loses 1 water (never below 0).</div></li>
-    <li><span class="ic" aria-hidden="true"><i class="art-i" data-art="icon:breath"></i></span><div class="box"><b class="t">3 · Forest Breath</b>Dead leaves drift in toward the centre.</div></li>
+    <li><span class="ic" aria-hidden="true"><i class="art-i" data-art="icon:breath"></i></span><div class="box"><b class="t">3 · Forest Breath</b>Dead leaves blow in from the edge and drift toward the centre.</div></li>
   </ol>
   <h3><i class="art-i" data-art="icon:breath"></i> Forest Breath and dead leaves</h3>
-  <p>At every Tide, the wind picks a few random hexes. From each one, <b>one layer of dead leaves</b> blows onto a hex next to it, <b>one ring closer to the centre</b>. A Ring 1 hex keeps its own leaves. The World Tree never gets leaves.</p>
+  <p>At every Tide, the wind picks a few random places: hexes of the forest, or spots just beyond its edge. From each one, <b>one layer of dead leaves</b> blows onto a hex next to it, <b>one ring closer to the centre</b>. From beyond the edge, the leaves land on Ring 4, so no ring is out of the wind. A Ring 1 hex keeps its own leaves. The World Tree never gets leaves.</p>
   <div class="tablecard">
     <table>
       <caption>How many drifts of leaves at each Tide</caption>
@@ -602,7 +602,7 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
     <div class="st" role="listitem" style="border-style:dashed"><span class="em" aria-hidden="true"><i class="art-i" data-art="leaves:2:tile"></i></span><b>Sealed</b></div>
   </div>
   <ul>
-    <li><b>When leaves land on a growing plant,</b> it drops back one step: Sapling → Sprout, Sprout → Seeded, and a Seeded hex loses its seed. A Big Tree keeps its stage. A <b>Loyalist</b> on the hex or next to it keeps the plant safe.</li>
+    <li><b>When leaves land on a growing plant,</b> it drops back one step: Sapling → Sprout, Sprout → Seeded, and a Seeded hex loses its seed. A Big Tree keeps its stage. <b>A plant is safe while someone stands on it.</b> A <b>Loyalist</b> also keeps the 6 hexes around them safe.</li>
     <li><b>1 layer</b> is a warning. The hex still works.</li>
     <li><b>2 layers seal the hex.</b> Nobody can walk in (except a Challenger). Nobody can sow, water, tend or harvest there. If you are standing on it when it seals, you can still walk out. A sealed hex gets no more leaves.</li>
     <li>A sealed Big Tree still counts for the goal, but nobody can harvest it until it is cleared.</li>
@@ -688,8 +688,8 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
     </li>
     <li class="role" data-n="6">
       <div class="top"><span class="t">6</span><div><h3>Loyalist</h3><span class="gift">gift: loyalty</span></div></div>
-      <p class="fx">Plants on your hex and next to you are <b>safe from dead leaves</b>.</p>
-      <p class="note">Leaves still land there, and two layers still seal the hex. But the plants do not drop a step.</p>
+      <p class="fx">Plants on your hex and on the <b>6 hexes around you</b> (7 in all) are <b>safe from dead leaves</b>.</p>
+      <p class="note">Anyone keeps the plant they stand on safe; you also guard the ring around you. Leaves still land there, and two layers still seal the hex. But the plants do not drop a step.</p>
     </li>
     <li class="role" data-n="7">
       <div class="top"><span class="t">7</span><div><h3>Enthusiast</h3><span class="gift">gift: joy</span></div></div>
@@ -823,7 +823,7 @@ footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line
       </div>
       <div class="blk">
         <h3>Forest Tide</h3>
-        <p>1 · New weather. 2 · Rain grows, sun dries (not on a Big Tree). 3 · Forest Breath: leaves drift one ring inward. <i class="art-i" data-art="leaves:2"></i> = sealed.</p>
+        <p>1 · New weather. 2 · Rain grows, sun dries (not on a Big Tree). 3 · Forest Breath: leaves drift one ring inward (onto Ring 4 from beyond the edge). Standing on a plant keeps it safe. <i class="art-i" data-art="leaves:2"></i> = sealed.</p>
       </div>
       <div class="blk">
         <h3>Weather</h3>

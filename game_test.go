@@ -201,10 +201,43 @@ func TestBoardShape(t *testing.T) {
 			t.Fatalf("rules %q breath %d", g.Rules, len(g.Breath))
 		}
 		for _, d := range g.Breath {
-			if d.To == 0 || (Board[d.From].Ring > 1 && Board[d.To].Ring != Board[d.From].Ring-1) || (Board[d.From].Ring == 1 && d.To != d.From) {
-				t.Fatalf("bad drift %+v", d)
-			}
+			checkDrift(t, d)
 		}
+	}
+	// Over many Breaths, every ring gets leaves, Ring 4 too (from beyond the edge).
+	g, rings := NewGame("T", "h"), map[int]int{}
+	g.Tide = 8
+	for range 400 {
+		for _, d := range g.rollBreath() {
+			checkDrift(t, d)
+			rings[Board[d.To].Ring]++
+		}
+	}
+	for r := 1; r <= Rings; r++ {
+		if rings[r] == 0 {
+			t.Fatalf("no leaves on ring %d: %v", r, rings)
+		}
+	}
+}
+
+// checkDrift: leaves land one ring closer to the centre (a Ring 1 hex keeps its
+// own; a gust from beyond the edge lands on Ring 4), never on the World Tree.
+func checkDrift(t *testing.T, d Drift) {
+	t.Helper()
+	ok := d.To > 0 && d.To < len(Board)
+	switch {
+	case !ok:
+	case d.From == -1:
+		ok = Board[d.To].Ring == Rings
+	case d.From <= 0 || d.From >= len(Board):
+		ok = false
+	case Board[d.From].Ring == 1:
+		ok = d.To == d.From
+	default:
+		ok = Board[d.To].Ring == Board[d.From].Ring-1 && neighbours(d.From, d.To)
+	}
+	if !ok {
+		t.Fatalf("bad drift %+v", d)
 	}
 }
 
@@ -841,6 +874,82 @@ func TestForestTide(t *testing.T) {
 	if tl(hit).Stage != 2 || tl(hit).Leaves != 1 {
 		t.Fatalf("Loyalist on the hex: %+v", tl(hit))
 	}
+
+	// Anyone standing on a plant keeps it safe; leaves still land there.
+	ps[0].Pos = 0
+	stand, alone := ringHexes(3, 1)[0], ringHexes(3, 2)[1]
+	set(stand, Tile{Up: true, Kind: "empty", Stage: 3})
+	set(alone, Tile{Up: true, Kind: "empty", Stage: 3})
+	ps[1].Pos = stand
+	ps[2].Pos = -1
+	for _, j := range Adj[alone] {
+		if j != 0 && j != stand {
+			ps[2].Pos = j // next to it: no help without the Loyalist
+			break
+		}
+	}
+	x.calm()
+	g.Breath = []Drift{{stand, stand}, {alone, alone}}
+	x.endRound()
+	if tl(stand).Stage != 3 || tl(stand).Leaves != 1 || tl(alone).Stage != 2 {
+		t.Fatalf("standing on it %+v, a teammate next to it %+v", tl(stand), tl(alone))
+	}
+
+	// The Loyalist reaches 7 hexes: their own and the 6 around, not 2 away.
+	ps[0].Pos = ringHexes(2, 3)[0]
+	ps[1].Pos, ps[2].Pos = 0, 0
+	var far int
+	for _, j := range Adj[ps[0].Pos] {
+		for _, k := range Adj[j] {
+			if k != 0 && k != ps[0].Pos && !neighbours(k, ps[0].Pos) && Board[k].Ring > 0 {
+				far = k
+			}
+		}
+	}
+	set(far, Tile{Up: true, Kind: "empty", Stage: 2})
+	x.calm()
+	g.Breath = []Drift{{far, far}}
+	x.endRound()
+	if tl(far).Stage != 1 {
+		t.Fatalf("2 hexes from the Loyalist: %+v", tl(far))
+	}
+
+	// A gust from beyond the edge lands on Ring 4.
+	edge := set(ringHexes(4, 3)[1], Tile{Up: true, Kind: "empty", Stage: 2})
+	x.calm()
+	g.Breath = []Drift{{-1, edge}}
+	x.endRound()
+	if tl(edge).Stage != 1 || tl(edge).Leaves != 1 {
+		t.Fatalf("Ring 4 from the edge: %+v", tl(edge))
+	}
+}
+
+// The Keeper deals one random type to each player, all different up to 9.
+func TestRandomTypes(t *testing.T) {
+	for _, n := range []int{6, 9, 12} {
+		x := newTable(t, n, func(i int) []int { return []int{1, 2, 3} })
+		x.fails(x.phone(x.ps[0], "randomTypes", Action{}), "a player dealing types")
+		x.must(x.host("randomTypes", Action{}))
+		count := map[int]int{}
+		for _, p := range x.ps {
+			if len(p.Types) != 1 || p.Types[0] < 1 || p.Types[0] > 9 {
+				t.Fatalf("%d players: %s has %v", n, p.Name, p.Types)
+			}
+			count[p.Types[0]]++
+		}
+		for ty, c := range count {
+			if c > 1 && len(count) < 9 {
+				t.Fatalf("%d players: type %d dealt %d times before all 9 were dealt (%v)", n, ty, c, count)
+			}
+			if c > 2 {
+				t.Fatalf("%d players: type %d dealt %d times", n, ty, c)
+			}
+		}
+		x.must(x.host("start", Action{}))
+		x.fails(x.host("randomTypes", Action{}), "dealing types after the start")
+	}
+	x := &table{t: t, g: NewGame("TEST", "host")}
+	x.fails(x.host("randomTypes", Action{}), "dealing types to nobody")
 }
 
 // Passing: on the same hex, or between a Peacemaker and a teammate on a neighbouring hex.

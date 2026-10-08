@@ -72,15 +72,18 @@ Keep the house style: plain HTML/JS/CSS, no build step, no frameworks, dark fore
   (2) Rain: every unsealed Seeded/Grass hex in a rainy sector grows one stage. Sun: every player in a sunny
   sector not standing on a Big Tree loses 1 water (not below 0). (3) **Forest Breath:** the pre-rolled list
   for this Tide (size = min(6, 2 + floor(tidesSoFar / 2)), each entry `{from,to}`: `from` = random hex 1..60,
-  `to` = a random neighbour one ring closer to the centre, or `from` itself on Ring 1; never the World Tree)
+  `to` = a random neighbour one ring closer to the centre, or `from` itself on Ring 1; never the World Tree;
+  El, 2026-10-08: `from` may also be one of 30 spots beyond the edge, `from` = -1, `to` = a random Ring 4 hex)
   adds 1 leaf layer to `to` unless already sealed; a Seeded/Grass/Shrub there drops one stage (Seeded → none)
-  unless a Loyalist stands on it or next to it. Big Trees keep their stage. Then pre-roll the next Breath.
+  unless a player stands on it (El, 2026-10-08) or a Loyalist stands next to it (7 hexes in all). Big Trees keep
+  their stage. Then pre-roll the next Breath.
   A player standing on a hex that seals can still walk out.
 - **Roles (Enneagram types 1–9, always on):** 1 Reformer, 2 Helper, 3 Achiever, 4 Individualist,
   5 Investigator, 6 Loyalist, 7 Enthusiast, 8 Challenger, 9 Peacemaker; texts in engine.js `ROLE_TEXT`
   (Peacemaker: "You and a teammate on a hex next to yours can pass things to each other.").
   The Keeper gives each player 1–3 types in the lobby (a player can't hold one twice; several players may
-  hold the same type). Investigator: always sees the next Forest Breath list on their phone, and once per
+  hold the same type), or deals one random type to everyone (`randomTypes`: all different up to 9 players, no
+  type twice before all 9 are dealt; El, 2026-10-08). Investigator: always sees the next Forest Breath list on their phone, and once per
   round (during their own turn) looks at one sector's next weather (phone action `investigate`, `n`=sector).
 - **Win:** the moment all hold: every sector has ≥1 Big Tree; every player has placed ≥1 fruit; all 3
   treasures placed; every player stands on the World Tree → result `won`, log "The forest wakes!".

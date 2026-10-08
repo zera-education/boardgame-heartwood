@@ -302,7 +302,7 @@ const W = [
 <tr><td>[[world-tree]]</td><td>1</td><td>Nothing to draw: [[placing]]</td></tr>
 </table></div>
 <p>The [[treasure|treasures]] hide only in Rings 1 and 2. [[spring|Springs]] can be in any ring.</p>
-<p>At the [[forest-breath]], dead leaves drift one ring closer to the centre.</p>` },
+<p>At the [[forest-breath]], dead leaves drift one ring closer to the centre. Ring 4 gets them from beyond the edge.</p>` },
 
 { id: 'sector', cat: 'forest', icon: 'icon:sector', title: 'Sector',
   short: 'One of six wedges of the forest, one for each value.',
@@ -450,7 +450,7 @@ const W = [
 <tr><td>{{stage:3}} Sapling</td><td>Water a Sprout hex, or rain at the Tide</td></tr>
 <tr><td>{{stage:4}} [[big-tree]]</td><td>[[tend]] a Sapling</td></tr>
 </table></div>
-<p>When [[dead-leaves]] land on a growing plant, it drops back one step. A Seeded hex loses its seed. A [[loyalist]] on the hex or next to it keeps the plant safe.</p>
+<p>When [[dead-leaves]] land on a growing plant, it drops back one step. A Seeded hex loses its seed. Someone standing on the hex keeps the plant safe, and so does a [[loyalist]] next to it.</p>
 <p>Nobody can water, tend or harvest on a [[sealed]] hex.</p>` },
 
 { id: 'big-tree', cat: 'growing', icon: 'stage:4', title: 'Big Tree',
@@ -546,20 +546,20 @@ const W = [
 <ol>
   <li><b>New weather.</b> Each [[sector]] turns to its new [[weather]]. Every [[big-tree]] can be harvested again.</li>
   <li><b>Rain grows, sun dries.</b> In [[rain]], Seeded and Sprout grow one step. In [[sun]], players who are not on a Big Tree lose 1 [[water]].</li>
-  <li><b>[[forest-breath]].</b> [[dead-leaves]] drift in toward the centre.</li>
+  <li><b>[[forest-breath]].</b> [[dead-leaves]] blow in from the edge and drift toward the centre.</li>
 </ol>
 <p>Then a new round begins with the first player.</p>` },
 
 { id: 'forest-breath', cat: 'weather', icon: 'icon:breath', title: 'Forest Breath',
   short: 'At each Tide, dead leaves drift one ring closer to the centre.',
   body: `
-<p>The last step of every [[forest-tide]]. The wind picks a few random hexes. From each one, one layer of [[dead-leaves]] blows onto a hex next to it, <b>one [[ring]] closer to the centre</b>. A Ring 1 hex keeps its own leaves. The [[world-tree]] never gets leaves.</p>
+<p>The last step of every [[forest-tide]]. The wind picks a few random places: hexes of the [[forest]], or spots just beyond its edge. From each one, one layer of [[dead-leaves]] blows onto a hex next to it, <b>one [[ring]] closer to the centre</b>. From beyond the edge, the leaves land on Ring 4. A Ring 1 hex keeps its own leaves. The [[world-tree]] never gets leaves.</p>
 <div class="tablewrap"><table>
 <tr><th>Tide</th><th>1–2</th><th>3–4</th><th>5–6</th><th>7–8</th><th>9 and later</th></tr>
 <tr><td>Drifts</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td></tr>
 </table></div>
 <ul>
-  <li>A growing [[plant]] where leaves land drops one step (a Seeded hex loses its seed), unless a [[loyalist]] stands on it or next to it.</li>
+  <li>A growing [[plant]] where leaves land drops one step (a Seeded hex loses its seed), unless someone stands on it, or a [[loyalist]] stands next to it.</li>
   <li>A [[big-tree]] keeps its stage.</li>
   <li>A [[sealed]] hex gets no more leaves.</li>
 </ul>
@@ -723,7 +723,7 @@ const W = [
 <tr><td>3 [[achiever]]</td><td>Your seed grows straight to Sprout.</td></tr>
 <tr><td>4 [[individualist]]</td><td>Explore also peeks at a hex next to you.</td></tr>
 <tr><td>5 [[investigator]]</td><td>See the next Forest Breath; once a round, one sector's next weather.</td></tr>
-<tr><td>6 [[loyalist]]</td><td>Plants on and next to your hex are safe from dead leaves.</td></tr>
+<tr><td>6 [[loyalist]]</td><td>Plants on your hex and the 6 around it (7 in all) are safe from dead leaves.</td></tr>
 <tr><td>7 [[enthusiast]]</td><td>Once a turn, move 2 hexes for 1 action.</td></tr>
 <tr><td>8 [[challenger]]</td><td>Enter sealed hexes; bring a teammate when you move.</td></tr>
 <tr><td>9 [[peacemaker]]</td><td>You can pass with a teammate next to you.</td></tr>
@@ -764,10 +764,10 @@ const W = [
 <p>Warn the team about sun, and about leaves heading for young plants.</p>` },
 
 { id: 'loyalist', cat: 'roles', icon: 'role:6', title: 'Loyalist',
-  short: 'Type 6 · loyalty. Plants on and next to your hex are safe from leaves.',
+  short: 'Type 6 · loyalty. Plants on your hex and the 6 around it are safe from leaves.',
   body: `
-<div class="box"><p><b>Plants on your hex and next to you are safe from [[dead-leaves]].</b></p></div>
-<p>Leaves still land there, and two layers still make the hex [[sealed]]. But the [[plant|plants]] do not drop a step.</p>` },
+<div class="box"><p><b>Plants on your hex and on the 6 hexes around you (7 in all) are safe from [[dead-leaves]].</b></p></div>
+<p>Anyone keeps the plant they stand on safe; the Loyalist also guards the ring around them. Leaves still land there, and two layers still make the hex [[sealed]]. But the [[plant|plants]] do not drop a step.</p>` },
 
 { id: 'enthusiast', cat: 'roles', icon: 'role:7', title: 'Enthusiast',
   short: 'Type 7 · joy. Once a turn, move 2 hexes for 1 action.',

@@ -18,6 +18,7 @@
 <aside id="k-q" class="k-sign k-still" hidden aria-label="Turn order"></aside>
 <aside id="k-tr" class="k-sign k-still" hidden></aside>
 <div id="k-pop"></div>
+<div id="k-info" hidden></div>
 <div id="k-tray"></div>
 <button id="k-tab" class="k-tab" aria-controls="k-drawer"></button>
 <aside id="k-drawer" class="k-still">
@@ -318,8 +319,9 @@ function fit() {
   if (vb === B.vb) return;
   B.vb = vb; B.k = k; B.vx = vx; B.vy = vy; B.fitKey = `${W}|${H}|${drawer}|${bottom}|${left}|${right}`;
   for (const n of LAYERS) B.L[n].setAttribute('viewBox', vb);
+  placeInfo();
 }
-addEventListener('resize', () => { clearTimeout(fit.t); fit.t = setTimeout(() => { hudScale(); trayMax.h = 0; if (HW.view) { renderTray(HW.view); renderQueue(HW.view); } fit(); }, 80); });
+addEventListener('resize', () => { clearTimeout(fit.t); fit.t = setTimeout(() => { hudScale(); trayMax.h = 0; if (HW.view) { renderTray(HW.view); renderQueue(HW.view); } fit(); placeInfo(); }, 80); });
 
 // ---------- patching the board from a view ----------
 const isSealed = t => t && t.leaves >= 2;
@@ -698,6 +700,18 @@ function banner(text, cls = '', ms = 2200) {
   clearTimeout(banner.t);
   banner.t = setTimeout(() => (b.className = ''), ms);
 }
+// a word floating up from a hex (screen space, so it stays readable however small the board is)
+function found(i, text, cls = '') {
+  const g = B.hg[i];
+  if (!g) return;
+  const r = g.getBoundingClientRect(), el = document.createElement('div');
+  el.className = 'k-found ' + cls;
+  el.textContent = text;
+  el.style.left = Math.round(r.left + r.width / 2) + 'px';
+  el.style.top = Math.round(r.top + r.height * .2) + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2700);
+}
 // a medallion hops along the path of hexes (squash on take-off and landing, a puff of dust)
 function hop(pid, path, dur, delay = 0) {
   const m = B.meds[pid], end = B.medPos[pid];
@@ -750,7 +764,9 @@ const ANIM = {
       tw.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1.12)', offset: .65 }, { transform: 'scaleX(1)' }], { duration: 330, easing: 'ease-out' });
       release(hold.obj, i);
       if (B.ow[i].innerHTML) popObj(i, 120, .05, 560);
-      if (v.tiles[i]?.kind === 'spring') { sparkles(x, y - 6, 9, 40, 200, '#d8f4ff'); burst(x, y, '#bfe8ff', 34, 650, 150); }
+      const kind = v.tiles[i]?.kind;
+      if (kind === 'spring') { sparkles(x, y - 6, 9, 40, 200, '#d8f4ff'); burst(x, y, '#bfe8ff', 34, 650, 150); }
+      if (kind !== 'treasure') found(i, kind === 'spring' ? 'A spring!' : 'Nothing here', kind === 'spring' ? 'spring' : '');
     };
     // the moss blanket blows off
     toss(() => ART.leaf({ size: 7 + Math.random() * 4, color: Math.random() < .5 ? '#6f9a4e' : '#93a85a' }), x, y - 2, 9, { speed: 70, grav: 40, spread: 2.8, ms: 760, stagger: 18 });
@@ -873,7 +889,8 @@ const ANIM = {
     // wind: gusts carry dead leaves from → to; brambles close over newly sealed hexes
     const sealedSet = new Set(e.sealed || []);
     (e.leaves || []).forEach((b, k) => setTimeout(() => {
-      const a = B.xy[b.from], c = B.xy[b.to];
+      const c = B.xy[b.to], o = B.xy[0];
+      const a = b.from >= 0 ? B.xy[b.from] : c && [o[0] + (c[0] - o[0]) * 1.3, o[1] + (c[1] - o[1]) * 1.3];
       if (!a || !c) return;
       const sw = fx('<path d="M-26,0 Q-8,-12 10,-4 T30,-8" fill="none" stroke="#eef6ff" stroke-width="3" stroke-linecap="round" opacity=".7"/>', a[0], a[1] - 18);
       const ang = Math.atan2(c[1] - a[1], c[0] - a[0]) * 180 / Math.PI;
@@ -924,7 +941,7 @@ function render(v) {
   if (!B || B.code !== v.code || B.n !== v.hexes.length) buildBoard(v);
   // A new turn or phase drops half-made choices (a picked value, a Water target…).
   const scope = `${v.phase}|${v.current || ''}|${v.round}`;
-  if (scope !== ui.scope) { ui.scope = scope; ui.value = null; ui.mode = null; ui.bring = ''; ui.pass = false; if (v.phase !== 'end') ui.hidePanel = false; }
+  if (scope !== ui.scope) { ui.scope = scope; ui.value = null; ui.mode = null; ui.bring = ''; ui.pass = false; ui.info = null; if (v.phase !== 'end') ui.hidePanel = false; }
   if (v.share) { ui.mode = null; ui.pass = false; }
   const fresh = takeEvents(v);
   const evs = plan(v, prevView, fresh);
@@ -946,6 +963,7 @@ function render(v) {
   renderQueue(v);
   fit();
   renderPop(v);
+  renderInfo(v);
   renderDrawer(v);
   renderModal(v);
   // recording each share (web/recorder.js): it watches the open share and records the Keeper's microphone
@@ -1217,7 +1235,8 @@ function lobbyHTML(v) {
       <p class="k-muted">The Keeper gives each player 1 to 3 Enneagram types, then starts.</p></div>`;
     return h;
   }
-  h += `<p class="k-muted k-lob-help">Tap a number to give a type or take it away: 1 to 3 per player. Several players may hold the same type.</p>
+  h += `<div class="k-lob-help"><p class="k-muted">Tap a number to give a type or take it away: 1 to 3 per player. Several players may hold the same type.</p>
+    ${n ? '<button class="k-btn cream sm" data-k="randomTypes" title="Every player gets one type at random, all different up to 9 players">Deal 1 random type each</button>' : ''}</div>
     <div class="k-lob-grid host">${v.players.map(p => `<div class="k-lp${p.types.length ? '' : ' need'}">${medPic(p, 38, { badges: false })}
       <b class="k-lp-nm" title="${esc(p.types.map(t => HW.roleName(t)).join(', '))}">${esc(p.name)}</b>
       <div class="k-types">${roles.map(r => `<button class="k-ty${p.types.includes(r.type) ? ' sel' : ''}" data-assign="${esc(p.id)}" data-type="${r.type}" title="${r.type} ${esc(r.name)}: ${esc(r.text)}">${r.type}</button>`).join('')}</div>
@@ -1311,37 +1330,112 @@ const VERB = { explore: 'explores', sow: 'sows a seed', water: 'waters', tend: '
 
 async function onHex(i) {
   const v = HW.view;
-  if (!v?.isHost) return;
-  if (v.share) return HW.toast(`${HW.name(v.share.player)} is sharing: tap Done sharing first.`, 'bad');
+  if (!v) return;
+  // A hex that isn't a target shows its card; tapping that hex again closes it. `why` says why the tap didn't act.
+  const info = (why = '') => (ui.info?.i === i ? closeInfo() : showInfo(i, why));
+  if (!v.isHost || !['enter', 'turn'].includes(v.phase)) return info();
+  if (v.share) return info(`${esc(HW.name(v.share.player))} is sharing: tap Done sharing first.`);
   const { hl, hl2 } = highlights(v);
   if (v.phase === 'enter') {
-    if (ui.value == null) return HW.toast('First tap the value they stand for.', 'bad');
-    if (!hl.has(i)) return HW.toast(`Tap a glowing hex on the outer ring of ${v.values[ui.value].name}.`, 'bad');
+    if (ui.value == null) return info('To enter here: first tap the value they stand for.');
+    if (!hl.has(i)) return info(`To enter: tap a glowing hex on the outer ring of ${esc(v.values[ui.value].name)}.`);
+    closeInfo();
     const p = HW.player(v.current), val = ui.value;
     if (await actAs(p.id, 'enter', { n: val, hex: i }, `✓ ${p.name} stands for ${v.values[val].name}`)) ui.value = null;
     return;
   }
-  if (v.phase !== 'turn' || !v.turn) return;
+  if (!v.turn) return info();
   const p = HW.player(v.turn.player);
   if (ui.pass) { ui.pass = false; return render(v); }
   if (ui.mode) {
-    if (!hl.has(i)) return HW.toast(`Tap a glowing hex to ${ui.mode}.`, 'bad');
+    if (!hl.has(i)) return info(`To ${ui.mode}: tap a glowing hex, or tap ${PK[ui.mode]} again to cancel.`);
+    closeInfo();
     const mode = ui.mode;
     ui.mode = null;
     await actAs(p.id, mode, { hex: i }, `✓ ${p.name} ${VERB[mode]}`);
     return render(HW.view);
   }
   if (!hl.has(i) && !hl2.has(i)) {
-    return HW.toast(p.water <= 0 ? `${p.name} has no water: a teammate on this hex passes 1 on their turn.` : !v.turn.actions ? 'No actions left: end the turn.' : 'Tap a glowing hex next to them to move.', 'bad');
+    // next to them but no move: say why; anywhere else it is just a look
+    const near = B.adj[p.pos]?.includes(i);
+    return info(!near ? '' : p.water <= 0 ? `${esc(p.name)} has no water: a teammate on this hex passes 1 on their turn.`
+      : !v.turn.actions ? 'No actions left: end the turn.' : sealed(v, i) ? 'Sealed: clear it first (a Challenger may walk in).' : '');
   }
+  closeInfo();
   const bring = ui.bring && HW.player(ui.bring)?.pos === p.pos ? ui.bring : '';
   if (await actAs(p.id, 'move', { hex: i, target: bring }, bring ? `✓ ${p.name} moves with ${HW.name(bring)}` : '')) ui.bring = '';
 }
 
+// ---------- the hex card: value, ring, weather, what lies there, leaves, who stands there, safe at the Tide ----------
+const WX_NOW = { sun: 'Everything works as usual.', rain: 'No harvest. Clear costs 2 actions.', fog: 'Explore costs 2 actions. No double step.' };
+const pic = (spec, h = 30) => M(`pic${spec}${h}`, () => ART.inline(spec, { height: h + 'px' }));
+// who keeps the plant on hex i from dropping a step at the Forest Tide: someone on it, or a Loyalist next to it
+function guardOf(v, i) {
+  const on = v.players.find(p => p.pos === i);
+  if (on) return { p: on, text: `${esc(on.name)} stands on it.` };
+  const loy = v.players.find(p => has(p, 6) && p.pos >= 0 && B.adj[p.pos].includes(i));
+  return loy ? { p: loy, role: true, text: `${esc(loy.name)}, a Loyalist, stands next to it.` } : null;
+}
+function infoHTML(v, i, why) {
+  const row = (icon, html, cls = '') => `<div class="k-inf-r ${cls}"><span class="k-inf-i">${icon}</span><span>${html}</span></div>`;
+  const here = v.players.filter(p => p.pos === i);
+  let head, rows = '';
+  if (!i) {
+    head = `${I.world(v.result === 'won', 46)}<div class="k-inf-t"><b>World Tree</b><small>the centre</small></div>`;
+    rows += row(pic('leaves:1', 26), 'No weather, and dead leaves never land here.');
+    rows += row(I.fruit(28), 'Step on it and what you carry is placed: fruit and treasures.');
+  } else {
+    const hx = v.hexes[i], t = v.tiles[i] || {}, w = v.weather[hx.sector], tr = t.treasure ? HW.treasure(t.treasure) : null, lv = t.leaves || 0;
+    head = `${I.val(hx.sector, 44)}<div class="k-inf-t"><b>${esc(v.values[hx.sector]?.name || '')}</b><small>Ring ${hx.ring}${hx.ring === 4 ? ' · the edge' : hx.ring === 1 ? ' · by the World Tree' : ''}</small></div>`;
+    rows += row(I.wx(w, 30), `<b>${esc(HW.WEATHER[w]?.[1] || '')}</b> · ${WX_NOW[w] || ''}`);
+    if (!t.up) rows += row(pic('tile:down', 28), '<b>Face down</b> · explore it to see what lies here.');
+    else if (t.stage) {
+      const next = t.stage === 4 ? (t.harvested ? 'picked since the last Tide' : 'harvest a fruit here (not in rain)')
+        : `next: ${esc(stageName(v, t.stage + 1))} by ${t.stage === 3 ? 'Tend' : 'Water, or rain at the Tide'}`;
+      rows += row(pic(`stage:${t.stage}${t.stage === 4 ? ':' + hx.sector : ''}`, 32), `<b>${esc(stageName(v, t.stage))}</b> · ${next}`);
+    } else if (t.kind === 'spring') rows += row(pic('spring', 30), '<b>A spring</b> · Drink fills your water to 5. It never runs dry.');
+    else if (tr) rows += row(I.treasure(tr.id, 30), `<b>${esc(tr.name)}</b> · take it and carry it to the World Tree.`);
+    else rows += row(I.icon('sow', 28), '<b>Nothing here</b> · an empty clearing, a place to sow.');
+    rows += row(lv ? pic(`leaves:${Math.min(lv, 2)}`, 26) : I.dead(24, 2, true), lv >= 2 ? '<b>Sealed</b> · only a Challenger walks in. No sowing, watering, tending or harvest. Clear it, even from next door.'
+      : lv ? '<b>1 layer of dead leaves</b> · one more seals it.' : 'No dead leaves.');
+    if (t.up && t.stage >= 1 && t.stage <= 3 && v.phase === 'turn') {
+      const g = guardOf(v, i);
+      rows += g ? row(g.role ? I.role(6, 30) : medPic(g.p, 34, { badges: false }), `<b>Safe at the Tide</b> · ${g.text}`, 'safe')
+        : row(I.dead(26, 4), '<b>At risk at the Tide</b> · if leaves land here, it drops a step. Stand on it to keep it safe.', 'risk');
+    }
+  }
+  if (here.length && v.phase !== 'lobby') rows += `<div class="k-inf-who">${here.map(p => chip(p, 30)).join('')}</div>`;
+  return `<div class="k-inf-h">${head}<button class="k-x" data-k="closeInfo" aria-label="Close">✕</button></div>${rows}${why ? `<div class="k-inf-why">${why}</div>` : ''}`;
+}
+function showInfo(i, why = '') { ui.info = { i, why }; renderInfo(HW.view); }
+function closeInfo() { if (!ui.info) return; ui.info = null; renderInfo(HW.view); }
+function renderInfo(v) {
+  const el = $('k-info'), inf = ui.info;
+  B?.L.hit.querySelector('.k-h.inf')?.classList.remove('inf');
+  if (!inf || !v || !B || v.phase === 'lobby' || inf.i >= B.n) { ui.info = null; el.hidden = true; HW.patch(el, ''); return; }
+  HW.patch(el, `<div class="k-panel k-inf">${infoHTML(v, inf.i, inf.why)}</div>`);
+  el.hidden = false;
+  B.hg[inf.i]?.classList.add('inf');
+  placeInfo();
+}
+// beside the hex: to its right, or its left when there is no room; always on screen
+function placeInfo() {
+  const el = $('k-info'), g = ui.info && B?.hg[ui.info.i];
+  if (!g || el.hidden) return;
+  const r = g.getBoundingClientRect(), cw = el.offsetWidth, ch = el.offsetHeight, W = innerWidth, H = innerHeight, gap = 14;
+  let x = r.right + gap;
+  if (x + cw > W - 10) x = r.left - gap - cw;
+  x = Math.max(10, Math.min(x, W - cw - 10));
+  const y = Math.max(10, Math.min(r.top + r.height / 2 - ch / 2, H - ch - 10));
+  el.style.left = Math.round(x) + 'px';
+  el.style.top = Math.round(y) + 'px';
+}
+
+$('k-map').addEventListener('click', e => { if (!e.target.closest('.k-h, .k-med')) closeInfo(); });
 $('k-tab').onclick = () => { ui.drawer = !ui.drawer; store.set('hw-drawer', ui.drawer); if (HW.view) renderDrawer(HW.view); setTimeout(fit, 260); };
 document.addEventListener('click', async e => {
   const b = e.target.closest('button');
-  if (!b || b.disabled || !b.closest('#k-tray, #k-pop, #k-modal, #k-drawer')) return;
+  if (!b || b.disabled || !b.closest('#k-tray, #k-pop, #k-modal, #k-drawer, #k-info')) return;
   const d = b.dataset, v = HW.view;
   if (!v) return;
   if (d.t) return act('timer', { n: +d.t }, `${+d.t % 60 === 0 ? +d.t / 60 + ' min' : d.t + ' s'} timer started`);
@@ -1399,6 +1493,12 @@ document.addEventListener('click', async e => {
   }
   switch (d.k) {
     case 'start': return act('start', {}, '✓ The game begins: enter the forest');
+    case 'randomTypes': {
+      const typed = v.players.filter(p => p.types.length).length;
+      if (typed && !twice('randomTypes', `Tap again: everyone's types are replaced by 1 random type each`)) return;
+      return act('randomTypes', {}, '✓ One random type each: tap a number to change one');
+    }
+    case 'closeInfo': return closeInfo();
     case 'doneShare': return act('doneShare', {}, '✓ Thank you');
     case 'pickAgain': ui.value = null; return render(v);
     case 'closePass': ui.pass = false; return render(v);
@@ -1421,7 +1521,11 @@ document.addEventListener('click', async e => {
   }
 });
 // Escape closes a popover or a mode
-addEventListener('keydown', e => { if (e.key === 'Escape' && HW.view && (ui.pass || ui.mode)) { ui.pass = false; ui.mode = null; render(HW.view); } });
+addEventListener('keydown', e => {
+  if (e.key !== 'Escape' || !HW.view) return;
+  if (ui.info) return closeInfo();
+  if (ui.pass || ui.mode) { ui.pass = false; ui.mode = null; render(HW.view); }
+});
 
 HW.connect(creds, render, msg => { $('k-modal').hidden = false; $('k-modal').className = 'k-m-lobby'; $('k-modal').innerHTML = `<div class="k-panel"><p class="bad">${esc(msg)}</p><p><a href="/">Back to the start page</a></p></div>`; });
 </script>
