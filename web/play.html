@@ -947,6 +947,7 @@ function endPanel(v, me, mv) {
       <div class="rec">${A.acorn(46)}<div><span class="num">${r.trust ?? 0}</span>trust acorn${r.trust === 1 ? '' : 's'} received${r.givers ? `, from ${r.givers} ${r.givers === 1 ? 'person' : 'people'}` : ''}</div></div>
       <div class="rec">${A.icon('owl', 46)}<div>Your Secret Owl was <b>${esc(r.owlName || '?')}</b>. ${r.guessedRight ? '<span class="yes">You guessed right!</span>' : "You didn't guess them."}</div></div>
       <div class="rec">${A.icon('explore', 46)}<div>${watched ? `You watched <b>${esc(watched)}</b>: ` : ''}${r.owlHidden ? '<span class="yes">you stayed hidden.</span>' : 'they spotted you.'}</div></div>
+      ${(r.found || []).map(treasureOf).filter(Boolean).map(t => `<div class="rec">${A.treasure(t.id, 46)}<div>You found <b>${esc(t.name)}</b>. ${esc(t.meaning)}</div></div>`).join('')}
     </div>`;
   if (me.photo > 0) h += `<p class="privacy">${LOCK(18)}<span>Your photo is deleted from the server soon after the game ends. <button class="linkbtn" data-act="photo">Remove it now</button></span></p>`;
   return { cls: won ? 'gold' : '', html: h };

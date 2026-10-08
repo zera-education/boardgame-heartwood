@@ -91,6 +91,11 @@ func TestSealedFind(t *testing.T) {
 		t.Fatal("undo kept the find")
 	}
 	x.must(x.as(mira, "explore", own))
+	for _, r := range g.Recognition() {
+		if (r.Surprise != "") != (r.ID == mira.ID) {
+			t.Fatalf("%s surprise %q", r.Name, r.Surprise)
+		}
+	}
 	// the Keeper moves it on: the celebration, then closed
 	x.fails(x.phone(mira, "foundCheer", own), "a phone moving the find on")
 	x.must(x.host("foundCheer", Action{}))

@@ -1324,12 +1324,21 @@ function renderModal(v) {
       if (n && n.textContent !== String(v.share.trustCount || 0)) { n.textContent = v.share.trustCount || 0; n.parentElement.animate([{ transform: 'scale(1.5)' }, { transform: 'scale(1)' }], { duration: 420, easing: SPRING }); }
     }
   } else HW.patch(el, h);
+  if (cls === 'fin') spotlight(el);
   // a new slide slides in from the side it comes from
   if (cls === 'brief' && shownModal.startsWith('brief|') && key !== shownModal && !RM.matches) {
     const dx = +key.split('|')[1] > +shownModal.split('|')[1] ? 40 : -40;
     el.querySelector('.k-br-main')?.animate([{ opacity: 0, transform: `translateX(${dx}px)` }, { opacity: 1, transform: 'none' }], { duration: 420, easing: SPRING });
   }
   shownModal = key;
+}
+
+// the recognition card the Keeper tapped glows, and the others step back
+function spotlight(el) {
+  const box = el.querySelector('.k-recog');
+  if (!box) return;
+  box.classList.toggle('spot', !!ui.spot && !!box.querySelector(`.k-rc[data-id="${CSS.escape(ui.spot)}"]`));
+  box.querySelectorAll('.k-rc').forEach(c => { const on = c.dataset.id === ui.spot; c.classList.toggle('on', on); c.setAttribute('aria-pressed', on); });
 }
 
 // ---------- the briefing: slides after Start, before anyone enters (every screen shows the Keeper's slide) ----------
@@ -1566,11 +1575,17 @@ function finaleHTML(v) {
     if (v.isHost) h += `<div class="k-fin-btns"><button class="k-btn big" data-k="nextTribute">Next tribute →</button><button class="k-btn cream" data-t="60">1 min</button><button class="k-btn cream" data-t="90">90 s</button></div>`;
   }
   if (v.phase === 'end') {
-    h += `<div class="k-fin-h"><div><h2>Recognition</h2><p>No points and no winner: the team ${won ? 'woke the forest' : 'played'} together. Here is what each of you received.</p></div></div>
-      <div class="k-recog">${(v.recognition || []).map(r => { const p = HW.player(r.id) || r; return `<div class="k-rc">${medPic(p, 64, { badges: false })}<div class="k-rc-t"><b>${esc(r.name)}</b>
-        <span class="k-rc-a">${I.acorn(24)}<b>${r.trust}</b>${r.givers ? `<small>from ${r.givers} ${r.givers === 1 ? 'person' : 'people'}</small>` : ''}</span>
-        <span>${I.icon('owl', 24)}<small>Owl: <b>${esc(r.owlName || '')}</b></small></span>
-        <span class="k-rc-tags">${r.guessedRight ? '<i class="good">spotted their Owl</i>' : '<i>missed their Owl</i>'}${r.owlHidden ? '<i class="good">stayed hidden</i>' : '<i>was spotted</i>'}</span></div></div>`; }).join('')}</div>`;
+    // each person's card; the Keeper taps one to put them in the spotlight while the team talks about them
+    h += `<div class="k-fin-h"><div><h2>Recognition</h2><p>The team ${won ? 'woke the forest' : 'played'} together. Here is what each of you received: tap a name to shine a light on them.</p></div></div>
+      <div class="k-recog">${(v.recognition || []).map((r, k) => {
+        const p = HW.player(r.id) || r, found = (r.found || []).map(id => HW.treasure(id)).filter(Boolean);
+        const finds = found.map(t => `<span class="k-rc-tr">${I.treasure(t.id, 44)}<span><b>Found ${esc(t.name)}</b><small>${esc(t.meaning)}</small></span></span>`).join('')
+          + (r.surprise ? `<span class="k-rc-tr"><img src="${esc(r.surprise)}" alt=""><span><b>Found the surprise</b></span></span>` : '');
+        return `<button class="k-rc" data-k="spot" data-id="${esc(r.id)}" style="--d:${k * 120}ms">${medPic(p, 104, { badges: false })}<span class="k-rc-t"><b class="k-rc-n">${esc(r.name)}</b>
+        <span class="k-rc-a">${I.acorn(36)}<b>${r.trust}</b><small>trust acorn${r.trust === 1 ? '' : 's'}${r.givers ? ` from ${r.givers} ${r.givers === 1 ? 'person' : 'people'}` : ''}</small></span>
+        <span class="k-rc-o">${I.icon('owl', 32)}<small>Their Secret Owl: <b>${esc(r.owlName || '?')}</b></small></span>
+        ${finds ? `<span class="k-rc-f">${finds}</span>` : ''}
+        <span class="k-rc-tags">${r.guessedRight ? '<i class="good">spotted their Owl</i>' : '<i>missed their Owl</i>'}${r.owlHidden ? '<i class="good">stayed hidden</i>' : '<i>was spotted</i>'}</span></span></button>`; }).join('')}</div>`;
   }
   return h + '</div>';
 }
@@ -1785,6 +1800,7 @@ document.addEventListener('click', async e => {
       return act('startChain', {}, '✓ The tribute chain begins');
     }
     case 'nextTribute': return act('nextTribute', {}, '✓ Next tribute');
+    case 'spot': ui.spot = ui.spot === d.id ? '' : d.id; return spotlight($('k-modal'));
     case 'hidePanel': ui.hidePanel = true; return render(v);
     case 'showPanel': ui.hidePanel = false; return render(v);
     case 'askEnd': ui.confirmEnd = true; return render(v);

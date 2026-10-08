@@ -623,6 +623,12 @@ func TestSpringsTreasuresAndFog(t *testing.T) {
 	if e := x.lastEvent("treasure"); e["hex"] != tr || e["treasure"] != "lantern" {
 		t.Fatalf("treasure event %v", e)
 	}
+	// the recognition says who found it
+	for _, r := range g.Recognition() {
+		if want := r.ID == p.ID; slices.Equal(r.Found, []string{"lantern"}) != want || (!want && r.Found == nil) {
+			t.Fatalf("%s found %v", r.Name, r.Found)
+		}
+	}
 	s := g.openShare()
 	if s == nil || s.Kind != "treasure" || s.Player != p.ID || s.Sub != "lantern" || s.Prompt != treasureByID("lantern").Question {
 		t.Fatalf("treasure share %+v", s)

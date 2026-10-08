@@ -168,7 +168,8 @@ type Player struct {
 	Target    string         `json:"target"`
 	Guess     string         `json:"guess"`
 	Peeks     []Peek         `json:"peeks"`
-	Photo     int            `json:"photo"` // 0 = no photo; a new number on every change (the photo is in the photos table)
+	Photo     int            `json:"photo"`           // 0 = no photo; a new number on every change (the photo is in the photos table)
+	Found     []string       `json:"found,omitempty"` // the treasures they turned up exploring, for the recognition
 }
 
 func (p *Player) has(t int) bool {
@@ -839,6 +840,7 @@ func (g *Game) explore(me *Player, peekHex int) error {
 	switch t.Kind {
 	case "treasure":
 		tr := treasureByID(t.Treasure)
+		me.Found = append(me.Found, tr.ID)
 		g.logf("%s explores and finds %s %s!", me.Name, tr.Icon, tr.Name)
 		g.event("treasure", Event{"hex": me.Pos, "treasure": tr.ID})
 		// everyone answers, one at a time, starting with the finder and going round the table
@@ -1288,15 +1290,17 @@ func (g *Game) toGuess() {
 // Recognition is what the end screen shows for each player. No points, no
 // winner among players: the team won or lost together.
 type Recognition struct {
-	ID           string `json:"id"`
-	Name         string `json:"name"`
-	Color        string `json:"color"`
-	Trust        int    `json:"trust"`        // trust acorns received
-	Givers       int    `json:"givers"`       // from how many people
-	OwlName      string `json:"owlName"`      // who was their Secret Owl
-	GuessedRight bool   `json:"guessedRight"` // they spotted their Owl
-	OwlHidden    bool   `json:"owlHidden"`    // as an Owl, they stayed hidden from the one they watched
-	TargetName   string `json:"targetName"`   // the one they watched
+	ID           string   `json:"id"`
+	Name         string   `json:"name"`
+	Color        string   `json:"color"`
+	Trust        int      `json:"trust"`              // trust acorns received
+	Givers       int      `json:"givers"`             // from how many people
+	OwlName      string   `json:"owlName"`            // who was their Secret Owl
+	GuessedRight bool     `json:"guessedRight"`       // they spotted their Owl
+	OwlHidden    bool     `json:"owlHidden"`          // as an Owl, they stayed hidden from the one they watched
+	TargetName   string   `json:"targetName"`         // the one they watched
+	Found        []string `json:"found"`              // treasures they turned up exploring
+	Surprise     string   `json:"surprise,omitempty"` // the sealed find's picture, if they turned it up (find.go)
 }
 
 func (g *Game) owlOf(id string) *Player {
@@ -1311,7 +1315,8 @@ func (g *Game) owlOf(id string) *Player {
 func (g *Game) Recognition() []Recognition {
 	out := []Recognition{}
 	for _, p := range g.Players {
-		r := Recognition{ID: p.ID, Name: p.Name, Color: p.Color}
+		r := Recognition{ID: p.ID, Name: p.Name, Color: p.Color, Found: append([]string{}, p.Found...)}
+		r.Surprise = g.foundBy(p.ID)
 		for _, c := range p.Pot {
 			if c > 0 {
 				r.Trust += c
