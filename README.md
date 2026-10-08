@@ -43,7 +43,8 @@ Locally, the server prints the address phones on the same Wi-Fi should use, and 
   Keeper can issue a 4-digit rejoin code (one use, 10 minutes) or get a link that moves the Keeper controls to another
   device.
 - **The Keeper screen is animated.** It shows the forest (61 hexes, weather tint per sector, plants, dead leaves,
-  each player's photo medallion), the three goals, each player's water, fruit and treasure, the open share card and the trail log. Everything
+  each player's photo medallion), the three goals (once fruit starts arriving, the fruit goal names who still has to bring one:
+  a treasure alone doesn't count), each player's water, fruit and treasure, the open share card and the trail log. Everything
   that happens is played as animation from the view's `events`. An Explore always says what it found on the hex,
   "Nothing here" too. **Tap a hex** for its card: value, ring, weather, what lies there, dead leaves, who stands there
   and whether its plant is safe at the next Forest Tide (and **Move here** when the current player can go there).

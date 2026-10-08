@@ -205,6 +205,12 @@ body.k-turning #k-map, body.k-turning .k-view button { pointer-events: none; }
 .k-gt-h { font: 21px/1.1 var(--toon); color: var(--wood-d); text-align: center; margin-bottom: 4px; }
 .k-gt { display: flex; align-items: center; gap: 8px; padding: 3px 8px; border-radius: 14px; min-height: 42px; }
 .k-gt + .k-gt { margin-top: 3px; }
+.k-gt-owe { display: flex; align-items: center; gap: 6px; margin: 0 8px 2px 12px; }
+.k-gt-owe em b { font-weight: 800; white-space: nowrap; }
+.k-gt-owe > span { display: flex; flex: none; }
+.k-gt-owe em { font: 800 13px/1.15 var(--read); font-style: normal; color: var(--wood-d); min-width: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.k-gt-owe em i { font-style: normal; font-weight: 700; color: #8a6a4e; }
+.k-gt-owe .k-medpic { margin-right: -2px; }
 .k-gt.ok { background: rgba(92, 184, 74, .2); box-shadow: inset 0 0 0 2px #5cb84a; }
 .k-gt-ic { display: inline-flex; gap: 0; flex: none; align-items: flex-end; }
 .k-gt-mid { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }

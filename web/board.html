@@ -1102,10 +1102,13 @@ function renderGoals(v) {
   if (el.hidden) return document.body.style.setProperty('--trh', '0px');
   const g = v.goals, n = v.players.length, nTrees = g.trees.filter(Boolean).length, tr = g.treasures || [];
   const ok = b => (b ? ' ok' : '');
+  // once fruit starts arriving, the fruit goal shows who still has to bring one (a treasure alone doesn't count)
+  const owe = g.placedPlayers > 0 ? v.players.filter(p => !(p.placed > 0)) : [];
+  const oweRow = owe.length ? `<div class="k-gt-owe" title="Still to bring a fruit: ${esc(owe.map(p => p.name).join(', '))}"><span>${owe.map(p => medPic(p, 26, { badges: false })).join('')}</span><em><i>still to bring:</i> ${owe.map(p => `<b>${esc(p.name)}</b>`).join(', ')}</em></div>` : '';
   const bar = (a, b) => `<span class="k-bar"><i style="width:${b ? Math.round(100 * (a || 0) / b) : 0}%"></i></span>`;
   HW.patch(el, `<span class="k-sprig tl">${I.sprig(54)}</span><div class="k-gt-h">Wake the forest</div>
     <div class="k-gt${ok(nTrees >= 6)}"><span class="k-gt-mid"><span class="k-gt-ic k-trees">${[0, 1, 2, 3, 4, 5].map(s => `<span title="${esc(v.values[s]?.name)}">${I.bigTree(s, 33, !!g.trees[s])}</span>`).join('')}</span><small title="a Big Tree in every value">a Big Tree per value</small></span><b>${nTrees}/6</b></div>
-    <div class="k-gt${ok(n && g.placedPlayers >= n)}"><span class="k-gt-ic">${I.fruit(30)}</span><span class="k-gt-mid"><small title="everyone places a fruit on the World Tree">everyone's fruit</small>${bar(g.placedPlayers, n)}</span><b>${g.placedPlayers || 0}/${n}</b></div>
+    <div class="k-gt${ok(n && g.placedPlayers >= n)}"><span class="k-gt-ic">${I.fruit(30)}</span><span class="k-gt-mid"><small title="everyone places a fruit on the World Tree">everyone's fruit</small>${bar(g.placedPlayers, n)}</span><b>${g.placedPlayers || 0}/${n}</b></div>${oweRow}
     <div class="k-gt${ok(tr.length >= 3)}"><span class="k-gt-ic">${(v.treasures || []).map(x => `<span title="${esc(x.name)}">${tr.includes(x.id) ? I.treasure(x.id, 27) : I.ghost(27)}</span>`).join('')}</span><span class="k-gt-mid"><small>treasures</small></span><b>${tr.length}/3</b></div>
     <div class="k-gt k-gt-world${ok(n && g.onTree >= n)}"><span class="k-gt-ic">${I.world(v.result === 'won', 32)}</span><span class="k-gt-mid"><small title="everyone stands on the World Tree">all on the tree</small>${bar(g.onTree, n)}</span><b>${g.onTree || 0}/${n}</b></div>`);
   // the drawer opens under the tracker
