@@ -198,6 +198,8 @@ func TestTidy(t *testing.T) {
 		{"Anda boleh SAASASASASASASASASASASASASASAS. Oh!", "Anda boleh Oh!"},
 		{"First part.\n\nwhat? what? what? what? what?\n\nLast part.", "First part.\n\nwhat?\n\nLast part."},
 		{"eh eh eh eh eh eh", "eh"},
+		{"So, and I have a flay, and I have a flay, and I have a flay, and I have a flay, and I have a flay.", "So, and I have a flay."},
+		{"One is every step in the table. One is every step in the table. One is every step in the table. One is every step in the table.", "One is every step in the table."},
 	} {
 		got := tidy(c.in)
 		if got != c.want {

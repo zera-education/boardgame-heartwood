@@ -361,7 +361,7 @@ func validCode(s string) bool {
 }
 
 // tidy takes out Whisper's loops. On noisy audio it can write one word or a short phrase dozens of times
-// ("oh, oh, oh, …"): four or more of the same 1 to 4 words in a row keep one. A long "word" of two or three
+// ("oh, oh, oh, …"): four or more of the same 1 to 10 words in a row keep one. A long "word" of two or three
 // letters over and over ("SASASASA…") goes.
 func tidy(text string) string {
 	var paras []string
@@ -393,7 +393,7 @@ func tidyPara(p string) string {
 	var out []string
 	for i := 0; i < len(words); {
 		bestK, bestN := 0, 0
-		for k := 1; k <= 4 && i+k <= len(words); k++ {
+		for k := 1; k <= 10 && i+k <= len(words); k++ {
 			n := 1
 			for i+(n+1)*k <= len(words) && same(i, i+n*k, k) {
 				n++
