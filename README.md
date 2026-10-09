@@ -230,7 +230,9 @@ The Keeper gives each player 1 to 3 types in the lobby; several players may hold
   `ops/transcribe/`: the worker on the Mac mini, its lanes seed and install script
 - `ops/report/report.mjs`: a finished game's report page (the team with their photos, a short memory for each player
   and what we said for each treasure, written from the stories as `--memories` JSON; the Secret Owls; word-for-word
-  stories only with `--transcripts`) from the game's state, the photos and the Mini's copies of the stories. The page holds people's photos
+  stories only with `--transcripts`) from the game's state, the photos and the Mini's copies of the stories.
+  `--story` makes Instagram story pages instead (1080 × 1920, prints to PDF at that size): a cover with everyone
+  round the World Tree, a page per player's memory, a page per treasure; `--pdf FILE` adds a Download PDF button. The page holds people's photos
   and stories, so it goes to El's private dashboard, never into this repo.
 - `find.go`: the sealed find (its file, its API, turning it up); `web/find.js`: how every screen shows it
 - `game_test.go`, `photo_test.go`, `sim_test.go`: rules tests, photo tests and the bot balance simulation

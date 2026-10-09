@@ -4,13 +4,15 @@
 // it goes to El's private dashboard, never into this public repo.
 //
 //   node ops/report/report.mjs CODE --out FILE [--server URL] [--archive DIR] [--photos DIR] [--state FILE]
-//        [--memories FILE] [--transcripts] [--fallback STORIES.json]
+//        [--memories FILE] [--transcripts] [--fallback STORIES.json] [--story [--pdf FILE]]
 //
 // --photos keeps the photos it fetched (the server deletes them 2 hours after the game ends; a photo already in the
 // folder is used as it is). --fallback is the Stories page's JSON download, for a story the archive doesn't have.
 // --memories is the summary someone wrote from the stories (a summary, not a transcript: the recordings are of a busy
 // room): {intro, people: {name: {quote, memory}}, together: [{treasure, answers: [[name, answer]]}]}.
 // --transcripts adds every story word for word, round by round.
+// --story makes Instagram story pages instead (1080 × 1920, printable to PDF at that size): a cover with everyone round
+// the World Tree, a page for each player's memory, a page for each treasure. --pdf puts a Download PDF button on it.
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -22,9 +24,10 @@ const ART = require('../../web/art.js');
 // ---------- arguments ----------
 const args = process.argv.slice(2);
 const opt = (name, dflt) => { const i = args.indexOf('--' + name); return i >= 0 ? args[i + 1] : dflt; };
-const SWITCHES = new Set(['--transcripts']);
+const SWITCHES = new Set(['--transcripts', '--story']);
 const CODE = (args.filter((a, i) => !a.startsWith('--') && !(i > 0 && args[i - 1].startsWith('--') && !SWITCHES.has(args[i - 1])))[0] || '').toUpperCase();
 const TRANSCRIPTS = args.includes('--transcripts');
+const STORY = args.includes('--story');
 const SERVER = opt('server', process.env.HW_SERVER || 'https://heartwood.zera.edu.my').replace(/\/$/, '');
 const ARCHIVE = opt('archive', path.join(os.homedir(), '.local/share/heartwood/stories'));
 const PHOTOS = opt('photos', '');
@@ -379,5 +382,161 @@ ${ART.css}
 </body>
 </html>
 `;
-fs.writeFileSync(OUT, html.replace('@@PHOTOS@@', Object.values(photoDefs).join('')), { mode: 0o600 });
+// ---------- the story deck: Instagram story pages (1080 × 1920), one per screen and per printed page ----------
+// A cover with everyone around the World Tree, a page for each player (their memory), a page for each treasure.
+function storyHTML() {
+  const shortDay = new Intl.DateTimeFormat('en-GB', { timeZone: TZ, day: 'numeric', month: 'long', year: 'numeric' }).format(first * 1000);
+  const foot = `<div class="foot">Heartwood · World Tree · ${esc(shortDay)}</div>`;
+  const ring = players.map((p, i) => {
+    const a = (-90 + i * 360 / players.length) * Math.PI / 180, R = 400;
+    return `<div class="g-mate" style="left:${(540 + R * Math.cos(a)).toFixed(1)}px;top:${(500 + R * Math.sin(a)).toFixed(1)}px">${med(p.name, 196)}<span>${esc(p.name)}</span></div>`;
+  }).join('');
+  const chip = (icon, n, what) => `<span class="chip">${art(icon, '1.25em')}<b>${n}</b> ${what}</span>`;
+  const cover = `<section class="page cover">
+  <div class="kicker">Heartwood · World Tree</div>
+  <h1${won ? '' : ' class="slept"'}>${won ? 'The forest woke' : 'The forest slept'}</h1>
+  <div class="date">${esc(day)}</div>
+  <div class="group"><div class="g-tree">${art(won ? 'worldTree:awake' : 'worldTree', '540px')}</div>${ring}</div>
+  <div class="chips">${chip('icon:round', state.round || 0, 'rounds')}${chip('stage:4', trees, 'trees grown')}${chip('fruit', goals.onTree ?? 0, 'fruit on the World Tree')}${chip('treasure', (goals.treasures || []).length, 'treasures')}${chip('icon:talk', stories.length, 'stories shared')}</div>
+  ${foot}
+</section>`;
+  const person = p => {
+    const r = recog.get(p.id) || {}, v = valueOf(p.value), role = ROLES.find(x => x.type === p.types?.[0]), m = memOf(p.name) || {};
+    const told = stories.filter(s => s.playerName === p.name).length;
+    const found = (r.found || []).map(id => { const t = TREASURES.find(x => x.id === id); return `<span>${art(`treasure:${id}`, '1.25em')} Found <b>${esc(t?.name || id)}</b></span>`; }).join('');
+    return `<section class="page person" style="--pc:${p.color};--vc:${v?.color || p.color}">
+  <div class="p-med">${med(p.name, 470)}</div>
+  <h2>${esc(p.name)}</h2>
+  ${v ? `<div class="p-val">${art(`value:${p.value}`, '1.3em')}<span>Stood for <b>${esc(v.name)}</b></span></div><div class="p-tag">${esc(v.tagline)}</div>` : ''}
+  ${role ? `<div class="p-role">${art(`role:${role.type}`, '1.2em')}<span>${esc(role.name)} · ${esc(role.gift)}</span></div>` : ''}
+  ${m.quote ? `<blockquote>${esc(m.quote)}</blockquote>` : ''}
+  ${m.memory ? `<div class="p-mem fit">${esc(m.memory)}</div>` : ''}
+  <div class="p-facts"><span>${art('acorn', '1.25em')} <b>${r.trust || 0}</b> acorns of trust</span>${found}<span>${art('icon:talk', '1.25em')} <b>${told}</b> stories shared</span></div>
+  ${foot}
+</section>`;
+  };
+  const treasure = g => {
+    const t = TREASURES.find(x => x.id === g.treasure), finder = foundBy(g.treasure);
+    const q = (t?.question || '').replace(/^Everyone, one sentence: /, '').replace(/^./, c => c.toUpperCase());
+    return `<section class="page treasure-p">
+  <div class="t-art">${art(t ? `treasure:${t.id}` : 'treasure', '210px')}</div>
+  <h2>${esc(t?.name || 'A treasure')}</h2>
+  <div class="t-found">${t?.meaning ? esc(t.meaning) : ''}${finder ? ` · found by ${esc(finder)}` : ''}</div>
+  <div class="t-q">${esc(q)}</div>
+  <ul class="t-ans fit${g.answers.length > 6 ? ' many' : ''}">${g.answers.map(([n, a]) => `<li><span class="m">${med(n, g.answers.length > 6 ? 92 : 118)}</span><span><b>${esc(n)}</b>${esc(a)}</span></li>`).join('')}</ul>
+  ${foot}
+</section>`;
+  };
+  const pdf = opt('pdf') ? `<a class="dl" download="heartwood-${esc(CODE)}-story.pdf" href="data:application/pdf;base64,${fs.readFileSync(opt('pdf')).toString('base64')}">Download PDF</a>` : '';
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heartwood · ${esc(CODE)} story</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E🌳%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;700;800;900&display=block">
+<style>
+@page { size: 1080px 1920px; margin: 0; }
+:root { --toon: 'Lilita One', 'Nunito', system-ui, sans-serif; --read: 'Nunito', system-ui, sans-serif;
+  --paper: #fff6df; --paper2: #fbecc8; --line: #e2c48e; --wood: #5a3418; --wood-d: #3e220f; --ink: #2a1a0c; --ink2: #6f4f36; --cream: #fff3d6;
+  color-scheme: light; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: #07120c; }
+svg { overflow: visible; }
+h1, h2 { font-family: var(--toon); font-weight: 400; margin: 0; line-height: 1.05; }
+.page { position: relative; width: 1080px; height: 1920px; overflow: hidden; display: flex; flex-direction: column; align-items: center;
+  padding: 150px 80px 150px; text-align: center; break-after: page; page-break-after: always;
+  background: radial-gradient(120% 60% at 50% 0%, #3a7550 0%, #1d3f2b 42%, #0b1a11 88%), #13241b; color: var(--cream); font-family: var(--read); }
+.page:last-child { break-after: auto; page-break-after: auto; }
+.foot { position: absolute; left: 0; right: 0; bottom: 70px; font: 800 24px var(--read); letter-spacing: .08em; color: rgba(255, 243, 214, .55); }
+.outline { text-shadow: 0 6px 0 #1f4a18, 4px 4px 0 #1f4a18, -4px 4px 0 #1f4a18, 4px -4px 0 #1f4a18, -4px -4px 0 #1f4a18, 4px 0 0 #1f4a18, -4px 0 0 #1f4a18, 0 -4px 0 #1f4a18; }
+
+/* cover */
+.kicker { font: 34px var(--toon); letter-spacing: .14em; text-transform: uppercase; color: #cfe9b4; }
+.cover h1 { margin-top: 14px; font-size: 128px; color: #8fe06a;
+  text-shadow: 0 7px 0 #1f4a18, 5px 5px 0 #1f4a18, -5px 5px 0 #1f4a18, 5px -5px 0 #1f4a18, -5px -5px 0 #1f4a18, 5px 0 0 #1f4a18, -5px 0 0 #1f4a18, 0 -5px 0 #1f4a18; }
+.cover h1.slept { color: #c9d3c4; }
+.date { margin-top: 18px; font: 800 36px var(--read); color: var(--cream); }
+.group { position: relative; width: 1080px; height: 1000px; margin: 40px -80px 0; flex: none; }
+.g-tree { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -54%); line-height: 0; }
+.g-mate { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; line-height: 0; }
+.g-mate span { margin-top: 6px; font: 34px/1 var(--toon); color: #fff; white-space: nowrap;
+  text-shadow: 0 4px 0 #142a1c, 3px 3px 0 #142a1c, -3px 3px 0 #142a1c, 3px -3px 0 #142a1c, -3px -3px 0 #142a1c; }
+.chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-top: 30px; }
+.chip { display: inline-flex; align-items: center; gap: 10px; padding: 10px 22px 10px 14px; border-radius: 999px; background: var(--paper);
+  border: 4px solid var(--wood); box-shadow: 0 5px 0 var(--wood-d); font: 800 28px var(--read); color: var(--ink2); }
+.chip b { font: 36px var(--toon); font-weight: 400; color: var(--wood); }
+
+/* a player's page */
+.p-med { line-height: 0; }
+/* a player's or a treasure's page sits in the middle of the screen (auto margins: never cut off at the top) */
+.person > :first-child, .treasure-p > :first-child { margin-top: auto; }
+.person > .p-facts, .treasure-p > .t-ans { margin-bottom: auto; }
+.person h2 { margin-top: 8px; font-size: 104px; color: #fff;
+  text-shadow: 0 7px 0 var(--wood-d), 5px 5px 0 var(--wood-d), -5px 5px 0 var(--wood-d), 5px -5px 0 var(--wood-d), -5px -5px 0 var(--wood-d), 5px 0 0 var(--wood-d), -5px 0 0 var(--wood-d), 0 -5px 0 var(--wood-d); }
+.p-val { display: flex; align-items: center; gap: 12px; margin-top: 14px; font: 800 40px var(--read); color: var(--cream); }
+.p-val b { color: #fff; }
+.p-tag { font: italic 800 30px var(--read); color: #d9ccae; margin-top: 2px; }
+.p-role { display: flex; align-items: center; gap: 10px; margin-top: 10px; font: 800 28px var(--read); color: #cfe9b4; }
+blockquote { margin: 34px 0 0; padding: 26px 40px 30px; background: var(--paper); border: 6px solid var(--wood); border-radius: 36px;
+  box-shadow: 0 8px 0 var(--wood-d), 0 18px 40px rgba(0, 0, 0, .4); font: 52px/1.18 var(--toon); color: var(--wood); position: relative; }
+blockquote::before { content: '“'; } blockquote::after { content: '”'; }
+blockquote { border-top: 14px solid var(--vc); }
+.p-mem { margin-top: 30px; padding: 30px 38px; background: rgba(255, 246, 223, .96); border-radius: 30px; border: 4px solid var(--line);
+  font: 600 35px/1.5 var(--read); color: var(--ink); text-align: left; }
+.p-facts { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 28px; margin-top: 26px; font: 800 28px var(--read); color: var(--cream); }
+.p-facts span { display: inline-flex; align-items: center; gap: 8px; }
+.p-facts b { color: #fff; }
+
+/* a treasure's page */
+.t-art { line-height: 0; }
+.treasure-p h2 { margin-top: 10px; font-size: 104px; color: #ffd36a;
+  text-shadow: 0 7px 0 #6b4116, 5px 5px 0 #6b4116, -5px 5px 0 #6b4116, 5px -5px 0 #6b4116, -5px -5px 0 #6b4116, 5px 0 0 #6b4116, -5px 0 0 #6b4116, 0 -5px 0 #6b4116; }
+.t-found { margin-top: 8px; font: italic 800 30px var(--read); color: #d9ccae; }
+.t-q { margin-top: 26px; padding: 22px 34px 26px; background: var(--paper); border: 6px solid #8a5a2c; border-radius: 32px; box-shadow: 0 8px 0 #6b4116;
+  font: 46px/1.2 var(--toon); color: #7a4a12; }
+.t-ans { list-style: none; margin: 34px 0 0; padding: 0; width: 100%; display: grid; gap: 16px; font-size: 32px; }
+.t-ans li { display: flex; align-items: center; gap: 18px; padding: 12px 26px 12px 12px; background: rgba(255, 246, 223, .96); border: 4px solid var(--line);
+  border-radius: 30px; text-align: left; font: 700 1em/1.3 var(--read); color: var(--ink); }
+.t-ans .m { line-height: 0; flex: none; }
+.t-ans.many { gap: 12px; margin-top: 28px; }
+.t-ans.many li { padding: 6px 22px 6px 8px; }
+.t-ans b { display: block; font: 1.05em/1.1 var(--toon); font-weight: 400; color: var(--ink2); margin-bottom: 4px; }
+
+.dl { position: fixed; top: 14px; right: 14px; z-index: 5; font: 20px/1 var(--toon); color: #fff; text-decoration: none; background: linear-gradient(#88dc64, #4cab37);
+  border: 3px solid #2c6a1f; border-radius: 14px; padding: 10px 16px 11px; box-shadow: inset 0 3px 0 rgba(255, 255, 255, .38), 0 5px 0 #2c6a1f; }
+@media screen { body { padding: 16px 0 40px; } .page { zoom: var(--z, 1); margin: 0 auto 28px; box-shadow: 0 20px 60px rgba(0, 0, 0, .6); } }
+@media print { .dl { display: none; } body { padding: 0; } .page { margin: 0; zoom: 1; box-shadow: none; } }
+${ART.css}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">${ART.defs()}<defs>@@PHOTOS@@</defs></svg>
+${pdf}
+${cover}
+${players.map(person).join('\n')}
+${(MEM.together || []).map(treasure).join('\n')}
+<script>
+// A long memory shrinks until its page fits; then the pages scale to the screen (never in print).
+function fit() {
+  for (const pg of document.querySelectorAll('.page')) {
+    const box = pg.querySelector('.fit');
+    if (!box) continue;
+    let size = parseFloat(getComputedStyle(box).fontSize);
+    while (pg.scrollHeight > pg.clientHeight + 1 && size > 18) { size -= 1; box.style.fontSize = size + 'px'; }
+  }
+}
+const zoom = () => document.documentElement.style.setProperty('--z', Math.min(1, (innerWidth - 24) / 1080));
+document.fonts.ready.then(() => { fit(); zoom(); document.documentElement.dataset.ready = '1'; });
+addEventListener('resize', zoom);
+</script>
+</body>
+</html>
+`;
+}
+
+const out = STORY ? storyHTML() : html;
+fs.writeFileSync(OUT, out.replace('@@PHOTOS@@', Object.values(photoDefs).join('')), { mode: 0o600 });
 console.log(`${OUT}: ${players.length} players, ${Object.keys(photo).length} photos, ${stories.length} stories (${stories.filter(s => s.fallback).length} from the fallback), ${Math.round(fs.statSync(OUT).size / 1024)} KB`);
