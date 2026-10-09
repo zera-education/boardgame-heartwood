@@ -41,7 +41,8 @@ func (f *fakeServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		var items []map[string]any
 		for id := range f.clips {
 			if _, done := f.results[id]; !done {
-				items = append(items, map[string]any{"id": id, "code": "ABCD", "mime": "audio/webm;codecs=opus", "bytes": 5})
+				items = append(items, map[string]any{"id": id, "code": "ABCD", "mime": "audio/webm;codecs=opus", "bytes": 5,
+					"share": id, "kind": "why", "playerName": "Aisyah", "prompt": "Why do you stand for Resilience?", "round": 0})
 			}
 		}
 		json.NewEncoder(w).Encode(map[string]any{"recordings": items})
@@ -73,7 +74,7 @@ func sscan(path, format string, id *int64) bool {
 
 func newWorker(t *testing.T, url string, tr Transcriber) (*Worker, *strings.Builder, *strings.Builder) {
 	var out, errs strings.Builder
-	return &Worker{Server: url, Token: "secret-token", Limit: 20, Budget: time.Minute, StateDir: t.TempDir(),
+	return &Worker{Server: url, Token: "secret-token", Limit: 20, Budget: time.Minute, StateDir: t.TempDir(), Archive: t.TempDir(),
 		Transcribe: tr, Client: &http.Client{Timeout: 5 * time.Second}, Out: &out, Err: &errs}, &out, &errs
 }
 
@@ -118,6 +119,15 @@ func TestWorkerRun(t *testing.T) {
 	}
 	if got := out.String(); !strings.Contains(got, "transcribed 1 story; 1 failed: ABCD#2: transcribe: could not decode") {
 		t.Fatalf("summary %q", got)
+	}
+	// The Mini's copy: the story with what it was; none for the clip that failed.
+	var kept map[string]any
+	if b, err := os.ReadFile(filepath.Join(w.Archive, "ABCD", "001-1.json")); err != nil || json.Unmarshal(b, &kept) != nil ||
+		kept["text"] != "Saya pilih Resilience kerana nenek saya." || kept["playerName"] != "Aisyah" || kept["prompt"] != "Why do you stand for Resilience?" {
+		t.Fatalf("kept copy: %v %v", err, kept)
+	}
+	if _, err := os.Stat(filepath.Join(w.Archive, "ABCD", "002-2.json")); err == nil {
+		t.Fatal("a copy of a failed clip")
 	}
 
 	// Whisper not set up: nothing is reported (the clip isn't at fault), and the run fails so lanes alerts.
@@ -175,6 +185,24 @@ func TestWorkerRun(t *testing.T) {
 	lock.Close()
 	if code := w.Run(ctx); code != 0 || f.results[4]["text"] != "later" {
 		t.Fatalf("after the lock: %d %v", code, f.results[4])
+	}
+}
+
+func TestTidy(t *testing.T) {
+	for _, c := range []struct{ in, want string }{
+		{"Fine as it is. Yes, yes, yes.", "Fine as it is. Yes, yes, yes."},
+		{"Oh, oh, oh, oh, oh, oh, oh, oh, oh.", "oh."},
+		{"I think, I think. Tentu, Tentu, Tentu, Tentu, Tentu. Okay.", "I think, I think. Tentu. Okay."},
+		{"to do to do to do to do to do to do to do. Good.", "to do. Good."},
+		{"Thank you, thank you, thank you, thank you.", "thank you."},
+		{"Anda boleh SAASASASASASASASASASASASASASAS. Oh!", "Anda boleh Oh!"},
+		{"First part.\n\nwhat? what? what? what? what?\n\nLast part.", "First part.\n\nwhat?\n\nLast part."},
+		{"eh eh eh eh eh eh", "eh"},
+	} {
+		got := tidy(c.in)
+		if got != c.want {
+			t.Errorf("tidy(%q) = %q, want %q", c.in, got, c.want)
+		}
 	}
 }
 

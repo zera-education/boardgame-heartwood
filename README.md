@@ -157,7 +157,10 @@ don't hard-code them; `/api/cards` has the same as `stages` and `ringDeckNames`.
   lanes job `heartwood/stories/transcribe` runs `~/.local/bin/hw-transcribe` every 5 minutes. It asks
   `GET /api/transcribe/queue`, downloads `GET /api/transcribe/{id}/audio`, posts `POST /api/transcribe/{id}`
   `{text, language, duration}` or `{error}` (3 tries, then the Keeper can retry). Always in English
-  (`--lang en`): left to guess, Whisper took Malaysian English for Malay and wrote it in Malay. Bearer token in
+  (`--lang en`): left to guess, Whisper took Malaysian English for Malay and wrote it in Malay; stories transcribed
+  before that (`englishSince`) went back to the worker once, at the next start. Whisper's loops ("oh, oh, oh, …")
+  come out as one. The Mini keeps a copy of each story it transcribes, with what the story was (game, round,
+  player, question), in `~/.local/share/heartwood/stories/<CODE>/<share>-<id>.json`, for game reports. Bearer token in
   `~/.config/heartwood/transcribe-token` on the Mini only; the server has its SHA-256 (`transcribeTokenHash`).
   Quiet with nothing to do; it fails (one lanes alert) when Whisper is missing, the token is refused, or the server
   is unreachable for 30 minutes. Install: `ops/transcribe/install.sh` (after a deploy).

@@ -4,9 +4,13 @@
 // (the lanes job heartwood/stories/transcribe) this asks the server for the clips without a transcript, downloads
 // each one, transcribes it offline with Steward's Whisper tool (steward run transcribe text) and posts the text back.
 // Every story comes out in English: the team speaks Malaysian English, which Whisper's own guess often took for Malay
-// (it then wrote the English it heard in Malay); a story told in Malay or Chinese is translated. Audio travels only between the Heartwood server and the Mini. With nothing to do it says nothing.
+// (it then wrote the English it heard in Malay); a story told in Malay or Chinese is translated. Audio travels only
+// between the Heartwood server and the Mini. With nothing to do it says nothing.
 //
-//	hw-transcribe [-server URL] [-token FILE] [-limit N] [-budget 4m]
+// The Mini keeps its own copy of every story it transcribes, with what the story was (game, round, player, question):
+// one JSON file per story in ~/.local/share/heartwood/stories/<CODE>/ (-archive), for game reports.
+//
+//	hw-transcribe [-server URL] [-token FILE] [-limit N] [-budget 4m] [-archive DIR]
 //
 // The server is $HW_SERVER or https://heartwood.zera.edu.my; the token is the one line in
 // ~/.config/heartwood/transcribe-token (mode 600; the server knows only its SHA-256).
@@ -30,6 +34,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"unicode"
+	"unicode/utf8"
 )
 
 const (
@@ -109,6 +115,7 @@ type Worker struct {
 	Limit      int
 	Budget     time.Duration // start no new clip after this long; the next run takes the rest
 	StateDir   string        // the lock and the count of unreachable runs
+	Archive    string        // the Mini's copy of each story ("": none)
 	Transcribe Transcriber
 	Client     *http.Client
 	Out, Err   io.Writer
@@ -121,6 +128,18 @@ type queued struct {
 	Bytes      int    `json:"bytes"`
 	DurationMs int    `json:"durationMs"`
 	Attempts   int    `json:"attempts"`
+	// what the story was
+	Share       int    `json:"share"`
+	Kind        string `json:"kind"`
+	PlayerName  string `json:"playerName"`
+	PlayerColor string `json:"playerColor"`
+	Value       int    `json:"value"`
+	Prompt      string `json:"prompt"`
+	Sub         string `json:"sub"`
+	Seq         int    `json:"seq"`
+	Of          int    `json:"of"`
+	Round       int    `json:"round"`
+	CreatedAt   int64  `json:"createdAt"`
 }
 
 // errUnreachable: the server didn't answer properly (network, 5xx, not deployed yet). Counted, not alerted at once.
@@ -275,7 +294,11 @@ func (w *Worker) Run(ctx context.Context) int {
 		if terr != nil {
 			err = w.report(ctx, q.ID, map[string]string{"error": terr.Error()})
 		} else {
+			res.Text = tidy(res.Text)
 			err = w.report(ctx, q.ID, map[string]any{"text": res.Text, "language": res.Language, "duration": res.Duration})
+			if err == nil {
+				w.keep(q, res)
+			}
 		}
 		switch {
 		case gone(err):
@@ -300,6 +323,108 @@ func (w *Worker) Run(ctx context.Context) int {
 	}
 	fmt.Fprintln(w.Out, msg)
 	return 0
+}
+
+// keep writes the Mini's copy of a story: <archive>/<CODE>/<share>-<id>.json. A story transcribed again replaces
+// its file. A failure here is only said: the transcript is on the server.
+func (w *Worker) keep(q queued, res Result) {
+	if w.Archive == "" || !validCode(q.Code) {
+		return
+	}
+	dir := filepath.Join(w.Archive, q.Code)
+	b, _ := json.MarshalIndent(map[string]any{
+		"id": q.ID, "code": q.Code, "share": q.Share, "round": q.Round, "kind": q.Kind, "playerName": q.PlayerName,
+		"playerColor": q.PlayerColor, "value": q.Value, "prompt": q.Prompt, "sub": q.Sub, "seq": q.Seq, "of": q.Of,
+		"durationMs": q.DurationMs, "createdAt": q.CreatedAt, "text": res.Text, "language": res.Language,
+		"transcribedAt": time.Now().Unix(),
+	}, "", "  ")
+	err := os.MkdirAll(dir, 0o700)
+	if err == nil {
+		err = os.WriteFile(filepath.Join(dir, fmt.Sprintf("%03d-%d.json", q.Share, q.ID)), b, 0o600)
+	}
+	if err != nil {
+		fmt.Fprintln(w.Err, "hw-transcribe: keeping a copy:", err)
+	}
+}
+
+// validCode: a game code is letters and digits (it names a folder).
+func validCode(s string) bool {
+	if s == "" || len(s) > 12 {
+		return false
+	}
+	for _, c := range s {
+		if !(c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || c >= '0' && c <= '9') {
+			return false
+		}
+	}
+	return true
+}
+
+// tidy takes out Whisper's loops. On noisy audio it can write one word or a short phrase dozens of times
+// ("oh, oh, oh, …"): four or more of the same 1 to 4 words in a row keep one. A long "word" of two or three
+// letters over and over ("SASASASA…") goes.
+func tidy(text string) string {
+	var paras []string
+	for _, p := range strings.Split(text, "\n\n") {
+		if p = tidyPara(p); p != "" {
+			paras = append(paras, p)
+		}
+	}
+	return strings.Join(paras, "\n\n")
+}
+
+func tidyPara(p string) string {
+	var words []string
+	for _, f := range strings.Fields(p) {
+		if n := norm(f); utf8.RuneCountInString(n) >= 20 && distinct(n) <= 3 {
+			continue
+		}
+		words = append(words, f)
+	}
+	same := func(i, j, k int) bool { // words[i:i+k] reads as words[j:j+k]
+		for x := 0; x < k; x++ {
+			a, b := norm(words[i+x]), norm(words[j+x])
+			if a == "" || a != b {
+				return false
+			}
+		}
+		return true
+	}
+	var out []string
+	for i := 0; i < len(words); {
+		bestK, bestN := 0, 0
+		for k := 1; k <= 4 && i+k <= len(words); k++ {
+			n := 1
+			for i+(n+1)*k <= len(words) && same(i, i+n*k, k) {
+				n++
+			}
+			if n >= 4 && n*k > bestN*bestK {
+				bestK, bestN = k, n
+			}
+		}
+		if bestK == 0 {
+			out = append(out, words[i])
+			i++
+			continue
+		}
+		last := i + (bestN-1)*bestK // the last time round keeps its punctuation
+		out = append(out, words[last:last+bestK]...)
+		i += bestN * bestK
+	}
+	return strings.Join(out, " ")
+}
+
+// norm: a word without its punctuation, in lower case.
+func norm(w string) string {
+	return strings.ToLower(strings.TrimFunc(w, func(r rune) bool { return !unicode.IsLetter(r) && !unicode.IsDigit(r) }))
+}
+
+func distinct(s string) int {
+	seen := map[rune]bool{}
+	for _, r := range s {
+		seen[r] = true
+	}
+	return len(seen)
 }
 
 // gone: the clip was deleted (or transcribed elsewhere) while this run had it.
@@ -358,9 +483,10 @@ func main() {
 	flag.StringVar(&server, "server", server, "the Heartwood server")
 	tokenFile := flag.String("token", filepath.Join(home, ".config/heartwood/transcribe-token"), "file holding the worker's bearer token")
 	flag.StringVar(&steward, "steward", steward, "the steward command")
-	limit := flag.Int("limit", 20, "clips to fetch per run")
+	limit := flag.Int("limit", 100, "clips to fetch per run (the budget ends a run sooner)")
 	budget := flag.Duration("budget", 4*time.Minute, "start no new clip after this long")
 	stateDir := flag.String("state", filepath.Join(home, ".cache/heartwood"), "lock and state directory")
+	archive := flag.String("archive", filepath.Join(home, ".local/share/heartwood/stories"), `the Mini's copy of each story ("": none)`)
 	flag.Parse()
 
 	tok, err := os.ReadFile(*tokenFile)
@@ -369,7 +495,7 @@ func main() {
 		os.Exit(1)
 	}
 	w := &Worker{
-		Server: server, Token: strings.TrimSpace(string(tok)), Limit: *limit, Budget: *budget, StateDir: *stateDir,
+		Server: server, Token: strings.TrimSpace(string(tok)), Limit: *limit, Budget: *budget, StateDir: *stateDir, Archive: *archive,
 		Transcribe: stewardTranscriber(steward), Client: &http.Client{Timeout: 3 * time.Minute}, Out: os.Stdout, Err: os.Stderr,
 	}
 	os.Exit(w.Run(context.Background()))

@@ -483,7 +483,8 @@ func (s *Server) worker(w http.ResponseWriter, r *http.Request) bool {
 
 // transcribeQueue lists the clips waiting for a transcript, oldest first.
 //
-// GET /api/transcribe/queue?limit=N → {recordings: [{id, code, mime, bytes, durationMs, attempts}]}
+// GET /api/transcribe/queue?limit=N → {recordings: [{id, code, mime, bytes, durationMs, attempts, share, kind,
+// playerName, playerColor, value, prompt, sub, seq, of, round, createdAt}]}
 func (s *Server) transcribeQueue(w http.ResponseWriter, r *http.Request) {
 	if !s.worker(w, r) {
 		return
@@ -492,7 +493,8 @@ func (s *Server) transcribeQueue(w http.ResponseWriter, r *http.Request) {
 	if limit < 1 || limit > 100 {
 		limit = 20
 	}
-	rows, err := s.db.Query(`SELECT id, code, mime, bytes, duration_ms, attempts FROM recordings
+	rows, err := s.db.Query(`SELECT id, code, mime, bytes, duration_ms, attempts, share_idx, kind, player_name, player_color, value_idx,
+prompt, sub, seq, seq_of, round, created_at FROM recordings
 WHERE transcript IS NULL AND audio IS NOT NULL AND attempts < ? ORDER BY id LIMIT ?`, transcribeAttempts, limit)
 	if err != nil {
 		fail(w, 500, err.Error())
@@ -506,11 +508,24 @@ WHERE transcript IS NULL AND audio IS NOT NULL AND attempts < ? ORDER BY id LIMI
 		Bytes      int    `json:"bytes"`
 		DurationMs int    `json:"durationMs"`
 		Attempts   int    `json:"attempts"`
+		// what the story was, for the Mini's own copy of the transcript
+		Share       int    `json:"share"`
+		Kind        string `json:"kind"`
+		PlayerName  string `json:"playerName"`
+		PlayerColor string `json:"playerColor"`
+		Value       int    `json:"value"`
+		Prompt      string `json:"prompt"`
+		Sub         string `json:"sub"`
+		Seq         int    `json:"seq"`
+		Of          int    `json:"of"`
+		Round       int    `json:"round"`
+		CreatedAt   int64  `json:"createdAt"`
 	}
 	out := []item{}
 	for rows.Next() {
 		var it item
-		if err := rows.Scan(&it.ID, &it.Code, &it.Mime, &it.Bytes, &it.DurationMs, &it.Attempts); err != nil {
+		if err := rows.Scan(&it.ID, &it.Code, &it.Mime, &it.Bytes, &it.DurationMs, &it.Attempts, &it.Share, &it.Kind, &it.PlayerName,
+			&it.PlayerColor, &it.Value, &it.Prompt, &it.Sub, &it.Seq, &it.Of, &it.Round, &it.CreatedAt); err != nil {
 			fail(w, 500, err.Error())
 			return
 		}
@@ -599,6 +614,26 @@ func (s *Server) sweepRecordings(now time.Time) {
 	}
 	if n, _ := res.RowsAffected(); n > 0 {
 		log.Printf("recording sweep: deleted the audio of %d transcribed stories", n)
+	}
+}
+
+// englishSince is when the worker began transcribing every story in English
+// (9 Oct 2026). Before, Whisper guessed the language and often took Malaysian
+// English for Malay, writing the English it heard in Malay.
+const englishSince = 1791556815
+
+// redoBeforeEnglish sends the stories transcribed before englishSince back to
+// the worker, once (at startup): their new transcript is dated after it. A story
+// whose audio is already gone keeps its text.
+func (s *Server) redoBeforeEnglish() {
+	res, err := s.db.Exec(`UPDATE recordings SET transcript=NULL, language='', transcribed_at=NULL, attempts=0, error=''
+WHERE transcript IS NOT NULL AND audio IS NOT NULL AND transcribed_at < ?`, englishSince)
+	if err != nil {
+		log.Printf("stories in English: %v", err)
+		return
+	}
+	if n, _ := res.RowsAffected(); n > 0 {
+		log.Printf("stories in English: %d stories transcribed before go to the worker again", n)
 	}
 }
 

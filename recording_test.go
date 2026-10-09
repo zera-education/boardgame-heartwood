@@ -278,6 +278,9 @@ func TestTranscribeWorker(t *testing.T) {
 	if len(q) != 3 || q[0]["id"] != float64(a) || q[0]["code"] != "TRAN" || q[0]["mime"] != "audio/webm" || q[0]["bytes"] != float64(104) {
 		t.Fatalf("queue %v", q)
 	}
+	if q[1]["share"] != float64(2) || q[1]["kind"] != rs[1].Kind || q[1]["playerName"] != x.ps[1].Name || q[1]["prompt"] != rs[1].Prompt {
+		t.Fatalf("what the story was: %v", q[1])
+	}
 	cd, _, rec := ps.req("GET", "/api/transcribe/"+itoa(int(b))+"/audio", auth, nil)
 	if cd != 200 || !bytes.Equal(rec.Body.Bytes(), webm(101)) || rec.Header().Get("Content-Type") != "audio/webm" {
 		t.Fatalf("worker audio: %d %d bytes", cd, rec.Body.Len())
@@ -398,5 +401,38 @@ func TestRecordingSweep(t *testing.T) {
 	}
 	if !rs[1].Audio || !rs[2].Audio || rs[2].Status != "waiting" {
 		t.Fatalf("kept: %+v %+v", rs[1], rs[2])
+	}
+}
+
+func TestRedoBeforeEnglish(t *testing.T) {
+	ps := newPhotoServer(t)
+	x := newTable(t, 6, nil)
+	x.play()
+	ps.add(x, "LANG")
+	for i, clip := range []string{"clip-guessed-1", "clip-english-2", "clip-no-audio-3", "clip-waiting-4"} {
+		if c, out := ps.clip("LANG", "host", clip, i+1, x.ps[i], nil, "audio/webm", webm(50)); c != 200 {
+			t.Fatalf("upload %d: %d %v", i, c, out)
+		}
+	}
+	db := ps.s.db
+	db.Exec(`UPDATE recordings SET transcript='Saya pilih Resilience.', language='ms', transcribed_at=? WHERE clip='clip-guessed-1'`, englishSince-3600)
+	db.Exec(`UPDATE recordings SET transcript='I chose Resilience.', language='en', transcribed_at=? WHERE clip='clip-english-2'`, englishSince+60)
+	db.Exec(`UPDATE recordings SET transcript='Kept text.', language='ms', transcribed_at=?, audio=NULL WHERE clip='clip-no-audio-3'`, englishSince-3600)
+
+	for range 2 { // once is enough: the second start changes nothing
+		ps.s.redoBeforeEnglish()
+		rs := ps.list("LANG", "host")
+		if r := rs[0]; r.Status != "waiting" || r.Transcript != nil || r.Language != "" || r.TranscribedAt != 0 {
+			t.Fatalf("guessed before English: %+v", r)
+		}
+		if r := rs[1]; r.Status != "done" || *r.Transcript != "I chose Resilience." {
+			t.Fatalf("English already: %+v", r)
+		}
+		if r := rs[2]; r.Transcript == nil || *r.Transcript != "Kept text." {
+			t.Fatalf("no audio to redo: %+v", r)
+		}
+		if r := rs[3]; r.Status != "waiting" {
+			t.Fatalf("waiting: %+v", r)
+		}
 	}
 }

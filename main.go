@@ -599,6 +599,7 @@ func main() {
 		log.Printf("sealed find: %v", err)
 	}
 	lan = lanURLs(*addr)
+	s.redoBeforeEnglish()
 	s.sweepPhotos(time.Now())
 	s.sweepRecordings(time.Now())
 	s.sweepAdmin(time.Now())
