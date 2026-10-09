@@ -15,7 +15,7 @@
 <div id="k-map" aria-label="The forest board"></div>
 <div id="k-dim" hidden></div>
 <header id="k-tl" class="k-sign k-still"></header>
-<aside id="k-q" class="k-sign k-still" hidden aria-label="Turn order"></aside>
+<aside id="k-q" class="k-sign k-still" hidden aria-label="Who still plays this round"></aside>
 <aside id="k-tr" class="k-sign k-still" hidden></aside>
 <div id="k-pop"></div>
 <div id="k-info" hidden></div>
@@ -65,7 +65,7 @@ const store = { get(k, d) { try { const x = localStorage.getItem(k); return x ==
   set(k, x) { try { localStorage.setItem(k, JSON.stringify(x)); } catch { } } };
 
 // ---------- actions ----------
-// Players say it aloud; the Keeper taps it here, acting for them (`as`). Every tap gets visible feedback:
+// Players play on their phones; the Keeper can tap for any of them here (`as`). Every tap gets visible feedback:
 // the board animates, and a toast says what happened (green) or why the server refused (red).
 let busy = false;
 async function act(type, extra = {}, okMsg) {
@@ -88,7 +88,7 @@ function undo() {
 }
 
 // Keeper choices on this screen that aren't sent yet.
-const ui = { value: null, mode: null, bring: null, pass: false, scope: '', confirmEnd: false, hidePanel: false, brief: null, slideTo: null,
+const ui = { value: null, mode: null, bring: null, pass: false, scope: '', confirmEnd: false, hidePanel: false, brief: null, slideTo: null, focus: null,
   drawer: store.get('hw-drawer', false), tip: '' };
 
 // ---------- small drawings for the HUD (ART markup, memoised) ----------
@@ -128,92 +128,15 @@ function medPic(p, size = 56, o = {}) {
 const pname = id => esc(HW.name(id));
 const chip = (p, size = 30) => p ? `<span class="k-chip">${medPic(p, size, { badges: false })}<b>${esc(p.name)}</b></span>` : '';
 
-// ---------- rules the Keeper screen checks before offering a tap ----------
-// The server checks again and its refusal is shown; these only decide what glows.
-const has = (p, t) => (p?.types || []).includes(t);
-const wxOf = (v, i) => (i > 0 && v.hexes[i] ? v.weather[v.hexes[i].sector] : null);
-const tileOf = (v, i) => (i > 0 ? v.tiles[i] : null);
-const sealed = (v, i) => !!tileOf(v, i) && tileOf(v, i).leaves >= 2;
+// ---------- rules the Keeper screen checks before offering a tap (common.js, shared with the phones) ----------
+const { has, wxOf, tileOf, sealed, moveTargets, canPass, chainOf, reachable, targetsFor, clearCost, turnOptions } = HW.rules;
 const stageName = (v, s) => (v.stages && v.stages[s]) || HW.STAGES[s] || '';
-
-function moveTargets(v, p) {
-  if (!p || p.pos < 0 || p.water <= 0 || !v.turn || v.turn.actions < 1) return { one: [], two: [] };
-  const one = B.adj[p.pos].filter(j => !sealed(v, j) || has(p, 8));
-  const two = [];
-  if (has(p, 7) && !v.turn.enthusiastUsed && wxOf(v, p.pos) !== 'fog')
-    for (const m of B.adj[p.pos].filter(j => !sealed(v, j) && wxOf(v, j) !== 'fog'))
-      for (const j of B.adj[m]) if (j !== p.pos && !sealed(v, j) && wxOf(v, j) !== 'fog' && !one.includes(j) && !two.includes(j)) two.push(j);
-  return { one, two };
-}
-// Passing: on the giver's own turn, on the same hex, or to a teammate on a neighbouring hex when both are in a
-// Peacemaker's chain (teammates linked hex by hex, each on or next to the next one's hex, a Peacemaker among them).
-function canPass(v, a, b) {
-  if (!a || !b || a.id === b.id || a.pos < 0 || b.pos < 0) return false;
-  if (a.pos === b.pos) return true;
-  return B.adj[a.pos].includes(b.pos) && !!chainOf(v, a);
-}
-// the Peacemaker that p is linked to hex by hex through teammates (p themself, maybe), or null
-function chainOf(v, p) {
-  const seen = new Set([p.id]), todo = [p];
-  while (todo.length) {
-    const a = todo.shift();
-    if (has(a, 9)) return a;
-    for (const b of v.players) if (!seen.has(b.id) && b.pos >= 0 && (b.pos === a.pos || B.adj[a.pos]?.includes(b.pos))) { seen.add(b.id); todo.push(b); }
-  }
-  return null;
-}
 // who comes along when a Challenger moves: everyone standing with them, or the Keeper's pick. On the World Tree,
 // where the team gathers, nobody comes unless picked.
 function bringing(v, p) {
   const mates = has(p, 8) ? v.players.filter(q => q.id !== p.id && q.pos === p.pos) : [];
   const b = ui.bring, pick = b && b.pid === p.id && b.pos === p.pos ? b.ids : p.pos === 0 ? [] : mates.map(q => q.id);
   return mates.filter(q => pick.includes(q.id));
-}
-const reachable = (v, p) => [p.pos, ...(has(p, 2) ? B.adj[p.pos] : [])].filter(i => i > 0);
-function targetsFor(v, p, mode) {
-  if (mode === 'water') return reachable(v, p).filter(i => [1, 2].includes(v.tiles[i].stage) && v.tiles[i].leaves < 2);
-  if (mode === 'tend') return reachable(v, p).filter(i => v.tiles[i].stage === 3 && v.tiles[i].leaves < 2);
-  if (mode === 'clear') return [p.pos, ...B.adj[p.pos]].filter(i => i > 0 && v.tiles[i].leaves > 0)
-    .filter(i => v.turn.actions >= clearCost(v, p, i));
-  return [];
-}
-const clearCost = (v, p, i) => (wxOf(v, i) === 'rain' ? 2 : 1);
-
-// What the current player can do, with the reason when they can't.
-function turnOptions(v, p) {
-  const t = v.turn, left = t.actions, pos = p.pos, tile = tileOf(v, pos), w = wxOf(v, pos);
-  const onTree = pos === 0, helper = has(p, 2);
-  const o = {};
-  const need = (n, ok, why) => (left < n ? { ok: false, why: left ? `needs ${n} actions` : 'no actions left' } : ok ? { ok: true } : { ok: false, why });
-  const exploreCost = w === 'fog' ? 2 : 1;
-  o.explore = need(exploreCost, tile && !tile.up, onTree ? 'nothing to explore here' : 'already explored');
-  o.explore.cost = exploreCost; o.explore.wx = w;
-  o.sow = need(1, tile && tile.up && tile.kind !== 'spring' && !tile.treasure && !tile.stage && tile.leaves < 2,
-    onTree ? 'not on the World Tree' : !tile.up ? 'explore it first' : tile.kind === 'spring' ? 'a spring' : tile.treasure ? 'a treasure lies here'
-      : tile.stage ? 'already growing' : 'sealed by leaves');
-  const wt = targetsFor(v, p, 'water');
-  o.water = need(1, p.water > 0 && wt.length, p.water <= 0 ? 'no water to give' : helper ? 'no Seeded or Sprout here or next door' : 'not Seeded or Sprout');
-  o.water.targets = wt;
-  const tt = targetsFor(v, p, 'tend');
-  o.tend = need(1, tt.length, helper ? 'no Sapling here or next door' : 'no Sapling here');
-  o.tend.targets = tt;
-  const near = [pos, ...B.adj[pos]].filter(i => i > 0 && v.tiles[i].leaves > 0);
-  const ct = targetsFor(v, p, 'clear');
-  o.clear = need(1, ct.length, !near.length ? 'no leaves nearby' : 'needs 2 actions in rain');
-  o.clear.targets = ct;
-  o.clear.cost = near.length && near.every(i => clearCost(v, p, i) === 2) ? 2 : 1;
-  o.clear.wx = o.clear.cost > 1 ? 'rain' : '';
-  if (has(p, 1)) {
-    // a Reformer's Clear sweeps a layer off their hex and every hex around it, in one go (2 actions in the rain)
-    const cost = w === 'rain' ? 2 : 1;
-    o.clear = Object.assign(need(cost, near.length, 'no leaves here or around'), { targets: near.length ? [pos] : [], cost, wx: cost > 1 ? 'rain' : '' });
-  }
-  o.harvest = need(1, tile && tile.stage === 4 && tile.leaves < 2 && w !== 'rain' && !tile.harvested && p.fruit < HW.MAX_FRUIT,
-    !tile || tile.stage !== 4 ? 'no Big Tree here' : tile.leaves >= 2 ? 'sealed by leaves' : w === 'rain' ? 'not in the rain'
-      : tile.harvested ? 'picked since the Tide' : 'carrying 2 fruit');
-  o.take = need(1, tile && tile.up && tile.treasure && !p.treasure, tile && tile.up && tile.treasure ? 'carrying a treasure' : 'no treasure here');
-  o.drink = need(1, tile && tile.up && tile.kind === 'spring' && p.water < HW.MAX_WATER, tile && tile.up && tile.kind === 'spring' ? 'already full' : 'no spring here');
-  return o;
 }
 
 // ==================================================================================================
@@ -230,10 +153,21 @@ const hold = { tile: new Map(), obj: new Map() };
 const ovr = {};          // pid → {water, fruit, treasure}: what a medallion shows until an animation lands
 let queueEnd = 0;        // when the animations already scheduled are done (the share card waits for it)
 
-// The map can be seen from any of its six sides (this screen only, kept per game): rot is how many sixths of a
-// turn it has turned clockwise. A hex's place on the screen comes from its turned coordinates; it keeps its own
+// The map can be seen from any of its six sides: rot is how many sixths of a turn it has turned clockwise. It is
+// the game's (view.rot): the Keeper turns it here and every phone's map turns with it. A hex's place on the screen comes from its turned coordinates; it keeps its own
 // look (the decoration follows the hex, the ribbon follows the forest's edge).
-let rot = store.get('hw-rot-' + HW.code, 0);
+let rot = 0, rotWant = null;    // rotWant: a turn sent to the server, not back in a view yet
+// a view's side of the map: taken up (a reload, another Keeper screen) unless this screen's own turn is on its way
+function takeRot(v) {
+  if (v.rot == null) return;
+  if (rotWant != null) { if (v.rot === rotWant) rotWant = null; return; }
+  if (v.rot !== rot) { rot = v.rot; B = null; }
+}
+function sendRot(v, k) {
+  if (!v.isHost) return;
+  rotWant = k;
+  HW.post(`/api/games/${HW.code}/action`, { ...creds, type: 'rotate', n: k }).catch(() => { rotWant = null; });
+}
 const turnQR = (q, r, k) => { for (let n = 0; n < k; n++) [q, r] = [-r, q + r]; return [q, r]; };
 const placeOf = (h, k = rot) => ART.project(...turnQR(h.q, h.r, k));
 // sector s's sign stands in the slot of the sector it has turned to; the slot at the top right is SIGN[0]
@@ -373,7 +307,7 @@ async function turnMap(dir) {
   if (!v || !B || turning || queueEnd - now() > 60) return;
   const k0 = rot, k1 = (rot + dir + 6) % 6, hx = B.hx;
   closeInfo();
-  if (RM.matches) { rot = k1; store.set('hw-rot-' + v.code, rot); B = null; return render(v); }
+  if (RM.matches) { rot = k1; sendRot(v, k1); B = null; return render(v); }
   turning = true;
   document.body.classList.add('k-turning');
   // the tiles as they will look from the new side (their edge ribbons move), swapped in halfway
@@ -426,7 +360,7 @@ async function turnMap(dir) {
     requestAnimationFrame(frame);
   });
   rot = k1;
-  store.set('hw-rot-' + v.code, rot);
+  sendRot(v, k1);
   turning = false;
   document.body.classList.remove('k-turning');
   B = null;
@@ -561,7 +495,7 @@ function paintMed(v, p, label) {
   const key = [photoURL(p), p.name, p.color, o.water, o.fruit, o.treasure, st, label ? 1 : 0].join('|');
   if (m.key === key) return;
   m.key = key;
-  // only the player whose turn it is gets a ring on the hex floor: their colour, a gold edge, a pulse going out
+  // only the player the Keeper is playing for gets a ring on the hex floor: their colour, a gold edge, a pulse going out
   const rx = (MED_R * 1.9).toFixed(1), ry = (MED_R * .9).toFixed(1);
   m.mb.innerHTML = (st === 'turn' ? `<g class="k-foot"><ellipse class="k-foot-pulse" rx="${rx}" ry="${ry}" fill="none" stroke="#ffd84a" stroke-width="3"/>
       <ellipse rx="${rx}" ry="${ry}" fill="${esc(p.color)}" fill-opacity=".55" stroke="#7a4a10" stroke-width="5.2"/>
@@ -688,10 +622,16 @@ const tideDur = e => 2500 + (e.leaves || []).length * 330 + 900;
 const durOf = e => (e.type === 'tide' ? tideDur(e) : DUR[e.type] || 500) * (e.type === 'move' && e.steps === 2 ? 1.6 : 1);
 
 // Plans the new events before the view is painted: what to hold back, when each one starts.
+// Everyone plays at once, so each player's taps play in their own lane, after their own last one: two players
+// acting together animate together. The Tide (and the forest waking or drying) waits for every lane, and what
+// comes after it waits for it.
+const lanes = {};
+let laneFloor = 0;
 function plan(v, prev, fresh) {
   const out = [];
   if (!fresh.length || !prev || RM.matches) return out;
-  let t = Math.max(now(), queueEnd), last = null;
+  const global = fresh.some(e => !(e.pid || e.from)), who = fresh.find(e => e.pid || e.from), lane = who && (who.pid || who.from);
+  let t = global ? Math.max(now(), queueEnd) : Math.max(now(), laneFloor, lanes[lane] || 0), last = null;
   const total = fresh.reduce((n, e) => n + durOf(e), 0);
   if (fresh.length > 16 || total > 20000) return out;          // a long absence: just show the state
   const until = ms => now() + ms + 9000;                         // holds expire on their own, whatever happens
@@ -727,7 +667,9 @@ function plan(v, prev, fresh) {
     }
     out.push(e);
   }
-  queueEnd = t;
+  queueEnd = Math.max(queueEnd, t);
+  if (global) laneFloor = t;
+  else lanes[lane] = t;
   return out;
 }
 // After the animations: whatever an animation held back or overrode (it may have been cut short) shows the view.
@@ -1098,7 +1040,14 @@ let prevView = null;
 function render(v) {
   if (!v.hexes?.length) return;
   if (turning) return;   // the map is turning: the newest view is drawn when it stops
+  takeRot(v);
   if (!B || B.code !== v.code || B.n !== v.hexes.length) buildBoard(v);
+  // Everyone plays the round at once (from their phones too): the Keeper taps for the first one still playing in
+  // seat order, or for the one picked in the list on the left.
+  if (v.phase === 'turn') {
+    const f = ui.focus && v.turns?.[ui.focus];
+    if (f && !f.done) { v.current = ui.focus; v.turn = f; } else ui.focus = null;
+  }
   // A new turn or phase drops half-made choices (a picked value, a Water target…).
   const scope = `${v.phase}|${v.current || ''}|${v.round}`;
   if (scope !== ui.scope) { ui.scope = scope; ui.value = null; ui.mode = null; ui.bring = null; ui.pass = false; ui.info = null; if (v.phase !== 'end') ui.hidePanel = false; }
@@ -1171,37 +1120,52 @@ function renderGoals(v) {
   document.body.style.setProperty('--trh', (el.getBoundingClientRect().height || 250) + 'px');
 }
 
-// ---------- HUD: the turn queue down the left (now, next, and where the Forest Tide falls) ----------
+// ---------- HUD: the list down the left (entering: now and next; playing: who still plays this round) ----------
 function renderQueue(v) {
   const el = $('k-q'), order = (v.order || []).map(id => HW.player(id)).filter(Boolean);
   el.hidden = !['enter', 'turn'].includes(v.phase) || !order.length;
   if (el.hidden) return;
-  const i = Math.max(0, order.findIndex(p => p.id === v.current));
-  // entering: everyone in order; playing: from now to the end of the round, the Tide, then the next round
-  const rows = v.phase === 'turn' ? [...order.slice(i), 'tide', ...order.slice(0, i)] : order;
-  const next = rows.slice(rows.indexOf(order[i]) + 1).find(p => p !== 'tide');
-  let after = false;
+  if (v.phase === 'turn') return renderPlaying(v, el, order);
+  const i = Math.max(0, order.findIndex(p => p.id === v.current)), next = order[i + 1];
   const row = p => {
-    const now = p.id === v.current, dry = v.phase === 'turn' && p.water <= 0, done = v.phase === 'enter' && p.pos >= 0 && !now;
+    const now = p.id === v.current, done = p.pos >= 0 && !now;
     const sub = now ? 'now' : p === next ? 'next' : '';
-    return `<li class="k-q-p${now ? ' now' : ''}${after ? ' after' : ''}${done ? ' done' : ''}" data-q="${p.pos}" title="${esc(p.name)}${now ? ': their turn now' : p === next ? ': next' : dry ? ': no water' : ''}">
-      ${sub ? `<small>${sub}</small>` : ''}${medPic(p, 44, { state: now ? 'turn' : dry ? 'dry' : '' })}<b style="border-color:${esc(p.color)}">${esc(p.name)}</b></li>`;
+    return `<li class="k-q-p${now ? ' now' : ''}${done ? ' done' : ''}" data-q="${p.pos}" title="${esc(p.name)}${now ? ': their turn now' : p === next ? ': next' : ''}">
+      ${sub ? `<small>${sub}</small>` : ''}${medPic(p, 44, { state: now ? 'turn' : '' })}<b style="border-color:${esc(p.color)}">${esc(p.name)}</b></li>`;
   };
-  HW.patch(el, `<div class="k-q-h">Turns</div><ol class="k-q-l">${rows.map(p => {
-    if (p !== 'tide') return row(p);
-    after = true;
-    return `<li class="k-q-tide" title="Forest Tide: after the last turn of the round, the weather changes and dead leaves blow">${I.dead(16, 2)}<span>Tide</span>${I.dead(16, 5)}</li>`;
-  }).join('')}</ol>`);
+  HW.patch(el, `<div class="k-q-h">Turns</div><ol class="k-q-l">${order.map(row).join('')}</ol>`);
   // fill the room between the top-left sign and the tray: the medallions shrink for a big team
+  sizeQueue(el, order.length);
+}
+// Playing: everyone at once. Who still plays this round and who has ended, in seat order; the Tide comes when the
+// last one ends. The Keeper taps for the one marked "Keeper" (the first still playing), or for any face tapped here.
+function renderPlaying(v, el, order) {
+  const max = v.actionsPerTurn || 2, still = order.filter(p => !v.turns?.[p.id]?.done);
+  const row = p => {
+    const t = v.turns?.[p.id] || {}, now = p.id === v.current, dry = p.water <= 0, done = !!t.done;
+    const sub = now ? 'Keeper' : done ? 'done' : `${t.actions ?? max} left`;
+    return `<li class="k-q-p${now ? ' now' : ''}${done ? ' done' : ' on'}" data-q="${p.pos}"${done || now || !v.isHost ? '' : ` data-focus="${esc(p.id)}"`} title="${esc(p.name)}${done ? ': ended their turn' : now ? ': the Keeper taps for them' : `: still playing${v.isHost ? ' (tap to play for them)' : ''}`}${dry ? ' · no water' : ''}">
+      <small>${done ? '✓ ' : ''}${sub}</small>${medPic(p, 44, { state: now ? 'turn' : dry ? 'dry' : '' })}<b style="border-color:${esc(p.color)}">${esc(p.name)}</b></li>`;
+  };
+  HW.patch(el, `<div class="k-q-h">Still playing <b>${still.length}/${order.length}</b></div><ol class="k-q-l">${order.map(row).join('')}
+    <li class="k-q-tide" title="Forest Tide: when everyone has ended their turn, the weather changes and dead leaves blow">${I.dead(16, 2)}<span>Tide</span>${I.dead(16, 5)}</li></ol>`);
+  sizeQueue(el, order.length, 34);
+}
+// a row is the medallion + its name tag + a gap (20px more than the medallion, 34 with a label over every one);
+// the current one is a quarter bigger; then the heading, the Tide line and the frame (~110px)
+function sizeQueue(el, n, extra = 20) {
   const z = parseFloat(document.body.style.getPropertyValue('--hud')) || 1;
   const top = $('k-tl').getBoundingClientRect().bottom + 12, tray = $('k-tray').getBoundingClientRect();
   const bottom = tray.height && tray.left < 14 + el.offsetWidth * z + 12 ? tray.top - 12 : innerHeight - 12;
   el.style.top = (top / z) + 'px';
-  // a row is the medallion + its name tag + a gap (20px more than the medallion); the current one is a quarter
-  // bigger and says "now", the next says "next"; then the Tide line, the heading and the frame (~110px)
-  const room = (bottom - top) / z, n = order.length;
-  el.style.setProperty('--qs', Math.max(28, Math.min(62, (room - 20 * n - 110) / (n + .25))).toFixed(1) + 'px');
+  const room = (bottom - top) / z;
+  el.style.setProperty('--qs', Math.max(26, Math.min(62, (room - extra * n - 110) / (n + .25))).toFixed(1) + 'px');
 }
+$('k-q').addEventListener('click', e => {
+  const r = e.target.closest('[data-focus]'), v = HW.view;
+  if (!r || !v?.isHost || v.phase !== 'turn') return;
+  ui.focus = r.dataset.focus; closeInfo(); render(v);
+});
 $('k-q').addEventListener('mouseover', e => { const r = e.target.closest('[data-q]'); B?.hov(r ? +r.dataset.q : null); });
 $('k-q').addEventListener('mouseleave', () => B?.hov(null));
 
@@ -1248,7 +1212,7 @@ function renderTray(v) {
     const p = HW.player(v.turn.player);
     if (p) {
       if (v.share) h = whoBlock(v, p) + `<div class="k-wait k-wood"><span>${pname(v.share.player)} is sharing.</span><small>Play goes on when they're done.</small></div>`;
-      else if (!v.isHost) h = whoBlock(v, p) + `<div class="k-wait k-wood"><span>They say what they do;</span><small>the Keeper taps it.</small></div>`;
+      else if (!v.isHost) h = whoBlock(v, p) + `<div class="k-wait k-wood"><span>Everyone plays at once,</span><small>on their own phone.</small></div>`;
       else { const t = turnHint(v, p); h = whoBlock(v, p, `<div class="k-cap" title="${esc(t.hint.replace(/<[^>]+>/g, ''))}">${t.hint}</div>${t.bring}`) + `<div class="k-shelf"><div class="k-packets">${packets(v, p)}</div></div>`; }
     }
   }
@@ -1278,7 +1242,7 @@ function turnHint(v, p) {
     : ui.mode ? `Tap a numbered hex to <b>${ui.mode}</b>${ui.mode === 'move' && moveTargets(v, p).two.length ? ' (dashed: the double step)' : ''} · tap ${PK[ui.mode]} again to cancel`
       : p.water <= 0 ? 'No water: a teammate here must pass 1 on their turn'
         : !v.turn.actions ? 'No actions left: pass things, or end the turn'
-          : 'Pick an action below · tap any hex to see what is there';
+          : 'Pick an action below · or tap another face on the left to play for them';
   // many mates (a crowd on the World Tree): just their medallions, the name shows on hover
   const few = mates.length <= 3;
   return { hint, bring: mates.length && !ui.pass ? `<div class="k-bring"><span>${I.role(8, 22)} Comes along:</span>${mates.map(q => { const on = coming.includes(q.id); return `<button class="k-mate${few ? '' : ' pic'}${on ? ' sel' : ' off'}" data-bring="${esc(q.id)}" aria-pressed="${on}" title="${esc(on ? `${q.name} comes along: tap to leave them here` : `${q.name} stays: tap to bring them`)}">${few ? chip(q, 26) : medPic(q, 30, { badges: false })}</button>`; }).join('')}</div>` : '' };
@@ -1510,15 +1474,14 @@ const SLIDE = {
   pact: v => ({ title: 'The Forest Pact', sub: 'Six promises we make before we play. They hold for the whole game, and after it.', body: `
     <ol class="k-br-pact">${[['worldTree:awake', "What's shared in the forest stays in the forest."], ['leaf', 'Every question is an invitation. You may always say “not this one”.'],
       ['icon:ear', 'Listen to understand: no advice, no fixing, no debating.'], ['acorn', 'Trust is a gift, not a grade.'],
-      ['icon:team', 'One team. Plan out loud, and look after each other.'], ['icon:phoneOff', 'Phones down. Pick yours up only to give trust, to check your private looks, and to guess.']]
+      ['icon:team', 'One team. Plan out loud, and look after each other.'], ['icon:phoneOff', 'Phones down when someone shares. Play your moves on your phone, then look up and listen.']]
       .map(([art, t]) => `<li>${pic(art, 64)}<span>${t}</span></li>`).join('')}</ol>
     <p class="k-br-note">The Keeper may pause any story.</p>` }),
   play: v => ({ title: 'How we play', sub: 'First, each of us chooses the value we stand for, steps onto its edge, and says why.', body: `
     <ul class="k-br-list">
-      <li>${I.icon('talk', 68)}<span><b>Say your moves aloud.</b> The Keeper taps them on this screen. Plan together: anyone can suggest.</span></li>
-      <li>${I.icon('round', 68)}<span><b>We take turns in this order</b>, 2 actions each. After the last turn of the round comes the Forest Tide.
-        <span class="k-br-order">${(v.order || []).map(id => HW.player(id)).filter(Boolean).map(p => `<span>${medPic(p, 54, { badges: false })}${esc(p.name)}</span>`).join('')}</span></span></li>
-      <li>${I.icon('ear', 68)}<span><b>When the forest asks, we share:</b> why you stand for your value, a card as you go deeper, a story when you harvest, a Heartwood question at the World Tree. One voice at a time.</span></li>
+      <li>${I.icon('round', 68)}<span><b>We all play at once</b>, 2 actions each, on our phones: tap a glowing hex to move, a button to act. Plan out loud together. When everyone has ended their turn, the Forest Tide comes.</span></li>
+      <li>${I.icon('talk', 68)}<span><b>No phone, or stuck?</b> Say it aloud: the Keeper can play for anyone on this screen.</span></li>
+      <li>${I.icon('ear', 68)}<span><b>When the forest asks, we share:</b> why you stand for your value, a card as you go deeper, a story when you harvest, a Heartwood question at the World Tree. One voice at a time: every phone waits until the Keeper closes the share.</span></li>
       <li>${I.acorn(62)}<span><b>Moved by what you heard?</b> Give the speaker a trust acorn on your phone. You have 10 for the whole game.</span></li>
     </ul>` }),
 };

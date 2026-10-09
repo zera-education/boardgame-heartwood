@@ -44,11 +44,15 @@ Keep the house style: plain HTML/JS/CSS, no build step, no frameworks, dark fore
   those slides. Keeper `begin` → phase `enter`.
 - **Entering (phase `enter`):** in turn order each player chooses their value and an outer-ring (ring 4) hex of
   that sector (sharing a hex is allowed), then shares **why** (share kind `why`).
-- **Turn (phase `turn`):** clockwise in join order; up to **2 actions**. Actions (1 action unless noted):
+- **Rounds (phase `turn`; El, 2026-10-09):** everyone plays the round at once, from their phone or through the
+  Keeper; each player has up to **2 actions** and ends their own turn (`turns[pid]`: actions, done). First come,
+  first served: the server takes taps in the order they arrive. While a share is open nobody plays. The one-at-a-time
+  version is the `turn-based` branch. Actions (1 action unless noted):
   - **Move** to a neighbouring hex that isn't sealed (Challenger may enter sealed). Not at 0 water.
-    Enthusiast: once per turn a move may go 2 hexes (both steps unsealed, neither hex in fog, own hex not in
-    fog). Challenger: everyone standing on the same hex comes along (El, 2026-10-09); `bring` lists who comes
-    when the Keeper leaves someone behind, and on the World Tree nobody comes unless listed.
+    Enthusiast: once per round a move may go 2 hexes (both steps unsealed, neither hex in fog, own hex not in
+    fog). Challenger: everyone standing on the same hex comes along (El, 2026-10-09), whatever they were doing
+    (they keep their own actions); `bring` lists who comes when the Keeper leaves someone behind, and on the World
+    Tree nobody comes unless listed.
     **Ring card:** the first time a player enters Ring 3, Ring 2 or Ring 1 (moving inward), they draw a card
     from that ring's deck (share kind `ring`): Ring 3 = Light, Ring 2 = Story, Ring 1 = Deep: get-to-know-you
     questions chosen by El (2026-10-08 and 09), no longer tied to the values; a deck that runs out is shuffled again. Applies to the brought teammates too.
@@ -70,7 +74,8 @@ Keep the house style: plain HTML/JS/CSS, no build step, no frameworks, dark fore
     tagline, where Value = the sector of the tree.
   - **Take** a revealed treasure lying on your hex (carry at most 1).
   - **Drink** at a revealed spring → water 5.
-  - **Free, on the giver's own turn when no share is open** (El, 2026-10-06: only the current player gives):
+  - **Free, until the giver ends their turn, when no share is open** (El, 2026-10-06; since 2026-10-09 everyone's
+    turn is on at once):
     **pass** water / fruit / treasure to a player on the same hex; or to a teammate on a neighbouring hex when the
     giver is in a Peacemaker's chain: teammates linked hex by hex, each on or next to the next one's hex, a
     Peacemaker among them (El, 2026-10-09). Never 2 hexes away.
@@ -78,7 +83,8 @@ Keep the house style: plain HTML/JS/CSS, no build step, no frameworks, dark fore
   - **Automatic placing:** whenever a player stands on the World Tree holding fruit or a treasure (after any
     move, pass, or Challenger carry), **everything they carry is placed at once**. If at least one fruit was
     placed, that player answers **one Heartwood question** (share kind `heartwood`), however many fruit.
-  - **End turn** (Keeper). After the last player of the round, the **Forest Tide** runs automatically.
+  - **End turn** (phone, or the Keeper for that player). When the last player of the round has ended their turn,
+    the **Forest Tide** runs automatically and everyone gets a fresh turn.
 - **Forest Tide:** (1) each sector takes its pre-drawn weather and pre-draws the next; reset `harvested`.
   (2) Rain: every unsealed Seeded/Grass hex in a rainy sector grows one stage. Sun: every player in a sunny
   sector not standing on a Big Tree loses 1 water (not below 0). (3) **Forest Breath:** the pre-rolled list
@@ -95,7 +101,7 @@ Keep the house style: plain HTML/JS/CSS, no build step, no frameworks, dark fore
   The Keeper gives each player 1–3 types in the lobby (a player can't hold one twice; several players may
   hold the same type), or deals one random type to everyone (`randomTypes`: all different up to 9 players, no
   type twice before all 9 are dealt; El, 2026-10-08). Investigator: always sees the next Forest Breath list on their phone, and once per
-  round (during their own turn) looks at one sector's next weather (phone action `investigate`, `n`=sector).
+  round (before ending their turn) looks at one sector's next weather (phone action `investigate`, `n`=sector).
 - **Win:** the moment all hold: every sector has ≥1 Big Tree; every player has placed ≥1 fruit; all 3
   treasures placed; every player stands on the World Tree → result `won`, log "The forest wakes!".
   **Lose:** every player at 0 water → result `lost`. Either way → phase `guess`.
@@ -130,14 +136,16 @@ mechanics: versioned views, pushes after every change, Keeper secret, rejoin pin
 
 `Action` JSON: `{pid, secret, host, type, hex, target, n, text, types, as}` (`hex` defaults to -1).
 
-**Keeper acts for a player** (`host` + `as`; keeperActs): `enter` (n=value, hex), `move` (hex, target=brought
-teammate id or ""), `explore`, `sow`, `water` (hex), `tend` (hex), `clear` (hex), `harvest`, `take`, `drink`,
-`pass` (target=receiver id, text=water|fruit|treasure), `endTurn`.
+**Play** (the player's phone, or the Keeper with `host` + `as`; keeperActs): `enter` (n=value, hex; Keeper),
+`move` (hex, bring=[ids], Keeper only), `explore`, `sow`, `water` (hex), `tend` (hex), `clear` (hex), `harvest`,
+`take`, `drink`, `pass` (target=receiver id, text=water|fruit|treasure), `endTurn`. Without `as` the Keeper acts for
+the first player in seat order still playing the round.
 **Keeper only:** `start`, `slide` (n), `begin`, `assignPowers` (target, types), `kick`, `doneShare`, `startChain`, `nextTribute`,
-`timer` (n seconds), `shareShown` (n = share idx: the Keeper screen shows that share's card, so its own
+`timer` (n seconds), `rotate` (n = the side the map is seen from, 0–5; every phone's map follows), `shareShown` (n = share idx: the Keeper screen shows that share's card, so its own
 timer starts now; a `why` or a treasure answer's 10 s wait in `timerWait` until then, so the treasure's rise doesn't
-eat into them), `undo` (takes back the Keeper's last tap for a player this turn: the server keeps a copy of
-the game before each one, up to 6, until the turn ends or the phase changes; End turn is not taken back; view `undo`,
+eat into them), `undo` (takes back the Keeper's last tap for a player: the server keeps a copy of the game before
+each one, up to 6, until the round ends, the phase changes or a player plays from their phone (the copy would undo
+their move too); End turn is not taken back; view `undo`,
 Keeper only, is the trail log line of the tap it takes back).
 **Phone only (own pid+secret):** `trust`, `investigate` (n=sector), `guess` (target).
 Errors are plain sentences shown to the user.
@@ -156,8 +164,9 @@ Errors are plain sentences shown to the user.
   weather: ["sun"|"rain"|"fog" x6], breathCount,
   players: [{id,name,color,value,types,pos,water,fruit,treasure,placed,reached:[r1,r2,r3 bools],
              trustLeft, guessed}],               // treasure = id or ""
-  order: [ids], current: id (enter/turn only),
-  turn: {player, actions, enthusiastUsed, investigated} | null,
+  order: [ids], current: id (enter: whose turn to enter; turn: the first still playing),
+  turns: {pid: {player, actions, enthusiastUsed, investigated, done}},   // turn phase: everyone's turn this round
+  turn: turns[current] | null, rot: 0..5,
   share: null | {idx, kind, player, prompt, sub, trustCount, iGave, was},
   goals: {trees:[6 bools], placedPlayers, players, treasures:[ids placed], onTree},
   events: [{id, type, ...}],                       // the last 80; ids increase

@@ -15,9 +15,10 @@ import (
 // big screen and phones do: the Keeper acts "as" players, phones send trust,
 // the Investigator's look and the Secret Owl guess.
 type table struct {
-	t  *testing.T
-	g  *Game
-	ps []*Player
+	t   *testing.T
+	g   *Game
+	ps  []*Player
+	cur *Player // whose turn turnOf last set up
 }
 
 // newTable joins n players and gives each the types from types(i) (default:
@@ -107,21 +108,29 @@ func (x *table) calm() {
 	x.g.Breath = nil
 }
 
-// turnOf makes it p's turn with fresh actions.
+// turnOf gives p fresh actions and makes them the first still playing: the
+// ones before them in seat order have ended their turns this round.
 func (x *table) turnOf(p *Player) {
-	x.g.TurnIdx = slices.Index(x.g.Order, p.ID)
-	x.g.newTurn()
+	x.cur = p
+	k := slices.Index(x.g.Order, p.ID)
+	for i, id := range x.g.Order {
+		x.g.Turns[id] = &TurnState{Player: id, Actions: ActionsPerTurn, Done: i < k}
+	}
+}
+
+// turn is the turn of the player turnOf set up (else the first still playing).
+func (x *table) turn() *TurnState {
+	if x.cur != nil {
+		return x.g.Turns[x.cur.ID]
+	}
+	return x.g.Turns[x.g.current().ID]
 }
 
 // endRound ends every remaining turn of the round, which runs the Forest Tide.
 func (x *table) endRound() {
 	x.t.Helper()
-	for x.g.Phase == PhaseTurn {
-		last := x.g.TurnIdx == len(x.g.Order)-1
+	for r := x.g.Round; x.g.Phase == PhaseTurn && x.g.Round == r; {
 		x.must(x.host("endTurn", Action{}))
-		if last {
-			return
-		}
 	}
 }
 
@@ -363,8 +372,8 @@ func TestFullGame(t *testing.T) {
 		x.must(x.host("doneShare", Action{}))
 	}
 	x.fails(x.host("doneShare", Action{}), "doneShare with no share")
-	if g.Phase != PhaseTurn || g.Round != 1 || g.Turn.Player != ps[0].ID || g.Turn.Actions != 2 {
-		t.Fatalf("phase %s round %d turn %+v", g.Phase, g.Round, g.Turn)
+	if g.Phase != PhaseTurn || g.Round != 1 || g.current() != ps[0] || x.turn().Actions != 2 {
+		t.Fatalf("phase %s round %d turns %+v", g.Phase, g.Round, g.Turns)
 	}
 	for _, p := range ps {
 		if p.TrustLeft != 9 || p.Pot[ps[(slices.Index(ps, p)+1)%6].ID] != 1 {
@@ -484,11 +493,14 @@ func TestActions(t *testing.T) {
 	p.Pos = h
 	x.turnOf(p)
 
-	x.fails(x.as(q, "explore", own), "acting out of turn")
+	// everyone plays the round at once; who has ended their turn waits for the next round
+	x.must(x.phone(q, "endTurn", own))
+	x.fails(x.as(q, "explore", own), "acting after ending the turn")
+	x.fails(x.phone(q, "endTurn", own), "ending the turn twice")
 	x.fails(x.as(p, "sow", own), "sowing a face-down hex")
 	x.fails(x.as(p, "fly", own), "an unknown action")
 	x.must(x.as(p, "explore", own))
-	if !g.Tiles[h].Up || g.Turn.Actions != 1 || x.lastEvent("flip")["hex"] != h {
+	if !g.Tiles[h].Up || x.turn().Actions != 1 || x.lastEvent("flip")["hex"] != h {
 		t.Fatal("explore")
 	}
 	x.fails(x.as(p, "explore", own), "exploring twice")
@@ -572,8 +584,8 @@ func TestActions(t *testing.T) {
 	x.fails(x.as(p, "clear", own), "clearing a hex with no leaves")
 	g.Weather[Board[w].Sector] = "rain"
 	x.must(x.as(p, "clear", Action{Hex: w}))
-	if g.Tiles[w].Leaves != 1 || g.Turn.Actions != 0 {
-		t.Fatalf("clear in rain: leaves %d actions %d", g.Tiles[w].Leaves, g.Turn.Actions)
+	if g.Tiles[w].Leaves != 1 || x.turn().Actions != 0 {
+		t.Fatalf("clear in rain: leaves %d actions %d", g.Tiles[w].Leaves, x.turn().Actions)
 	}
 	g.Weather[Board[w].Sector] = "sun"
 	x.turnOf(p)
@@ -590,12 +602,12 @@ func TestSpringsTreasuresAndFog(t *testing.T) {
 	// Explore in fog costs 2 actions.
 	x.turnOf(p)
 	g.Weather[1] = "fog"
-	g.Turn.Actions = 1
+	x.turn().Actions = 1
 	x.fails(x.as(p, "explore", own), "exploring fog with 1 action")
 	x.turnOf(p)
 	g.Tiles[h] = &Tile{Kind: "spring"}
 	x.must(x.as(p, "explore", own))
-	if g.Turn.Actions != 0 || !g.Tiles[h].Up {
+	if x.turn().Actions != 0 || !g.Tiles[h].Up {
 		t.Fatal("explore in fog costs 2")
 	}
 
@@ -715,8 +727,8 @@ func TestRoles(t *testing.T) {
 	}
 	x.turnOf(reformer)
 	x.must(x.as(reformer, "clear", Action{Hex: Adj[h][0]}))
-	if g.Tiles[h].Leaves != 0 || g.Tiles[Adj[h][0]].Leaves != 1 || g.Tiles[Adj[h][1]].Leaves != 0 || g.Tiles[far].Leaves != 1 || g.Turn.Actions != 1 {
-		t.Fatalf("Reformer sweep: leaves %d %d %d %d, actions %d", g.Tiles[h].Leaves, g.Tiles[Adj[h][0]].Leaves, g.Tiles[Adj[h][1]].Leaves, g.Tiles[far].Leaves, g.Turn.Actions)
+	if g.Tiles[h].Leaves != 0 || g.Tiles[Adj[h][0]].Leaves != 1 || g.Tiles[Adj[h][1]].Leaves != 0 || g.Tiles[far].Leaves != 1 || x.turn().Actions != 1 {
+		t.Fatalf("Reformer sweep: leaves %d %d %d %d, actions %d", g.Tiles[h].Leaves, g.Tiles[Adj[h][0]].Leaves, g.Tiles[Adj[h][1]].Leaves, g.Tiles[far].Leaves, x.turn().Actions)
 	}
 	if e := x.lastEvent("sweep"); e["hex"] != h || len(e["hexes"].([]int)) != 3 {
 		t.Fatalf("sweep event %v", e)
@@ -728,8 +740,8 @@ func TestRoles(t *testing.T) {
 	x.fails(x.as(reformer, "clear", own), "a sweep in the rain with 1 action left")
 	x.turnOf(reformer)
 	x.must(x.as(reformer, "clear", own))
-	if g.Tiles[Adj[h][0]].Leaves != 0 || g.Turn.Actions != 0 {
-		t.Fatalf("rain sweep: leaves %d actions %d", g.Tiles[Adj[h][0]].Leaves, g.Turn.Actions)
+	if g.Tiles[Adj[h][0]].Leaves != 0 || x.turn().Actions != 0 {
+		t.Fatalf("rain sweep: leaves %d actions %d", g.Tiles[Adj[h][0]].Leaves, x.turn().Actions)
 	}
 	x.turnOf(reformer)
 	x.fails(x.as(reformer, "clear", own), "a sweep with no leaves around")
@@ -863,7 +875,7 @@ func TestRoles(t *testing.T) {
 	x.fails(x.as(enthusiast, "move", Action{Hex: two}), "a 2-hex move out of fog")
 	x.calm()
 	x.must(x.as(enthusiast, "move", Action{Hex: two}))
-	if enthusiast.Pos != two || !g.Turn.EnthusiastUsed {
+	if enthusiast.Pos != two || !x.turn().EnthusiastUsed {
 		t.Fatal("Enthusiast 2-hex move")
 	}
 	x.must(x.host("doneShare", Action{})) // the ring card
@@ -1337,8 +1349,8 @@ func TestUndo(t *testing.T) {
 	if g.player(p.ID) != p || g.player(mate.ID) != mate {
 		t.Fatal("undo replaced the Player values")
 	}
-	if p.Pos != r4 || g.Turn.Actions != ActionsPerTurn || p.Reached[2] || len(g.Shares) != 0 || mate.TrustLeft != StartTrust {
-		t.Fatalf("not undone: pos %d actions %d reached %v shares %d trust %d", p.Pos, g.Turn.Actions, p.Reached, len(g.Shares), mate.TrustLeft)
+	if p.Pos != r4 || x.turn().Actions != ActionsPerTurn || p.Reached[2] || len(g.Shares) != 0 || mate.TrustLeft != StartTrust {
+		t.Fatalf("not undone: pos %d actions %d reached %v shares %d trust %d", p.Pos, x.turn().Actions, p.Reached, len(g.Shares), mate.TrustLeft)
 	}
 	if x.ps[2].Photo != 7 || g.ShareSeq != shares || g.EventSeq <= seq {
 		t.Fatalf("photo %d shareSeq %d/%d eventSeq %d/%d", x.ps[2].Photo, g.ShareSeq, shares, g.EventSeq, seq)
@@ -1355,17 +1367,23 @@ func TestUndo(t *testing.T) {
 	x.must(x.as(p, "move", Action{Hex: r3}))
 	x.must(x.host("doneShare", Action{}))
 	x.must(x.host("undo", Action{}))
-	if p.Pos != r4 || !g.Tiles[r4].Up || g.Turn.Actions != 1 {
-		t.Fatalf("first undo: pos %d up %v actions %d", p.Pos, g.Tiles[r4].Up, g.Turn.Actions)
+	if p.Pos != r4 || !g.Tiles[r4].Up || x.turn().Actions != 1 {
+		t.Fatalf("first undo: pos %d up %v actions %d", p.Pos, g.Tiles[r4].Up, x.turn().Actions)
 	}
 	x.must(x.host("undo", Action{}))
-	if g.Tiles[r4].Up || g.Turn.Actions != 2 {
+	if g.Tiles[r4].Up || x.turn().Actions != 2 {
 		t.Fatal("explore not undone")
 	}
-	// the turn's end closes it
+	// a player playing from their phone closes it (taking the copy back would undo their move too)
 	x.must(x.as(p, "explore", own))
-	x.must(x.host("endTurn", Action{}))
-	x.fails(x.host("undo", Action{}), "undo after the turn ended")
+	x.must(x.phone(x.ps[1], "endTurn", own))
+	x.fails(x.host("undo", Action{}), "undo after a player played from their phone")
+	// and so does the round's end
+	x.turnOf(p)
+	p.Pos = ringHexes(4, 0)[2]
+	x.must(x.as(p, "explore", own))
+	x.endRound()
+	x.fails(x.host("undo", Action{}), "undo after the round ended")
 	// entering is a tap too
 	y := newTable(t, 6, nil)
 	x.must(y.host("start", Action{}))
@@ -1408,7 +1426,7 @@ func TestLoseWhenEveryoneIsDry(t *testing.T) {
 	}
 	y.g.NextWeather[2] = "sun"
 	y.endRound()
-	if y.g.Result != "lost" || y.g.Phase != PhaseGuess || y.g.Turn != nil {
+	if y.g.Result != "lost" || y.g.Phase != PhaseGuess || y.g.Turns != nil {
 		t.Fatalf("result %q phase %s", y.g.Result, y.g.Phase)
 	}
 	// Someone with water left keeps the game going.
@@ -1590,7 +1608,7 @@ func TestEndGameEarly(t *testing.T) {
 		t.Fatal("ended at is set before the end")
 	}
 	x.must(x.host("endGame", Action{}))
-	if g.Result != "ended" || g.Phase != PhaseGuess || g.Turn != nil || g.Log[len(g.Log)-2] != "The Keeper closed the game early." || g.EndedAt == 0 {
+	if g.Result != "ended" || g.Phase != PhaseGuess || g.Turns != nil || g.Log[len(g.Log)-2] != "The Keeper closed the game early." || g.EndedAt == 0 {
 		t.Fatalf("result %q phase %s log %v ended at %d", g.Result, g.Phase, g.Log[len(g.Log)-2:], g.EndedAt)
 	}
 	if buildView(g, "", "", "host")["result"] != "ended" {
@@ -1742,5 +1760,117 @@ func TestSpringsScattered(t *testing.T) {
 	}
 	if hexDist(0, ringHexes(4, 0)[0]) != 4 || !neighbours(1, 0) || hexDist(1, 0) != 1 {
 		t.Fatal("hexDist")
+	}
+}
+
+// Everyone plays the round at once, from their phone or through the Keeper; the
+// Forest Tide waits for the last turn to end (El, 2026-10-09).
+func TestConcurrentRound(t *testing.T) {
+	x := newTable(t, 6, func(i int) []int {
+		if i == 0 {
+			return []int{8} // a Challenger
+		}
+		return []int{3}
+	})
+	x.play()
+	g, ps := x.g, x.ps
+	for _, p := range ps {
+		if tt := g.Turns[p.ID]; tt == nil || tt.Actions != ActionsPerTurn || tt.Done {
+			t.Fatalf("round 1 turn of %s: %+v", p.Name, tt)
+		}
+	}
+	// any order: the last seat first, from a phone; then the first, through the Keeper
+	last, first := ps[5], ps[0]
+	x.must(x.phone(last, "explore", own))
+	x.must(x.as(first, "explore", own))
+	if g.Turns[last.ID].Actions != 1 || g.Turns[first.ID].Actions != 1 || !g.Tiles[last.Pos].Up || !g.Tiles[first.Pos].Up {
+		t.Fatal("two players acting in the same round")
+	}
+	// the Keeper's default is the first still playing in seat order
+	x.must(x.phone(first, "endTurn", own))
+	if g.current() != ps[1] {
+		t.Fatalf("current %v", g.current().Name)
+	}
+	x.must(x.host("endTurn", Action{}))
+	if !g.Turns[ps[1].ID].Done || g.current() != ps[2] {
+		t.Fatal("the Keeper's End turn without a player ends the first still playing")
+	}
+	// passing waits for your own turn to be on too
+	first.Pos = ps[2].Pos
+	x.fails(x.phone(first, "pass", Action{Target: ps[2].ID, Text: "water"}), "passing after ending the turn")
+	// a share stops everyone, whoever triggered it
+	x.must(x.phone(ps[2], "move", Action{Hex: ringHexes(3, 2)[0]}))
+	if s := g.openShare(); s == nil || s.Kind != "ring" {
+		t.Fatalf("ring card %+v", g.openShare())
+	}
+	x.fails(x.phone(last, "drink", own), "playing while someone shares")
+	x.fails(x.phone(last, "endTurn", own), "ending a turn while someone shares")
+	x.must(x.phone(first, "trust", own))
+	x.must(x.host("doneShare", Action{}))
+	// no Tide until the last one ends
+	tide := g.Tide
+	for _, p := range ps[2:5] {
+		x.must(x.phone(p, "endTurn", own))
+		if g.Tide != tide || g.Round != 1 {
+			t.Fatalf("the Tide came before %s ended their turn", ps[5].Name)
+		}
+	}
+	x.must(x.phone(last, "endTurn", own))
+	if g.Tide != tide+1 || g.Round != 2 || g.current() != ps[0] {
+		t.Fatalf("tide %d round %d", g.Tide, g.Round)
+	}
+	for _, p := range ps {
+		if tt := g.Turns[p.ID]; tt.Done || tt.Actions != ActionsPerTurn {
+			t.Fatalf("round 2 turn of %s: %+v", p.Name, tt)
+		}
+	}
+	// first come, first served: a Challenger takes whoever stands with them, mid-turn or not
+	x.calm()
+	mate := ps[1]
+	mate.Pos = first.Pos
+	x.must(x.phone(mate, "explore", Action{Hex: -1}))
+	to := Adj[first.Pos][0]
+	x.must(x.phone(first, "move", Action{Hex: to}))
+	if mate.Pos != to || g.Turns[mate.ID].Actions != ActionsPerTurn-1 || g.Turns[first.ID].Actions != ActionsPerTurn-1 {
+		t.Fatalf("dragged: pos %d actions %d", mate.Pos, g.Turns[mate.ID].Actions)
+	}
+	v := buildView(g, mate.ID, mate.Secret, "")
+	if tv := v["turns"].(map[string]any)[mate.ID].(map[string]any); tv["actions"] != ActionsPerTurn-1 || tv["done"] != false || v["turn"] == nil {
+		t.Fatalf("view turns %v", tv)
+	}
+}
+
+// The Keeper turns the map on the big screen; every phone's map follows.
+func TestRotate(t *testing.T) {
+	x := newTable(t, 6, nil)
+	x.play()
+	x.must(x.host("rotate", Action{N: 4}))
+	x.must(x.host("rotate", Action{N: -1}))
+	if x.g.Rot != 5 || buildView(x.g, x.ps[0].ID, x.ps[0].Secret, "")["rot"] != 5 {
+		t.Fatalf("rot %d", x.g.Rot)
+	}
+	x.fails(x.phone(x.ps[0], "rotate", Action{N: 2}), "a phone turning everyone's map")
+}
+
+// A game saved mid-round before concurrent rounds plays on: the seats before
+// the turn it was on have played this round.
+func TestMigrateOldTurn(t *testing.T) {
+	x := newTable(t, 6, nil)
+	x.play()
+	g := x.g
+	g.Turns, g.TurnIdx = nil, 2
+	g.OldTurn = &TurnState{Player: g.Order[2], Actions: 1, EnthusiastUsed: true}
+	b, _ := json.Marshal(g)
+	var back Game
+	x.must(json.Unmarshal(b, &back))
+	back.migrate()
+	if back.OldTurn != nil || back.TurnIdx != 0 || back.current().ID != g.Order[2] {
+		t.Fatalf("migrated: current %v", back.current())
+	}
+	for i, id := range back.Order {
+		tt := back.Turns[id]
+		if tt.Done != (i < 2) || (i == 2 && (tt.Actions != 1 || !tt.EnthusiastUsed)) || (i > 2 && tt.Actions != ActionsPerTurn) {
+			t.Fatalf("seat %d: %+v", i, tt)
+		}
 	}
 }

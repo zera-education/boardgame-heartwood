@@ -180,6 +180,18 @@ const HW = {
     return (Math.abs(dq) + Math.abs(dr) + Math.abs(dq + dr)) / 2;
   },
 
+  // The hexes next to each hex (index → indices), from the view's board.
+  adj(v) {
+    if (HW._adj?.n === v.hexes.length) return HW._adj.a;
+    const at = new Map(v.hexes.map((h, i) => [h.q + ',' + h.r, i]));
+    const a = v.hexes.map(h => [[1, 0], [1, -1], [0, -1], [-1, 0], [-1, 1], [0, 1]].map(([dq, dr]) => at.get((h.q + dq) + ',' + (h.r + dr))).filter(j => j !== undefined));
+    HW._adj = { n: v.hexes.length, a };
+    return a;
+  },
+  // A player's turn this round (everyone plays at once): {actions, done, enthusiastUsed, investigated}.
+  turnOf(v, p) { return (p && v.turns?.[p.id]) || null; },
+  playing(v, p) { const t = HW.turnOf(v, p); return v.phase === 'turn' && !!t && !t.done; },
+
   startTimers() {
     setInterval(() => {
       document.querySelectorAll('[data-timer]').forEach(el => {
@@ -214,4 +226,90 @@ const HW = {
   // Older name, kept so any page still calling it shows the recognition table.
   scoresTable(v) { return HW.recognitionTable(v); },
 };
+
+// ---------- the rules both screens check before offering a tap ----------
+// The server checks again and its refusal is shown; these only decide what glows (the Keeper's board) or
+// what a phone offers.
+HW.rules = (() => {
+  const has = (p, t) => (p?.types || []).includes(t);
+  const wxOf = (v, i) => (i > 0 && v.hexes[i] ? v.weather[v.hexes[i].sector] : null);
+  const tileOf = (v, i) => (i > 0 ? v.tiles[i] : null);
+  const sealed = (v, i) => !!tileOf(v, i) && tileOf(v, i).leaves >= 2;
+  const left = (v, p) => HW.turnOf(v, p)?.actions || 0;
+  function moveTargets(v, p) {
+    const t = HW.turnOf(v, p), adj = HW.adj(v);
+    if (!p || p.pos < 0 || p.water <= 0 || !t || t.done || t.actions < 1) return { one: [], two: [] };
+    const one = adj[p.pos].filter(j => !sealed(v, j) || has(p, 8));
+    const two = [];
+    if (has(p, 7) && !t.enthusiastUsed && wxOf(v, p.pos) !== 'fog')
+      for (const m of adj[p.pos].filter(j => !sealed(v, j) && wxOf(v, j) !== 'fog'))
+        for (const j of adj[m]) if (j !== p.pos && !sealed(v, j) && wxOf(v, j) !== 'fog' && !one.includes(j) && !two.includes(j)) two.push(j);
+    return { one, two };
+  }
+  // Passing: until the giver ends their turn, on the same hex, or to a teammate on a neighbouring hex when both
+  // are in a Peacemaker's chain (teammates linked hex by hex, each on or next to the next one's hex, a Peacemaker
+  // among them).
+  function canPass(v, a, b) {
+    if (!a || !b || a.id === b.id || a.pos < 0 || b.pos < 0) return false;
+    if (a.pos === b.pos) return true;
+    return HW.adj(v)[a.pos].includes(b.pos) && !!chainOf(v, a);
+  }
+  // the Peacemaker that p is linked to hex by hex through teammates (p themself, maybe), or null
+  function chainOf(v, p) {
+    const adj = HW.adj(v), seen = new Set([p.id]), todo = [p];
+    while (todo.length) {
+      const a = todo.shift();
+      if (has(a, 9)) return a;
+      for (const b of v.players) if (!seen.has(b.id) && b.pos >= 0 && (b.pos === a.pos || adj[a.pos]?.includes(b.pos))) { seen.add(b.id); todo.push(b); }
+    }
+    return null;
+  }
+  const reachable = (v, p) => [p.pos, ...(has(p, 2) ? HW.adj(v)[p.pos] : [])].filter(i => i > 0);
+  const clearCost = (v, p, i) => (wxOf(v, i) === 'rain' ? 2 : 1);
+  function targetsFor(v, p, mode) {
+    if (mode === 'water') return reachable(v, p).filter(i => [1, 2].includes(v.tiles[i].stage) && v.tiles[i].leaves < 2);
+    if (mode === 'tend') return reachable(v, p).filter(i => v.tiles[i].stage === 3 && v.tiles[i].leaves < 2);
+    if (mode === 'clear') return [p.pos, ...HW.adj(v)[p.pos]].filter(i => i > 0 && v.tiles[i].leaves > 0)
+      .filter(i => left(v, p) >= clearCost(v, p, i));
+    return [];
+  }
+  // What a player can do now, with the reason when they can't.
+  function turnOptions(v, p) {
+    const n = left(v, p), pos = p.pos, tile = tileOf(v, pos), w = wxOf(v, pos), adj = HW.adj(v);
+    const onTree = pos === 0, helper = has(p, 2);
+    const o = {};
+    const need = (k, ok, why) => (n < k ? { ok: false, why: n ? `needs ${k} actions` : 'no actions left' } : ok ? { ok: true } : { ok: false, why });
+    const exploreCost = w === 'fog' ? 2 : 1;
+    o.explore = need(exploreCost, tile && !tile.up, onTree ? 'nothing to explore here' : 'already explored');
+    o.explore.cost = exploreCost; o.explore.wx = w;
+    o.sow = need(1, tile && tile.up && tile.kind !== 'spring' && !tile.treasure && !tile.stage && tile.leaves < 2,
+      onTree ? 'not on the World Tree' : !tile.up ? 'explore it first' : tile.kind === 'spring' ? 'a spring' : tile.treasure ? 'a treasure lies here'
+        : tile.stage ? 'already growing' : 'sealed by leaves');
+    const wt = targetsFor(v, p, 'water');
+    o.water = need(1, p.water > 0 && wt.length, p.water <= 0 ? 'no water to give' : helper ? 'no Seeded or Sprout here or next door' : 'not Seeded or Sprout');
+    o.water.targets = wt;
+    const tt = targetsFor(v, p, 'tend');
+    o.tend = need(1, tt.length, helper ? 'no Sapling here or next door' : 'no Sapling here');
+    o.tend.targets = tt;
+    const near = [pos, ...(adj[pos] || [])].filter(i => i > 0 && v.tiles[i].leaves > 0);
+    const ct = targetsFor(v, p, 'clear');
+    o.clear = need(1, ct.length, !near.length ? 'no leaves nearby' : 'needs 2 actions in rain');
+    o.clear.targets = ct;
+    o.clear.cost = near.length && near.every(i => clearCost(v, p, i) === 2) ? 2 : 1;
+    o.clear.wx = o.clear.cost > 1 ? 'rain' : '';
+    if (has(p, 1)) {
+      // a Reformer's Clear sweeps a layer off their hex and every hex around it, in one go (2 actions in the rain)
+      const cost = w === 'rain' ? 2 : 1;
+      o.clear = Object.assign(need(cost, near.length, 'no leaves here or around'), { targets: near.length ? [pos] : [], cost, wx: cost > 1 ? 'rain' : '' });
+    }
+    o.harvest = need(1, tile && tile.stage === 4 && tile.leaves < 2 && w !== 'rain' && !tile.harvested && p.fruit < HW.MAX_FRUIT,
+      !tile || tile.stage !== 4 ? 'no Big Tree here' : tile.leaves >= 2 ? 'sealed by leaves' : w === 'rain' ? 'not in the rain'
+        : tile.harvested ? 'picked since the Tide' : 'carrying 2 fruit');
+    o.take = need(1, tile && tile.up && tile.treasure && !p.treasure, tile && tile.up && tile.treasure ? 'carrying a treasure' : 'no treasure here');
+    o.drink = need(1, tile && tile.up && tile.kind === 'spring' && p.water < HW.MAX_WATER, tile && tile.up && tile.kind === 'spring' ? 'already full' : 'no spring here');
+    return o;
+  }
+  return { has, wxOf, tileOf, sealed, moveTargets, canPass, chainOf, reachable, clearCost, targetsFor, turnOptions };
+})();
+
 HW.startTimers();

@@ -64,8 +64,9 @@ func simReport(t *testing.T, players int, s *simStats) {
 	fmt.Fprintf(&b, "shares per won game: %.1f (%s)\n", total, strings.Join(parts, ", "))
 	fmt.Fprintf(&b, "goal reached by round (won games): trees %.1f, fruit %.1f, treasures %.1f\n",
 		s.doneTrees/w, s.doneFruit/w, s.doneTreasure/w)
-	fmt.Fprintf(&b, "rough length: %.0f minutes (1.5 min a share, 1.5 a round, 15 s an action)\n",
-		total*1.5+s.rounds/w*1.5+s.actions/w*0.25)
+	// everyone plays the round at once (El, 2026-10-09): a round is about a minute of play, then the Tide
+	fmt.Fprintf(&b, "rough length: %.0f minutes (1.5 min a share, 2.5 a round: everyone's actions at once, then the Tide)\n",
+		total*1.5+s.rounds/w*2.5)
 	fmt.Fprintf(&b, "all games: sealed hexes at the end %.1f, lowest water seen %.2f\n", s.sealedAtEnd/n, s.lowestWater/n)
 	t.Log(b.String())
 }
@@ -187,17 +188,21 @@ func (b *bot) act(p *Player, typ string, a Action) bool {
 func (b *bot) turn(p *Player) int {
 	g := b.g
 	spent := 0
-	for guard := 1; g.Phase == PhaseTurn && g.Turn.Player == p.ID && guard <= 12; guard++ {
-		before := g.Turn.Actions
+	for guard := 1; g.playing(p) == nil && guard <= 12; guard++ {
+		before := g.turnOf(p).Actions
 		if !b.step(p) || g.Phase != PhaseTurn {
 			break
 		}
-		spent += before - g.Turn.Actions
-		if g.Turn.Actions == before && guard > 8 {
+		t := g.turnOf(p)
+		if t == nil {
+			break
+		}
+		spent += before - t.Actions
+		if t.Actions == before && guard > 8 {
 			break
 		}
 	}
-	if g.Phase == PhaseTurn {
+	if g.playing(p) == nil {
 		b.act(p, "endTurn", Action{})
 	}
 	return spent
@@ -281,7 +286,7 @@ func (b *bot) step(p *Player) bool {
 			}
 		}
 	}
-	if g.Turn.Actions < 1 {
+	if t := g.turnOf(p); t == nil || t.Actions < 1 {
 		return false
 	}
 	// 0. A teammate is out of water: the nearest one who can spare it walks over.

@@ -187,11 +187,15 @@ func (p *Player) has(t int) bool {
 	return false
 }
 
+// TurnState is one player's turn in the round. Everyone plays at once, from
+// their phone or through the Keeper (El, 2026-10-09); the Forest Tide waits
+// until the last of them has ended their turn.
 type TurnState struct {
 	Player         string `json:"player"`
 	Actions        int    `json:"actions"`
 	EnthusiastUsed bool   `json:"enthusiastUsed"`
 	Investigated   bool   `json:"investigated"`
+	Done           bool   `json:"done"`
 }
 
 // Share is one person speaking (or, for a treasure, the whole table). Shares
@@ -218,36 +222,40 @@ type Share struct {
 type Event map[string]any
 
 type Game struct {
-	Rules       string           `json:"rules"`
-	Code        string           `json:"code"`
-	HostSecret  string           `json:"hostSecret"`
-	Phase       string           `json:"phase"`
-	Players     []*Player        `json:"players"`
-	Order       []string         `json:"order"`
-	TurnIdx     int              `json:"turnIdx"`
-	Round       int              `json:"round"`
-	Tide        int              `json:"tide"`
-	Result      string           `json:"result"`    // "", won, lost, ended (closed early by the Keeper)
-	EndedAt     int64            `json:"endedAt"`   // unix seconds when Result was set; photos go 2 hours later
-	CreatedAt   int64            `json:"createdAt"` // unix seconds; 0 for games made before it was noted
-	Tiles       []*Tile          `json:"tiles"`     // index 0 (the World Tree) is nil
-	Weather     [6]string        `json:"weather"`
-	NextWeather [6]string        `json:"nextWeather"`
-	Breath      []Drift          `json:"breath"` // the next Forest Breath, rolled ahead
-	Turn        *TurnState       `json:"turn"`
-	Shares      []*Share         `json:"shares"` // the queue; [0] is open
-	ShareSeq    int              `json:"shareSeq"`
-	Placed      []string         `json:"placed"` // treasures on the World Tree
-	Slide       int              `json:"slide"`  // the briefing slide every screen shows
-	Decks       map[string][]int `json:"decks"`
-	Chain       []string         `json:"chain"`
-	ChainIdx    int              `json:"chainIdx"`
-	Log         []string         `json:"log"`
-	Events      []Event          `json:"events"`
-	EventSeq    int              `json:"eventSeq"`
-	TimerEnd    int64            `json:"timerEnd"`
-	TimerLabel  string           `json:"timerLabel"`
-	TimerShare  int              `json:"timerShare"` // the share the running timer belongs to (0: none)
+	Rules       string                `json:"rules"`
+	Code        string                `json:"code"`
+	HostSecret  string                `json:"hostSecret"`
+	Phase       string                `json:"phase"`
+	Players     []*Player             `json:"players"`
+	Order       []string              `json:"order"`
+	TurnIdx     int                   `json:"turnIdx"` // entering: whose turn to enter
+	Round       int                   `json:"round"`
+	Tide        int                   `json:"tide"`
+	Result      string                `json:"result"`    // "", won, lost, ended (closed early by the Keeper)
+	EndedAt     int64                 `json:"endedAt"`   // unix seconds when Result was set; photos go 2 hours later
+	CreatedAt   int64                 `json:"createdAt"` // unix seconds; 0 for games made before it was noted
+	Tiles       []*Tile               `json:"tiles"`     // index 0 (the World Tree) is nil
+	Weather     [6]string             `json:"weather"`
+	NextWeather [6]string             `json:"nextWeather"`
+	Breath      []Drift               `json:"breath"` // the next Forest Breath, rolled ahead
+	Turns       map[string]*TurnState `json:"turns"`  // this round's turn of each player
+	// OldTurn is the single turn a game saved before concurrent rounds had;
+	// migrate turns it into Turns.
+	OldTurn    *TurnState       `json:"turn,omitempty"`
+	Rot        int              `json:"rot"`    // the side the map is seen from, in sixths of a turn (the Keeper turns it; phones follow)
+	Shares     []*Share         `json:"shares"` // the queue; [0] is open
+	ShareSeq   int              `json:"shareSeq"`
+	Placed     []string         `json:"placed"` // treasures on the World Tree
+	Slide      int              `json:"slide"`  // the briefing slide every screen shows
+	Decks      map[string][]int `json:"decks"`
+	Chain      []string         `json:"chain"`
+	ChainIdx   int              `json:"chainIdx"`
+	Log        []string         `json:"log"`
+	Events     []Event          `json:"events"`
+	EventSeq   int              `json:"eventSeq"`
+	TimerEnd   int64            `json:"timerEnd"`
+	TimerLabel string           `json:"timerLabel"`
+	TimerShare int              `json:"timerShare"` // the share the running timer belongs to (0: none)
 	// TimerWait is a share's own timer (seconds) waiting for its card to show on
 	// the Keeper screen, after the board's animation (a treasure takes a few
 	// seconds to rise): "shareShown" starts it, so nobody loses seconds.
@@ -769,7 +777,17 @@ func (g *Game) another(by *Player) error {
 
 // ---- entering ----
 
+// current is whose turn it is to enter; during play, the first player in
+// seat order still playing this round (the one the Keeper taps for by default).
 func (g *Game) current() *Player {
+	if g.Phase == PhaseTurn {
+		for _, id := range g.Order {
+			if t := g.Turns[id]; t != nil && !t.Done {
+				return g.player(id)
+			}
+		}
+		return nil
+	}
 	if g.TurnIdx < 0 || g.TurnIdx >= len(g.Order) {
 		return nil
 	}
@@ -798,28 +816,76 @@ func (g *Game) enter(me *Player, value, hex int) error {
 	if g.TurnIdx >= len(g.Order) {
 		g.Phase = PhaseTurn
 		g.TurnIdx, g.Round = 0, 1
-		g.newTurn()
-		g.logf("Round 1.")
+		g.newRound()
+		g.logf("Round 1: everyone plays at once.")
 	}
 	return nil
 }
 
 // ---- turns ----
 
-func (g *Game) newTurn() {
-	g.Turn = &TurnState{Player: g.Order[g.TurnIdx], Actions: ActionsPerTurn}
+// newRound gives everyone a fresh turn: they all play at once.
+func (g *Game) newRound() {
+	g.Turns = map[string]*TurnState{}
+	for _, id := range g.Order {
+		g.Turns[id] = &TurnState{Player: id, Actions: ActionsPerTurn}
+	}
 	g.Undo = nil
 	g.clearTimer()
 }
 
-func (g *Game) spend(n int) error {
-	if g.Turn.Actions < n {
-		if n > 1 && g.Turn.Actions > 0 {
+// turnOf is p's turn this round (nil outside play).
+func (g *Game) turnOf(p *Player) *TurnState {
+	if g.Phase != PhaseTurn || p == nil {
+		return nil
+	}
+	return g.Turns[p.ID]
+}
+
+// playing says whether p is still playing this round, or why not.
+func (g *Game) playing(p *Player) error {
+	t := g.turnOf(p)
+	if t == nil {
+		return errors.New("not now")
+	}
+	if t.Done {
+		return fmt.Errorf("%s has ended their turn this round", p.Name)
+	}
+	return nil
+}
+
+// migrate brings a game saved before concurrent rounds up to date: the ones
+// before the turn it was on have played this round, the rest still play.
+func (g *Game) migrate() {
+	old := g.OldTurn
+	g.OldTurn = nil
+	if g.Phase != PhaseTurn || g.Turns != nil {
+		return
+	}
+	g.newRound()
+	for i, id := range g.Order {
+		if i < g.TurnIdx {
+			g.Turns[id].Done = true
+		} else if old != nil && old.Player == id {
+			old.Done = false
+			g.Turns[id] = old
+		}
+	}
+	g.TurnIdx = 0
+}
+
+func (g *Game) spend(p *Player, n int) error {
+	t := g.turnOf(p)
+	if t == nil {
+		return errors.New("not now")
+	}
+	if t.Actions < n {
+		if n > 1 && t.Actions > 0 {
 			return fmt.Errorf("that costs %d actions here", n)
 		}
 		return errors.New("no actions left this turn")
 	}
-	g.Turn.Actions -= n
+	t.Actions -= n
 	return nil
 }
 
@@ -830,7 +896,7 @@ func (g *Game) canEnter(p *Player, j int) bool {
 // doubleStep says whether an Enthusiast may reach `to` with this turn's one
 // 2-hex move: not from fog, and neither hex sealed or in fog.
 func (g *Game) doubleStep(p *Player, to int) bool {
-	if !p.has(Enthusiast) || g.Turn.EnthusiastUsed || g.wx(p.Pos) == "fog" || to == p.Pos {
+	if t := g.turnOf(p); !p.has(Enthusiast) || t == nil || t.EnthusiastUsed || g.wx(p.Pos) == "fog" || to == p.Pos {
 		return false
 	}
 	if to < 0 || to >= len(Board) || g.sealed(to) || g.wx(to) == "fog" {
@@ -863,11 +929,11 @@ func (g *Game) move(me *Player, to int, bring []string) error {
 	if err != nil {
 		return err
 	}
-	if err := g.spend(1); err != nil {
+	if err := g.spend(me, 1); err != nil {
 		return err
 	}
 	if two {
-		g.Turn.EnthusiastUsed = true
+		g.turnOf(me).EnthusiastUsed = true
 	}
 	from := me.Pos
 	movers := append([]*Player{me}, mates...)
@@ -991,18 +1057,18 @@ func (g *Game) explore(me *Player) error {
 	if g.wx(me.Pos) == "fog" {
 		cost = 2
 	}
-	if err := g.spend(cost); err != nil {
+	if err := g.spend(me, cost); err != nil {
 		return err
 	}
 	t.Up = true
-	g.event("flip", Event{"hex": me.Pos})
+	g.event("flip", Event{"hex": me.Pos, "pid": me.ID})
 	found := g.turnUp(me, t.Kind) // a sealed find (find.go)
 	switch t.Kind {
 	case "treasure":
 		tr := treasureByID(t.Treasure)
 		me.Found = append(me.Found, tr.ID)
 		g.logf("%s explores and finds %s %s!", me.Name, tr.Icon, tr.Name)
-		g.event("treasure", Event{"hex": me.Pos, "treasure": tr.ID})
+		g.event("treasure", Event{"hex": me.Pos, "treasure": tr.ID, "pid": me.ID})
 		// everyone answers, one at a time, starting with the finder and going round the table
 		start := 0
 		for k, id := range g.Order {
@@ -1058,7 +1124,7 @@ func (g *Game) sow(me *Player) error {
 	if !sowable(g.tile(me.Pos)) {
 		return errors.New("sow on an explored, empty hex with nothing growing")
 	}
-	if err := g.spend(1); err != nil {
+	if err := g.spend(me, 1); err != nil {
 		return err
 	}
 	t := g.Tiles[me.Pos]
@@ -1066,7 +1132,7 @@ func (g *Game) sow(me *Player) error {
 	if me.has(Achiever) {
 		t.Stage = 2
 	}
-	g.event("grow", Event{"hex": me.Pos, "stage": t.Stage})
+	g.event("grow", Event{"hex": me.Pos, "stage": t.Stage, "pid": me.ID})
 	if t.Stage == 2 {
 		g.logf("%s sows a seed and it springs up as a Sprout.", me.Name)
 	} else {
@@ -1098,12 +1164,12 @@ func (g *Game) water(me *Player, hex int) error {
 	if me.Water < 1 {
 		return fmt.Errorf("%s has no water", me.Name)
 	}
-	if err := g.spend(1); err != nil {
+	if err := g.spend(me, 1); err != nil {
 		return err
 	}
 	me.Water--
 	t.Stage++
-	g.event("grow", Event{"hex": j, "stage": t.Stage})
+	g.event("grow", Event{"hex": j, "stage": t.Stage, "pid": me.ID})
 	g.logf("%s waters it: %s.", me.Name, StageNames[t.Stage])
 	return nil
 }
@@ -1117,11 +1183,11 @@ func (g *Game) tend(me *Player, hex int) error {
 	if t == nil || t.Stage != 3 || t.Leaves >= 2 {
 		return errors.New("tend a Sapling that isn't sealed")
 	}
-	if err := g.spend(1); err != nil {
+	if err := g.spend(me, 1); err != nil {
 		return err
 	}
 	t.Stage = 4
-	g.event("grow", Event{"hex": j, "stage": 4})
+	g.event("grow", Event{"hex": j, "stage": 4, "pid": me.ID})
 	g.logf("%s tends the Sapling: a Big Tree in %s!", me.Name, Values[Board[j].Sector].Name)
 	return nil
 }
@@ -1144,11 +1210,11 @@ func (g *Game) clear(me *Player, hex int) error {
 	if g.wx(hex) == "rain" {
 		cost = 2
 	}
-	if err := g.spend(cost); err != nil {
+	if err := g.spend(me, cost); err != nil {
 		return err
 	}
 	t.Leaves--
-	g.event("clear", Event{"hex": hex})
+	g.event("clear", Event{"hex": hex, "pid": me.ID})
 	g.logf("%s clears dead leaves.", me.Name)
 	return nil
 }
@@ -1170,13 +1236,13 @@ func (g *Game) sweep(me *Player) error {
 	if g.wx(me.Pos) == "rain" {
 		cost = 2
 	}
-	if err := g.spend(cost); err != nil {
+	if err := g.spend(me, cost); err != nil {
 		return err
 	}
 	for _, j := range hexes {
 		g.Tiles[j].Leaves--
 	}
-	g.event("sweep", Event{"hex": me.Pos, "hexes": hexes})
+	g.event("sweep", Event{"hex": me.Pos, "hexes": hexes, "pid": me.ID})
 	g.logf("%s sweeps dead leaves off %s.", me.Name, plural(len(hexes), "hex", "hexes"))
 	return nil
 }
@@ -1195,7 +1261,7 @@ func (g *Game) harvest(me *Player) error {
 	if me.Fruit >= MaxFruit {
 		return fmt.Errorf("you can carry %d fruit", MaxFruit)
 	}
-	if err := g.spend(1); err != nil {
+	if err := g.spend(me, 1); err != nil {
 		return err
 	}
 	t.Harvested = true
@@ -1216,7 +1282,7 @@ func (g *Game) take(me *Player) error {
 	if me.Treasure != "" {
 		return errors.New("you can carry 1 treasure")
 	}
-	if err := g.spend(1); err != nil {
+	if err := g.spend(me, 1); err != nil {
 		return err
 	}
 	me.Treasure, t.Treasure = t.Treasure, ""
@@ -1234,7 +1300,7 @@ func (g *Game) drink(me *Player) error {
 	if me.Water >= MaxWater {
 		return errors.New("already full")
 	}
-	if err := g.spend(1); err != nil {
+	if err := g.spend(me, 1); err != nil {
 		return err
 	}
 	me.Water = MaxWater
@@ -1277,13 +1343,13 @@ func (g *Game) inChain(p *Player) bool {
 	return false
 }
 
-// pass is free: on your own turn, water, fruit or a treasure to a teammate you can reach.
+// pass is free: until you end your turn, water, fruit or a treasure to a teammate you can reach.
 func (g *Game) pass(a, b *Player, item string) error {
-	if g.Phase != PhaseTurn || g.Turn == nil {
+	if g.Phase != PhaseTurn {
 		return errors.New("pass things during the game")
 	}
-	if g.Turn.Player != a.ID {
-		return fmt.Errorf("only %s can pass now, on their turn", g.current().Name)
+	if err := g.playing(a); err != nil {
+		return err
 	}
 	if b == nil || b == a {
 		return errors.New("choose a teammate to pass to")
@@ -1333,33 +1399,38 @@ func (g *Game) investigate(me *Player, sector int) error {
 	if !me.has(Investigator) {
 		return errors.New("only an Investigator looks ahead")
 	}
-	if g.Phase != PhaseTurn || g.Turn == nil || g.Turn.Player != me.ID {
+	t := g.turnOf(me)
+	if t == nil || t.Done {
 		return errors.New("look during your own turn")
 	}
-	if g.Turn.Investigated {
+	if t.Investigated {
 		return errors.New("you've looked once this round")
 	}
 	if sector < 0 || sector > 5 {
 		return errors.New("choose a sector")
 	}
-	g.Turn.Investigated = true
+	t.Investigated = true
 	me.Peeks = append(me.Peeks, Peek{Type: "weather", Hex: -1, Sector: sector, Weather: g.NextWeather[sector],
 		Round: g.Round, Tide: g.Tide})
 	return nil
 }
 
-func (g *Game) endTurn() {
-	g.TurnIdx++
-	if g.TurnIdx >= len(g.Order) {
-		g.forestTide()
-		if g.Phase != PhaseTurn {
+// endTurn ends p's turn this round; the last one to end it brings the Forest Tide.
+func (g *Game) endTurn(p *Player) {
+	g.turnOf(p).Done = true
+	g.logf("%s ends their turn.", p.Name)
+	for _, t := range g.Turns {
+		if !t.Done {
 			return
 		}
-		g.TurnIdx = 0
-		g.Round++
-		g.logf("Round %d.", g.Round)
 	}
-	g.newTurn()
+	g.forestTide()
+	if g.Phase != PhaseTurn {
+		return
+	}
+	g.Round++
+	g.logf("Round %d.", g.Round)
+	g.newRound()
 }
 
 // forestTide runs after everyone's turn: new weather, rain grows plants, sun
@@ -1495,7 +1566,7 @@ func (g *Game) end(result string) {
 
 func (g *Game) toGuess() {
 	g.Phase = PhaseGuess
-	g.Turn = nil
+	g.Turns = nil
 	g.Undo = nil
 	g.clearTimer()
 	g.logf("Everyone: guess who was your Secret Owl.")
@@ -1586,7 +1657,15 @@ func (g *Game) Apply(a Action) error {
 	if me == nil || me.Secret != a.Secret {
 		return errors.New("not recognised: rejoin the game")
 	}
-	return g.playerAction(me, a)
+	if err := g.playerAction(me, a); err != nil {
+		return err
+	}
+	if keeperActs[a.Type] {
+		// A player played from their phone: the Keeper's Undo would take that
+		// back too, so it goes (the Keeper doesn't undo players' own moves).
+		g.Undo = nil
+	}
+	return nil
 }
 
 // keeperActs lists the player actions the Keeper may take for a player.
@@ -1673,6 +1752,9 @@ func (g *Game) hostAction(a Action) error {
 		p.Photo = 0
 	case "timer":
 		g.setTimer(a.N, "Timer")
+	case "rotate":
+		// The Keeper turned the map on the big screen: the phones' maps turn with it.
+		g.Rot = ((a.N % 6) + 6) % 6
 	case "shareShown":
 		g.shareShown(a.N)
 	case "undo":
@@ -1728,12 +1810,9 @@ func (g *Game) playerAction(me *Player, a Action) error {
 		return err
 	}
 
-	// The rest is the current player's own turn.
-	if g.Phase != PhaseTurn || g.Turn == nil {
-		return errors.New("not now")
-	}
-	if g.Turn.Player != me.ID {
-		return fmt.Errorf("it's %s's turn", g.current().Name)
+	// The rest is the player's own turn: everyone plays the round at once.
+	if err := g.playing(me); err != nil {
+		return err
 	}
 	var err error
 	switch a.Type {
@@ -1756,7 +1835,7 @@ func (g *Game) playerAction(me *Player, a Action) error {
 	case "drink":
 		err = g.drink(me)
 	case "endTurn":
-		g.endTurn()
+		g.endTurn(me)
 		return nil
 	}
 	if err == nil {

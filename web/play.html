@@ -165,6 +165,29 @@ body.wtp { margin: 0; min-height: 100vh; color: var(--p-cream); font: 16px/1.42 
 .spot > div { flex: 1; min-width: 0; }
 .leaves { display: inline-flex; gap: 2px; vertical-align: middle; }
 .turnrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+/* Your turn: the flat map (turned like the big screen) and the action buttons under it. */
+.pmap { display: block; width: calc(100% + 20px); margin: 6px -10px 4px; height: auto; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  background: radial-gradient(closest-side, #2c5a34, #1d3d26); border-radius: 18px; box-shadow: inset 0 0 0 3px rgba(0,0,0,.18); }
+.pmap text { font-family: var(--read); pointer-events: none; }
+.maphint { margin: 6px 0 0 !important; min-height: 2.6em; }
+.linkbtn { appearance: none; border: 0; background: none; padding: 0 2px; font: inherit; font-weight: 900; color: #1f7a48; text-decoration: underline; cursor: pointer; }
+.selbar { margin: 4px 0 8px; padding: 9px 12px; border-radius: 14px; background: var(--p-well); border: 2px solid var(--p-well-line); }
+.selbar > span { display: block; font-weight: 900; }
+.selbar > small { display: block; color: var(--p-ink2); }
+.selbar .tb { margin-top: 8px; }
+.acts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0 2px; }
+.abtn { appearance: none; display: flex; flex-direction: column; align-items: center; gap: 1px; min-height: 76px; padding: 6px 4px 5px; border-radius: 16px; cursor: pointer;
+  font: 800 15px/1.1 var(--read); color: #4a2a17; background: linear-gradient(#fffaf0, #efdcb4); border: 3px solid #8a5a2c; box-shadow: 0 4px 0 #8a5a2c; }
+.abtn small { font-size: 11px; font-weight: 800; color: #8a5418; min-height: 12px; }
+.abtn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 #8a5a2c; }
+.abtn.sel { background: linear-gradient(#ffeaa0, #f6c445); border-color: #8a5418; box-shadow: 0 4px 0 #8a5418, 0 0 0 3px rgba(255,214,90,.6); }
+.abtn.no { opacity: .42; filter: grayscale(.7); }
+.abtn:disabled { opacity: .6; }
+.passp { margin: 8px 0; padding: 8px 10px; border-radius: 14px; background: #e6f4ff; border: 2px solid #8fc3e8; }
+.prow { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+.prow > span { flex: 1; font-weight: 900; }
+.pitem { appearance: none; width: 46px; height: 46px; display: grid; place-items: center; border-radius: 12px; background: #fff; border: 2px solid #8fc3e8; box-shadow: 0 3px 0 #5d9cc9; cursor: pointer; }
+.pitem:disabled { opacity: .35; box-shadow: none; }
 .vals { display: grid; gap: 7px; margin-top: 10px; }
 .val { display: flex; align-items: center; gap: 10px; padding: 6px 10px 6px 6px; border-radius: 15px; background: #fffaf0; border: 2px solid var(--p-well-line); }
 .val b { display: block; font: 18px/1.1 var(--toon); font-weight: 400; color: #4a2a17; }
@@ -421,7 +444,8 @@ const mySeat = pid && loadSeats()[pid];
 if (mySeat) creds = { pid, secret: mySeat.secret };
 
 // Local, unsent choices that survive a redraw.
-const ui = { color: '', owlOpen: false, owlShown: false, guessPick: '', busy: '', photoChecked: false, screen: '' };
+const ui = { color: '', owlOpen: false, owlShown: false, guessPick: '', busy: '', photoChecked: false, screen: '',
+  sel: null, mode: '', pass: false, confirmEnd: false, tscope: '' };   // sel, mode, pass: your turn's map and buttons
 
 // ---------- lookups (own copies, so the board rewrite can't break the phone) ----------
 const V = () => HW.view;
@@ -635,13 +659,14 @@ function joinPreview() {
 }
 
 // ---------- game ----------
-// Phones down: the phone shows only what is yours (pack, roles, private looks,
-// your Secret Owl) and the three private actions: trust, Investigator look, guess.
+// The phone shows what is yours (pack, roles, private looks, your Secret Owl), your turn's map and actions
+// (everyone plays the round at once), and the private actions: trust, Investigator look, guess. When someone
+// shares, it shows only the share and the trust acorn: phones down, eyes up.
 function renderGame(v) {
   const me = player(v.me.id), mv = v.me;
   if (!me) return;
   const inPlay = v.phase === 'enter' || v.phase === 'turn';
-  const myTurn = (v.phase === 'turn' && v.turn?.player === me.id) || (v.phase === 'enter' && v.current === me.id);
+  const myTurn = HW.playing(v, me) || (v.phase === 'enter' && v.current === me.id);
   const state = myTurn && !v.share ? 'turn' : inPlay && me.pos >= 0 && me.water === 0 ? 'dry' : '';
   const owlKnown = !!(mv.target || mv.targetName);
   const phaseName = { lobby: 'Gathering in the lobby', brief: 'The briefing', enter: 'Entering the forest', turn: `Round ${v.round || 1}${v.tide ? ` · after ${v.tide} Tide${v.tide > 1 ? 's' : ''}` : ''}`,
@@ -664,7 +689,7 @@ function renderGame(v) {
   main.style.cssText = m.color ? `--kc:${m.color};--kd:${ART.dark(m.color, .42)}` : '';
   HW.patch(main, m.html);
   // A new moment (phase, share, whose turn) pops in; small updates don't.
-  const screen = [v.phase, v.share?.idx, v.turn?.player, v.current, v.tribute?.idx, HW.slideId(v)].join('|');
+  const screen = [v.phase, v.share?.idx, v.phase === 'turn' ? v.round + '|' + !!HW.turnOf(v, me)?.done : v.current, v.tribute?.idx, HW.slideId(v)].join('|');
   if (screen !== ui.screen) {
     const first = !ui.screen;
     ui.screen = screen; main.classList.remove('pop'); void main.offsetWidth; main.classList.add('pop');
@@ -724,7 +749,7 @@ function briefPanel(v, me, mv) {
   if (id === 'powers') return { html: `${sign('Your powers', '#3f9e9a')}
     <p class="lead">The big screen shows all nine. These are yours:</p>
     ${me.types.map(t => { const r = roleOf(t); return `<div class="role">${A.role(t, 52)}<div><b>${t} · ${esc(r?.name || '')}</b><span>${esc(r?.text || '')}</span></div></div>`; }).join('')}
-    <p class="small">Always on. When you use one, say it aloud so the Keeper can tap it.</p>` };
+    <p class="small">Always on: they work by themselves when you play on your phone.</p>` };
   if (id === 'owl' && (mv.target || mv.targetName)) return { cls: 'night', html: `${sign('Your Secret Owl', '#7a5aa8')}
     <div class="owlrow">${A.icon('owl', 64)}<p>You are the Secret Owl of <button class="secret ${ui.owlShown ? 'shown' : ''}" data-act="owlname" aria-label="${ui.owlShown ? '' : 'Tap to show the name'}">${esc(mv.targetName || pname(mv.target))}</button>${ui.owlShown ? '' : ' <small>(tap to show)</small>'}</p></div>
     <p class="small">Keep it to yourself. Watch them quietly all game: something they love, something that shaped them, something they hope for. The owl button at the top keeps it for later.</p>` };
@@ -745,22 +770,146 @@ function enterPanel(v, me) {
 }
 
 const leaves = (left, per) => `<span class="leaves" role="img" aria-label="${left} of ${per} actions left">${Array.from({ length: per }, (_, i) => LEAF(i < left, 32)).join('')}</span>`;
+
+// ---------- your turn: everyone plays the round at once, on their own phone ----------
+// The map is flat and plain, turned to the side the Keeper turned the big screen to (view.rot). Tap a glowing hex
+// to move there; the buttons under it act on your own hex. The Keeper can still tap for anyone on the big screen.
+const R = HW.rules;
+const SQ3 = Math.sqrt(3);
+const turnQR = (q, r, k) => { for (let n = 0; n < k; n++) [q, r] = [-r, q + r]; return [q, r]; };
+const hexXY = (h, k) => { const [q, r] = turnQR(h.q, h.r, k); return [SQ3 * (q + r / 2), 1.5 * r]; };
+const CORNER = [0, 1, 2, 3, 4, 5].map(k => { const a = Math.PI / 180 * (60 * k - 30); return [Math.cos(a), Math.sin(a)]; });
+const hexPath = (x, y, s = .97) => 'M' + CORNER.map(([a, b]) => `${(x + a * s).toFixed(3)},${(y + b * s).toFixed(3)}`).join('L') + 'Z';
+const at = (x, y, k, inner) => `<g transform="translate(${x.toFixed(3)},${y.toFixed(3)}) scale(${k})">${inner}</g>`;
+const PLANT = (st, sec) => keep(`pl${st}|${sec}`, () => ART.plant(st, sec, { seed: 3 }));
+const MOSS = '#3f8f35', DIRT = '#c4925c';
+const ACTS = ['explore', 'sow', 'water', 'tend', 'clear', 'harvest', 'take', 'drink', 'pass'];
+const ACT_NAME = { explore: 'Explore', sow: 'Sow', water: 'Water', tend: 'Tend', clear: 'Clear', harvest: 'Harvest', take: 'Take', drink: 'Drink', pass: 'Pass' };
+const DONE = { explore: 'You explore.', sow: 'You sow a seed.', water: 'You water it.', tend: 'You tend it.', clear: 'You clear dead leaves.', harvest: 'You harvest a fruit.', take: 'You take the treasure.', drink: 'You drink.' };
+
+// What is on a hex, in words.
+function hexWhat(v, i) {
+  const t = v.tiles[i] || {};
+  if (!i) return 'the World Tree';
+  const tr = t.treasure ? treasureOf(t.treasure) : null;
+  const what = !t.up ? (t.hint === 'something' ? 'face down · something lies here' : t.hint === 'nothing' ? 'face down · nothing there' : 'face down')
+    : t.stage ? (v.stages[t.stage] || '') + (t.stage === 4 && t.harvested ? ' (picked)' : '') : t.kind === 'spring' ? 'a spring' : tr ? esc(tr.name) : 'empty';
+  return what + (t.leaves >= 2 ? ' · sealed by leaves' : t.leaves ? ' · dead leaves' : '');
+}
+
+function mapSVG(v, me, o) {
+  const k = v.rot || 0, xy = v.hexes.map(h => hexXY(h, k));
+  let tiles = '', marks = '', rims = '', ppl = '', hits = '', edge = '';
+  for (let i = 0; i < v.hexes.length; i++) {
+    const h = v.hexes[i], [x, y] = xy[i], t = v.tiles[i] || {}, d = hexPath(x, y);
+    if (!i) {
+      tiles += `<path d="${d}" fill="#e7c35c" stroke="#8a5418" stroke-width=".08"/>`;
+      marks += at(x, y + .42, .0062, keep('wt' + (v.result === 'won'), () => ART.worldTree({ awake: v.result === 'won' })));
+    } else {
+      const col = v.values[h.sector]?.color || '#888';
+      // moss (face down) or dirt (explored), edged in the colour of its value
+      tiles += `<path d="${d}" fill="${t.up ? DIRT : MOSS}"/><path d="${d}" fill="${col}" opacity=".14"/>`
+        + `<path d="${hexPath(x, y, .85)}" fill="none" stroke="${col}" stroke-width=".15"/>`;
+      if (t.up && t.stage) marks += at(x, y + .38, .0105, PLANT(t.stage, h.sector));
+      else if (t.up && t.kind === 'spring') marks += at(x, y - .05, .036, ART.drop());
+      else if (t.up && t.treasure) marks += at(x, y - .05, .028, ART.treasure(t.treasure));
+      else if (!t.up && t.hint === 'something') marks += `<text x="${x.toFixed(2)}" y="${(y + .22).toFixed(2)}" font-size=".7" text-anchor="middle" fill="#ffe680" stroke="#6b4a10" stroke-width=".06" paint-order="stroke">✦</text>`;
+      if (t.leaves >= 2) marks += `<path d="${d}" fill="#3b2a1a" opacity=".55"/>` + at(x - .25, y - .1, .045, ART.deadLeaf({ seed: i })) + at(x + .22, y + .12, .045, ART.deadLeaf({ seed: i + 3 }));
+      else if (t.leaves) marks += at(x + .3, y - .32, .04, ART.deadLeaf({ seed: i }));
+    }
+    const mine = me.pos === i, sel = o.sel === i, one = o.one.has(i), two = o.two.has(i), tgt = o.targets.has(i);
+    if (one || two || tgt) rims += `<path d="${hexPath(x, y, .9)}" fill="${tgt ? 'rgba(127,227,255,.22)' : 'rgba(255,240,150,.2)'}" stroke="${tgt ? '#7fe3ff' : '#fff090'}" stroke-width=".13"${two ? ' stroke-dasharray=".25 .16"' : ''}/>`;
+    if (mine) rims += `<path d="${hexPath(x, y, .93)}" fill="none" stroke="#ffb020" stroke-width=".16"/>`;
+    if (sel) rims += `<path d="${hexPath(x, y, .86)}" fill="rgba(255,255,255,.3)" stroke="#fff" stroke-width=".18"/>`;
+    hits += `<path d="${d}" fill="transparent" data-act="hex" data-i="${i}"/>`;
+  }
+  // players: a coloured counter with their initial, you with a gold ring
+  const by = {};
+  for (const p of v.players) if (p.pos >= 0) (by[p.pos] ||= []).push(p);
+  for (const [pos, ps] of Object.entries(by)) {
+    const [x, y] = xy[pos], n = ps.length, r = n > 3 ? .25 : n > 1 ? .32 : .38;
+    ps.sort((a, b) => (a.id === me.id) - (b.id === me.id)).forEach((p, j) => {
+      const row = n > 3 ? j % 2 : 0, col = n > 3 ? Math.floor(j / 2) : j, cols = n > 3 ? Math.ceil(n / 2) : n;
+      const dx = cols === 1 ? 0 : (col - (cols - 1) / 2) * Math.min(.62, 1.5 / cols), dy = n > 3 ? (row ? .5 : .02) : n > 1 ? .4 : .3;
+      const you = p.id === me.id, cx = x + dx, cy = y + dy;
+      ppl += `<circle cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="${(you ? r + .05 : r).toFixed(2)}" fill="${esc(p.color)}" stroke="${you ? '#ffd23a' : '#fff'}" stroke-width="${you ? .11 : .06}"${HW.turnOf(v, p)?.done ? ' opacity=".7"' : ''}/>`
+        + `<text x="${cx.toFixed(2)}" y="${(cy + r * .38).toFixed(2)}" font-size="${(r * 1.15).toFixed(2)}" text-anchor="middle" fill="#fff" font-weight="900" stroke="rgba(0,0,0,.45)" stroke-width=".04" paint-order="stroke">${esc((p.name || '?').trim().charAt(0).toUpperCase())}</text>`;
+    });
+  }
+  // each value's sign and weather at its edge of the forest
+  for (let sct = 0; sct < 6; sct++) {
+    const ring = v.hexes.map((h, i) => [h, i]).filter(([h]) => h.ring === 4 && h.sector === sct);
+    if (!ring.length) continue;
+    const mx = ring.reduce((a, [, i]) => a + xy[i][0], 0) / ring.length, my = ring.reduce((a, [, i]) => a + xy[i][1], 0) / ring.length;
+    const len = Math.hypot(mx, my) || 1, ux = mx / len, uy = my / len, ex = mx + ux * 1.55, ey = my + uy * 1.55;
+    const w = v.weather[sct];
+    edge += at(ex - uy * .45, ey + ux * .45, .022, ART.valueBadge(sct)) + (w ? at(ex + uy * .45, ey - ux * .45, .024, ART.weatherBadge(w)) : '');
+  }
+  return `<svg class="pmap" viewBox="-9.6 -8.6 19.2 17.2" role="img" aria-label="The forest map">${tiles}${marks}${edge}${rims}${ppl}${hits}</svg>`;
+}
+
 function turnPanel(v, me) {
-  const t = v.turn || {};
-  const per = v.actionsPerTurn || 2;
-  const left = Math.max(0, Math.min(per, t.actions ?? per));
-  if (t.player === me.id) return { cls: 'hot', html: `${sign('Your turn', '#f2a62a')}
-    <div class="turnrow"><p class="lead" style="margin:0">Say your moves aloud.</p>${leaves(left, per)}</div>
-    <p class="small">${left} of ${per} action${per === 1 ? '' : 's'} left. The Keeper taps them on the big screen. Passing water, fruit or a treasure is free on your turn.</p>
-    ${me.water === 0 ? zeroWater() : ''}` };
-  const cur = player(t.player);
-  const nextUp = (() => { const o = v.order, i = o.indexOf(t.player); return i >= 0 && o.length ? o[(i + 1) % o.length] : ''; })();
-  return { html: `${sign(`Round ${v.round || 1}`)}
-    <div class="spot">${medal(cur, 'cur', 88, { state: 'turn', items: true })}<div><p class="lead">${esc(cur?.name || '?')}'s turn.</p>${leaves(left, per)}</div></div>
-    <p class="small">${nextUp === me.id ? "<b>You're next:</b> think about your 2 actions." : 'Phones down: help them plan out loud.'}</p>
+  const t = HW.turnOf(v, me) || {}, per = v.actionsPerTurn || 2;
+  const left = Math.max(0, Math.min(per, t.actions ?? 0)), done = !!t.done;
+  // a new round, a move or the end of your turn drops what was half picked
+  const scope = `${v.round}|${done}|${me.pos}`;
+  if (scope !== ui.tscope) { ui.tscope = scope; ui.sel = null; ui.mode = ''; ui.pass = false; ui.confirmEnd = false; }
+  const still = v.order.filter(id => !HW.turnOf(v, player(id))?.done).map(pname);
+  if (done) {
+    return { html: `${sign(`Round ${v.round || 1}`)}
+      <p class="lead">You've ended your turn.</p>
+      <p class="small">${still.length ? `Still playing: <b>${still.map(esc).join(', ')}</b>. The Forest Tide comes when everyone is done.` : 'The Forest Tide is coming.'}</p>
+      ${mapSVG(v, me, { one: new Set(), two: new Set(), targets: new Set(), sel: ui.sel })}${selInfo(v, me, null)}` };
+  }
+  const o = R.turnOptions(v, me), m = R.moveTargets(v, me);
+  const mode = ui.mode && o[ui.mode]?.ok ? ui.mode : '';
+  const targets = new Set(mode ? o[mode].targets : []);
+  const mapO = { one: new Set(mode ? [] : m.one), two: new Set(mode ? [] : m.two), targets, sel: ui.sel };
+  const hint = mode ? `Tap a glowing blue hex to <b>${mode}</b>.` : m.one.length + m.two.length ? 'Tap a glowing hex to move there, or pick an action below.' : left ? 'Pick an action below.' : 'No actions left: pass things, or end your turn.';
+  const btn = k => {
+    const x = k === 'pass' ? passOption(v, me) : o[k], cost = k === 'pass' ? 0 : x.cost || 1, sel = (k === 'pass' && ui.pass) || mode === k;
+    return `<button class="abtn${x.ok ? '' : ' no'}${sel ? ' sel' : ''}" data-act="do" data-k="${k}"${x.ok ? '' : ` data-why="${esc(x.why)}"`} ${ui.busy ? 'disabled' : ''}>
+      ${A.icon(k, 34)}<span>${ACT_NAME[k]}</span><small>${k === 'pass' ? 'free' : cost > 1 ? '2 actions' : ''}</small></button>`;
+  };
+  return { cls: 'hot', html: `${sign('Your turn', '#f2a62a')}
+    <div class="turnrow"><p class="lead" style="margin:0">Round ${v.round || 1}</p>${leaves(left, per)}</div>
+    <p class="small maphint">${hint}${mode ? ' <button class="linkbtn" data-act="cancel">Cancel</button>' : ''}</p>
+    ${mapSVG(v, me, mapO)}
+    ${selInfo(v, me, { m, mode, targets })}
+    ${ui.pass ? passPanel(v, me) : ''}
+    <div class="acts">${ACTS.map(btn).join('')}</div>
+    <button class="tb gold block" data-act="endturn" ${ui.busy ? 'disabled' : ''}>${ui.busy === 'endTurn' ? 'Ending…' : ui.confirmEnd ? `Tap again: end with ${left} action${left === 1 ? '' : 's'} left` : 'End my turn'}</button>
     ${me.water === 0 ? zeroWater() : ''}` };
 }
-const zeroWater = () => `<div class="alert"><span style="filter:grayscale(1);opacity:.6;line-height:0">${A.drop(30)}</span><span>0 water. You can't move until a teammate on your hex passes you 1 water on their turn.</span></div>`;
+
+// The hex you tapped: what is there, and what you can do with it.
+function selInfo(v, me, c) {
+  const i = ui.sel;
+  if (i == null || !v.hexes[i]) return `<div class="selbar"><span>${loc(me.pos)}</span><small>You stand here: ${hexWhat(v, me.pos)}.</small></div>`;
+  const who = v.players.filter(p => p.pos === i).map(p => p.id === me.id ? 'you' : esc(p.name));
+  let act = '';
+  if (c && !c.mode && (c.m.one.includes(i) || c.m.two.includes(i))) {
+    const mates = has(me, 8) && me.pos !== 0 ? v.players.filter(q => q.id !== me.id && q.pos === me.pos) : [];
+    act = `<button class="tb block sm" data-act="move" data-i="${i}" ${ui.busy ? 'disabled' : ''}>${A.icon('move', 30)} ${ui.busy === 'move' ? 'Moving…' : 'Move here'}${c.m.two.includes(i) ? ' (2 hexes)' : ''}</button>
+      ${mates.length ? `<p class="small">${A.role(8, 22)} ${mates.map(q => esc(q.name)).join(', ')} come${mates.length === 1 ? 's' : ''} along.</p>` : ''}`;
+  } else if (c && c.mode && c.targets.has(i)) {
+    act = `<button class="tb block sm" data-act="target" data-i="${i}" ${ui.busy ? 'disabled' : ''}>${A.icon(c.mode, 30)} ${ACT_NAME[c.mode]} here</button>`;
+  }
+  return `<div class="selbar"><span>${loc(i)}</span><small>${hexWhat(v, i)}${who.length ? ` · ${who.join(', ')}` : ''}</small>${act}</div>`;
+}
+
+// Passing is free until you end your turn: water, fruit or a treasure to a teammate you can reach.
+function passOption(v, me) {
+  const holds = me.water > 0 || me.fruit > 0 || !!me.treasure, mates = v.players.some(q => R.canPass(v, me, q));
+  return { ok: holds && mates, why: !holds ? 'nothing to pass' : R.chainOf(v, me) ? 'nobody on your hex or next to it' : 'nobody on your hex' };
+}
+function passPanel(v, me) {
+  const mates = v.players.filter(q => R.canPass(v, me, q));
+  const item = (q, k, art, ok) => `<button class="pitem" data-act="give" data-to="${esc(q.id)}" data-item="${k}" ${ok && !ui.busy ? '' : 'disabled'} aria-label="Pass ${k} to ${esc(q.name)}">${art}</button>`;
+  return `<div class="passp"><p class="small"><b>Pass</b> (free): tap what to give.</p>${mates.map(q => `<div class="prow">${medal(q, 'pass' + q.id, 40)}<span>${esc(q.name)}</span>
+    ${item(q, 'water', A.drop(26), me.water > 0 && q.water < HW.MAX_WATER)}${item(q, 'fruit', A.fruit(26), me.fruit > 0 && q.fruit < HW.MAX_FRUIT)}${item(q, 'treasure', me.treasure ? A.treasure(me.treasure, 26) : EMPTY(24), !!me.treasure && !q.treasure)}</div>`).join('')}</div>`;
+}
+const zeroWater = () => `<div class="alert"><span style="filter:grayscale(1);opacity:.6;line-height:0">${A.drop(30)}</span><span>0 water. You can't move until a teammate on your hex passes you 1 water.</span></div>`;
 
 function sharePanel(v, me) {
   const s = v.share, isMe = s.player === me.id, sp = player(s.player);
@@ -853,8 +1002,8 @@ function privatePanel(v, me, mv) {
       const w = mv.weatherPeek.weather;
       h += `<div class="note new">${A.wx(w, 44)}<span>Next weather in ${valueBadgeText(mv.weatherPeek.sector)}<b class="wxn">${esc(WX[w] || w || '?')}</b></span></div>`;
     }
-    const myTurn = v.phase === 'turn' && v.turn?.player === me.id;
-    if (myTurn && !v.turn.investigated) {
+    const myTurn = HW.playing(v, me);
+    if (myTurn && !HW.turnOf(v, me).investigated) {
       h += `<p style="margin:12px 0 2px"><b>Investigate:</b> look at one sector's next weather (once a round).</p>
         <div class="sectors">${v.values.map((x, s) => `<button class="sbtn" data-act="investigate" data-n="${s}" ${v.share || ui.busy ? 'disabled' : ''}>${A.value(s, 36)}<span>${esc(x.name)}</span></button>`).join('')}</div>
         ${v.share ? '<p class="small">You can look after the share closes.</p>' : ''}`;
@@ -885,7 +1034,7 @@ function rolesPanel(v, me) {
   if (!me.types.length) return `${sign('Your roles', '#3f9e9a')}<p class="small">The Keeper will give you 1 to 3 Enneagram types before the start.</p>`;
   return `${sign('Your roles', '#3f9e9a')}
     ${me.types.map(t => { const r = roleOf(t); return `<div class="role">${A.role(t, 52)}<div><b>${t} · ${esc(r?.name || '')}</b><span>${esc(r?.text || '')}</span></div></div>`; }).join('')}
-    <p class="small">When it matters, say it aloud: the Keeper uses it on the big screen.</p>`;
+    <p class="small">Always on: they work by themselves when you play.</p>`;
 }
 
 // How the game ended, for the guess and chain screens.
@@ -1240,6 +1389,11 @@ $('sheet').addEventListener('click', e => {
 });
 
 // ---------- taps ----------
+async function doAt(k, i) {
+  ui.mode = '';
+  if (await send(k, { hex: i }, DONE[k] || '')) ui.sel = null;
+  draw();
+}
 document.addEventListener('click', async e => {
   const b = e.target.closest('[data-act]');
   if (!b || b.disabled) return;
@@ -1270,6 +1424,44 @@ document.addEventListener('click', async e => {
     case 'another': return send('another', {}, 'Here is another question.');
     case 'investigate': { const n = +d.n; return send('investigate', { n }, `You looked at ${valueOf(n)?.name || 'the sector'}'s next weather.`); }
     case 'pick': ui.guessPick = d.id; return draw();
+    // your turn
+    case 'hex': {
+      const i = +d.i, v = V(), me = v && player(creds?.pid);
+      if (!me || v.phase !== 'turn') return;
+      if (ui.mode && R.turnOptions(v, me)[ui.mode]?.targets?.includes(i)) return doAt(ui.mode, i);
+      ui.sel = ui.sel === i ? null : i; ui.confirmEnd = false; return draw();
+    }
+    case 'cancel': ui.mode = ''; return draw();
+    case 'do': {
+      const v = V(), me = player(creds?.pid), k = d.k;
+      if (!v || !me) return;
+      ui.confirmEnd = false;
+      if (d.why) { flash(friendly(`${ACT_NAME[k]}: ${d.why}`), true); return draw(); }
+      if (k === 'pass') { ui.pass = !ui.pass; ui.mode = ''; return draw(); }
+      ui.pass = false;
+      const x = R.turnOptions(v, me)[k];
+      // one place to do it (most of the time, your own hex): straight away; more: tap one on the map
+      if (x.targets && x.targets.length > 1) { ui.mode = ui.mode === k ? '' : k; ui.sel = null; return draw(); }
+      ui.mode = '';
+      return doAt(k, x.targets ? x.targets[0] : -1);
+    }
+    case 'target': return doAt(ui.mode, +d.i);
+    case 'move': {
+      const i = +d.i;
+      if (await send('move', { hex: i }, '')) { ui.sel = null; }
+      return draw();
+    }
+    case 'give': {
+      const to = pname(d.to);
+      if (await send('pass', { target: d.to, text: d.item }, `You pass ${d.item === 'treasure' ? 'the treasure' : d.item} to ${to}.`)) ui.pass = false;
+      return draw();
+    }
+    case 'endturn': {
+      const v = V(), me = player(creds?.pid), left = HW.turnOf(v, me)?.actions || 0;
+      if (left > 0 && !ui.confirmEnd) { ui.confirmEnd = true; return draw(); }
+      ui.confirmEnd = false;
+      return send('endTurn', {}, 'Turn ended. Wait for the others.');
+    }
     case 'guess': if (!ui.guessPick) return flash('Tap a player first.', true);
       return send('guess', { target: ui.guessPick }, `Guess saved: ${pname(ui.guessPick)}`);
   }

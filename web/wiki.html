@@ -183,7 +183,7 @@ const W = [
   <li>Gives each player 1 to 3 Enneagram types in the lobby: their [[roles]].</li>
   <li>Starts the game when 6 to 12 players are in and everyone has a role.</li>
   <li>Gives the [[briefing]] on the big screen, and reads the [[forest-pact]] in it.</li>
-  <li>Taps what players say: [[entering]], every [[action]], every [[pass]], and <b>End turn</b>. A slip (the wrong hex) is taken back with <b>Undo</b> in the trail log, until the turn ends.</li>
+  <li>Taps [[entering]] for each player. During a [[round]] everyone plays on their phone, and the Keeper can play for anyone: by default the first player still playing, or any face tapped in the <b>Still playing</b> list. A slip (the wrong hex) is taken back with <b>Undo</b> in the trail log, until the round ends or a player plays from their phone.</li>
   <li>On a laptop, keys do the commonest taps: <b>M</b> Move, <b>E</b> Explore, <b>Enter</b> End turn, or the default button of whatever is open (marked ↵: <b>Done sharing</b>, <b>Next</b>…), <b>1</b> to <b>9</b> a numbered hex, <b>,</b> and <b>.</b> turn the map, <b>Ctrl+Z</b> Undo, <b>Esc</b> cancels.</li>
   <li>Can <b>turn the map</b> to see the forest from any of its six sides (the buttons in the top-left sign, or the <b>,</b> and <b>.</b> keys).</li>
   <li>Taps <b>Done sharing</b> when a [[share]] ends, and can start a [[timer]]. When a player says "not this one" to a [[ring-card]] or a [[heartwood-question]], taps <b>Another question</b>.</li>
@@ -219,39 +219,34 @@ const W = [
   <li><b>Our powers:</b> the nine [[roles]] and who holds each. Your phone shows yours.</li>
   <li><b>Side quest:</b> the [[secret-owl]]: what to notice, and what each Owl says at the end. Your phone shows whose Owl you are.</li>
   <li><b>The [[forest-pact]]</b>, read aloud.</li>
-  <li><b>How we play:</b> the turn order and the [[share|shares]]. Then <b>Enter the forest</b> starts [[entering]].</li>
+  <li><b>How we play:</b> everyone plays each round at once on their phone, and the [[share|shares]]. Then <b>Enter the forest</b> starts [[entering]].</li>
 </ol>
 <p>The Keeper may skip it, and can show the slides again during play from the Keeper tools.</p>` },
 { id: 'phones-down', cat: 'basics', icon: 'icon:phoneOff', title: 'Phones down',
-  short: 'Look at each other and at the big screen, not at your phone.',
+  short: 'When someone shares, look up: your phone waits with you.',
   body: `
-<p>Heartwood is about the people in the room. So your phone stays face down. Everything public happens on the big screen: you say what you want, and the [[keeper]] taps it.</p>
-<p>Pick your phone up only to:</p>
-<ul>
-  <li>{{acorn}} give a [[trust-acorn]] after someone else's [[share]];</li>
-  <li>{{icon:eye}} check your private looks (the [[investigator]]'s forecast);</li>
-  <li>{{icon:guess}} make your [[guess]] at the end.</li>
-</ul>
+<p>Heartwood is about the people in the room. You play your moves on your phone, but the stories are the heart of the game: when someone [[share|shares]], every phone stops and shows only the story and your [[trust-acorn]]. Look up and listen. Play goes on when the [[keeper]] taps <b>Done sharing</b>.</p>
+<p>Plan out loud while you play: the big screen shows everyone's moves.</p>
 <p>See [[your-phone]] for everything it shows.</p>` },
 
 { id: 'round', cat: 'basics', icon: 'icon:round', title: 'Round',
-  short: 'Every player takes one turn, then the Forest Tide.',
+  short: 'Everyone plays at once, then the Forest Tide.',
   body: `
-<p>In a round, every player takes one [[turn]], clockwise, in the order they joined. After the last player's turn, the [[forest-tide]] runs by itself. Then the next round begins with the first player again.</p>
+<p>In a round, every player plays their [[turn]] at the same time, on their own phone. When the last player has ended their turn, the [[forest-tide]] runs by itself. Then the next round begins, with 2 fresh actions each.</p>
 <p>A game has many rounds: often 20 to 30. The game ends the moment [[wake|the forest wakes]] or [[sleep|sleeps on]], even in the middle of a round.</p>` },
 
 { id: 'turn', cat: 'basics', icon: 'medallion:turn', title: 'Turn',
-  short: 'Up to 2 actions. Say them, and the Keeper taps them.',
+  short: 'Up to 2 actions each round, on your phone, all at once.',
   body: `
-<p>On your turn you have <b>2 [[action|actions]]</b>. Say what you want to do, and the [[keeper]] taps it on the big screen. You may use fewer. Some actions cost 2 in certain [[weather]]: [[explore]] in [[fog]], [[clear]] in [[rain]].</p>
-<p>When you are done, the Keeper taps <b>End turn</b>. After the last player of the [[round]], the [[forest-tide]] runs.</p>
+<p>Each [[round]] you have <b>2 [[action|actions]]</b>, played on your phone while everyone else plays theirs. Tap a glowing hex on your map and <b>Move here</b> to walk; the buttons under the map act on the hex you stand on. You may use fewer. Some actions cost 2 in certain [[weather]]: [[explore]] in [[fog]], [[clear]] in [[rain]]. First come, first served: if two of you reach for the same thing, the first tap gets it.</p>
+<p>When you are done, tap <b>End my turn</b>. When the last player has ended theirs, the [[forest-tide]] runs. No phone, or stuck? Say it aloud: the [[keeper]] can play for you on the big screen.</p>
 <h3>Free things</h3>
 <ul>
-  <li>[[pass|Passing]] water, fruit or a treasure costs no action, on your own turn.</li>
+  <li>[[pass|Passing]] water, fruit or a treasure costs no action, until you end your turn.</li>
   <li>[[placing|Placing]] on the [[world-tree]] happens by itself.</li>
   <li>The [[investigator]]'s weather look costs no action.</li>
 </ul>
-<p>When someone starts a [[share]], play waits until the Keeper taps <b>Done sharing</b>.</p>` },
+<p>When someone starts a [[share]], every phone shows only the story and the trust acorn, and play waits until the Keeper taps <b>Done sharing</b>.</p>` },
 
 { id: 'action', cat: 'basics', icon: 'leaf', title: 'Action',
   short: 'The nine things you can do on your turn.',
@@ -380,7 +375,7 @@ const W = [
   <li>The first time you step into Ring 3, Ring 2 or Ring 1, moving inward, you draw that [[ring-card|ring's card]].</li>
   <li>If you arrive on the [[world-tree]] with fruit or a treasure, it is placed: see [[placing]].</li>
 </ul>
-<p>The [[enthusiast]] may move 2 hexes once a turn. The [[challenger]] may bring a teammate.</p>` },
+<p>The [[enthusiast]] may move 2 hexes once a round. The [[challenger]] takes everyone standing with them.</p>` },
 
 { id: 'explore', cat: 'actions', icon: 'icon:explore', title: 'Explore',
   short: 'Turn over the face-down hex you stand on. 2 actions in fog.',
@@ -444,9 +439,9 @@ const W = [
 <p>Springs never run dry. Drinking is the only way to get water back, apart from a teammate's [[pass]].</p>` },
 
 { id: 'pass', cat: 'actions', icon: 'icon:pass', title: 'Pass',
-  short: 'Hand water, fruit or a treasure to a teammate. Free, on your own turn.',
+  short: 'Hand water, fruit or a treasure to a teammate. Free, until you end your turn.',
   body: `
-<p>Passing costs no [[action]]. On your own [[turn]], when nobody is in a [[share]], you can pass <b>water</b>, <b>fruit</b> or a <b>treasure</b> to a teammate. Only the player whose turn it is gives. Say it, and the [[keeper]] taps it.</p>
+<p>Passing costs no [[action]]. Until you end your [[turn]], when nobody is in a [[share]], you can pass <b>water</b>, <b>fruit</b> or a <b>treasure</b> to a teammate. Tap <b>Pass</b> on your phone, then what to give to whom.</p>
 <h3>Who can pass to whom</h3>
 <ul>
   <li><b>Same hex:</b> always.</li>
@@ -744,7 +739,7 @@ const W = [
 <tr><td>4 [[individualist]]</td><td>Explore shows which hexes around you hold something.</td></tr>
 <tr><td>5 [[investigator]]</td><td>See the next Forest Breath; once a round, one sector's next weather.</td></tr>
 <tr><td>6 [[loyalist]]</td><td>Plants on your hex and the 6 around it (7 in all) are safe from dead leaves.</td></tr>
-<tr><td>7 [[enthusiast]]</td><td>Once a turn, move 2 hexes for 1 action.</td></tr>
+<tr><td>7 [[enthusiast]]</td><td>Once a round, move 2 hexes for 1 action.</td></tr>
 <tr><td>8 [[challenger]]</td><td>Everyone standing with you moves with you; enter sealed hexes.</td></tr>
 <tr><td>9 [[peacemaker]]</td><td>Everyone in your chain can pass to a teammate next to them.</td></tr>
 </table></div>` },
@@ -786,7 +781,7 @@ const W = [
 <div class="box"><p><b>See which hexes the next [[forest-breath]] will hit. Once a round, see one sector's next [[weather]].</b></p></div>
 <ul>
   <li>The next Breath is always on your phone: where each drift of leaves comes from and where it lands.</li>
-  <li>The weather look: once a [[round]], during your own [[turn]], choose a sector on your phone. It costs no action.</li>
+  <li>The weather look: once a [[round]], before you end your [[turn]], choose a sector on your phone. It costs no action.</li>
 </ul>
 <p>Warn the team about sun, and about leaves heading for young plants.</p>` },
 
@@ -797,9 +792,9 @@ const W = [
 <p>Anyone keeps the plant they stand on safe; the Loyalist also guards the ring around them. Leaves still land there, and two layers still make the hex [[sealed]]. But the [[plant|plants]] do not drop a step.</p>` },
 
 { id: 'enthusiast', cat: 'roles', icon: 'role:7', title: 'Enthusiast',
-  short: 'Type 7 · joy. Once a turn, move 2 hexes for 1 action.',
+  short: 'Type 7 · joy. Once a round, move 2 hexes for 1 action.',
   body: `
-<div class="box"><p><b>Once a turn, one [[move]] may go 2 hexes, for 1 action.</b></p></div>
+<div class="box"><p><b>Once a round, one [[move]] may go 2 hexes, for 1 action.</b></p></div>
 <p>Not if your hex, the middle hex or the last hex is in [[fog]]. Not through [[sealed]] hexes.</p>` },
 
 { id: 'challenger', cat: 'roles', icon: 'role:8', title: 'Challenger',
@@ -942,11 +937,12 @@ const W = [
 
 // ───────────── Your phone
 { id: 'your-phone', cat: 'phone', icon: 'icon:phone', title: 'Your phone',
-  short: 'Face down. It only shows what is private to you.',
+  short: 'Your map and actions each round, your private things, and the trust acorn.',
   body: `
-<p>Your phone stays face down (see [[phones-down]]). Everything public happens on the big screen: you say it, and the [[keeper]] taps it.</p>
+<p>You play your [[turn]] on your phone. When someone shares, it shows only the story and the trust acorn (see [[phones-down]]).</p>
 <h3>What your phone shows</h3>
 <ul>
+  <li>{{icon:move}} Your turn: a flat map of the forest, turned the same way as the big screen, with the hexes you can move to glowing, your actions left, and the action buttons.</li>
   <li>{{icon:owl}} The colleague you watch as their [[secret-owl]].</li>
   <li>{{drop}}{{fruit}}{{treasure}} What you carry, and which [[ring|rings]] you have reached.</li>
   <li>{{icon:roles}} Your [[roles]], as a reminder.</li>
@@ -956,15 +952,15 @@ const W = [
   <li>{{acorn}} <b>Give trust</b> after someone else's [[share]]: see [[trust-acorn]].</li>
   <li>{{icon:guess}} Your [[guess]] at the end.</li>
 </ul>
-<h3>Say it, and the Keeper taps it</h3>
+<h3>On your phone, or say it to the Keeper</h3>
 <div class="tablewrap"><table>
-<tr><th>You say</th><th>The Keeper taps</th></tr>
-<tr><td>"I stand for Resilience, because…"</td><td>Your value and a Ring 4 hex</td></tr>
-<tr><td>"I move to 3." / "I explore here."</td><td>The action first (<b>Move</b>, <b>Explore</b>…), then the numbered hex when it needs one</td></tr>
-<tr><td>"I pass Mei one water."</td><td>The [[pass]]</td></tr>
-<tr><td>"Not this one, please."</td><td><b>Another question</b></td></tr>
-<tr><td>(the story ends)</td><td><b>Done sharing</b></td></tr>
-<tr><td>"That's my turn."</td><td><b>End turn</b></td></tr>
+<tr><th>You do</th><th>On your phone</th></tr>
+<tr><td>Walk</td><td>Tap a glowing hex, then <b>Move here</b></td></tr>
+<tr><td>Explore, sow, water, tend, clear, harvest, take, drink</td><td>The button under the map (a blue glow asks which hex, when there is a choice)</td></tr>
+<tr><td>Pass water, fruit or a treasure</td><td><b>Pass</b>, then what to whom</td></tr>
+<tr><td>Done for this round</td><td><b>End my turn</b> (tap twice if you still have actions)</td></tr>
+<tr><td>"I stand for Resilience, because…"</td><td>Said aloud: the Keeper taps your value and a Ring 4 hex</td></tr>
+<tr><td>"Not this one, please."</td><td><b>Not this one</b> on your card, or the Keeper taps <b>Another question</b></td></tr>
 </table></div>
 <p>If your phone loses its connection, see [[live-badge]] and [[rejoin-code]].</p>` },
 

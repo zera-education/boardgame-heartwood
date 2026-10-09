@@ -299,7 +299,10 @@ body.k-turning #k-map, body.k-turning .k-view button { pointer-events: none; }
 .k-q-p.now > b { font-size: 14px; }
 .k-q-p.now > small { color: #2c6a1f; }
 .k-q-p.after { opacity: .8; }
-.k-q-p.done { opacity: .6; }
+.k-q-p.done { opacity: .55; }
+.k-q-p.done > small { color: #2c6a1f; }
+.k-q-p[data-focus] { cursor: pointer; }
+.k-q-h b { font-size: 14px; color: #2c6a1f; }
 .k-q-tide { display: flex; align-items: center; justify-content: center; gap: 1px; width: 100%; margin: 1px 0; padding: 1px 0; border-top: 3px dashed var(--paper-line); border-bottom: 3px dashed var(--paper-line);
   font: 800 10px/1.3 var(--read); text-transform: uppercase; letter-spacing: .06em; color: #8a5418; }
 

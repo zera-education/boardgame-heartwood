@@ -48,22 +48,31 @@ Locally, the server prints the address phones on the same Wi-Fi should use, and 
   a treasure alone doesn't count), each player's water, fruit and treasure, the open share card and the trail log. Everything
   that happens is played as animation from the view's `events`. An Explore always says what it found on the hex,
   "Nothing here" too. **Tap a hex** for its card: value, ring, weather, what lies there, dead leaves, who stands there
-  and whether its plant is safe at the next Forest Tide (and **Move here** when the current player can go there).
+  and whether its plant is safe at the next Forest Tide (and **Move here** when the player the Keeper plays for can go there).
   Nothing moves on a plain tap: the Keeper picks the action first (**Move**, Water, Tend, Clear), then the hexes it can
   reach glow with numbers 1, 2, 3… in reading order, so the team can say "move to 3"; the number keys pick them too.
   Keys do the commonest taps: **M** Move, **E** Explore, **Enter** End turn (each packet shows its key), so a turn can be
   M, 3, E, Enter. Whenever something is open, **Enter** presses its default button, marked ↵ (Done sharing, Next, Start
   the tribute chain…), once per press. `,` and `.` turn the map, during play and in the finale.
   The drawer (**Tools · log**: Keeper tools and the trail log) opens over the map without moving it. **Undo** at the
-  top of the trail log (or Ctrl+Z) takes back the Keeper's last tap for a player, newest first, until the turn ends.
+  top of the trail log (or Ctrl+Z) takes back the Keeper's last tap for a player, newest first, until the round ends or
+  a player plays from their phone (taking it back would undo their move too; the Keeper doesn't undo players' own moves).
   **Turn the map** (in the top-left sign, or the `,` and `.` keys; also in the finale) shows the forest from any of its six sides: the ground turns like a table,
-  trees and medallions ride on it upright, the value signs travel with their sectors. It is this screen's view only,
-  kept per game.
-- **Players say it, the Keeper taps it. Phones down.** Every public action (enter, move, explore, sow, water, tend,
-  clear, harvest, take, drink, pass, end turn) is tapped by the Keeper, acting for that player (`host` + `as`). The
-  server refuses `trust`, `investigate` and `guess` from the Keeper. The phone keeps only private things: the Secret
-  Owl name, what you carry, rings reached, your roles, private looks (Investigator forecast and weather look), Give
-  trust, **Not this one** on your own ring card or Heartwood question, and the Secret Owl guess.
+  trees and medallions ride on it upright, the value signs travel with their sectors. The side is the game's (`rot` in
+  the view): every phone's map turns with it.
+- **Everyone plays the round at once, on their phones** (El, 2026-10-09; the one-at-a-time version is the
+  `turn-based` branch). Each player has 2 actions a round and **Ends their turn**; the **Forest Tide** comes when the
+  last one has. The phone shows a flat map turned to the big screen's side: tap a glowing hex, then **Move here**; the
+  buttons under it act on your own hex (Explore, Sow, Water, Tend, Clear, Harvest, Take, Drink, Pass); a Helper's or a
+  Clear's choice of hex glows blue to tap. First come, first served: a Challenger who moves takes everyone standing
+  with them, whatever they were doing. **When someone shares, every phone shows only the share and the trust acorn**,
+  and the server refuses play until the Keeper taps Done.
+- **The Keeper can still play for anyone** (`host` + `as`): by default for the first player in seat order who hasn't
+  ended their turn ("Keeper" in the **Still playing** list down the left), or for any face tapped in that list. Entering
+  stays one at a time on the big screen (each player says why). The server refuses `trust`, `investigate` and `guess`
+  from the Keeper. The phone also keeps the private things: the Secret Owl name, what you carry, rings reached, your
+  roles, private looks (Investigator forecast and weather look), Give trust, **Not this one** on your own ring card or
+  Heartwood question, and the Secret Owl guess.
 - **Players (6 to 12)** scan the QR code or open `play.html?g=CODE`, pick a name and one of 12 colours. Join refuses a
   13th player; Start needs at least 6 and every player needs at least one Enneagram type (the Keeper gives 1 to 3 in
   the lobby). Their seat is kept in the URL (`&p=…`) and on the device, so a reload or a reopened browser goes straight
@@ -79,6 +88,8 @@ actor's new view, so taps feel instant. Clients keep the newest view by version 
 45 s without a heartbeat as a dead connection, open a fresh socket after a phone wakes up, and poll slowly while the
 socket is down. Screens redraw only the parts that changed.
 
+During play each view carries `turns` (every player's actions left this round, and whether they have ended their
+turn), `turn` (the first still playing: whom the Keeper taps for by default) and `rot` (the side the map is seen from).
 Each view also carries `events` (the last 80, with increasing ids: `move`, `flip`, `grow`, `harvest`, `clear`,
 `take`, `drink`, `pass`, `place`, `treasure`, `tide`, `wake`, `dry`, `hint`, `sweep`). The Keeper screen plays the events it hasn't seen
 yet as animation: medallions hop, tiles flip, plants grow, leaves drift in at the Forest Tide. Private results (the
@@ -92,7 +103,7 @@ player tabs on one computer froze every other request. WebSockets don't share th
 
 Lobby → **brief** (the Keeper's briefing slides on every screen: the goal, limits, obstacles and how to prevent them,
 the roles, the Secret Owl side quest, the Forest Pact, how we play; phones show your roles and your Owl) → **enter**
-(in turn order, each player chooses the value they stand for and a Ring 4 hex of its sector, and says why) → **turns** (clockwise, up to 2 actions each; after the last player the **Forest Tide** runs by itself: new
+(in turn order, each player chooses the value they stand for and a Ring 4 hex of its sector, and says why) → **rounds** (everyone at once, up to 2 actions each; when the last player ends their turn the **Forest Tide** runs by itself: new
 weather per sector, rain grows Seeded/Sprout, sun dries players not on a Big Tree, Forest Breath drifts dead leaves one
 ring inward, and from beyond the edge onto Ring 4; a plant someone stands on keeps its stage) → the game ends the moment the forest **wakes** (a Big Tree in every sector, every player has placed a
 fruit, all 3 treasures placed, everyone on the World Tree) or every player is at 0 water → **guess** (Secret Owl, on
@@ -196,7 +207,7 @@ The Keeper gives each player 1 to 3 types in the lobby; several players may hold
 | 2 | Helper | Water or Tend a hex next to you without standing on it |
 | 3 | Achiever | After you Sow, the hex grows straight to Sprout |
 | 4 | Individualist | When you Explore, the board shows which face-down hexes around you hold something, not what (`Tile.Hint`) |
-| 5 | Investigator | Always sees the next Forest Breath; once a round, on their turn, sees one sector's next weather |
+| 5 | Investigator | Always sees the next Forest Breath; once a round, before ending their turn, sees one sector's next weather |
 | 6 | Loyalist | Plants on your hex and the 6 hexes around you (7 in all) don't lose a stage to dead leaves |
 | 7 | Enthusiast | Once a turn, one Move may go 2 hexes (no fog, no sealed hexes) |
 | 8 | Challenger | Everyone on your hex moves with you (the Keeper may leave someone behind; nobody is taken off the World Tree unless picked); may enter sealed hexes |

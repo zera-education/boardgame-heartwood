@@ -8,7 +8,9 @@ import (
 // Undo: the Keeper taps every public action for the players, and a tap can
 // slip (the wrong hex, the wrong player's move). Before each such tap the game
 // keeps a copy of itself; "undo" puts the newest copy back. The copies last
-// until the turn ends, so only this turn's taps can be taken back.
+// until the round ends, or until a player plays from their phone (taking a
+// copy back would undo their move too), so only the Keeper's latest taps can
+// be taken back.
 
 // MaxUndo is how many taps back the Keeper can go.
 const MaxUndo = 6
@@ -20,9 +22,9 @@ type UndoPoint struct {
 }
 
 // keeperTap applies a play action the Keeper taps for a player, keeping an
-// undo point when it works. Ending the turn starts the next one fresh: it is
-// not taken back, and neither is a tap that moves the game on (the last
-// player entering starts play; a tap that wakes the forest ends it).
+// undo point when it works. Ending a turn is not taken back, and neither is a
+// tap that moves the game on (the last player entering starts play; a tap that
+// wakes the forest ends it).
 func (g *Game) keeperTap(p *Player, a Action) error {
 	if a.Type == "endTurn" {
 		return g.playerAction(p, a)
@@ -52,11 +54,11 @@ func (g *Game) keeperTap(p *Player, a Action) error {
 	return nil
 }
 
-// undo puts back the game as it was before the Keeper's last tap this turn.
+// undo puts back the game as it was before the Keeper's last tap.
 // What isn't play stays as it is now: the version, the event and share
 // numbers (they only ever grow, so screens and recordings stay in step),
-// photos, rejoin codes and the recording settings. Players hop back on the
-// big screen.
+// photos, rejoin codes, the recording settings and the side the map is seen
+// from. Players hop back on the big screen.
 func (g *Game) undo() error {
 	if len(g.Undo) == 0 || (g.Phase != PhaseEnter && g.Phase != PhaseTurn) {
 		return errors.New("nothing to undo")
@@ -70,7 +72,7 @@ func (g *Game) undo() error {
 	*g = old
 	g.Undo = now.Undo[:len(now.Undo)-1]
 	g.Version, g.EventSeq, g.ShareSeq, g.logged = now.Version, now.EventSeq, now.ShareSeq, now.logged
-	g.Rejoin, g.NoRecord, g.RecDevice = now.Rejoin, now.NoRecord, now.RecDevice
+	g.Rejoin, g.NoRecord, g.RecDevice, g.Rot = now.Rejoin, now.NoRecord, now.RecDevice, now.Rot
 	// the same Player values as before, so nothing that holds one goes stale
 	for i, p := range g.Players {
 		q := now.player(p.ID)

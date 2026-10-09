@@ -127,6 +127,7 @@ func (s *Server) load() error {
 			log.Printf("skip game %s: saved under older rules (%q)", code, g.Rules)
 			continue
 		}
+		g.migrate()
 		s.games[code] = g
 	}
 	return rows.Err()
@@ -496,6 +497,7 @@ func buildView(g *Game, pid, secret, host string) map[string]any {
 		"round": g.Round, "tide": g.Tide, "result": g.Result, "slide": g.Slide,
 		"hexes": Board, "tiles": tiles, "weather": g.Weather, "breathCount": len(g.Breath),
 		"players": players, "order": order, "current": "", "turn": nil, "share": nil,
+		"rot": g.Rot, "turns": map[string]any{},
 		"goals": g.goals(), "timerEnd": g.TimerEnd, "timerLabel": g.TimerLabel, "timerWait": g.TimerWait,
 		"tribute": nil, "recognition": nil, "me": nil,
 	}
@@ -527,9 +529,17 @@ func buildView(g *Game, pid, secret, host string) map[string]any {
 			v["current"] = p.ID
 		}
 	}
-	if t := g.Turn; t != nil && g.Phase == PhaseTurn {
-		v["turn"] = map[string]any{"player": t.Player, "actions": t.Actions, "enthusiastUsed": t.EnthusiastUsed,
-			"investigated": t.Investigated}
+	if g.Phase == PhaseTurn {
+		// everyone's turn this round; "turn" is the first still playing, whom the Keeper taps for by default
+		turns := map[string]any{}
+		for id, t := range g.Turns {
+			turns[id] = map[string]any{"player": t.Player, "actions": t.Actions, "enthusiastUsed": t.EnthusiastUsed,
+				"investigated": t.Investigated, "done": t.Done}
+		}
+		v["turns"] = turns
+		if p := g.current(); p != nil {
+			v["turn"] = turns[p.ID]
+		}
 	}
 	if s := g.openShare(); s != nil {
 		sv := map[string]any{"idx": s.Idx, "kind": s.Kind, "player": s.Player, "prompt": s.Prompt, "sub": s.Sub,
