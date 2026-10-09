@@ -1,14 +1,16 @@
-// Game report: one page for a finished game, in the forest's look (web/art.js). The team with their photos, what each
-// stood for, every story told round by round, and the Secret Owls. Made on the Mini from the game's state, the player
+// Game report: one page for a finished game, in the forest's look (web/art.js). The team with their photos and what
+// each stood for, a short memory for each player, what we said together for each treasure, and the Secret Owls. Made on the Mini from the game's state, the player
 // photos and the Mini's own copy of each story (hw-transcribe -archive). The page holds people's photos and stories:
 // it goes to El's private dashboard, never into this public repo.
 //
 //   node ops/report/report.mjs CODE --out FILE [--server URL] [--archive DIR] [--photos DIR] [--state FILE]
-//        [--fallback STORIES.json] [--intro FILE]
+//        [--memories FILE] [--transcripts] [--fallback STORIES.json]
 //
 // --photos keeps the photos it fetched (the server deletes them 2 hours after the game ends; a photo already in the
 // folder is used as it is). --fallback is the Stories page's JSON download, for a story the archive doesn't have.
-// --intro is a few plain-text paragraphs (blank lines between) for "The night in brief" under the title.
+// --memories is the summary someone wrote from the stories (a summary, not a transcript: the recordings are of a busy
+// room): {intro, people: {name: {quote, memory}}, together: [{treasure, answers: [[name, answer]]}]}.
+// --transcripts adds every story word for word, round by round.
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -20,7 +22,9 @@ const ART = require('../../web/art.js');
 // ---------- arguments ----------
 const args = process.argv.slice(2);
 const opt = (name, dflt) => { const i = args.indexOf('--' + name); return i >= 0 ? args[i + 1] : dflt; };
-const CODE = (args.filter((a, i) => !a.startsWith('--') && !(i > 0 && args[i - 1].startsWith('--')))[0] || '').toUpperCase();
+const SWITCHES = new Set(['--transcripts']);
+const CODE = (args.filter((a, i) => !a.startsWith('--') && !(i > 0 && args[i - 1].startsWith('--') && !SWITCHES.has(args[i - 1])))[0] || '').toUpperCase();
+const TRANSCRIPTS = args.includes('--transcripts');
 const SERVER = opt('server', process.env.HW_SERVER || 'https://heartwood.zera.edu.my').replace(/\/$/, '');
 const ARCHIVE = opt('archive', path.join(os.homedir(), '.local/share/heartwood/stories'));
 const PHOTOS = opt('photos', '');
@@ -131,13 +135,15 @@ const acorns = [...recog.values()].reduce((n, r) => n + (r.trust || 0), 0);
 const first = stories.find(s => s.createdAt)?.createdAt || state.now / 1000;
 const day = new Intl.DateTimeFormat('en-GB', { timeZone: TZ, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(first * 1000);
 const foundBy = id => [...recog.values()].find(r => (r.found || []).includes(id))?.name;
+const MEM = opt('memories') ? JSON.parse(fs.readFileSync(opt('memories'), 'utf8')) : {};
+const memOf = name => MEM.people?.[name];
 
 const teamCards = players.map(p => {
   const r = recog.get(p.id) || {}, v = valueOf(p.value), role = ROLES.find(x => x.type === p.types?.[0]);
   const told = stories.filter(s => s.playerName === p.name).length;
   const facts = [
     `<li>${art('acorn', '1.3em')}<span><b>${r.trust || 0}</b> acorns of trust, from ${plural(r.givers || 0, 'person', 'people')}</span></li>`,
-    `<li>${art('icon:talk', '1.3em')}<span>Told <b>${told}</b> ${told === 1 ? 'story' : 'stories'}</span></li>`,
+    `<li>${art('icon:talk', '1.3em')}<span>Shared <b>${told}</b> ${told === 1 ? 'story' : 'stories'}</span></li>`,
     ...(r.found || []).map(id => { const t = TREASURES.find(x => x.id === id); return `<li>${art(`treasure:${id}`, '1.3em')}<span>Found <b>${esc(t?.name || id)}</b></span></li>`; }),
     r.targetName ? `<li>${art('icon:owl', '1.3em')}<span>Secret Owl watching over <b>${esc(r.targetName)}</b></span></li>` : '',
   ].join('');
@@ -146,8 +152,22 @@ const teamCards = players.map(p => {
     <div><h3>${esc(p.name)}</h3>
       ${v ? `<div class="stood">${art(`value:${p.value}`, '1.5em')}<span>Stood for <b>${esc(v.name)}</b><small>${esc(v.tagline)}</small></span></div>` : ''}
       ${role ? `<div class="role">${art(`role:${role.type}`, '1.3em')}<span>${esc(role.name)} · ${esc(role.gift)}</span></div>` : ''}</div></div>
+  ${memOf(p.name)?.quote ? `<blockquote style="--vc:${v?.color || p.color}">${esc(memOf(p.name).quote)}</blockquote>` : ''}
+  ${memOf(p.name)?.memory ? `<p class="memory">${esc(memOf(p.name).memory)}</p>` : ''}
   <ul class="facts">${facts}</ul>
 </article>`;
+}).join('\n');
+
+// what we said together: each treasure's question and everyone's answer, in a few words
+const togetherHTML = (MEM.together || []).map(g => {
+  const t = TREASURES.find(x => x.id === g.treasure), finder = foundBy(g.treasure);
+  return `<section class="treasure">
+  <div class="t-head">${art(t ? `treasure:${t.id}` : 'treasure', '3.4em')}<div>
+    <div class="t-name">${esc(t?.name || 'A treasure')}${finder ? ` <small>found by ${esc(finder)}</small>` : ''}</div>
+    ${t?.meaning ? `<div class="t-mean">${esc(t.meaning)}</div>` : ''}
+    <div class="q">${esc((t?.question || '').replace(/^Everyone, one sentence: /, '').replace(/^./, c => c.toUpperCase()))}</div></div></div>
+  <ul class="said">${g.answers.map(([name, a]) => `<li><span class="m">${med(name, 46)}</span><span><b>${esc(name)}</b>${esc(a)}</span></li>`).join('')}</ul>
+</section>`;
 }).join('\n');
 
 // stories by round; a treasure's answers sit together under the treasure
@@ -190,7 +210,7 @@ const owlRows = [];
   }
 }
 
-const INTRO = opt('intro') ? `<section class="brief"><h2>The night in brief</h2>${fs.readFileSync(opt('intro'), 'utf8').trim().split(/\n{2,}/).map(p => `<p>${esc(p.trim())}</p>`).join('')}</section>` : '';
+const INTRO = MEM.intro ? `<section class="brief"><h2>The night in brief</h2>${MEM.intro.trim().split(/\n{2,}/).map(p => `<p>${esc(p.trim())}</p>`).join('')}</section>` : '';
 const html = `<!doctype html>
 <html lang="en">
 <head>
@@ -249,6 +269,11 @@ nav a { font: 18px/1 var(--toon); color: var(--wood); text-decoration: none; bac
 .stood small { display: block; font-style: italic; color: var(--muted); font-size: 13.5px; }
 .stood b { color: var(--ink); }
 .role { margin-top: 4px; font-size: 14px; }
+.team.mem { grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); }
+.mate blockquote { margin: 14px 0 0; padding: 10px 14px; border-left: 6px solid var(--vc); background: var(--paper2); border-radius: 0 14px 14px 0;
+  font: 21px/1.3 var(--toon); color: var(--wood); }
+.mate blockquote::before { content: '“'; } .mate blockquote::after { content: '”'; }
+.memory { margin: 12px 0 0; font: 600 17px/1.6 var(--read); color: var(--ink); }
 .facts { list-style: none; margin: 12px 0 0; padding: 10px 0 0; border-top: 2px dashed var(--line); display: grid; gap: 4px; }
 .facts li { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--ink2); }
 .facts li .art-inline { flex: none; }
@@ -287,6 +312,12 @@ nav a { font: 18px/1 var(--toon); color: var(--wood); text-decoration: none; bac
 .answer .who { font-size: 19px; }
 .answer .text { font-size: 16px; margin-top: 6px; padding: 8px 10px; }
 
+.said { list-style: none; margin: 0 0 12px; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+.said li { display: flex; align-items: center; gap: 10px; padding: 8px 12px 8px 8px; background: var(--paper); border: 3px solid var(--line); border-radius: 18px;
+  font: 700 16.5px/1.35 var(--read); color: var(--ink); }
+.said .m { line-height: 0; flex: none; }
+.said b { display: block; font: 18px/1.1 var(--toon); font-weight: 400; color: var(--ink2); margin-bottom: 2px; }
+
 /* the Secret Owls */
 .owls { list-style: none; margin: 0; padding: 18px; display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 10px 24px; background: var(--paper); border: 4px solid var(--wood); border-radius: 24px;
   box-shadow: 0 6px 0 var(--wood-d), 0 14px 30px rgba(0, 0, 0, .35); }
@@ -302,7 +333,7 @@ footer { margin-top: 34px; color: #bfb397; font-size: 13.5px; font-weight: 700; 
   .story .med svg { width: 52px; height: 52px; }
   .story .q { grid-column: 1 / -1; font-size: 17px; }
   .mate-top .med svg { width: 84px; height: 84px; }
-  .answers, .owls { grid-template-columns: 1fr; }
+  .answers, .owls, .said, .team.mem { grid-template-columns: 1fr; }
 }
 ${ART.css}
 </style>
@@ -320,27 +351,30 @@ ${ART.css}
         <span class="chip">${art('fruit', '1.3em')}<b>${goals.onTree ?? 0}</b> fruit on the World Tree</span>
         <span class="chip">${art('treasure', '1.4em')}<b>${(goals.treasures || []).length}</b> of 3 treasures</span>
         <span class="chip">${art('acorn', '1.3em')}<b>${acorns}</b> acorns of trust</span>
-        <span class="chip">${art('icon:talk', '1.3em')}<b>${stories.length}</b> stories</span>
+        <span class="chip">${art('icon:talk', '1.3em')}<b>${stories.length}</b> stories shared</span>
       </div>
     </div>
   </header>
   ${INTRO}
-  <nav><a href="#team">The team</a><a href="#stories">The stories</a><a href="#owls">The Secret Owls</a></nav>
+  <nav><a href="#team">${MEM.people ? 'For each of you' : 'The team'}</a>${togetherHTML ? '<a href="#together">What we said together</a>' : ''}<a href="#owls">The Secret Owls</a>${TRANSCRIPTS ? '<a href="#stories">Every story</a>' : ''}</nav>
 
-  <section class="band" id="team"><h2>The team</h2>
-    <p class="about">Who played, the value each one stood for, and the trust the others gave them.</p>
-    <div class="team">${teamCards}</div></section>
+  <section class="band" id="team"><h2>${MEM.people ? 'For each of you' : 'The team'}</h2>
+    <p class="about">${MEM.people ? 'Something to remember from what each of us shared tonight.' : 'Who played, the value each one stood for, and the trust the others gave them.'}</p>
+    <div class="team${MEM.people ? ' mem' : ''}">${teamCards}</div></section>
 
-  <section class="band" id="stories"><h2>The stories</h2>
-    <p class="about">Every story told in the forest, in the order we told them.</p>
-    ${roundHTML}</section>
+  ${togetherHTML ? `<section class="band" id="together"><h2>What we said together</h2>
+    <p class="about">Each treasure asked all of us one question.</p>
+    ${togetherHTML}</section>` : ''}
 
   ${owlRows.length ? `<section class="band" id="owls"><h2>The Secret Owls</h2>
     <p class="about">Each of us quietly watched over one other player all game, then honoured them in the tribute chain.</p>
     <ul class="owls">${owlRows.join('')}</ul></section>` : ''}
 
-  <footer>Heartwood · World Tree. The stories were recorded on the Keeper's laptop and turned into English text on our own
-    computer; in a busy room some words may be misheard, and the Keeper's voice is in them too.</footer>
+  ${TRANSCRIPTS ? `<section class="band" id="stories"><h2>Every story</h2>
+    <p class="about">Every story told in the forest, word for word as the recording heard it.</p>
+    ${roundHTML}</section>` : ''}
+
+  <footer>Heartwood · World Tree · written from the stories we told during the game.</footer>
 </div>
 </body>
 </html>

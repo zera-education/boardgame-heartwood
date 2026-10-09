@@ -228,8 +228,9 @@ The Keeper gives each player 1 to 3 types in the lobby; several players may hold
 - `admin.go`: the admin page's API (Telegram login code, sessions, games list and actions); `web/admin.html`: the page
 - `recording.go`: story recordings, the Keeper's and the transcription worker's API, the audio sweep;
   `ops/transcribe/`: the worker on the Mac mini, its lanes seed and install script
-- `ops/report/report.mjs`: a finished game's report page (the team with their photos, every story by round, the
-  Secret Owls) from the game's state, the photos and the Mini's copies of the stories. The page holds people's photos
+- `ops/report/report.mjs`: a finished game's report page (the team with their photos, a short memory for each player
+  and what we said for each treasure, written from the stories as `--memories` JSON; the Secret Owls; word-for-word
+  stories only with `--transcripts`) from the game's state, the photos and the Mini's copies of the stories. The page holds people's photos
   and stories, so it goes to El's private dashboard, never into this repo.
 - `find.go`: the sealed find (its file, its API, turning it up); `web/find.js`: how every screen shows it
 - `game_test.go`, `photo_test.go`, `sim_test.go`: rules tests, photo tests and the bot balance simulation
