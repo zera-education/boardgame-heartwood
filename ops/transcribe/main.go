@@ -3,7 +3,8 @@
 // The Keeper's laptop records each share and uploads it to the Heartwood server (recording.go). Every 5 minutes
 // (the lanes job heartwood/stories/transcribe) this asks the server for the clips without a transcript, downloads
 // each one, transcribes it offline with Steward's Whisper tool (steward run transcribe text) and posts the text back.
-// Audio travels only between the Heartwood server and the Mini. With nothing to do it says nothing.
+// Every story comes out in English: the team speaks Malaysian English, which Whisper's own guess often took for Malay
+// (it then wrote the English it heard in Malay); a story told in Malay or Chinese is translated. Audio travels only between the Heartwood server and the Mini. With nothing to do it says nothing.
 //
 //	hw-transcribe [-server URL] [-token FILE] [-limit N] [-budget 4m]
 //
@@ -52,13 +53,13 @@ var errSetup = errors.New("whisper is not set up")
 // Transcriber turns one audio file into text.
 type Transcriber func(ctx context.Context, file string) (Result, error)
 
-// stewardTranscriber runs `steward run transcribe text <file> --out <json>`. Exit codes (tools/transcribe): 2 the venv,
+// stewardTranscriber runs `steward run transcribe text <file> --lang en --out <json>`. Exit codes (tools/transcribe): 2 the venv,
 // model or ffmpeg is missing · 3 the audio could not be decoded · 4 bad input · 5 bug.
 func stewardTranscriber(steward string) Transcriber {
 	return func(ctx context.Context, file string) (Result, error) {
 		out := file + ".json"
 		defer os.Remove(out)
-		cmd := exec.CommandContext(ctx, steward, "run", "transcribe", "text", file, "--out", out)
+		cmd := exec.CommandContext(ctx, steward, "run", "transcribe", "text", file, "--lang", "en", "--out", out)
 		var stderr strings.Builder
 		cmd.Stdout, cmd.Stderr = io.Discard, &stderr
 		err := cmd.Run()

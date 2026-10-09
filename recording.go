@@ -442,7 +442,9 @@ func (s *Server) deleteRecording(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, 200, map[string]any{"ok": true})
 }
 
-// retryRecording asks for one more try at a clip that couldn't be transcribed.
+// retryRecording asks for the clip to be transcribed again: one that couldn't be,
+// or one whose text came out wrong. Its transcript goes until the worker sends
+// the new one (within 5 minutes).
 //
 // POST /api/games/{code}/recordings/{id}/retry (Keeper) → {ok}
 func (s *Server) retryRecording(w http.ResponseWriter, r *http.Request) {
@@ -450,13 +452,14 @@ func (s *Server) retryRecording(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	res, err := s.db.Exec(`UPDATE recordings SET attempts=0, error='' WHERE id=? AND code=? AND transcript IS NULL AND audio IS NOT NULL`, recordingID(r), code)
+	res, err := s.db.Exec(`UPDATE recordings SET transcript=NULL, language='', transcribed_at=NULL, attempts=0, error=''
+WHERE id=? AND code=? AND audio IS NOT NULL`, recordingID(r), code)
 	if err != nil {
 		fail(w, 500, err.Error())
 		return
 	}
 	if n, _ := res.RowsAffected(); n == 0 {
-		fail(w, 404, "nothing to try again")
+		fail(w, 404, "nothing to transcribe again: the audio is gone")
 		return
 	}
 	writeJSON(w, 200, map[string]any{"ok": true})

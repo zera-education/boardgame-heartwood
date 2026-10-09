@@ -176,7 +176,7 @@ function textHTML(r) {
 function metaHTML(r) {
   const bits = [dur(r.durationMs), r.language ? LANG[r.language] || r.language : '', when(r.createdAt), r.partial ? 'cut short (the Keeper screen was reloaded)' : ''].filter(Boolean);
   return `${bits.map(b => `<span>${esc(b)}</span>`).join('')}<span class="grow"></span>
-    ${r.audio ? `<a href="${audioURL(r)}" download>Download audio</a>` : ''}<button class="link" data-del="${r.id}">Delete</button>`;
+    ${r.audio ? `<a href="${audioURL(r)}" download>Download audio</a>` : ''}${r.status === 'done' && r.audio ? `<button class="link" data-retry="${r.id}">Transcribe again</button>` : ''}<button class="link" data-del="${r.id}">Delete</button>`;
 }
 const audioURL = r => `/api/games/${encodeURIComponent(CODE)}/recordings/${r.id}/audio?host=${encodeURIComponent(HOST)}`;
 

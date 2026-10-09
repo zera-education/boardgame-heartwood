@@ -321,9 +321,6 @@ func TestTranscribeWorker(t *testing.T) {
 	if q := queue(); len(q) != 1 || q[0]["id"] != float64(c3) || q[0]["attempts"] != float64(0) {
 		t.Fatalf("queue after retry: %v", q)
 	}
-	if c, _, _ := ps.req("POST", "/api/games/TRAN/recordings/"+itoa(int(a))+"/retry", map[string]string{"X-Keeper": "host"}, nil); c != 404 {
-		t.Fatalf("retrying a transcribed clip: %d", c)
-	}
 	// Bad results.
 	if c, _ := post(c3, `{}`); c != 400 {
 		t.Fatalf("empty result: %d", c)
@@ -336,6 +333,19 @@ func TestTranscribeWorker(t *testing.T) {
 	}
 	if c, _ := post(a, `{"error":"late error"}`); c != 404 {
 		t.Fatalf("an error for a clip that has its transcript: %d", c)
+	}
+	// The Keeper asks again for a transcribed clip whose text came out wrong.
+	if c, _, _ := ps.req("POST", "/api/games/TRAN/recordings/"+itoa(int(a))+"/retry", map[string]string{"X-Keeper": "host"}, nil); c != 200 {
+		t.Fatalf("transcribing a clip again: %d", c)
+	}
+	if q := queue(); len(q) != 2 || q[0]["id"] != float64(a) {
+		t.Fatalf("queue after transcribing again: %v", q)
+	}
+	if r := ps.list("TRAN", "host")[0]; r.Status != "waiting" || r.Transcript != nil || r.Language != "" || r.TranscribedAt != 0 {
+		t.Fatalf("waiting again %+v", r)
+	}
+	if c, _, _ := ps.req("POST", "/api/games/TRAN/recordings/"+itoa(int(c3))+"/retry", map[string]string{"X-Keeper": "host"}, nil); c != 200 {
+		t.Fatalf("asking twice: %d", c)
 	}
 
 	// The worker API is off when the server has no token hash.

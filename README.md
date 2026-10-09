@@ -149,18 +149,20 @@ don't hard-code them; `/api/cards` has the same as `stages` and `ringDeckNames`.
   `POST /api/games/{code}/recordings?clip&share&kind&player&value&prompt&sub&seq&of&round&ms&partial` (raw audio
   body, WebM/MP4/Ogg checked by type and magic bytes, 25 MB at most; the same `clip` again is stored once),
   `GET /api/games/{code}/recordings` (metadata and transcripts, in story order), `GET …/recordings/{id}/audio`,
-  `DELETE …/recordings/{id}`, `POST …/recordings/{id}/retry`. Keeper actions `record` (n=1/0) and `recordHere`
+  `DELETE …/recordings/{id}`, `POST …/recordings/{id}/retry` (transcribe again: a failed clip, or one whose text
+  came out wrong; its transcript goes until the new one arrives). Keeper actions `record` (n=1/0) and `recordHere`
   (text = device id). Recordings are the team's story record: the photo sweep never touches them; the audio alone
   is deleted 30 days after its transcript (same 10-minute sweep).
 - **Transcription on the Mac mini** (`ops/transcribe`, offline Whisper through `steward run transcribe text`): the
   lanes job `heartwood/stories/transcribe` runs `~/.local/bin/hw-transcribe` every 5 minutes. It asks
   `GET /api/transcribe/queue`, downloads `GET /api/transcribe/{id}/audio`, posts `POST /api/transcribe/{id}`
-  `{text, language, duration}` or `{error}` (3 tries, then the Keeper can retry). Bearer token in
+  `{text, language, duration}` or `{error}` (3 tries, then the Keeper can retry). Always in English
+  (`--lang en`): left to guess, Whisper took Malaysian English for Malay and wrote it in Malay. Bearer token in
   `~/.config/heartwood/transcribe-token` on the Mini only; the server has its SHA-256 (`transcribeTokenHash`).
   Quiet with nothing to do; it fails (one lanes alert) when Whisper is missing, the token is refused, or the server
   is unreachable for 30 minutes. Install: `ops/transcribe/install.sh` (after a deploy).
 - **Stories page** `stories.html?g=CODE` (Keeper only): every clip by round, with the question, the player, an
-  audio player and the transcript; downloads as CSV and JSON.
+  audio player and the transcript (**Transcribe again** under each); downloads as CSV and JSON.
 
 ## Sealed find (one-off surprises)
 
